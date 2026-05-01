@@ -78,6 +78,7 @@
     <div class="nav-logo" onclick="location.href='main.html'">🧩 CREATIVE BLOCKS</div>
     <div class="project-title-container">
         <input type="text" id="project-title-input" value="未命名作品">
+        <span id="remix-badge" style="display:none; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="if(window.gotoOriginal) window.gotoOriginal()"></span>
         <span id="status-text">☁️ 已連線</span>
     </div>
 
@@ -243,6 +244,7 @@
     let currentPid = new URLSearchParams(window.location.search).get('load');
     let authorUid = new URLSearchParams(window.location.search).get('from');
     let isOwner = true;
+    let originalProjectData = null;
 
     // --- 定義自訂偵測 (Sensing) 積木 ---
     Blockly.Blocks['scratch_ask'] = {
@@ -394,8 +396,18 @@
             const snap = await getDoc(doc(db, "users", uid, "projects", currentPid));
             if (snap.exists()) {
                 const d = snap.data();
+                originalProjectData = d;
+                
                 document.getElementById('project-title-input').value = d.name;
                 document.getElementById('is-public-check').checked = d.isPublic;
+                
+                if (d.originalPid) {
+                    const badge = document.getElementById('remix-badge');
+                    badge.innerHTML = `♻️ 改編自 ${(d.originalAuthorEmail||'未知').split('@')[0]} 的作品`;
+                    badge.style.display = 'inline-block';
+                    window.gotoOriginal = () => location.href = `page.html?load=${d.originalPid}&from=${d.originalAuthorId}`;
+                }
+
                 if (uid !== user.uid) { 
                     isOwner = false; 
                     document.getElementById('main-action-btn').innerText = "⭐ 改編 (Remix)";
@@ -496,11 +508,20 @@
                 });
                 alert("儲存成功！");
             } else {
-                const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), {
-                    name: isOwner ? title : title + " (改編)",
+                const savePayload = {
+                    name: title,
                     data: xmlText, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
                     createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-                });
+                };
+                
+                if (!isOwner && currentPid && originalProjectData) {
+                    savePayload.originalPid = originalProjectData.originalPid || currentPid;
+                    savePayload.originalAuthorId = originalProjectData.originalAuthorId || authorUid;
+                    savePayload.originalAuthorEmail = originalProjectData.originalAuthorEmail || originalProjectData.authorEmail || "";
+                    savePayload.originalProjectName = originalProjectData.originalProjectName || originalProjectData.name || "";
+                }
+                
+                const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), savePayload);
                 location.href = `page.html?load=${newDoc.id}`;
             }
         } catch (e) { alert("儲存失敗: " + e.message); }

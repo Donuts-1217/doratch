@@ -60,7 +60,10 @@
 
 <nav>
     <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
-    <a href="page.html" class="nav-btn">+ 創作新作品</a>
+    <div style="display:flex; gap:10px;">
+        <a href="chat.html" class="nav-btn" style="color:var(--scratch-orange);">💬 聊天室</a>
+        <a href="page.html" class="nav-btn">+ 創作新作品</a>
+    </div>
 </nav>
 
 <div class="container">
@@ -116,6 +119,7 @@
                 const project = projectDoc.data();
                 const pid = projectDoc.id;
                 const date = project.updatedAt?.toDate().toLocaleDateString() || "未知時間";
+                const remixBadge = project.originalPid ? `<span style="background:#855CD6; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; flex-shrink:0;">♻️ Remix</span>` : "";
 
                 const card = document.createElement('div');
                 card.className = 'project-card';
@@ -125,7 +129,10 @@
                     </span>
                     <div class="thumbnail">🧩</div>
                     <div class="card-body">
-                        <div class="card-title">${project.name || "未命名作品"}</div>
+                        <div class="card-title" style="display:flex; align-items:center;">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${project.name || "未命名作品"}</span>
+                            ${remixBadge}
+                        </div>
                         <div class="card-meta">最後更新：${date}</div>
                     </div>
                     <div class="actions">

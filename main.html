@@ -8,6 +8,7 @@
         :root { 
             --scratch-blue: #4C97FF; --scratch-purple: #855CD6;
             --scratch-orange: #FFAB19; --scratch-green: #4CB050;
+            --danger: #FF4D4D;
         }
         body { font-family: 'Noto Sans TC', sans-serif; margin: 0; background: #F0F2F5; color: #333; }
 
@@ -21,7 +22,17 @@
         .nav-right { display: flex; align-items: center; gap: 20px; }
         .nav-link { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; }
         .nav-link:hover { opacity: 1; }
-        .user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+        
+        /* --- 下拉選單 Wrapper --- */
+        .user-profile-wrapper { position: relative; padding: 10px 0; margin-left: 10px; }
+        .user-profile { display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; color: white; }
+        .dropdown-menu {
+            position: absolute; top: 50px; right: 0; width: 150px; background: white; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; padding: 5px 0; z-index: 1001;
+        }
+        .user-profile-wrapper:hover .dropdown-menu { display: flex; }
+        .dropdown-item { padding: 8px 15px; color: #333; text-decoration: none; font-size: 13px; cursor: pointer; display: block; }
+        .dropdown-item:hover { background: #f0f2f5; }
 
         /* --- 主內容區 --- */
         .hero { background: white; padding: 40px 5%; text-align: center; border-bottom: 1px solid #ddd; }
@@ -67,12 +78,20 @@
     <div class="nav-right">
         <a href="dashboard.html" class="nav-link">我的班級</a>
         <a href="projects.html" class="nav-link">我的作品</a>
+        <a href="chat.html" class="nav-link" style="color:var(--scratch-orange);">💬 聊天室</a>
         <a href="page.html" class="btn-create">+ 建立作品</a>
-        <div class="user-profile" onclick="location.href='profile.html'">
-            <img id="nav-avatar" src="" style="width:28px; height:28px; border-radius:50%; display:none;">
-            <span id="nav-username">載入中...</span>
+        <div class="user-profile-wrapper">
+            <div class="user-profile">
+                <img id="nav-avatar" src="" style="width:24px; height:24px; border-radius:50%; display:none;">
+                <span id="nav-username" style="font-size:12px;">載入中...</span>
+            </div>
+            <div class="dropdown-menu">
+                <a href="projects.html" class="dropdown-item">📁 作品集</a>
+                <a href="dashboard.html" class="dropdown-item">🏫 班級</a>
+                <a href="chat.html" class="dropdown-item" style="color:var(--scratch-orange); font-weight:bold;">💬 聊天室</a>
+                <div class="dropdown-item" onclick="handleLogout()" style="color:var(--danger);">🚪 登出</div>
+            </div>
         </div>
-        <button onclick="handleLogout()" style="background:none; border:1px solid white; color:white; border-radius:5px; cursor:pointer; padding:2px 8px; font-size:12px;">登出</button>
     </div>
 </nav>
 
@@ -120,12 +139,10 @@
     async function fetchPublicProjects() {
         const grid = document.getElementById('project-grid');
         try {
-            // 注意：這裡需要建立索引，否則會報錯
-            // 如果你還沒建立索引，請先把 orderBy 這行註解掉測試
+            // 移除 orderBy 以避免 Firebase 複合索引要求，改由前端排序
             const q = query(
                 collectionGroup(db, "projects"), 
-                where("isPublic", "==", true),
-                orderBy("updatedAt", "desc") 
+                where("isPublic", "==", true)
             );
 
             const querySnapshot = await getDocs(q);
@@ -136,7 +153,16 @@
                 return;
             }
 
-            querySnapshot.forEach((doc) => {
+            // 前端排序
+            const docs = [];
+            querySnapshot.forEach(doc => docs.push(doc));
+            docs.sort((a, b) => {
+                const t1 = a.data().updatedAt ? a.data().updatedAt.toMillis() : 0;
+                const t2 = b.data().updatedAt ? b.data().updatedAt.toMillis() : 0;
+                return t2 - t1;
+            });
+
+            docs.forEach((doc) => {
                 const data = doc.data();
                 const pid = doc.id;
                 const authorId = doc.ref.parent.parent.id; // 從 path 獲取作者 UID
@@ -145,6 +171,7 @@
                 const email = data.authorEmail || "unknown@user";
                 const displayName = email.includes('@') ? email.split('@')[0] : "匿名用戶";
                 const projectName = data.name || "未命名作品";
+                const remixBadge = data.originalPid ? `<span style="background:#855CD6; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; flex-shrink:0;">♻️ Remix</span>` : "";
 
                 const card = document.createElement('div');
                 card.className = 'project-card';
@@ -156,7 +183,10 @@
                 card.innerHTML = `
                     <div class="project-thumb">🧩</div>
                     <div class="project-info">
-                        <div class="project-name">${projectName}</div>
+                        <div class="project-name" style="display:flex; align-items:center;">
+                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${projectName}</span>
+                            ${remixBadge}
+                        </div>
                         <div class="project-author">
                             <img src="https://ui-avatars.com/api/?name=${email}&size=20&background=random">
                             ${displayName}
