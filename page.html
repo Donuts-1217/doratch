@@ -2,126 +2,148 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Creative Blocks - 雲端積木編輯器</title>
+    <title>Creative Blocks - 旗艦開發環境</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
             --scratch-blue: #4C97FF; --scratch-purple: #855CD6;
             --scratch-orange: #FFAB19; --scratch-green: #4CB050;
-            --bg-workspace: #F9F9F9;
+            --scratch-pink: #FF6680; --bg-workspace: #F9F9F9;
         }
         body { font-family: 'Noto Sans TC', sans-serif; margin: 0; background: #F0F2F5; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
         /* --- 頂部導覽列 --- */
         .navbar {
             background: var(--scratch-blue); color: white; padding: 0 20px;
-            height: 50px; display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000;
+            height: 55px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000;
         }
         .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
-        .logo { font-weight: 900; font-size: 1.2rem; cursor: pointer; }
-        .project-name { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; padding: 5px 12px; border-radius: 4px; outline: none; transition: 0.3s; }
-        .project-name:focus { background: white; color: #333; }
-        
-        .btn-nav { background: var(--scratch-orange); border: none; color: white; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        
-        /* 使用者下拉選單 */
-        .user-menu { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); }
-        .user-dropdown {
-            position: absolute; top: 100%; right: 0; background: white; color: #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; display: none;
-            min-width: 160px; margin-top: 10px; overflow: hidden;
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; letter-spacing: 1px; }
+        .project-name { 
+            background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4); 
+            color: white; padding: 7px 15px; border-radius: 8px; outline: none; font-size: 14px; width: 200px;
         }
-        .user-dropdown div { padding: 12px 15px; transition: 0.2s; }
-        .user-dropdown div:hover { background: #f0f2f5; }
+        .project-name:focus { background: white; color: #333; }
+        .btn-save { background: var(--scratch-orange); border: none; color: white; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 900; transition: 0.2s; }
+        .btn-save:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        
+        .user-menu { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: 20px; transition: 0.2s; }
+        .user-menu:hover { background: rgba(255,255,255,0.1); }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2px solid rgba(255,255,255,0.5); }
+        .user-dropdown {
+            position: absolute; top: 110%; right: 0; background: white; color: #333;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); border-radius: 12px; display: none;
+            min-width: 180px; overflow: hidden; border: 1px solid #eee;
+        }
+        .user-dropdown div { padding: 12px 20px; font-size: 14px; cursor: pointer; }
+        .user-dropdown div:hover { background: #F0F7FF; color: var(--scratch-blue); }
         .user-menu:hover .user-dropdown { display: block; }
 
-        /* --- 編輯器主體 --- */
-        .editor-container { display: flex; flex: 1; overflow: hidden; }
+        /* --- 編輯器版面 --- */
+        .main-content { display: flex; flex: 1; overflow: hidden; }
         
-        /* 積木工具箱 */
-        .toolbox { width: 240px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-        .toolbox-header { padding: 15px; font-weight: bold; background: #f4f4f4; border-bottom: 1px solid #ddd; }
-        .block-palette { padding: 15px; overflow-y: auto; }
-        
-        /* 積木通用樣式 */
+        .toolbox { width: 260px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .toolbox-header { padding: 15px; font-weight: bold; background: #f8f9fa; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .block-palette { padding: 15px; flex: 1; overflow-y: auto; }
+
+        /* 積木樣式設計 */
         .block {
-            padding: 10px 15px; margin-bottom: 10px; color: white; border-radius: 8px;
+            padding: 12px 15px; margin-bottom: 8px; color: white; border-radius: 8px;
             cursor: grab; user-select: none; font-size: 13px; font-weight: bold;
-            display: block; width: 160px; position: relative;
+            width: 170px; position: relative; box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 8px;
         }
         .block-move { background: var(--scratch-blue); }
         .block-rotate { background: var(--scratch-purple); }
-        .block-color { background: var(--scratch-green); }
+        .block-looks { background: var(--scratch-pink); }
+        .block-event { background: var(--scratch-orange); }
 
-        /* 畫布工作區 */
+        /* 工作區 */
         .workspace { 
-            flex: 1; background: var(--bg-workspace); position: relative; overflow: auto; 
-            background-image: radial-gradient(#ddd 1px, transparent 1px); background-size: 20px 20px; 
+            flex: 1; background: var(--bg-workspace); position: relative; overflow: auto;
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px); background-size: 30px 30px;
         }
-        .workspace .block { position: absolute; z-index: 10; box-shadow: 2px 4px 8px rgba(0,0,0,0.1); }
-        .workspace .block:active { cursor: grabbing; }
+        .workspace .block { position: absolute; z-index: 10; cursor: move; }
 
-        /* 預覽與控制台 */
-        .preview-pane { width: 340px; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; align-items: center; padding: 15px; }
-        canvas { background: #eee; border: 3px solid #333; border-radius: 12px; width: 300px; height: 300px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
-        .controls { width: 100%; margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .btn-run { background: var(--scratch-green); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: 900; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 0 #3d8b40; }
-        .btn-run:active { transform: translateY(2px); box-shadow: 0 2px 0 #3d8b40; }
-        
-        /* 浮動提示 (Toast) */
-        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 25px; border-radius: 30px; display: none; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        /* 右側預覽區 */
+        .preview-pane { width: 350px; background: white; border-left: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.02); }
+        .stage-container { 
+            background: #222; border-radius: 15px; position: relative; width: 310px; height: 310px; 
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
+            border: 4px solid #333; overflow: hidden;
+        }
+        #speech-bubble {
+            position: absolute; background: white; padding: 8px 15px; border-radius: 15px;
+            font-size: 13px; color: #333; font-weight: bold; display: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 100;
+        }
+        #speech-bubble::after {
+            content: ""; position: absolute; bottom: -8px; left: 20px;
+            border-width: 8px 8px 0; border-style: solid; border-color: white transparent;
+        }
+
+        .btn-run { 
+            padding: 18px; background: var(--scratch-green); color: white; border: none; 
+            border-radius: 12px; font-size: 1.3rem; font-weight: 900; cursor: pointer; 
+            box-shadow: 0 5px 0 #2E7D32; transition: 0.1s;
+        }
+        .btn-run:active { transform: translateY(3px); box-shadow: 0 2px 0 #2E7D32; }
+
+        #sync-status { font-size: 11px; color: #999; text-align: center; margin-top: 10px; }
+        #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 30px; border-radius: 50px; display: none; z-index: 2000; }
     </style>
 </head>
 <body>
 
 <nav class="navbar">
     <div class="nav-left">
-        <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
-        <input type="text" id="project-title" class="project-name" value="我的酷炫作品">
-        <button class="btn-nav" onclick="saveProject()">💾 儲存作品</button>
+        <div class="logo" onclick="location.href='main.html'">🧩 CREATIVE BLOCKS</div>
+        <input type="text" id="project-title" class="project-name" value="新作品">
+        <button class="btn-save" onclick="saveToCloud()">儲存專案</button>
     </div>
-    
     <div class="nav-right">
-        <div id="remix-label" style="display:none; color:#FFD700; font-weight:bold; font-size:12px; border:1px solid #FFD700; padding:2px 8px; border-radius:12px;">REMIX 版本</div>
+        <div id="remix-tag" style="display:none; color: gold; font-size: 12px;">★ REMIX</div>
         <div class="user-menu">
             <img id="nav-avatar" class="user-avatar" src="">
-            <span id="user-email-display">載入中...</span>
+            <span id="nav-username">載入中...</span>
             <div class="user-dropdown">
                 <div onclick="location.href='profile.html'">👤 個人檔案</div>
-                <div onclick="location.href='projects.html'">📁 我的作品集</div>
-                <div onclick="location.href='dashboard.html'">🏫 班級系統</div>
-                <div onclick="handleLogout()" style="color:red; border-top:1px solid #eee;">🚪 安全登出</div>
+                <div onclick="location.href='projects.html'">📁 我的作品</div>
+                <div onclick="location.href='dashboard.html'">🏫 班級與作業</div>
+                <div onclick="handleLogout()" style="color:red; border-top:1px solid #f0f0f0;">🚪 安全登出</div>
             </div>
         </div>
     </div>
 </nav>
 
-<div class="editor-container">
-    <div class="toolbox">
-        <div class="toolbox-header">積木分類</div>
+<div class="main-content">
+    <aside class="toolbox">
+        <div class="toolbox-header"><span>積木庫</span> <small style="color: #999;">拖曳使用</small></div>
         <div class="block-palette">
-            <div class="block block-move" draggable="true" data-type="move">🏃 向前移動 20 步</div>
-            <div class="block block-rotate" draggable="true" data-type="rotate">🔄 順時針旋轉 15 度</div>
-            <div class="block block-color" draggable="true" data-type="color">🎨 隨機更換顏色</div>
+            <p style="font-size: 11px; color: #4C97FF; font-weight: 900;">動作</p>
+            <div class="block block-move" draggable="true" data-type="move">🏃 向前移動 30 步</div>
+            <div class="block block-rotate" draggable="true" data-type="rotate">🔄 順時針旋轉 15°</div>
+            
+            <p style="font-size: 11px; color: #FF6680; font-weight: 900; margin-top: 15px;">外觀</p>
+            <div class="block block-looks" draggable="true" data-type="say">💬 說出「你好！」</div>
+            <div class="block block-looks" draggable="true" data-type="scale">🔍 放大角色 1.2x</div>
+            <div class="block block-color" draggable="true" data-type="color">🎨 隨機變換顏色</div>
         </div>
-    </div>
-    
-    <div class="workspace" id="workspace" ondragover="event.preventDefault()" ondrop="dropBlock(event)">
-        </div>
+    </aside>
 
-    <div class="preview-pane">
-        <canvas id="stage" width="300" height="300"></canvas>
-        <div class="controls">
-            <button class="btn-run" onclick="runProgram()">▶ 啟動程式</button>
-            <button style="padding:10px; border-radius:8px; border:1px solid #ccc; cursor:pointer;" onclick="resetStage()">🔄 重設舞台</button>
+    <main class="workspace" id="workspace" ondragover="event.preventDefault()" ondrop="onDrop(event)">
+        </main>
+
+    <section class="preview-pane">
+        <div class="stage-container">
+            <div id="speech-bubble">你好！</div>
+            <canvas id="stage" width="300" height="300"></canvas>
         </div>
-        <p style="font-size:12px; color:#999; margin-top:20px; line-height: 1.5;">
-            滑鼠右鍵點擊積木可刪除。<br>
-            積木執行順序由上至下。
-        </p>
-    </div>
+        <button class="btn-run" onclick="runProject()">▶ 啟動程式</button>
+        <button style="margin-top:15px; border:none; background:none; cursor:pointer; color:#888; text-decoration:underline;" onclick="resetStage()">重設舞台位置</button>
+        <div id="sync-status">雲端同步已就緒</div>
+    </section>
 </div>
 
 <div id="toast"></div>
@@ -145,162 +167,148 @@
     const db = getFirestore(app);
 
     const urlParams = new URLSearchParams(window.location.search);
-    let projectId = urlParams.get('load');
-    let fromUser = urlParams.get('from'); 
+    let docId = urlParams.get('load');
+    let fromUID = urlParams.get('from');
 
     const workspace = document.getElementById('workspace');
     const canvas = document.getElementById('stage');
     const ctx = canvas.getContext('2d');
+    const bubble = document.getElementById('speech-bubble');
 
-    // 角色屬性
-    let actor = { x: 150, y: 150, angle: 0, color: '#4C97FF' };
+    let actor = { x: 150, y: 150, angle: 0, color: '#4C97FF', size: 40, visible: true };
 
-    // --- 身分與資料初始化 ---
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) { location.href = 'login.html'; return; }
-        
-        // 介面更新
-        document.getElementById('user-email-display').innerText = user.email.split('@')[0];
+    onAuthStateChanged(auth, (user) => {
+        if (!user) { location.href='login.html'; return; }
+        document.getElementById('nav-username').innerText = user.email.split('@')[0];
         document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
-
-        if (projectId) { loadProject(user); }
+        if (docId) loadData(user);
     });
 
-    // --- 積木引擎邏輯 (拖拽與生成) ---
-    let draggedType = "";
+    let draggingType = "";
     document.querySelectorAll('.block-palette .block').forEach(b => {
-        b.addEventListener('dragstart', (e) => { draggedType = e.target.dataset.type; });
+        b.addEventListener('dragstart', (e) => { draggingType = e.target.dataset.type; });
     });
 
-    window.dropBlock = (e) => {
-        e.preventDefault();
+    window.onDrop = (e) => {
         const rect = workspace.getBoundingClientRect();
-        const x = e.clientX - rect.left - 80; // 置中積木
-        const y = e.clientY - rect.top - 20;
-        createBlockInWorkspace(draggedType, x, y);
+        createBlock(draggingType, e.clientX - rect.left - 85, e.clientY - rect.top - 20);
     };
 
-    function createBlockInWorkspace(type, x, y, text = "") {
-        const div = document.createElement('div');
-        div.className = `block block-${type}`;
-        div.style.left = x + 'px';
-        div.style.top = y + 'px';
-        div.dataset.type = type;
+    function createBlock(type, x, y, text = "") {
+        const b = document.createElement('div');
+        b.className = `block block-${type === 'move' ? 'move' : type === 'rotate' ? 'rotate' : 'looks'}`;
+        if(type==='color') b.className = 'block block-color';
+        
+        b.style.left = x + 'px';
+        b.style.top = y + 'px';
+        b.dataset.type = type;
         
         let content = text;
         if(!text) {
-            if(type === 'move') content = "🏃 向前移動 20 步";
-            if(type === 'rotate') content = "🔄 順時針旋轉 15 度";
-            if(type === 'color') content = "🎨 隨機更換顏色";
+            if(type==='move') content = "🏃 向前移動 30 步";
+            if(type==='rotate') content = "🔄 順時針旋轉 15°";
+            if(type==='say') content = "💬 說出「你好！」";
+            if(type==='scale') content = "🔍 放大角色 1.2x";
+            if(type==='color') content = "🎨 隨機變換顏色";
         }
-        div.innerText = content;
-
-        // 右鍵刪除功能
-        div.oncontextmenu = (e) => { e.preventDefault(); div.remove(); };
+        b.innerText = content;
+        b.ondblclick = () => b.remove();
         
-        workspace.appendChild(div);
+        // 簡單的吸附邏輯：如果附近有積木，自動對齊
+        const others = workspace.querySelectorAll('.block');
+        others.forEach(other => {
+            const dx = Math.abs(parseInt(other.style.left) - x);
+            const dy = Math.abs(parseInt(other.style.top) + 45 - y);
+            if(dx < 20 && dy < 20) {
+                b.style.left = other.style.left;
+                b.style.top = (parseInt(other.style.top) + 45) + 'px';
+            }
+        });
+
+        workspace.appendChild(b);
     }
 
-    // --- 程式執行引擎 ---
-    window.runProgram = () => {
-        const blocks = Array.from(workspace.querySelectorAll('.block'));
-        // 按垂直座標排序，從上往下執行
-        blocks.sort((a,b) => parseInt(a.style.top) - parseInt(b.style.top));
+    window.runProject = async () => {
+        const blocks = Array.from(workspace.querySelectorAll('.block')).sort((a,b) => parseInt(a.style.top) - parseInt(b.style.top));
+        bubble.style.display = 'none';
         
-        blocks.forEach((b, index) => {
-            setTimeout(() => {
-                executeLogic(b.dataset.type);
-                drawStage();
-            }, index * 250); // 每隔 0.25 秒執行一塊
-        });
+        for(let b of blocks) {
+            const t = b.dataset.type;
+            await new Promise(r => setTimeout(r, 400));
+            
+            if(t==='move') {
+                actor.x += Math.cos(actor.angle * Math.PI / 180) * 30;
+                actor.y += Math.sin(actor.angle * Math.PI / 180) * 30;
+            } else if(t==='rotate') {
+                actor.angle += 15;
+            } else if(t==='say') {
+                bubble.style.display = 'block';
+                bubble.style.left = (actor.x + 20) + 'px';
+                bubble.style.top = (actor.y - 40) + 'px';
+                setTimeout(() => bubble.style.display = 'none', 2000);
+            } else if(t==='scale') {
+                actor.size *= 1.2;
+            } else if(t==='color') {
+                actor.color = `hsl(${Math.random()*360}, 75%, 60%)`;
+            }
+            renderCanvas();
+        }
     };
 
-    function executeLogic(type) {
-        if (type === 'move') {
-            actor.x += Math.cos(actor.angle * Math.PI / 180) * 20;
-            actor.y += Math.sin(actor.angle * Math.PI / 180) * 20;
-        } else if (type === 'rotate') {
-            actor.angle += 15;
-        } else if (type === 'color') {
-            actor.color = `hsl(${Math.random() * 360}, 80%, 50%)`;
-        }
-    }
-
-    function drawStage() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    function renderCanvas() {
+        ctx.clearRect(0,0,300,300);
         ctx.save();
         ctx.translate(actor.x, actor.y);
         ctx.rotate(actor.angle * Math.PI / 180);
         ctx.fillStyle = actor.color;
-        ctx.shadowBlur = 10; ctx.shadowColor = "rgba(0,0,0,0.3)";
-        ctx.fillRect(-20, -20, 40, 40); // 角色本體
-        ctx.fillStyle = "white"; ctx.fillRect(5, -10, 10, 10); // 眼睛
+        ctx.fillRect(-actor.size/2, -actor.size/2, actor.size, actor.size);
         ctx.restore();
     }
-    drawStage(); // 初始化畫布
+    renderCanvas();
 
-    window.resetStage = () => { actor = { x: 150, y: 150, angle: 0, color: '#4C97FF' }; drawStage(); };
+    window.resetStage = () => { actor = {x:150,y:150,angle:0,color:'#4C97FF',size:40}; renderCanvas(); bubble.style.display='none'; };
 
-    // --- Firebase 雲端操作 ---
-    window.saveProject = async () => {
+    window.saveToCloud = async () => {
         const user = auth.currentUser;
-        if (!user) return;
-
-        // 收集目前工作區所有積木的位置與數據
-        const blocksData = Array.from(workspace.querySelectorAll('.block')).map(b => ({
-            type: b.dataset.type,
-            x: parseInt(b.style.left),
-            y: parseInt(b.style.top),
-            text: b.innerText
+        const blocks = Array.from(workspace.querySelectorAll('.block')).map(b => ({
+            type: b.dataset.type, x: parseInt(b.style.left), y: parseInt(b.style.top), text: b.innerText
         }));
 
-        const payload = {
+        const data = {
             name: document.getElementById('project-title').value,
-            blocks: blocksData,
-            authorEmail: user.email,
-            updatedAt: serverTimestamp()
+            blocks: blocks,
+            updatedAt: serverTimestamp(),
+            authorEmail: user.email
         };
 
         try {
-            if (projectId && !fromUser) {
-                // 更新自己的舊作品
-                await updateDoc(doc(db, "users", user.uid, "projects", projectId), payload);
+            if (docId && !fromUID) {
+                await updateDoc(doc(db, "users", user.uid, "projects", docId), data);
             } else {
-                // 建立新作品 (或是 Remix 他人的作品存成自己的)
                 const newRef = doc(collection(db, "users", user.uid, "projects"));
-                payload.createdAt = serverTimestamp();
-                await setDoc(newRef, payload);
-                projectId = newRef.id;
-                fromUser = null; 
-                window.history.pushState({}, '', `?load=${projectId}`);
+                data.createdAt = serverTimestamp();
+                await setDoc(newRef, data);
+                docId = newRef.id; fromUID = null;
+                window.history.pushState({}, '', `?load=${docId}`);
             }
-            showToast("✨ 作品已成功儲存至雲端！");
-        } catch (e) { alert("儲存失敗: " + e.message); }
+            document.getElementById('sync-status').innerText = "最後同步時間：" + new Date().toLocaleTimeString();
+            showToast("✨ 儲存成功！");
+        } catch (e) { alert("儲存失敗"); }
     };
 
-    async function loadProject(user) {
-        // 判斷讀取路徑
-        const path = fromUser ? ["users", fromUser, "projects", projectId] : ["users", user.uid, "projects", projectId];
+    async function loadData(user) {
+        const path = fromUID ? ["users", fromUID, "projects", docId] : ["users", user.uid, "projects", docId];
         const snap = await getDoc(doc(db, ...path));
-        
         if (snap.exists()) {
-            const data = snap.data();
-            document.getElementById('project-title').value = fromUser ? data.name + " (改編)" : data.name;
-            if (fromUser) document.getElementById('remix-label').style.display = 'block';
-            
-            // 重新在畫布生成積木
-            data.blocks.forEach(b => createBlockInWorkspace(b.type, b.x, b.y, b.text));
+            const d = snap.data();
+            document.getElementById('project-title').value = d.name + (fromUID ? " (改編)" : "");
+            if(fromUID) document.getElementById('remix-tag').style.display='block';
+            d.blocks.forEach(b => createBlock(b.type, b.x, b.y, b.text));
         }
     }
 
-    window.handleLogout = () => { if(confirm("確定登出嗎？")) signOut(auth).then(()=>location.href='login.html'); };
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
-    }
+    window.handleLogout = () => signOut(auth).then(()=>location.href='login.html');
+    function showToast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
 </script>
-
 </body>
 </html>
