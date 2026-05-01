@@ -58,14 +58,16 @@
 
         /* --- 主內容區佈局 --- */
         #main-container { display: flex; flex: 1; overflow: hidden; }
-        #blockly-area { flex: 1; position: relative; }
+        #blockly-area { flex: 0.6; position: relative; border-right: 2px solid #333; }
         #blockly-div { position: absolute; top:0; left:0; right:0; bottom:0; }
         
         /* 側邊代碼/控制台面板 */
-        #side-panel { width: 300px; background: #1e1e1e; display: flex; flex-direction: column; border-left: 2px solid #333; }
+        #side-panel { flex: 0.4; min-width: 350px; background: #1e1e1e; display: flex; flex-direction: column; }
         .panel-header { background: #2d2d2d; color: #aaa; padding: 8px 12px; font-size: 12px; font-weight: bold; border-bottom: 1px solid #111; }
-        #code-preview { flex: 1; padding: 10px; color: #9cdcfe; font-family: 'Consolas', monospace; font-size: 12px; overflow: auto; margin: 0; }
-        #console-out { height: 180px; background: #000; color: #4af626; padding: 10px; font-family: monospace; font-size: 13px; overflow-y: auto; border-top: 2px solid #333; }
+        
+        /* 頁籤按鈕樣式 */
+        .tab-btn { background: transparent; border: none; color: #aaa; cursor: pointer; padding: 4px 10px; font-size: 12px; font-weight: bold; }
+        .tab-btn.active { background: #444; color: white; border-radius: 4px; }
         
         #status-text { font-size: 11px; opacity: 0.7; margin-left: 5px; color: white; }
     </style>
@@ -109,10 +111,25 @@
     </div>
     
     <div id="side-panel">
-        <div class="panel-header">JAVASCRIPT 代碼預覽</div>
-        <pre id="code-preview"></pre>
-        <div class="panel-header">控制台輸出 (CONSOLE)</div>
-        <div id="console-out">> 等待執行...</div>
+        <div class="panel-header" style="display:flex; justify-content:space-between;">
+            <span>📺 執行舞台 (STAGE)</span>
+            <span id="stage-status" style="color:var(--scratch-orange);">等待執行</span>
+        </div>
+        <div id="stage-container" style="flex: 1; background: white; position: relative; overflow: hidden; border-bottom: 2px solid #111;">
+            <iframe id="execution-iframe" sandbox="allow-scripts allow-same-origin" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+        
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <button id="tab-console" class="tab-btn active" onclick="switchTab('console')">控制台 (Console)</button>
+                <button id="tab-code" class="tab-btn" onclick="switchTab('code')">JS 預覽</button>
+            </div>
+            <button onclick="document.getElementById('console-out').innerHTML='> 清除完畢。<br>'" class="tab-btn" style="color:#f66;">清除</button>
+        </div>
+        <div id="console-wrapper" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <div id="console-out" style="flex:1; background: #000; color: #4af626; padding: 10px; font-family: monospace; font-size: 13px; overflow-y: auto;">> 等待執行...<br></div>
+            <pre id="code-preview" style="flex:1; display:none; padding: 10px; color: #9cdcfe; font-family: 'Consolas', monospace; font-size: 13px; overflow: auto; margin: 0; background: #1e1e1e;"></pre>
+        </div>
     </div>
 </div>
 
@@ -168,6 +185,29 @@
         <block type="lists_setIndex"></block>
     </category>
     <sep></sep>
+    <category name="畫布 (Canvas)" colour="#E65C5C">
+        <block type="canvas_init"></block>
+        <block type="canvas_set_color">
+            <value name="COLOR">
+                <shadow type="text">
+                    <field name="TEXT">#FF0000</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="canvas_draw_circle">
+            <value name="X"><shadow type="math_number"><field name="NUM">150</field></shadow></value>
+            <value name="Y"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            <value name="RADIUS"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
+        </block>
+        <block type="canvas_draw_rect">
+            <value name="X"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
+            <value name="Y"><shadow type="math_number"><field name="NUM">50</field></shadow></value>
+            <value name="WIDTH"><shadow type="math_number"><field name="NUM">100</field></shadow></value>
+            <value name="HEIGHT"><shadow type="math_number"><field name="NUM">80</field></shadow></value>
+        </block>
+        <block type="canvas_clear"></block>
+    </category>
+    <sep></sep>
     <category name="變數" colour="#A65C81" custom="VARIABLE"></category>
     <category name="函式" colour="#9A5CA6" custom="PROCEDURE"></category>
 </xml>
@@ -193,6 +233,99 @@
     let currentPid = new URLSearchParams(window.location.search).get('load');
     let authorUid = new URLSearchParams(window.location.search).get('from');
     let isOwner = true;
+
+    // --- 定義自訂畫布積木 ---
+    Blockly.Blocks['canvas_init'] = {
+        init: function() {
+            this.appendDummyInput().appendField("建立畫布 (滿版)");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#E65C5C');
+            this.setTooltip("在舞台上建立並初始化畫布");
+        }
+    };
+    Blockly.JavaScript['canvas_init'] = function(block) {
+        return `
+            window.canvas = document.createElement('canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.body.innerHTML = '';
+            document.body.appendChild(canvas);
+            window.ctx = canvas.getContext('2d');
+            window.ctx.fillStyle = '#FFFFFF';
+            window.ctx.fillRect(0, 0, canvas.width, canvas.height);
+        `;
+    };
+
+    Blockly.Blocks['canvas_set_color'] = {
+        init: function() {
+            this.appendValueInput("COLOR").setCheck("String").appendField("設定畫筆顏色 (HEX或英文)");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#E65C5C');
+        }
+    };
+    Blockly.JavaScript['canvas_set_color'] = function(block) {
+        var color = Blockly.JavaScript.valueToCode(block, 'COLOR', Blockly.JavaScript.ORDER_ATOMIC) || "'#000000'";
+        return `if(window.ctx) { window.ctx.fillStyle = ${color}; window.ctx.strokeStyle = ${color}; }\n`;
+    };
+
+    Blockly.Blocks['canvas_draw_circle'] = {
+        init: function() {
+            this.appendValueInput("X").setCheck("Number").appendField("畫圓形 - X:");
+            this.appendValueInput("Y").setCheck("Number").appendField("Y:");
+            this.appendValueInput("RADIUS").setCheck("Number").appendField("半徑:");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#E65C5C');
+        }
+    };
+    Blockly.JavaScript['canvas_draw_circle'] = function(block) {
+        var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var r = Blockly.JavaScript.valueToCode(block, 'RADIUS', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        return `
+            if(window.ctx) {
+                window.ctx.beginPath();
+                window.ctx.arc(${x}, ${y}, ${r}, 0, 2 * Math.PI);
+                window.ctx.fill();
+            }
+        `;
+    };
+
+    Blockly.Blocks['canvas_draw_rect'] = {
+        init: function() {
+            this.appendValueInput("X").setCheck("Number").appendField("畫矩形 - X:");
+            this.appendValueInput("Y").setCheck("Number").appendField("Y:");
+            this.appendValueInput("WIDTH").setCheck("Number").appendField("寬:");
+            this.appendValueInput("HEIGHT").setCheck("Number").appendField("高:");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#E65C5C');
+        }
+    };
+    Blockly.JavaScript['canvas_draw_rect'] = function(block) {
+        var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var w = Blockly.JavaScript.valueToCode(block, 'WIDTH', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var h = Blockly.JavaScript.valueToCode(block, 'HEIGHT', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        return `if(window.ctx) { window.ctx.fillRect(${x}, ${y}, ${w}, ${h}); }\n`;
+    };
+
+    Blockly.Blocks['canvas_clear'] = {
+        init: function() {
+            this.appendDummyInput().appendField("清除畫布");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#E65C5C');
+        }
+    };
+    Blockly.JavaScript['canvas_clear'] = function(block) {
+        return `if(window.ctx && window.canvas) { window.ctx.clearRect(0, 0, canvas.width, canvas.height); }\n`;
+    };
+
 
     // --- 3. Blockly 究極配置 ---
     workspace = Blockly.inject('blockly-div', {
@@ -235,22 +368,79 @@
 
     // --- 4. 功能實現 ---
 
-    // 執行程式碼
+    // 切換頁籤
+    window.switchTab = (tab) => {
+        document.getElementById('tab-console').classList.toggle('active', tab === 'console');
+        document.getElementById('tab-code').classList.toggle('active', tab === 'code');
+        document.getElementById('console-out').style.display = tab === 'console' ? 'block' : 'none';
+        document.getElementById('code-preview').style.display = tab === 'code' ? 'block' : 'none';
+    };
+
+    // 接收 iframe 回傳的 console 訊息
+    window.addEventListener('message', (event) => {
+        const consoleOut = document.getElementById('console-out');
+        if (event.data && event.data.type === 'console') {
+            const color = event.data.level === 'error' ? '#f66' : (event.data.level === 'warn' ? '#fd0' : '#4af626');
+            consoleOut.innerHTML += `<span style="color:${color}">> ${event.data.msg}</span><br>`;
+            consoleOut.scrollTop = consoleOut.scrollHeight;
+        } else if (event.data && event.data.type === 'system') {
+            consoleOut.innerHTML += `<span style="color:#0bf">> [系統]: ${event.data.msg}</span><br>`;
+            consoleOut.scrollTop = consoleOut.scrollHeight;
+        }
+    });
+
+    // 執行程式碼 (沙盒 iframe 執行)
     window.executeCode = () => {
         const code = Blockly.JavaScript.workspaceToCode(workspace);
+        const iframe = document.getElementById('execution-iframe');
         const consoleOut = document.getElementById('console-out');
-        consoleOut.innerHTML = "> 程式開始執行...<br>";
+        const statusText = document.getElementById('stage-status');
         
-        // 劫持 window.alert 和 console.log 以輸出到畫面
-        const originalAlert = window.alert;
-        window.alert = (msg) => { consoleOut.innerHTML += `<span style="color:#fff">[彈窗]: ${msg}</span><br>`; originalAlert(msg); };
+        switchTab('console');
+        consoleOut.innerHTML = "<span style='color:#0bf'>> 準備執行沙盒環境...</span><br>";
+        statusText.innerText = "🟢 執行中";
+        statusText.style.color = "var(--scratch-green)";
         
-        try {
-            eval(code);
-            consoleOut.innerHTML += "> ✅ 執行成功！";
-        } catch (e) {
-            consoleOut.innerHTML += `<span style="color:red">> ❌ 錯誤: ${e.message}</span>`;
-        }
+        const htmlTemplate = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; }
+                canvas { display: block; }
+            </style>
+            <script>
+                // 攔截 console.log 傳回主視窗
+                ['log', 'warn', 'error'].forEach(method => {
+                    const original = console[method];
+                    console[method] = (...args) => {
+                        window.parent.postMessage({ type: 'console', level: method, msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') }, '*');
+                        original.apply(console, args);
+                    };
+                });
+                // 攔截 alert
+                window.alert = (msg) => { window.parent.postMessage({ type: 'system', msg: 'Alert: ' + msg }, '*'); };
+                
+                window.onerror = function(msg, url, line) {
+                    console.error("行 " + line + ": " + msg);
+                    return true; 
+                };
+            </script>
+        </head>
+        <body>
+            <script>
+                try {
+                    ${code}
+                    console.log("✅ 執行完畢");
+                } catch(e) {
+                    console.error("執行錯誤: " + e.message);
+                }
+            <\/script>
+        </body>
+        </html>
+        `;
+        
+        iframe.srcdoc = htmlTemplate;
     };
 
     // 雲端儲存
