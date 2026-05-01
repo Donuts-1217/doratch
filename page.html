@@ -19,7 +19,7 @@
         #project-title-input { background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px; width: 200px; transition: 0.3s; }
         #project-title-input:focus { background: white; color: #333; outline: none; }
         
-        /* [新增] Remix 標籤樣式 */
+        /* Remix 標籤與按鈕 */
         #remix-badge { background: #FFD700; color: #333; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 900; display: none; }
         .remix-btn { background: #FFD700; color: #333; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
 
@@ -29,7 +29,7 @@
         .publish-btn { background: var(--scratch-orange); color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
         .publish-btn.active { background: #555; }
 
-        /* [新增] 使用者頭像區塊 */
+        /* 使用者頭像區塊 */
         .user-section { margin-left: auto; display: flex; align-items: center; gap: 10px; cursor: pointer; position: relative; }
         #user-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: #eee; }
         .user-dropdown { position: absolute; top: 45px; right: 0; background: white; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; display: none; min-width: 150px; z-index: 2000; }
@@ -45,11 +45,11 @@
         #blocklyArea { flex: 1; background: white; border-radius: 12px; border: 1px solid #D1D5DB; position: relative; overflow: hidden; }
         #blocklyDiv { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 
-        /* 舞台 */
+        /* 舞台 (右側輸出區) */
         #stage-area { width: 400px; display: flex; flex-direction: column; gap: 12px; }
         .stage-box { flex: 1; background: white; border-radius: 12px; border: 2px solid #E5E7EB; display: flex; flex-direction: column; overflow: hidden; }
         .stage-header { background: #F9FAFB; padding: 10px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; }
-        #output-console { flex: 1; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; background: #fff; line-height: 1.5; }
+        #output-console { flex: 1; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; background: #fff; line-height: 1.5; color: #333; }
 
         /* 按鈕通規 */
         .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
@@ -145,7 +145,7 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, query, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Firebase 配置 (完整保留)
+        // Firebase 配置 (與您的 page.html 完全一致)
         const firebaseConfig = {
             apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
             authDomain: "chat-52c0d.firebaseapp.com",
@@ -167,36 +167,41 @@
             zoom: { controls: true, wheel: true }
         });
 
-        // 舞台輸出 (確保輸出至 Stage)
+        // --- 核心：定義輸出到右側舞台的函數 ---
         window.stageLog = (msg) => {
             const con = document.getElementById('output-console');
             con.innerHTML += `<div>> ${msg}</div>`;
-            con.scrollTop = con.scrollHeight;
+            con.scrollTop = con.scrollHeight; // 自動捲動到底部
         };
 
+        // --- 核心：覆寫 text_print 積木行為，確保顯示在右邊舞台 ---
         Blockly.JavaScript['text_print'] = function(block) {
             const msg = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || "''";
+            // 這裡不再使用 window.alert，而是調用 stageLog
             return `stageLog(${msg});\n`;
         };
 
         window.runCode = () => {
             const code = Blockly.JavaScript.workspaceToCode(workspace);
             document.getElementById('output-console').innerHTML = "<b>[系統] 開始執行...</b><br>";
-            try { eval(code); } catch(e) { stageLog("執行錯誤: " + e); }
+            try { 
+                // 執行生成的 JavaScript 代碼，代碼內含 stageLog() 調用
+                eval(code); 
+            } catch(e) { 
+                stageLog("執行錯誤: " + e); 
+            }
         };
 
         window.resetStage = () => {
             document.getElementById('output-console').innerHTML = "<span style='color:#999;'>[系統] 已停止。</span>";
         };
 
-        // --- [新增] Scratch 等級的 Remix 功能 ---
+        // --- Scratch 等級的 Remix 功能 ---
         window.handleRemix = async () => {
             const user = auth.currentUser;
-            if (!user) return alert("請先登入再進行改編");
-
+            if (!user) return alert("請先登入");
             const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
             const originalTitle = document.getElementById('project-title-input').value;
-
             try {
                 const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), {
                     name: originalTitle + " (改編)",
@@ -204,16 +209,15 @@
                     isPublic: false,
                     updatedAt: serverTimestamp()
                 });
-                alert("🎉 改編成功！已存入您的作品集。");
+                alert("🎉 改編完成！");
                 location.href = `?load=${newDoc.id}`;
             } catch (e) { alert("改編失敗"); }
         };
 
-        // --- ☁️ 雲端儲存功能 (完整保留並優化) ---
+        // --- 儲存功能 (整合 Remix 判斷) ---
         window.saveToCloud = async () => {
             const user = auth.currentUser;
             if (!user) return alert("請先登入");
-
             const title = document.getElementById('project-title-input').value.trim() || "未命名專案";
             const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
 
@@ -222,45 +226,38 @@
                     await updateDoc(doc(db, "users", user.uid, "projects", currentProjectId), {
                         name: title, data: xmlText, updatedAt: serverTimestamp()
                     });
-                    alert("✅ 雲端更新成功！");
-                } 
-                else {
-                    // 非本人點擊儲存，自動導向 Remix
-                    handleRemix();
+                    alert("✅ 儲存成功！");
+                } else {
+                    handleRemix(); // 非本人點擊儲存視同 Remix
                 }
-            } catch (e) { alert("儲存失敗: " + e.message); }
+            } catch (e) { alert("儲存失敗"); }
         };
 
-        // --- 📢 修復發布分享功能 ---
+        // --- 修復發布功能 ---
         window.togglePublish = async () => {
             const user = auth.currentUser;
-            if (!currentProjectId || projectOwnerId !== user.uid) return alert("⚠️ 只有作者能發布作品！");
-
+            if (!currentProjectId || projectOwnerId !== user.uid) return alert("只有作者能發布！");
             try {
                 const projectRef = doc(db, "users", user.uid, "projects", currentProjectId);
                 const snap = await getDoc(projectRef);
                 const newState = !(snap.data().isPublic || false);
-
                 await updateDoc(projectRef, { isPublic: newState });
                 updatePublishUI(newState);
-                alert(newState ? "🎉 已公開！" : "🔒 已設為不公開。");
-            } catch (e) { alert("發布失敗"); }
+                alert(newState ? "🚀 已公開作品" : "🔒 已設為不公開");
+            } catch (e) { alert("操作失敗"); }
         };
 
         function updatePublishUI(isPublic) {
             const btn = document.getElementById('publish-btn');
             const status = document.getElementById('publish-status');
             btn.style.display = 'block';
-            if (isPublic) {
-                status.innerText = "● 已發布"; status.style.color = "#4AF2A1";
-                btn.innerText = "取消發布"; btn.classList.add('active');
-            } else {
-                status.innerText = "● 未發布"; status.style.color = "#FFE082";
-                btn.innerText = "發布作品"; btn.classList.remove('active');
-            }
+            status.innerText = isPublic ? "● 已發布" : "● 未發布";
+            status.style.color = isPublic ? "#4AF2A1" : "#FFE082";
+            btn.innerText = isPublic ? "取消發布" : "發布作品";
+            if (isPublic) btn.classList.add('active'); else btn.classList.remove('active');
         }
 
-        // 登出
+        // 登出功能
         window.handleLogout = () => { if(confirm("確定登出?")) signOut(auth).then(()=>location.href='login.html'); };
 
         // 本地下載與匯入 (完整保留)
@@ -282,24 +279,20 @@
             reader.readAsText(input.files[0]);
         };
 
-        // 初始化偵測 (整合頭像與 Remix 邏輯)
+        // 初始化偵測 (包含頭像生成)
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const name = user.email.split('@')[0];
                 document.getElementById('user-info').innerText = name;
-                // 自動生成頭像
                 document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
 
                 if (currentProjectId) {
                     const loadUid = projectOwnerId || user.uid;
-                    
-                    // Remix 偵測
                     if (loadUid !== user.uid) {
                         document.getElementById('remix-badge').style.display = 'inline-block';
                         document.getElementById('remix-btn').style.display = 'block';
-                        document.getElementById('save-btn').style.display = 'none'; // 非作者隱藏儲存按鈕，改用 Remix 按鈕
+                        document.getElementById('save-btn').style.display = 'none';
                     }
-
                     const snap = await getDoc(doc(db, "users", loadUid, "projects", currentProjectId));
                     if (snap.exists()) {
                         const d = snap.data();
