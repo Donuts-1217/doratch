@@ -2,9 +2,9 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>登入 / 註冊 - Creative Blocks</title>
+    <title>會員系統 - Creative Blocks</title>
     <style>
-        :root { --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; }
+        :root { --scratch-blue: #4C97FF; --scratch-purple: #855CD6; }
         body { 
             font-family: "Noto Sans TC", sans-serif; 
             background: linear-gradient(135deg, #4C97FF 0%, #855CD6 100%); 
@@ -14,8 +14,8 @@
             background: white; padding: 40px; border-radius: 20px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 350px; text-align: center; 
         }
-        .logo { font-size: 24px; font-weight: 900; color: var(--scratch-blue); margin-bottom: 20px; cursor: pointer; }
-        h2 { color: #444; margin-bottom: 25px; }
+        .logo { font-size: 26px; font-weight: 900; color: var(--scratch-blue); margin-bottom: 10px; cursor: pointer; }
+        .subtitle { color: #888; font-size: 14px; margin-bottom: 25px; }
         
         input { 
             width: 100%; padding: 12px; margin: 10px 0; 
@@ -29,25 +29,29 @@
             font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px;
         }
         .btn-primary { background: var(--scratch-blue); color: white; }
-        .btn-primary:hover { background: #357ABD; }
+        .btn-primary:hover { background: #357ABD; transform: translateY(-1px); }
         
         .toggle-link { margin-top: 20px; font-size: 14px; color: #666; }
-        .toggle-link span { color: var(--scratch-blue); cursor: pointer; font-weight: bold; }
+        .toggle-link span { color: var(--scratch-blue); cursor: pointer; font-weight: bold; text-decoration: underline; }
         
-        .loading { display: none; margin-top: 10px; font-size: 14px; color: var(--scratch-blue); }
+        #message-box { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 8px; display: none; }
+        .msg-error { background: #FFEBEE; color: #D32F2F; }
+        .msg-success { background: #E8F5E9; color: #2E7D32; }
     </style>
 </head>
 <body>
 
 <div class="auth-card">
     <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
+    <div class="subtitle">啟發你的程式邏輯</div>
     <h2 id="auth-title">會員登入</h2>
     
+    <div id="message-box"></div>
+
     <input type="email" id="email" placeholder="電子郵件 (Email)">
     <input type="password" id="password" placeholder="密碼 (至少 6 位數)">
     
     <button id="main-btn" class="btn btn-primary" onclick="handleAuth()">登入</button>
-    <div id="loading-msg" class="loading">處理中，請稍候...</div>
 
     <div class="toggle-link" id="toggle-area">
         還沒有帳號嗎？ <span onclick="switchMode('reg')">立即註冊</span>
@@ -60,7 +64,8 @@
         getAuth, 
         signInWithEmailAndPassword, 
         createUserWithEmailAndPassword, 
-        sendEmailVerification 
+        sendEmailVerification,
+        signOut 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -75,11 +80,19 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    let mode = 'login'; // 'login' 或 'reg'
+    let mode = 'login';
 
-    // 切換 登入/註冊 介面
+    // 顯示訊息提示
+    function showMsg(text, type) {
+        const box = document.getElementById('message-box');
+        box.innerText = text;
+        box.className = type === 'error' ? 'msg-error' : 'msg-success';
+        box.style.display = 'block';
+    }
+
     window.switchMode = (target) => {
         mode = target;
+        document.getElementById('message-box').style.display = 'none';
         const title = document.getElementById('auth-title');
         const mainBtn = document.getElementById('main-btn');
         const toggleArea = document.getElementById('toggle-area');
@@ -95,59 +108,45 @@
         }
     };
 
-    // 核心邏輯：處理登入或註冊
     window.handleAuth = async () => {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value.trim();
-        const loading = document.getElementById('loading-msg');
-
-        if (!email || !password) return alert("請完整填寫欄位");
-        
-        loading.style.display = "block";
+        if (!email || !password) return showMsg("請填寫完整資訊", "error");
 
         try {
             if (mode === 'reg') {
-                // --- 註冊邏輯 ---
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                // 註冊成功後立即發送驗證信
-                await sendEmailVerification(userCredential.user);
-                alert("✅ 註冊成功！驗證連結已寄出到您的信箱，請先驗證再登入。");
+                // --- 註冊模式 ---
+                const res = await createUserWithEmailAndPassword(auth, email, password);
+                // 1. 發送驗證信
+                await sendEmailVerification(res.user);
+                // 2. 註冊後會自動登入，但因為未驗證，我們強制登出他
+                await signOut(auth);
+                
+                showMsg("✅ 註冊成功！驗證信已寄出，請點擊信中連結後再重新登入。", "success");
                 switchMode('login');
             } else {
-                // --- 登入邏輯 ---
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+                // --- 登入模式 ---
+                const res = await signInWithEmailAndPassword(auth, email, password);
+                const user = res.user;
 
-                // 檢查是否已驗證（選用，建議開啟）
-                if (!user.emailVerified) {
-                    alert("⚠️ 您的 Email 尚未驗證，請至信箱點擊連結。");
-                    // 也可以選擇讓未驗證的人照樣進入，但這裡建議強制驗證
+                // 檢查是否驗證
+                if (user.emailVerified) {
+                    showMsg("🎉 登入成功，正在導向...", "success");
+                    setTimeout(() => location.href = "main.html", 1000);
+                } else {
+                    // ❌ 未驗證，彈出警告並強制登出
+                    showMsg("⚠️ 您的 Email 尚未驗證！請先至信箱點擊連結。", "error");
+                    await signOut(auth);
                 }
-                
-                alert("🎉 登入成功！");
-                location.href = "main.html"; // 登入後跳轉主頁
             }
         } catch (error) {
-            console.error(error.code);
-            handleError(error.code);
-        } finally {
-            loading.style.display = "none";
+            let errorMsg = "認證失敗，請檢查帳密";
+            if (error.code === 'auth/email-already-in-use') errorMsg = "此 Email 已被註冊";
+            if (error.code === 'auth/invalid-credential') errorMsg = "帳號或密碼錯誤";
+            if (error.code === 'auth/weak-password') errorMsg = "密碼至少需要 6 位數";
+            showMsg(errorMsg, "error");
         }
     };
-
-    // 錯誤代碼中文化
-    function handleError(code) {
-        let msg = "認證失敗，請重試。";
-        switch (code) {
-            case 'auth/email-already-in-use': msg = "此 Email 已被註冊，請直接登入。"; break;
-            case 'auth/weak-password': msg = "密碼太弱囉，至少需要 6 個字。"; break;
-            case 'auth/invalid-email': msg = "Email 格式不正確。"; break;
-            case 'auth/invalid-credential': msg = "Email 或密碼錯誤。"; break;
-            case 'auth/too-many-requests': msg = "嘗試次數過多，請稍後再試。"; break;
-            case 'auth/user-not-found': msg = "找不到此帳號，請先註冊。"; break;
-        }
-        alert(msg);
-    }
 </script>
 
 </body>
