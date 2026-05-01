@@ -2,298 +2,270 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creative Blocks Pro - 編程工作台</title>
     
     <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
     <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
     <script src="https://unpkg.com/blockly/msg/zh-hant.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
     <style>
-        :root { --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; --scratch-green: #4CB050; --bg-light: #F0F2F5; }
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); overflow: hidden; }
-        
-        /* 導覽列 */
-        nav { background: var(--scratch-blue); color: white; padding: 0 20px; display: flex; align-items: center; height: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; gap: 15px; }
-        .nav-logo { font-weight: 900; font-size: 1.2rem; cursor: pointer; white-space: nowrap; }
-        #project-title-input { background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px; width: 220px; transition: 0.3s; }
+        :root {
+            --primary: #4C97FF;
+            --secondary: #855CD6;
+            --success: #4CB050;
+            --warning: #FFAB19;
+            --danger: #FF4D4D;
+            --bg-light: #F0F2F5;
+            --nav-height: 60px;
+        }
+
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Noto Sans TC', sans-serif; background: var(--bg-light); overflow: hidden; }
+
+        /* --- 頂部導覽 --- */
+        nav {
+            background: var(--primary); color: white; height: var(--nav-height);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100;
+        }
+        .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; letter-spacing: -1px; }
+
+        #project-title-input {
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 8px 15px; border-radius: 8px; font-size: 14px; width: 200px;
+        }
         #project-title-input:focus { background: white; color: #333; outline: none; }
+
+        /* --- Remix 狀態條 --- */
+        #remix-banner {
+            background: #FFF9C4; color: #856404; padding: 10px 20px;
+            font-size: 14px; font-weight: bold; display: none; text-align: center;
+            border-bottom: 1px solid #FFEE58;
+        }
+
+        /* --- 主容器 --- */
+        #main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
         
-        /* Remix 標籤與提示列 */
-        #remix-badge { background: #FFD700; color: #333; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 900; display: none; }
-        #remix-info-bar { background: #FFF9C4; color: #856404; padding: 5px 20px; font-size: 12px; display: none; border-bottom: 1px solid #FFEE58; font-weight: bold; }
-
-        /* 發布功能區塊 */
-        #publish-area { display: flex; align-items: center; gap: 10px; margin-left: 10px; }
-        #publish-status { font-size: 12px; color: #FFE082; font-weight: bold; }
-        .publish-btn { background: var(--scratch-orange); color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
-        .publish-btn.active { background: #555; }
-
-        /* 使用者頭像與選單 */
-        .user-section { margin-left: auto; display: flex; align-items: center; gap: 10px; cursor: pointer; position: relative; }
-        #user-avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); background: #eee; }
-        .user-dropdown { position: absolute; top: 45px; right: 0; background: white; color: #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; display: none; min-width: 150px; z-index: 2000; }
-        .user-dropdown div { padding: 12px 15px; font-size: 13px; border-bottom: 1px solid #eee; }
-        .user-dropdown div:hover { background: #f8f9fa; }
-        .user-section:hover .user-dropdown { display: block; }
-
-        .toolbar { height: 50px; background: white; border-bottom: 1px solid #D1D5DB; display: flex; align-items: center; padding: 0 15px; gap: 10px; }
-        #main-container { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 12px; }
-        #blocklyArea { flex: 1; background: white; border-radius: 12px; border: 1px solid #D1D5DB; position: relative; overflow: hidden; }
+        #blocklyArea { flex: 1; background: white; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
         #blocklyDiv { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 
-        /* 右側舞台輸出區 */
-        #stage-area { width: 400px; display: flex; flex-direction: column; gap: 12px; }
-        .stage-box { flex: 1; background: white; border-radius: 12px; border: 2px solid #E5E7EB; display: flex; flex-direction: column; overflow: hidden; }
-        .stage-header { background: #F9FAFB; padding: 10px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; }
-        #output-console { flex: 1; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; background: #fff; line-height: 1.5; color: #333; }
-        #remix-footer { padding: 8px 15px; font-size: 11px; color: #999; background: #fafafa; border-top: 1px solid #eee; display: none; }
+        #stage-area { width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        
+        /* --- 控制面板 --- */
+        .panel { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .stage-view { flex: 1; display: flex; flex-direction: column; }
+        #console-output { flex: 1; background: #f8f9fa; border-radius: 10px; padding: 15px; font-family: monospace; overflow-y: auto; font-size: 14px; border: 1px solid #eee; }
 
-        /* 按鈕樣式 */
-        .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
-        .btn-go { background: var(--scratch-green); color: white; }
-        .btn-stop { background: #FF4D4D; color: white; }
-        .btn-cloud { background: #2196F3; color: white; }
-        .btn-remix { background: #FFD700; color: #333; }
-        .btn-sub { background: #EEE; color: #555; }
+        /* --- 按鈕樣式 --- */
+        .btn { border: none; padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-run { background: var(--success); color: white; }
+        .btn-save { background: var(--primary); color: white; }
+        .btn-remix { background: var(--warning); color: #856404; }
+        .btn-ghost { background: #eee; color: #555; }
+        
+        .publish-tag { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
-    <nav>
-        <div class="nav-logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
-        <input type="text" id="project-title-input" placeholder="專案名稱..." value="未命名專案">
-        <div id="remix-badge">★ REMIX</div>
-
-        <div id="publish-area">
-            <div id="publish-status">● 未發布</div>
-            <button id="publish-btn" class="publish-btn" onclick="togglePublish()">發布作品</button>
-        </div>
-
-        <div class="user-section">
-            <span id="user-info">👤 驗證中...</span>
-            <img id="user-avatar" src="" alt="">
-            <div class="user-dropdown">
-                <div onclick="location.href='projects.html'">📁 我的作品</div>
-                <div onclick="handleLogout()" style="color:red; border-top:1px solid #eee;">🚪 登出系統</div>
-            </div>
-        </div>
-    </nav>
-
-    <div id="remix-info-bar"></div>
-
-    <div class="toolbar">
-        <button class="btn btn-go" onclick="runCode()">🚩 執行</button>
-        <button class="btn btn-stop" onclick="resetStage()">🛑 停止</button>
-        <div style="width:1px; height:25px; background:#DDD; margin:0 5px;"></div>
-        <button id="main-action-btn" class="btn btn-cloud" onclick="handleSaveAction()">☁️ 儲存作品</button>
-        <button class="btn btn-sub" onclick="downloadProject()">💾 下載 XML</button>
-        <button class="btn btn-sub" onclick="document.getElementById('fileInput').click()">📤 匯入</button>
-        <input type="file" id="fileInput" style="display:none;" onchange="importProject(this)">
+<nav>
+    <div class="nav-left">
+        <div class="logo" onclick="location.href='main.html'">🧩 CREATIVE BLOCKS</div>
+        <input type="text" id="project-title-input" placeholder="作品標題">
+        <span id="save-status" style="font-size: 12px; opacity: 0.8;"></span>
     </div>
-
-    <div id="main-container">
-        <div id="blocklyArea"><div id="blocklyDiv"></div></div>
-        <div id="stage-area">
-            <div class="stage-box">
-                <div class="stage-header">
-                    <b style="font-size: 13px; color: #666;">執行結果 (Stage)</b>
-                    <button onclick="document.getElementById('output-console').innerText=''" style="font-size:11px;">清空</button>
-                </div>
-                <div id="output-console"></div>
-                <div id="remix-footer"></div>
-            </div>
+    <div class="nav-right">
+        <div id="publish-ui" style="display: none; align-items: center; gap: 10px;">
+            <span id="status-text" class="publish-tag">草稿</span>
+            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;" onclick="togglePublish()">發布/取消</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="location.href='profile.html'">
+            <img id="user-avatar" src="" style="width:32px; height:32px; border-radius:50%; border:2px solid white;">
+            <span id="user-email" style="font-size:14px; font-weight:bold;"></span>
         </div>
     </div>
+</nav>
 
-    <xml id="toolbox" style="display: none">
-        <category name="邏輯判斷" colour="#5b80a5">
-            <block type="controls_if"></block>
-            <block type="logic_compare"></block>
-            <block type="logic_operation"></block>
-            <block type="logic_negate"></block>
-            <block type="logic_boolean"></block>
-        </category>
-        <category name="重複執行" colour="#5ba55b">
-            <block type="controls_repeat_ext"><value name="TIMES"><block type="math_number"><field name="NUM">10</field></block></value></block>
-            <block type="controls_whileUntil"></block>
-            <block type="controls_for"></block>
-        </category>
-        <category name="數學計算" colour="#5b67a5">
-            <block type="math_number"><field name="NUM">0</field></block>
-            <block type="math_arithmetic"></block>
-            <block type="math_single"></block>
-            <block type="math_random_int"></block>
-        </category>
-        <category name="文字顯示" colour="#a55b80">
-            <block type="text_print"><value name="TEXT"><block type="text"><field name="TEXT">Hello World</field></block></value></block>
-            <block type="text"></block>
-            <block type="text_join"></block>
-        </category>
-        <sep></sep>
-        <category name="我的變數" colour="#a55b5b" custom="VARIABLE"></category>
-        <category name="定義函式" colour="#995ba5" custom="PROCEDURE"></category>
-    </xml>
+<div id="remix-banner">🌀 這是一個改編作品，點擊「改編 (Remix)」來儲存到你的帳號。</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<div id="main-layout">
+    <div id="blocklyArea">
+        <div id="blocklyDiv"></div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
-            authDomain: "chat-52c0d.firebaseapp.com",
-            projectId: "chat-52c0d",
-            storageBucket: "chat-52c0d.firebasestorage.app",
-            appId: "1:449329325475:web:75f255c4055360dc9e6616"
-        };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <div id="stage-area">
+        <div class="panel" style="display: flex; gap: 10px;">
+            <button class="btn btn-run" onclick="runCode()">🚩 執行</button>
+            <button class="btn btn-ghost" onclick="resetStage()">🛑 停止</button>
+            <div style="flex:1"></div>
+            <button id="main-action-btn" class="btn btn-save">☁️ 儲存作品</button>
+        </div>
 
-        let currentProjectId = new URLSearchParams(window.location.search).get('load');
-        let projectOwnerId = new URLSearchParams(window.location.search).get('user');
-        let currentAuthorName = "";
+        <div class="panel stage-view">
+            <div style="margin-bottom:10px; font-weight:bold; color:#666; font-size:13px; display:flex; justify-content:space-between;">
+                <span>輸出控制台</span>
+                <span onclick="document.getElementById('console-output').innerHTML=''" style="cursor:pointer; font-weight:normal;">清空</span>
+            </div>
+            <div id="console-output">準備就緒...</div>
+            <div id="remix-origin-info" style="font-size:11px; color:#aaa; margin-top:10px; display:none;"></div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <button class="btn btn-ghost" onclick="downloadXML()">💾 導出 XML</button>
+            <button class="btn btn-ghost" onclick="location.href='projects.html'">📁 作品集</button>
+        </div>
+    </div>
+</div>
 
-        const workspace = Blockly.inject('blocklyDiv', {
-            toolbox: document.getElementById('toolbox'),
-            media: 'https://unpkg.com/blockly/media/',
-            zoom: { controls: true, wheel: true }
-        });
+<xml id="toolbox" style="display: none">
+    <category name="邏輯" colour="#5b80a5"><block type="controls_if"></block><block type="logic_compare"></block></category>
+    <category name="迴圈" colour="#5ba55b"><block type="controls_repeat_ext"></block></category>
+    <category name="數學" colour="#5b67a5"><block type="math_number"></block><block type="math_arithmetic"></block></category>
+    <category name="文字" colour="#5ba58c"><block type="text"></block><block type="text_print"></block></category>
+    <category name="變數" colour="#a55b80" custom="VARIABLE"></category>
+</xml>
 
-        // --- 核心：右側舞台輸出 ---
-        window.stageLog = (msg) => {
-            const con = document.getElementById('output-console');
-            con.innerHTML += `<div>> ${msg}</div>`;
-            con.scrollTop = con.scrollHeight;
-        };
-        Blockly.JavaScript['text_print'] = function(block) {
-            const msg = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || "''";
-            return `stageLog(${msg});\n`;
-        };
-        window.runCode = () => {
-            const code = Blockly.JavaScript.workspaceToCode(workspace);
-            document.getElementById('output-console').innerHTML = "<b>[系統] 開始執行...</b><br>";
-            try { eval(code); } catch(e) { stageLog("執行錯誤: " + e); }
-        };
-        window.resetStage = () => { document.getElementById('output-console').innerHTML = "<span style='color:#999;'>[系統] 已停止。</span>"; };
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- 核心：Scratch 功能：儲存與 Remix 分流 ---
-        window.handleSaveAction = async () => {
-            const user = auth.currentUser;
-            if (!user) return alert("請先登入");
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
 
-            const title = document.getElementById('project-title-input').value.trim() || "未命名專案";
-            const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-            // 情境 1：自己是作者 -> 直接更新
-            if (currentProjectId && (!projectOwnerId || projectOwnerId === user.uid)) {
-                try {
-                    await updateDoc(doc(db, "users", user.uid, "projects", currentProjectId), {
-                        name: title, data: xmlText, updatedAt: serverTimestamp()
-                    });
-                    alert("✅ 儲存成功");
-                } catch (e) { alert("儲存失敗"); }
-            } 
-            // 情境 2：非作者 -> 執行 Remix (複製並標註來源)
-            else {
-                try {
-                    const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), {
-                        name: title + " (改編)",
-                        data: xmlText,
-                        isPublic: false,
-                        remixFromId: currentProjectId || null,
-                        remixFromName: currentAuthorName || null,
-                        updatedAt: serverTimestamp()
-                    });
-                    alert("⭐ 改編成功！此作品已存入您的作品集，現在您可以隨意修改並發布它。");
-                    location.href = `?load=${newDoc.id}`;
-                } catch (e) { alert("改編失敗"); }
-            }
-        };
+    let isOwner = true;
+    let currentPid = new URLSearchParams(window.location.search).get('load');
+    let fromUid = new URLSearchParams(window.location.search).get('from');
 
-        // --- 核心：發布功能 (改編後也可發布) ---
-        window.togglePublish = async () => {
-            const user = auth.currentUser;
-            if (!currentProjectId || (projectOwnerId && projectOwnerId !== user.uid)) return alert("只有作者能點擊此按鈕！");
+    const workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        media: 'https://unpkg.com/blockly/media/',
+        zoom: { controls: true, wheel: true }
+    });
 
-            try {
-                const projectRef = doc(db, "users", user.uid, "projects", currentProjectId);
-                const snap = await getDoc(projectRef);
-                const newState = !(snap.data().isPublic || false);
-                await updateDoc(projectRef, { isPublic: newState });
-                updatePublishUI(newState);
-                alert(newState ? "🚀 作品已公開！" : "🔒 作品已轉為私有。");
-            } catch (e) { alert("發布失敗"); }
-        };
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { location.href = 'login.html'; return; }
+        
+        document.getElementById('user-email').innerText = user.email.split('@')[0];
+        document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
 
-        function updatePublishUI(isPublic) {
-            const btn = document.getElementById('publish-btn');
-            const status = document.getElementById('publish-status');
-            btn.style.display = 'block';
-            status.innerText = isPublic ? "● 已發布" : "● 未發布";
-            status.style.color = isPublic ? "#4AF2A1" : "#FFE082";
-            btn.innerText = isPublic ? "取消發布" : "發布作品";
-            if (isPublic) btn.classList.add('active'); else btn.classList.remove('active');
-        }
+        if (currentPid && fromUid) {
+            isOwner = (user.uid === fromUid);
+            const docRef = doc(db, "users", fromUid, "projects", currentPid);
+            const snap = await getDoc(docRef);
 
-        // 登入狀態監控
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const myName = user.email.split('@')[0];
-                document.getElementById('user-info').innerText = myName;
-                document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${myName}&background=random&color=fff`;
+            if (snap.exists()) {
+                const data = snap.data();
+                Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(data.data), workspace);
+                document.getElementById('project-title-input').value = data.name;
 
-                if (currentProjectId) {
-                    const loadUid = projectOwnerId || user.uid;
-                    const snap = await getDoc(doc(db, "users", loadUid, "projects", currentProjectId));
-                    
-                    if (snap.exists()) {
-                        const d = snap.data();
-                        document.getElementById('project-title-input').value = d.name;
-                        Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(d.data), workspace);
-                        
-                        // 紀錄作者名以便 Remix
-                        currentAuthorName = loadUid === user.uid ? myName : (d.authorName || "原作者");
-
-                        // 判斷是否為改編作品
-                        if (d.remixFromName) {
-                            const remixTxt = `🌀 改編自 ${d.remixFromName} 的作品`;
-                            document.getElementById('remix-info-bar').innerText = remixTxt;
-                            document.getElementById('remix-info-bar').style.display = 'block';
-                            document.getElementById('remix-footer').innerText = remixTxt;
-                            document.getElementById('remix-footer').style.display = 'block';
-                        }
-
-                        // 非作者：切換按鈕為 Remix
-                        if (loadUid !== user.uid) {
-                            document.getElementById('remix-badge').style.display = 'inline-block';
-                            const actionBtn = document.getElementById('main-action-btn');
-                            actionBtn.innerText = "⭐ 改編 (Remix)";
-                            actionBtn.className = "btn btn-remix";
-                            document.getElementById('publish-area').style.display = 'none';
-                        } else {
-                            updatePublishUI(d.isPublic || false);
-                        }
+                const mainBtn = document.getElementById('main-action-btn');
+                if (isOwner) {
+                    mainBtn.innerHTML = "☁️ 儲存變更";
+                    mainBtn.onclick = () => handleUpdate();
+                    document.getElementById('publish-ui').style.display = 'flex';
+                    syncPublishUI(data.isPublic);
+                } else {
+                    mainBtn.innerHTML = "🌀 改編 (Remix)";
+                    mainBtn.className = "btn btn-remix";
+                    mainBtn.onclick = () => handleRemix(data);
+                    document.getElementById('remix-banner').style.display = 'block';
+                    if(data.remixFrom) {
+                        const info = document.getElementById('remix-origin-info');
+                        info.innerText = `此作品原創自: ${data.authorEmail}`;
+                        info.style.display = 'block';
                     }
                 }
-            } else { location.href = 'login.html'; }
-        });
+            }
+        } else {
+            // 新作品模式
+            document.getElementById('main-action-btn').onclick = () => handleCreate();
+        }
+    });
 
-        window.handleLogout = () => signOut(auth).then(()=>location.href='login.html');
-        window.downloadProject = () => {
-            const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-            const blob = new Blob([xml], {type: 'text/xml'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = document.getElementById('project-title-input').value + ".xml"; a.click();
-        };
-        window.importProject = (i) => {
-            const r = new FileReader();
-            r.onload = (e) => { workspace.clear(); Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(e.target.result), workspace); };
-            r.readAsText(i.files[0]);
-        };
-        window.addEventListener('resize', () => Blockly.svgResize(workspace));
-    </script>
+    // 1. 本人更新作品
+    async function handleUpdate() {
+        const title = document.getElementById('project-title-input').value;
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        await updateDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid), {
+            name: title, data: xml, updatedAt: serverTimestamp()
+        });
+        alert("儲存成功！");
+    }
+
+    // 2. 訪客改編作品 (Remix)
+    async function handleRemix(oldData) {
+        if(!confirm("確定要將此作品改編並存入你的作品集嗎？")) return;
+        const title = document.getElementById('project-title-input').value;
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        
+        const newDoc = await addDoc(collection(db, "users", auth.currentUser.uid, "projects"), {
+            name: title + " (Remix)",
+            data: xml,
+            authorEmail: auth.currentUser.email,
+            isPublic: false,
+            remixFrom: oldData.authorEmail,
+            createdAt: serverTimestamp()
+        });
+        
+        alert("改編成功！正在跳轉到你的新作品...");
+        location.href = `page.html?load=${newDoc.id}&from=${auth.currentUser.uid}`;
+    }
+
+    // 3. 建立全新作品
+    async function handleCreate() {
+        const title = document.getElementById('project-title-input').value || "未命名作品";
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        const newDoc = await addDoc(collection(db, "users", auth.currentUser.uid, "projects"), {
+            name: title, data: xml, authorEmail: auth.currentUser.email,
+            isPublic: false, createdAt: serverTimestamp()
+        });
+        location.href = `page.html?load=${newDoc.id}&from=${auth.currentUser.uid}`;
+    }
+
+    // 發布切換
+    window.togglePublish = async () => {
+        const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid));
+        const newState = !snap.data().isPublic;
+        await updateDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid), { isPublic: newState });
+        syncPublishUI(newState);
+    };
+
+    function syncPublishUI(isPublic) {
+        const tag = document.getElementById('status-text');
+        tag.innerText = isPublic ? "已發布" : "草稿";
+        tag.style.background = isPublic ? "#4AF2A1" : "#eee";
+    }
+
+    window.runCode = () => {
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        const out = document.getElementById('console-output');
+        out.innerHTML = "";
+        try {
+            eval(code); 
+        } catch (e) { out.innerHTML += `<span style="color:red">錯誤: ${e}</span>`; }
+    };
+    
+    window.downloadXML = () => {
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        const link = document.createElement('a');
+        link.href = 'data:text/xml;charset=utf-8,' + encodeURIComponent(xml);
+        link.download = 'project.xml';
+        link.click();
+    };
+</script>
+
 </body>
 </html>
