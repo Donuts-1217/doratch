@@ -96,6 +96,20 @@
         
         .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #949ba4; background: #313338; }
         .empty-state i { font-size: 50px; margin-bottom: 10px; opacity: 0.5; }
+
+        /* 成員列表側邊欄 */
+        .member-sidebar { width: 240px; background: #2b2d31; border-left: 1px solid #1e1f22; display: none; flex-direction: column; flex-shrink: 0; }
+        .member-sidebar.active { display: flex; }
+        .member-sidebar-header { height: 60px; padding: 0 15px; display: flex; align-items: center; border-bottom: 1px solid #1e1f22; font-size: 14px; font-weight: bold; color: #dbdee1; }
+        .member-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .member-item { display: flex; align-items: center; padding: 6px 10px; border-radius: 4px; margin-bottom: 2px; transition: 0.1s; }
+        .member-item:hover { background: #35373c; }
+        .member-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 12px; }
+        .member-info { flex: 1; overflow: hidden; }
+        .member-name { font-size: 14px; color: #949ba4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member-item:hover .member-name { color: white; }
+        .kick-btn { background: #FF4D4D; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; opacity: 0; transition: 0.2s; white-space: nowrap; }
+        .member-item:hover .kick-btn { opacity: 1; }
     </style>
 </head>
 <body>
@@ -131,6 +145,11 @@
             </div>
         </div>
         <div class="chat-list" id="chat-list">
+            <div id="category-invite" style="display:none;">
+                <div class="category-title" style="color:#f47f24;">🔔 待確認邀請</div>
+                <div id="list-invites"></div>
+            </div>
+
             <div class="category-title">🏫 伺服器 (班級)</div>
             <div id="list-server"></div>
             
@@ -147,6 +166,11 @@
             <i>💬</i>
             <p>選擇或發起一個對話開始聊天吧！</p>
         </div>
+    </div>
+    
+    <div class="member-sidebar" id="member-sidebar">
+        <div class="member-sidebar-header">成員名單</div>
+        <div class="member-list" id="member-list"></div>
     </div>
 </div>
 
@@ -165,7 +189,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -180,7 +204,9 @@
 
     let currentUser = null;
     let currentChatId = null;
+    let currentChatParticipants = [];
     let unsubscribeMessages = null;
+    let unsubscribeChatDoc = null;
     let modalMode = ''; // 'private' or 'group'
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
@@ -271,7 +297,68 @@
                 }
             });
         });
+
+        // 監聽待審批邀請
+        const qInvites = query(
+            collection(db, "chats"),
+            where("pendingInvites", "array-contains", currentUser.uid)
+        );
+
+        onSnapshot(qInvites, (snapshot) => {
+            const listDiv = document.getElementById('list-invites');
+            const categoryDiv = document.getElementById('category-invite');
+            listDiv.innerHTML = '';
+            
+            if (snapshot.empty) {
+                categoryDiv.style.display = 'none';
+                return;
+            }
+            categoryDiv.style.display = 'block';
+
+            snapshot.forEach(docSnap => {
+                const chat = { id: docSnap.id, ...docSnap.data() };
+                const item = document.createElement('div');
+                item.className = 'chat-item';
+                item.style.borderLeft = '3px solid #f47f24';
+                item.innerHTML = `
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="font-size:13px; font-weight:bold;">💌 邀請：${chat.name}</div>
+                        <div style="display:flex; gap:10px;">
+                            <button style="flex:1; background:#4CAF50; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite('${chat.id}', true)">接受</button>
+                            <button style="flex:1; background:#FF4D4D; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite('${chat.id}', false)">拒絕</button>
+                        </div>
+                    </div>
+                `;
+                listDiv.appendChild(item);
+            });
+        });
     }
+
+    // 處理邀請接受/拒絕
+    window.handleInvite = async (chatId, isAccept) => {
+        try {
+            const ref = doc(db, "chats", chatId);
+            if (isAccept) {
+                const groupCount = await checkGroupLimit();
+                if (groupCount >= 20) {
+                    alert("接受失敗：您最多只能加入 20 個群組或伺服器！");
+                    return;
+                }
+                await updateDoc(ref, {
+                    pendingInvites: arrayRemove(currentUser.uid),
+                    participants: arrayUnion(currentUser.uid)
+                });
+                alert("已成功加入！");
+            } else {
+                if(!confirm("確定要拒絕此邀請嗎？")) return;
+                await updateDoc(ref, {
+                    pendingInvites: arrayRemove(currentUser.uid)
+                });
+            }
+        } catch (e) {
+            alert("處理失敗：" + e.message);
+        }
+    };
 
     let currentChatTeacherId = null;
     let currentChatType = null;
@@ -288,13 +375,27 @@
         if (activeItem) activeItem.classList.add('active');
 
         const displayTitle = chatType === 'server' ? `${chatName} <span style="font-size:12px; color:#949ba4;">(代碼: ${chatId})</span>` : chatName;
-        const inviteBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">➕ 邀請成員</button>` : '';
+        const inviteBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">邀請</button>` : '';
+        const memberToggleBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:8px; background:#4e5058;" onclick="toggleMemberSidebar()" title="顯示成員名單">👥</button>` : '';
         
+        let manageBtnHtml = '';
+        if (chatType === 'server' || chatType === 'group') {
+            if (currentUser.uid === teacherId) {
+                manageBtnHtml = `<button class="btn-icon" style="background:#FF4D4D; margin-left:10px;" onclick="deleteChat('${chatId}')">🗑️ 解散</button>`;
+            } else {
+                manageBtnHtml = `<button class="btn-icon" style="background:#f47f24; margin-left:10px;" onclick="leaveChat('${chatId}')">🚪 退出</button>`;
+            }
+        }
+
         const mainDiv = document.getElementById('chat-main');
         mainDiv.innerHTML = `
             <div class="chat-header">
                 <h3 id="current-chat-name" style="margin: 0; font-size: 1.1rem;">${icon} ${displayTitle}</h3>
-                ${inviteBtnHtml}
+                <div style="margin-left:auto; display:flex; align-items:center;">
+                    ${inviteBtnHtml}
+                    ${memberToggleBtnHtml}
+                    ${manageBtnHtml}
+                </div>
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
@@ -307,6 +408,17 @@
         `;
 
         if (unsubscribeMessages) unsubscribeMessages();
+        if (unsubscribeChatDoc) unsubscribeChatDoc();
+
+        // 監聽聊天室文件（用於更新成員名單等）
+        unsubscribeChatDoc = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
+            if (docSnap.exists()) {
+                currentChatParticipants = docSnap.data().participants || [];
+                if (document.getElementById('member-sidebar').classList.contains('active')) {
+                    loadMembers();
+                }
+            }
+        });
 
         const q = query(
             collection(db, "chats", chatId, "messages"),
@@ -385,6 +497,107 @@
     });
         
         setTimeout(() => document.getElementById('msg-input').focus(), 100);
+    };
+
+    // 退出群組邏輯
+    window.leaveChat = async (chatId) => {
+        if (!confirm("確定要退出這個聊天室嗎？退出後需要重新受邀才能進入。")) return;
+        try {
+            await updateDoc(doc(db, "chats", chatId), {
+                participants: arrayRemove(currentUser.uid)
+            });
+            document.getElementById('chat-main').innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#949ba4;">選擇一個聊天室開始對話</div>';
+            currentChatId = null;
+            currentChatTeacherId = null;
+            currentChatType = null;
+            alert("已成功退出聊天室");
+        } catch (e) { alert("退出失敗：" + e.message); }
+    };
+
+    // 解散群組邏輯
+    window.deleteChat = async (chatId) => {
+        if (!confirm("⚠️ 警告：確定要解散這個聊天室嗎？\n此動作將永久刪除所有對話紀錄與檔案，且無法還原！")) return;
+        try {
+            await deleteDoc(doc(db, "chats", chatId));
+            document.getElementById('chat-main').innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#949ba4;">選擇一個聊天室開始對話</div>';
+            currentChatId = null;
+            currentChatTeacherId = null;
+            currentChatType = null;
+            alert("已成功解散聊天室");
+        } catch (e) { alert("解散失敗：" + e.message); }
+    };
+
+    // --- 成員管理相關 ---
+    window.toggleMemberSidebar = () => {
+        const sidebar = document.getElementById('member-sidebar');
+        sidebar.classList.toggle('active');
+        if (sidebar.classList.contains('active')) {
+            loadMembers();
+        }
+    };
+
+    window.loadMembers = async () => {
+        if (!currentChatId || currentChatParticipants.length === 0) return;
+        const listDiv = document.getElementById('member-list');
+        listDiv.innerHTML = '<div style="color:#949ba4; font-size:12px; padding:10px;">載入成員中...</div>';
+        
+        try {
+            // Firestore 的 'in' 查詢最多支援 10-30 個（視版本而定），因為我們限制 20 人，這裡直接分批或用 loop
+            // 這裡簡單處理：直接 query users 集合
+            const members = [];
+            for (const uid of currentChatParticipants) {
+                const userSnap = await getDoc(doc(db, "users", uid));
+                if (userSnap.exists()) {
+                    members.push(userSnap.data());
+                }
+            }
+
+            // 排序：房主最前面
+            members.sort((a, b) => {
+                if (a.uid === currentChatTeacherId) return -1;
+                if (b.uid === currentChatTeacherId) return 1;
+                return 0;
+            });
+
+            listDiv.innerHTML = '';
+            members.forEach(member => {
+                const isOwner = member.uid === currentChatTeacherId;
+                const isMe = member.uid === currentUser.uid;
+                const avatarUrl = `https://ui-avatars.com/api/?name=${member.email}&background=random`;
+                const displayName = (member.email || "未知").split('@')[0];
+                
+                const kickBtnHtml = (currentChatTeacherId === currentUser.uid && !isOwner && !isMe) 
+                    ? `<button class="kick-btn" onclick="kickMember('${member.uid}', '${displayName}')">踢出</button>` 
+                    : '';
+                const crown = isOwner ? '<span style="margin-left:4px;">👑</span>' : '';
+
+                const item = document.createElement('div');
+                item.className = 'member-item';
+                item.innerHTML = `
+                    <img src="${avatarUrl}" class="member-avatar">
+                    <div class="member-info">
+                        <div class="member-name">${displayName}${crown}</div>
+                    </div>
+                    ${kickBtnHtml}
+                `;
+                listDiv.appendChild(item);
+            });
+        } catch (e) {
+            console.error("載入成員失敗:", e);
+            listDiv.innerHTML = '<div style="color:#FF4D4D; font-size:12px; padding:10px;">載入失敗</div>';
+        }
+    };
+
+    window.kickMember = async (uid, name) => {
+        if (!confirm(`確定要將成員「${name}」踢出聊天室嗎？`)) return;
+        try {
+            await updateDoc(doc(db, "chats", currentChatId), {
+                participants: arrayRemove(uid)
+            });
+            alert(`已將 ${name} 踢出`);
+        } catch (e) {
+            alert("踢出失敗：" + e.message);
+        }
     };
 
     // 私訊滿 300 條清理機制
@@ -649,11 +862,9 @@
                 const targetUid = userSnap.docs[0].id;
                 
                 await updateDoc(doc(db, "chats", currentChatId), {
-                    participants: arrayUnion(targetUid),
-                    lastMessage: `${currentUser.email.split('@')[0]} 邀請了新成員`,
-                    updatedAt: serverTimestamp()
+                    pendingInvites: arrayUnion(targetUid)
                 });
-                alert("邀請成功！");
+                alert("邀請已送出！需等待對方確認後才會加入。");
             }
             closeModal();
         } catch (e) {
