@@ -2,75 +2,109 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>探索作品 - Creative Blocks</title>
+    <title>Creative Blocks - 探索創意</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --scratch-blue: #4C97FF; --scratch-purple: #855CD6; }
-        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
-        
-        /* 頂部導航 */
-        nav { background: var(--scratch-blue); color: white; padding: 10px 5%; display: flex; align-items: center; gap: 20px; }
-        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
-        .search-bar { flex: 1; max-width: 500px; display: flex; }
-        .search-bar input { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; outline: none; }
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-purple: #855CD6;
+            --scratch-orange: #FFAB19; --scratch-green: #4CB050;
+        }
+        body { font-family: 'Noto Sans TC', sans-serif; margin: 0; background: #F0F2F5; color: #333; }
 
-        /* 主區塊 */
-        .container { padding: 30px 5%; }
-        .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .section-title h2 { color: #555; margin: 0; }
+        /* --- 導覽列 (與所有頁面一致) --- */
+        nav {
+            background: var(--scratch-blue); color: white; padding: 0 5%;
+            height: 60px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-weight: 900; font-size: 1.5rem; cursor: pointer; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        
+        .user-menu { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; }
+        .user-dropdown {
+            position: absolute; top: 100%; right: 0; background: white; color: #333;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px; display: none;
+            min-width: 160px; margin-top: 10px; overflow: hidden;
+        }
+        .user-dropdown div { padding: 12px 20px; font-size: 14px; }
+        .user-dropdown div:hover { background: #f0f2f5; }
+        .user-menu:hover .user-dropdown { display: block; }
 
-        /* 作品網格 */
-        .explore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
-        
-        /* 作品卡片 (仿 Scratch 風格) */
-        .project-card { background: white; border-radius: 10px; overflow: hidden; border: 1px solid #DDD; transition: 0.3s; cursor: pointer; position: relative; }
-        .project-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--scratch-blue); }
-        
-        .project-thumb { width: 100%; height: 140px; background: #E0E0E0; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #BBB; }
-        
-        .project-info { padding: 12px; display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 32px; height: 32px; background: #DDD; border-radius: 4px; flex-shrink: 0; }
-        .details { overflow: hidden; }
-        .details strong { display: block; font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .details span { font-size: 12px; color: #888; }
+        /* --- 英雄區 --- */
+        .hero {
+            background: linear-gradient(135deg, var(--scratch-blue), var(--scratch-purple));
+            color: white; padding: 60px 10%; text-align: center;
+        }
+        .hero h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 900; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; }
+        .btn-create {
+            background: var(--scratch-orange); color: white; padding: 15px 40px;
+            border-radius: 50px; font-weight: 900; font-size: 1.2rem;
+            text-decoration: none; display: inline-block; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-create:hover { transform: scale(1.05); filter: brightness(1.1); }
 
-        /* 標籤篩選 */
-        .filter-tags { display: flex; gap: 10px; margin-bottom: 30px; }
-        .tag { background: white; padding: 6px 15px; border-radius: 20px; border: 1px solid #DDD; font-size: 14px; cursor: pointer; font-weight: bold; color: #666; }
-        .tag.active { background: var(--scratch-purple); color: white; border-color: var(--scratch-purple); }
+        /* --- 作品探索牆 --- */
+        .content { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .section-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .section-title::before { content: ""; width: 8px; height: 30px; background: var(--scratch-orange); border-radius: 4px; }
+
+        .project-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;
+        }
+        .project-card {
+            background: white; border-radius: 15px; overflow: hidden;
+            transition: 0.3s; cursor: pointer; border: 1px solid #eee;
+        }
+        .project-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+        .project-thumb {
+            height: 160px; background: #E1F5FE; display: flex; align-items: center; justify-content: center;
+            font-size: 60px; color: var(--scratch-blue);
+        }
+        .project-info { padding: 20px; }
+        .project-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: #333; }
+        .project-author { font-size: 0.9rem; color: #777; display: flex; align-items: center; gap: 5px; }
+        
+        .loading { text-align: center; padding: 50px; color: #999; font-style: italic; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo" onclick="window.location.href='index.html'">🧩 Creative Blocks</div>
-    <div class="search-bar">
-        <input type="text" placeholder="搜尋作品...">
-    </div>
-    <div id="auth-links" style="margin-left: auto;">
+    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+    <div class="nav-right">
+        <div class="user-menu" id="user-menu-area">
+            <img id="nav-avatar" class="user-avatar" src="">
+            <span id="nav-user-name">載入中...</span>
+            <div class="user-dropdown">
+                <div onclick="location.href='profile.html'">👤 個人檔案</div>
+                <div onclick="location.href='projects.html'">📁 我的作品集</div>
+                <div onclick="location.href='dashboard.html'">🏫 班級系統</div>
+                <div onclick="handleLogout()" style="color:red; border-top:1px solid #eee;">🚪 登出</div>
+            </div>
         </div>
+    </div>
 </nav>
 
-<div class="container">
-    <div class="filter-tags">
-        <div class="tag active">全部作品</div>
-        <div class="tag">最新上傳</div>
-        <div class="tag">熱門專案</div>
-        <div class="tag">教學範例</div>
-    </div>
+<div class="hero">
+    <h1>想像、程式、分享</h1>
+    <p>建立你的第一個積木專案，並與全世界的小創客一起交流！</p>
+    <a href="page.html" class="btn-create">🚀 開始創作</a>
+</div>
 
-    <div class="section-title">
-        <h2>大家都在做什麼？</h2>
-    </div>
-
-    <div class="explore-grid" id="explore-list">
-        <div style="color:#999;">正在探索宇宙中的作品...</div>
+<div class="content">
+    <div class="section-title">大家的作品</div>
+    <div id="explore-grid" class="project-grid">
+        <div class="loading">正在收集創意作品...</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collectionGroup, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collectionGroup, query, where, getDocs, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -85,62 +119,71 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // 1. 處理導覽列登入狀態
+    // --- 使用者狀態監控 ---
     onAuthStateChanged(auth, (user) => {
-        const authLinks = document.getElementById('auth-links');
         if (user) {
-            authLinks.innerHTML = `<button onclick="window.location.href='projects.html'" style="background:none; border:1px solid white; color:white; padding:5px 15px; border-radius:15px; cursor:pointer;">我的東西</button>`;
+            document.getElementById('nav-user-name').innerText = user.email.split('@')[0];
+            document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            fetchPublicProjects();
         } else {
-            authLinks.innerHTML = `<a href="login.html" style="color:white; text-decoration:none; font-weight:bold;">登入</a>`;
+            location.href = "login.html";
         }
     });
 
-    // 2. 核心功能：探索所有使用者的公開作品
-    // 注意：這裡使用 collectionGroup 需要在 Firebase 控制台建立索引
-    async function loadExploreProjects() {
-        const listDiv = document.getElementById('explore-list');
-        
+    // --- 抓取所有使用者的公開作品 ---
+    async function fetchPublicProjects() {
+        const grid = document.getElementById('explore-grid');
         try {
-            // 抓取所有路徑下名為 "projects" 的集合 (跨使用者抓取)
-            const q = query(collectionGroup(db, "projects"), orderBy("updatedAt", "desc"), limit(20));
-            const snapshot = await getDocs(q);
-            
-            listDiv.innerHTML = "";
-            
-            if (snapshot.empty) {
-                listDiv.innerHTML = "目前還沒有公開作品。";
+            // 使用 collectionGroup 搜尋所有使用者子集合中 isPublic 為 true 的作品
+            // 注意：這需要在 Firebase Console 建立索引(Index)，如果噴錯請看 console 連結去建立
+            const q = query(
+                collectionGroup(db, "projects"), 
+                where("isPublic", "==", true),
+                orderBy("updatedAt", "desc"),
+                limit(20)
+            );
+
+            const querySnapshot = await getDocs(q);
+            grid.innerHTML = "";
+
+            if (querySnapshot.empty) {
+                grid.innerHTML = "<div class='loading'>目前還沒有公開作品，成為第一個分享的人吧！</div>";
                 return;
             }
 
-            snapshot.forEach((doc) => {
+            querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                const projectId = doc.id;
-                // 嘗試取得該專案的使用者 ID (從路徑解析)
-                const userId = doc.ref.parent.parent.id;
+                const pid = doc.id;
+                const authorId = doc.ref.parent.parent.id; // 從路徑回推作者 UID
 
                 const card = document.createElement('div');
                 card.className = 'project-card';
-                card.onclick = () => window.location.href = `page.html?load=${projectId}&user=${userId}`;
-                
+                card.onclick = () => {
+                    // 跳轉至編輯器，並帶入 load (作品ID) 與 from (作者ID) 參數
+                    location.href = `page.html?load=${pid}&from=${authorId}`;
+                };
+
                 card.innerHTML = `
                     <div class="project-thumb">🧩</div>
                     <div class="project-info">
-                        <div class="user-avatar"></div>
-                        <div class="details">
-                            <strong>${data.name || "未命名專案"}</strong>
-                            <span>by 創作者</span>
+                        <div class="project-name">${data.name || "未命名"}</div>
+                        <div class="project-author">
+                            <img src="https://ui-avatars.com/api/?name=${data.authorEmail}&size=20&background=random" style="border-radius:50%">
+                            ${data.authorEmail.split('@')[0]}
                         </div>
                     </div>
                 `;
-                listDiv.appendChild(card);
+                grid.appendChild(card);
             });
         } catch (e) {
             console.error(e);
-            listDiv.innerHTML = "無法載入探索內容，請確認資料庫權限。";
+            grid.innerHTML = "<div class='loading'>載入失敗，請確認 Firebase Security Rules 是否允許讀取。</div>";
         }
     }
 
-    loadExploreProjects();
+    window.handleLogout = () => {
+        if(confirm("確定要登出嗎？")) signOut(auth).then(() => location.href = "login.html");
+    };
 </script>
 </body>
 </html>
