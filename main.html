@@ -11,7 +11,7 @@
         }
         body { font-family: 'Noto Sans TC', sans-serif; margin: 0; background: #F0F2F5; color: #333; }
 
-        /* --- 導覽列 (與所有頁面一致) --- */
+        /* --- 導覽列 --- */
         nav {
             background: var(--scratch-blue); color: white; padding: 0 5%;
             height: 60px; display: flex; align-items: center; justify-content: space-between;
@@ -19,99 +19,85 @@
         }
         .logo { font-weight: 900; font-size: 1.5rem; cursor: pointer; }
         .nav-right { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; }
+        .nav-link:hover { opacity: 1; }
+        .user-profile { display: flex; align-items: center; gap: 10px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; }
+
+        /* --- 主內容區 --- */
+        .hero { background: white; padding: 40px 5%; text-align: center; border-bottom: 1px solid #ddd; }
+        .hero h1 { margin: 0; font-size: 2rem; color: var(--scratch-blue); }
+        .hero p { color: #666; margin-top: 10px; }
+
+        .container { padding: 30px 5%; }
+        .section-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         
-        .user-menu { position: relative; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .user-avatar { width: 35px; height: 35px; border-radius: 50%; border: 2px solid white; }
-        .user-dropdown {
-            position: absolute; top: 100%; right: 0; background: white; color: #333;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 8px; display: none;
-            min-width: 160px; margin-top: 10px; overflow: hidden;
-        }
-        .user-dropdown div { padding: 12px 20px; font-size: 14px; }
-        .user-dropdown div:hover { background: #f0f2f5; }
-        .user-menu:hover .user-dropdown { display: block; }
-
-        /* --- 英雄區 --- */
-        .hero {
-            background: linear-gradient(135deg, var(--scratch-blue), var(--scratch-purple));
-            color: white; padding: 60px 10%; text-align: center;
-        }
-        .hero h1 { font-size: 3rem; margin-bottom: 10px; font-weight: 900; }
-        .hero p { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; }
-        .btn-create {
-            background: var(--scratch-orange); color: white; padding: 15px 40px;
-            border-radius: 50px; font-weight: 900; font-size: 1.2rem;
-            text-decoration: none; display: inline-block; transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .btn-create:hover { transform: scale(1.05); filter: brightness(1.1); }
-
-        /* --- 作品探索牆 --- */
-        .content { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
-        .section-title { font-size: 1.8rem; font-weight: 900; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-        .section-title::before { content: ""; width: 8px; height: 30px; background: var(--scratch-orange); border-radius: 4px; }
-
+        /* 作品網格 */
         .project-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
         }
         .project-card {
-            background: white; border-radius: 15px; overflow: hidden;
-            transition: 0.3s; cursor: pointer; border: 1px solid #eee;
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer;
+            border: 1px solid #eee;
         }
-        .project-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        .project-thumb {
-            height: 160px; background: #E1F5FE; display: flex; align-items: center; justify-content: center;
-            font-size: 60px; color: var(--scratch-blue);
-        }
-        .project-info { padding: 20px; }
-        .project-name { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: #333; }
-        .project-author { font-size: 0.9rem; color: #777; display: flex; align-items: center; gap: 5px; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .project-thumb { height: 140px; background: #eef4ff; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
         
-        .loading { text-align: center; padding: 50px; color: #999; font-style: italic; }
+        .project-info { padding: 15px; }
+        .project-name { font-weight: bold; font-size: 1rem; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .project-author { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #777; }
+        .project-author img { width: 20px; height: 20px; border-radius: 50%; }
+
+        .loading { text-align: center; padding: 50px; color: #999; }
+        
+        .btn-create {
+            background: var(--scratch-orange); color: white; padding: 10px 25px;
+            border-radius: 25px; text-decoration: none; font-weight: 900;
+            box-shadow: 0 4px 0 #e69500; transition: 0.1s;
+        }
+        .btn-create:active { transform: translateY(3px); box-shadow: none; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+    <div class="logo" onclick="location.href='index.html'">🧩 CREATIVE BLOCKS</div>
     <div class="nav-right">
-        <div class="user-menu" id="user-menu-area">
-            <img id="nav-avatar" class="user-avatar" src="">
-            <span id="nav-user-name">載入中...</span>
-            <div class="user-dropdown">
-                <div onclick="location.href='profile.html'">👤 個人檔案</div>
-                <div onclick="location.href='projects.html'">📁 我的作品集</div>
-                <div onclick="location.href='dashboard.html'">🏫 班級系統</div>
-                <div onclick="handleLogout()" style="color:red; border-top:1px solid #eee;">🚪 登出</div>
-            </div>
+        <a href="dashboard.html" class="nav-link">我的班級</a>
+        <a href="projects.html" class="nav-link">我的作品</a>
+        <a href="page.html" class="btn-create">+ 建立作品</a>
+        <div class="user-profile" onclick="location.href='profile.html'">
+            <img id="nav-avatar" src="" style="width:28px; height:28px; border-radius:50%; display:none;">
+            <span id="nav-username">載入中...</span>
         </div>
+        <button onclick="handleLogout()" style="background:none; border:1px solid white; color:white; border-radius:5px; cursor:pointer; padding:2px 8px; font-size:12px;">登出</button>
     </div>
 </nav>
 
 <div class="hero">
-    <h1>想像、程式、分享</h1>
-    <p>建立你的第一個積木專案，並與全世界的小創客一起交流！</p>
-    <a href="page.html" class="btn-create">🚀 開始創作</a>
+    <h1>探索公開創意</h1>
+    <p>看看其他小小程式設計師分享的精彩積木作品！</p>
 </div>
 
-<div class="content">
-    <div class="section-title">大家的作品</div>
-    <div id="explore-grid" class="project-grid">
-        <div class="loading">正在收集創意作品...</div>
+<div class="container">
+    <div class="section-title">✨ 最新發布</div>
+    <div id="project-grid" class="project-grid">
+        <div class="loading">正在抓取最新作品...</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collectionGroup, query, where, getDocs, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collectionGroup, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // 使用你的 Firebase 配置
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
         authDomain: "chat-52c0d.firebaseapp.com",
         projectId: "chat-52c0d",
-        storageBucket: "chat-52c0d.firebasestorage.app",
-        messagingSenderId: "449329325475",
         appId: "1:449329325475:web:75f255c4055360dc9e6616"
     };
 
@@ -119,71 +105,82 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- 使用者狀態監控 ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            document.getElementById('nav-user-name').innerText = user.email.split('@')[0];
-            document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            document.getElementById('nav-username').innerText = user.email.split('@')[0];
+            const avatar = document.getElementById('nav-avatar');
+            avatar.src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            avatar.style.display = 'block';
             fetchPublicProjects();
         } else {
-            location.href = "login.html";
+            location.href = 'login.html';
         }
     });
 
-    // --- 抓取所有使用者的公開作品 ---
     async function fetchPublicProjects() {
-        const grid = document.getElementById('explore-grid');
+        const grid = document.getElementById('project-grid');
         try {
-            // 使用 collectionGroup 搜尋所有使用者子集合中 isPublic 為 true 的作品
-            // 注意：這需要在 Firebase Console 建立索引(Index)，如果噴錯請看 console 連結去建立
+            // 注意：這裡需要建立索引，否則會報錯
+            // 如果你還沒建立索引，請先把 orderBy 這行註解掉測試
             const q = query(
                 collectionGroup(db, "projects"), 
                 where("isPublic", "==", true),
-                orderBy("updatedAt", "desc"),
-                limit(20)
+                orderBy("updatedAt", "desc") 
             );
 
             const querySnapshot = await getDocs(q);
             grid.innerHTML = "";
 
             if (querySnapshot.empty) {
-                grid.innerHTML = "<div class='loading'>目前還沒有公開作品，成為第一個分享的人吧！</div>";
+                grid.innerHTML = "<div class='loading'>目前還沒有公開的作品，去成為第一個發布的人吧！</div>";
                 return;
             }
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const pid = doc.id;
-                const authorId = doc.ref.parent.parent.id; // 從路徑回推作者 UID
+                const authorId = doc.ref.parent.parent.id; // 從 path 獲取作者 UID
+
+                // --- 修正 split('@') 報錯的關鍵防護 ---
+                const email = data.authorEmail || "unknown@user";
+                const displayName = email.includes('@') ? email.split('@')[0] : "匿名用戶";
+                const projectName = data.name || "未命名作品";
 
                 const card = document.createElement('div');
                 card.className = 'project-card';
                 card.onclick = () => {
-                    // 跳轉至編輯器，並帶入 load (作品ID) 與 from (作者ID) 參數
+                    // 跳轉至編輯器
                     location.href = `page.html?load=${pid}&from=${authorId}`;
                 };
 
                 card.innerHTML = `
                     <div class="project-thumb">🧩</div>
                     <div class="project-info">
-                        <div class="project-name">${data.name || "未命名"}</div>
+                        <div class="project-name">${projectName}</div>
                         <div class="project-author">
-                            <img src="https://ui-avatars.com/api/?name=${data.authorEmail}&size=20&background=random" style="border-radius:50%">
-                            ${data.authorEmail.split('@')[0]}
+                            <img src="https://ui-avatars.com/api/?name=${email}&size=20&background=random">
+                            ${displayName}
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         } catch (e) {
-            console.error(e);
-            grid.innerHTML = "<div class='loading'>載入失敗，請確認 Firebase Security Rules 是否允許讀取。</div>";
+            console.error("Fetch Error:", e);
+            if (e.message.includes("index")) {
+                grid.innerHTML = "<div class='loading'>資料庫正在準備中（索引建立中），請稍候再試。</div>";
+            } else {
+                grid.innerHTML = "<div class='loading'>載入失敗，請檢查網路連線。</div>";
+            }
         }
     }
 
     window.handleLogout = () => {
-        if(confirm("確定要登出嗎？")) signOut(auth).then(() => location.href = "login.html");
+        if(confirm("確定要登出嗎？")) {
+            signOut(auth).then(() => location.href = 'index.html');
+        }
     };
 </script>
+
 </body>
 </html>
