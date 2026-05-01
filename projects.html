@@ -2,61 +2,83 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>我的雲端專案 - Creative Blocks</title>
+    <title>我的作品集 - Creative Blocks</title>
     <style>
-        :root { --main-blue: #4C97FF; --bg-color: #F4F7F9; --text-dark: #333; }
-        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: var(--text-dark); }
+        :root { 
+            --scratch-blue: #4C97FF; 
+            --scratch-orange: #FFAB19;
+            --scratch-green: #4CB050;
+            --bg-light: #F0F2F5;
+            --danger: #FF4D4D;
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); margin: 0; padding: 0; }
         
-        .container { max-width: 1000px; margin: 0 auto; }
+        /* 導覽列 */
+        nav { background: var(--scratch-blue); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
+        .nav-btn { background: white; color: var(--scratch-blue); border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; text-decoration: none; }
+
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { color: #333; margin: 0; }
+
+        /* 作品網格 */
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
         
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #DDD; padding-bottom: 15px; }
-        h1 { margin: 0; color: var(--main-blue); font-size: 1.8rem; }
+        .project-card { 
+            background: white; border-radius: 15px; overflow: hidden; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; 
+            display: flex; flex-direction: column; position: relative;
+        }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
-        /* 儲存量進度條 */
-        .usage-bar { background: #E0E0E0; border-radius: 10px; height: 10px; width: 200px; overflow: hidden; margin-top: 5px; }
-        #progress-fill { background: var(--main-blue); height: 100%; width: 0%; transition: 0.5s; }
-        .usage-text { font-size: 13px; color: #666; }
+        .thumbnail { height: 140px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; font-size: 50px; color: var(--scratch-blue); }
+        
+        .card-body { padding: 20px; flex: 1; }
+        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
+        .card-meta { font-size: 12px; color: #999; margin-bottom: 15px; }
 
-        /* 專案卡片佈局 */
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #EEE; display: flex; flex-direction: column; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        .card h3 { margin: 0 0 10px; font-size: 1.2rem; color: #222; word-break: break-all; }
-        .card p { font-size: 12px; color: #888; margin-bottom: 20px; }
+        /* 標籤 */
+        .status-tag { 
+            position: absolute; top: 10px; left: 10px; padding: 4px 10px; 
+            border-radius: 12px; font-size: 11px; font-weight: bold; color: white;
+        }
+        .tag-public { background: var(--scratch-green); }
+        .tag-private { background: #999; }
 
-        .actions { margin-top: auto; display: flex; gap: 10px; }
-        .btn { border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
-        .btn-open { background: var(--main-blue); color: white; }
-        .btn-del { background: #FFEDED; color: #FF4D4D; }
-        .btn-del:hover { background: #FF4D4D; color: white; }
+        /* 按鈕組 */
+        .actions { display: flex; gap: 10px; padding: 15px 20px; border-top: 1px solid #F0F0F0; background: #FAFAFA; }
+        .btn-act { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; text-align: center; text-decoration: none; }
+        .btn-edit { background: var(--scratch-blue); color: white; }
+        .btn-delete { background: white; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-delete:hover { background: var(--danger); color: white; }
 
-        .empty-state { text-align: center; grid-column: 1 / -1; padding: 50px; color: #999; }
-        .back-btn { background: #FFF; border: 1px solid #DDD; padding: 8px 15px; border-radius: 6px; text-decoration: none; color: #555; font-size: 14px; }
+        .empty-msg { text-align: center; padding: 100px 0; color: #999; grid-column: 1/-1; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div>
-            <h1>☁️ 我的雲端專案</h1>
-            <div class="usage-text">雲端空間使用量: <span id="count-num">0</span> / 10</div>
-            <div class="usage-bar"><div id="progress-fill"></div></div>
-        </div>
-        <a href="page.html" class="back-btn">⬅ 回到工作台</a>
-    </header>
+<nav>
+    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+    <a href="page.html" class="nav-btn">+ 創作新作品</a>
+</nav>
 
-    <div class="project-grid" id="project-list">
-        <div class="empty-state">正在讀取專案列表...</div>
+<div class="container">
+    <div class="header">
+        <h1>我的作品集</h1>
+        <div id="user-display" style="color: #666;">載入中...</div>
+    </div>
+
+    <div id="project-list" class="project-grid">
+        <div class="empty-msg">正在尋找你的驚人創作...</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Firebase 配置 (請確保與 page.html 一致)
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
         authDomain: "chat-52c0d.firebaseapp.com",
@@ -70,77 +92,76 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.href = 'login.html'; // 未登入跳回登入頁
-        } else {
-            loadProjects(user.uid);
-        }
-    });
-
-    async function loadProjects(uid) {
+    async function loadUserProjects(user) {
         const listDiv = document.getElementById('project-list');
-        const countNum = document.getElementById('count-num');
-        const progressFill = document.getElementById('progress-fill');
+        document.getElementById('user-display').innerText = `👤 ${user.email}`;
 
         try {
-            // 抓取該用戶的專案，並按時間排序
-            const q = query(collection(db, "users", uid, "projects"), orderBy("updatedAt", "desc"));
+            // 從使用者的子集合中抓取作品，按更新時間排序
+            const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc"));
             const snapshot = await getDocs(q);
             
             listDiv.innerHTML = "";
-            const total = snapshot.size;
-            
-            // 更新進度條與文字
-            countNum.innerText = total;
-            progressFill.style.width = (total * 10) + "%";
 
-            if (total === 0) {
-                listDiv.innerHTML = `<div class="empty-state">你還沒有任何雲端專案，快去建立一個吧！</div>`;
+            if (snapshot.empty) {
+                listDiv.innerHTML = `
+                    <div class="empty-msg">
+                        <p>你目前還沒有任何作品喔！</p>
+                        <a href="page.html" style="color:var(--scratch-blue);">立刻去動手做一個吧！</a>
+                    </div>`;
                 return;
             }
 
             snapshot.forEach((projectDoc) => {
-                const data = projectDoc.data();
-                const time = data.updatedAt ? data.updatedAt.toDate().toLocaleString() : "未知時間";
-                
+                const project = projectDoc.data();
+                const pid = projectDoc.id;
+                const date = project.updatedAt?.toDate().toLocaleDateString() || "未知時間";
+
                 const card = document.createElement('div');
-                card.className = 'card';
+                card.className = 'project-card';
                 card.innerHTML = `
-                    <h3>${data.name || "未命名專案"}</h3>
-                    <p>最後更新：${time}</p>
+                    <span class="status-tag ${project.isPublic ? 'tag-public' : 'tag-private'}">
+                        ${project.isPublic ? '● 已發布' : '○ 草稿'}
+                    </span>
+                    <div class="thumbnail">🧩</div>
+                    <div class="card-body">
+                        <div class="card-title">${project.name || "未命名作品"}</div>
+                        <div class="card-meta">最後更新：${date}</div>
+                    </div>
                     <div class="actions">
-                        <button class="btn btn-open" onclick="openProject('${projectDoc.id}')">開啟專案</button>
-                        <button class="btn btn-del" onclick="deleteProject('${projectDoc.id}')">刪除</button>
+                        <a href="page.html?load=${pid}" class="btn-act btn-edit">開啟編輯</a>
+                        <button class="btn-act btn-delete" onclick="handleDelete('${pid}')">刪除</button>
                     </div>
                 `;
                 listDiv.appendChild(card);
             });
-        } catch (error) {
-            console.error(error);
-            listDiv.innerHTML = `<div class="empty-state" style="color:red;">讀取失敗，請確認 Firebase Firestore 規則已開啟。</div>`;
+        } catch (e) {
+            console.error(e);
+            listDiv.innerHTML = `<div class="empty-msg" style="color:red;">讀取失敗：${e.message}</div>`;
         }
     }
 
-    // 開啟專案 (跳轉回 page.html 並帶入 load 參數)
-    window.openProject = (id) => {
-        window.location.href = `page.html?load=${id}`;
-    };
-
-    // 刪除專案
-    window.deleteProject = async (id) => {
-        if (!confirm("確定要永久刪除這個雲端專案嗎？")) return;
+    // 刪除處理
+    window.handleDelete = async (pid) => {
+        if (!confirm("確定要刪除這個作品嗎？此動作無法復原！")) return;
         
         try {
             const user = auth.currentUser;
-            await deleteDoc(doc(db, "users", user.uid, "projects", id));
-            alert("專案已刪除");
-            location.reload(); // 重新整理列表
+            await deleteDoc(doc(db, "users", user.uid, "projects", pid));
+            alert("作品已刪除");
+            location.reload();
         } catch (e) {
             alert("刪除失敗：" + e.message);
         }
     };
-</script>
 
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            loadUserProjects(user);
+        } else {
+            location.href = "login.html";
+        }
+    });
+</script>
 </body>
 </html>
