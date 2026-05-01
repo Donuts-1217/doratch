@@ -17,6 +17,13 @@
         .nav-links { display: flex; align-items: center; }
         .nav-link { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; margin-left: 20px; }
         .nav-link:hover { opacity: 1; }
+        /* --- 下拉選單 Wrapper --- */
+        .user-profile-wrapper { position: relative; padding: 10px 0; margin-left: 20px; }
+        .user-profile { display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; color: white; }
+        .dropdown-menu { position: absolute; top: 50px; right: 0; width: 120px; background: white; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; padding: 5px 0; z-index: 1001; }
+        .user-profile-wrapper:hover .dropdown-menu { display: flex; }
+        .dropdown-item { padding: 8px 15px; color: #333; text-decoration: none; font-size: 13px; cursor: pointer; }
+        .dropdown-item:hover { background: #f0f2f5; }
         
         /* 聊天主容器 */
         .chat-container { display: flex; flex: 1; overflow: hidden; }
@@ -79,6 +86,15 @@
         <a href="dashboard.html" class="nav-link">班級</a>
         <a href="projects.html" class="nav-link">作品</a>
         <a href="chat.html" class="nav-link" style="color:var(--scratch-orange);">💬 聊天室</a>
+        <div class="user-profile-wrapper">
+            <div class="user-profile">
+                <img id="nav-avatar" src="" style="width:24px; height:24px; border-radius:50%; display:none;">
+                <span id="nav-username" style="font-size:12px;">載入中</span>
+            </div>
+            <div class="dropdown-menu">
+                <div class="dropdown-item" onclick="handleLogout()" style="color:#FF4D4D; font-weight:bold;">🚪 登出</div>
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -108,7 +124,7 @@
 <div id="modal" class="modal-overlay">
     <div class="modal-content">
         <h3 id="modal-title">新增</h3>
-        <input type="text" id="modal-input" placeholder="...">
+        <input type="text" id="modal-input" placeholder="..." onkeypress="if(event.key==='Enter') submitModal()">
         <div class="modal-actions">
             <button class="btn-modal" style="background:#eee; color:#333;" onclick="closeModal()">取消</button>
             <button class="btn-modal" style="background:var(--scratch-blue); color:white;" onclick="submitModal()" id="modal-submit">確認</button>
@@ -118,8 +134,8 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -137,11 +153,17 @@
     let unsubscribeMessages = null;
     let modalMode = ''; // 'private' or 'group'
 
+    window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+
     // 1. 確認登入狀態並確保 User 存在目錄中
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = 'login.html'; return; }
         currentUser = user;
         
+        document.getElementById('nav-username').innerText = user.email.split('@')[0];
+        document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+        document.getElementById('nav-avatar').style.display = 'block';
+
         try {
             // 記錄/更新使用者，以便他人透過 Email 搜尋
             await setDoc(doc(db, "users", user.uid), {
@@ -192,7 +214,7 @@
 
                 const item = document.createElement('div');
                 item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
-                item.onclick = () => openChat(chat.id, displayName, icon);
+                item.onclick = () => openChat(chat.id, displayName, icon, chat.type);
                 
                 const timeStr = chat.updatedAt ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
 
@@ -206,15 +228,20 @@
     }
 
     // 3. 開啟特定聊天室
-    window.openChat = (chatId, chatName, icon) => {
+    window.openChat = (chatId, chatName, icon, chatType) => {
         currentChatId = chatId;
         
         // 更新樣式
         document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
         
+        const inviteBtnHtml = chatType === 'group' ? `<button class="btn-icon group" style="margin-left:auto;" onclick="openModal('invite')">➕ 邀請成員</button>` : '';
+        
         const mainDiv = document.getElementById('chat-main');
         mainDiv.innerHTML = `
-            <div class="chat-header">${icon} ${chatName}</div>
+            <div class="chat-header" style="display:flex; align-items:center;">
+                ${icon} ${chatName}
+                ${inviteBtnHtml}
+            </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
                 <input type="text" id="msg-input" class="input-box" placeholder="輸入訊息... (按 Enter 發送)" onkeypress="if(event.key==='Enter') sendMessage()">
@@ -293,9 +320,12 @@
         if (mode === 'private') {
             title.innerText = '發起私訊';
             input.placeholder = '請輸入對方的註冊 Email';
-        } else {
+        } else if (mode === 'group') {
             title.innerText = '建立群聊';
             input.placeholder = '請為群組取個名稱';
+        } else if (mode === 'invite') {
+            title.innerText = '邀請成員加入群組';
+            input.placeholder = '請輸入要邀請的 Email';
         }
         
         input.value = '';
@@ -345,7 +375,7 @@
                 });
 
                 if (existingChatId) {
-                    openChat(existingChatId, targetEmail.split('@')[0], '👤');
+                    openChat(existingChatId, targetEmail.split('@')[0], '👤', 'private');
                 } else {
                     const newChat = await addDoc(collection(db, "chats"), {
                         type: 'private',
@@ -355,7 +385,7 @@
                         lastMessage: '新對話',
                         updatedAt: serverTimestamp()
                     });
-                    openChat(newChat.id, targetEmail.split('@')[0], '👤');
+                    openChat(newChat.id, targetEmail.split('@')[0], '👤', 'private');
                 }
                 
             } else if (modalMode === 'group') {
@@ -366,7 +396,24 @@
                     lastMessage: '群組已建立',
                     updatedAt: serverTimestamp()
                 });
-                openChat(newChat.id, inputVal, '👥');
+                openChat(newChat.id, inputVal, '👥', 'group');
+            } else if (modalMode === 'invite') {
+                const targetEmail = inputVal.toLowerCase();
+                const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
+                const userSnap = await getDocs(userQuery);
+                
+                if (userSnap.empty) {
+                    alert("找不到此 Email 的聯絡人！");
+                    throw new Error("User not found");
+                }
+                const targetUid = userSnap.docs[0].id;
+                
+                await updateDoc(doc(db, "chats", currentChatId), {
+                    participants: arrayUnion(targetUid),
+                    lastMessage: `${currentUser.email.split('@')[0]} 邀請了新成員`,
+                    updatedAt: serverTimestamp()
+                });
+                alert("邀請成功！");
             }
             closeModal();
         } catch (e) {
