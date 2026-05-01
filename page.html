@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Creative Blocks Pro - 編程工作台</title>
+    
+    <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/msg/zh-hant.js"></script>
+
+    <style>
+        :root { --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; --scratch-green: #4CB050; --bg-light: #F0F2F5; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); overflow: hidden; }
+        
+        /* 導覽列 */
+        nav { background: var(--scratch-blue); color: white; padding: 0 20px; display: flex; align-items: center; height: 50px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; gap: 15px; }
+        .nav-logo { font-weight: 900; font-size: 1.2rem; cursor: pointer; white-space: nowrap; }
+        #project-title-input { background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 12px; border-radius: 4px; font-size: 14px; width: 200px; transition: 0.3s; }
+        #project-title-input:focus { background: white; color: #333; outline: none; }
+        
+        /* 發布狀態區域 */
+        #publish-area { display: flex; align-items: center; gap: 10px; margin-left: 10px; }
+        #publish-status { font-size: 12px; color: #FFE082; font-weight: bold; }
+        .publish-btn { background: var(--scratch-orange); color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; display: none; }
+        .publish-btn.active { background: #555; }
+
+        /* 工具列 */
+        .toolbar { height: 50px; background: white; border-bottom: 1px solid #D1D5DB; display: flex; align-items: center; padding: 0 15px; gap: 10px; }
+
+        /* 主佈局 */
+        #main-container { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 12px; }
+        #blocklyArea { flex: 1; background: white; border-radius: 12px; border: 1px solid #D1D5DB; position: relative; overflow: hidden; }
+        #blocklyDiv { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+
+        /* 舞台 */
+        #stage-area { width: 400px; display: flex; flex-direction: column; gap: 12px; }
+        .stage-box { flex: 1; background: white; border-radius: 12px; border: 2px solid #E5E7EB; display: flex; flex-direction: column; overflow: hidden; }
+        .stage-header { background: #F9FAFB; padding: 10px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; }
+        #output-console { flex: 1; padding: 15px; font-family: 'Consolas', monospace; font-size: 14px; overflow-y: auto; white-space: pre-wrap; background: #fff; line-height: 1.5; }
+
+        /* 按鈕通規 */
+        .btn { border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+        .btn-go { background: var(--scratch-green); color: white; }
+        .btn-stop { background: #FF4D4D; color: white; }
+        .btn-cloud { background: #2196F3; color: white; }
+        .btn-sub { background: #EEE; color: #555; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+        <input type="text" id="project-title-input" placeholder="專案名稱..." value="未命名專案">
+        
+        <div id="publish-area">
+            <div id="publish-status">● 未發布</div>
+            <button id="publish-btn" class="publish-btn" onclick="togglePublish()">發布作品</button>
+        </div>
+
+        <div id="user-info" style="margin-left: auto; font-size: 13px;">👤 驗證中...</div>
+    </nav>
+
+    <div class="toolbar">
+        <button class="btn btn-go" onclick="runCode()">🚩 執行</button>
+        <button class="btn btn-stop" onclick="resetStage()">🛑 停止</button>
+        <div style="width:1px; height:25px; background:#DDD; margin:0 5px;"></div>
+        <button class="btn btn-cloud" onclick="saveToCloud()">☁️ 儲存雲端</button>
+        <button class="btn btn-sub" onclick="location.href='projects.html'">📂 我的作品</button>
+        <div style="width:1px; height:25px; background:#DDD; margin:0 5px;"></div>
+        <button class="btn btn-sub" onclick="downloadProject()">💾 下載 XML</button>
+        <button class="btn btn-sub" onclick="document.getElementById('fileInput').click()">📤 匯入</button>
+        <input type="file" id="fileInput" style="display:none;" onchange="importProject(this)">
+    </div>
+
+    <div id="main-container">
+        <div id="blocklyArea">
+            <div id="blocklyDiv"></div>
+        </div>
+        <div id="stage-area">
+            <div class="stage-box">
+                <div class="stage-header">
+                    <b style="font-size: 13px; color: #666;">執行結果 (Stage)</b>
+                    <button onclick="document.getElementById('output-console').innerText=''" style="font-size:11px; cursor:pointer;">清空</button>
+                </div>
+                <div id="output-console"></div>
+            </div>
+        </div>
+    </div>
+
+    <xml id="toolbox" style="display: none">
+        <category name="邏輯判斷" colour="#5b80a5">
+            <block type="controls_if"></block>
+            <block type="logic_compare"></block>
+            <block type="logic_operation"></block>
+            <block type="logic_negate"></block>
+            <block type="logic_boolean"></block>
+        </category>
+        <category name="重複執行" colour="#5ba55b">
+            <block type="controls_repeat_ext"><value name="TIMES"><block type="math_number"><field name="NUM">10</field></block></value></block>
+            <block type="controls_whileUntil"></block>
+            <block type="controls_for"></block>
+        </category>
+        <category name="數學計算" colour="#5b67a5">
+            <block type="math_number"><field name="NUM">0</field></block>
+            <block type="math_arithmetic"></block>
+            <block type="math_single"></block>
+            <block type="math_random_int"></block>
+        </category>
+        <category name="文字顯示" colour="#a55b80">
+            <block type="text_print"><value name="TEXT"><block type="text"><field name="TEXT">Hello World</field></block></value></block>
+            <block type="text"></block>
+            <block type="text_join"></block>
+        </category>
+        <sep></sep>
+        <category name="我的變數" colour="#a55b5b" custom="VARIABLE"></category>
+        <category name="定義函式" colour="#995ba5" custom="PROCEDURE"></category>
+    </xml>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, query, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+            authDomain: "chat-52c0d.firebaseapp.com",
+            projectId: "chat-52c0d",
+            storageBucket: "chat-52c0d.firebasestorage.app",
+            messagingSenderId: "449329325475",
+            appId: "1:449329325475:web:75f255c4055360dc9e6616"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // 全域變數追蹤
+        let currentProjectId = new URLSearchParams(window.location.search).get('load');
+        let projectOwnerId = new URLSearchParams(window.location.search).get('user');
+
+        // 初始化 Blockly
+        const workspace = Blockly.inject('blocklyDiv', {
+            toolbox: document.getElementById('toolbox'),
+            media: 'https://unpkg.com/blockly/media/',
+            zoom: { controls: true, wheel: true }
+        });
+
+        // 舞台日誌
+        window.stageLog = (msg) => {
+            const con = document.getElementById('output-console');
+            con.innerHTML += `<div>> ${msg}</div>`;
+            con.scrollTop = con.scrollHeight;
+        };
+
+        // 自定義積木轉 JavaScript
+        Blockly.JavaScript['text_print'] = function(block) {
+            const msg = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || "''";
+            return `stageLog(${msg});\n`;
+        };
+
+        window.runCode = () => {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            document.getElementById('output-console').innerHTML = "<b>[系統] 開始執行...</b><br>";
+            try { eval(code); } catch(e) { stageLog("執行錯誤: " + e); }
+        };
+
+        window.resetStage = () => {
+            document.getElementById('output-console').innerHTML = "<span style='color:#999;'>[系統] 已停止。</span>";
+        };
+
+        // --- ☁️ 雲端儲存功能 ---
+        window.saveToCloud = async () => {
+            const user = auth.currentUser;
+            if (!user) return alert("請先登入");
+
+            const title = document.getElementById('project-title-input').value.trim() || "未命名專案";
+            const xmlDom = Blockly.Xml.workspaceToDom(workspace);
+            const xmlText = Blockly.Xml.domToText(xmlDom);
+
+            try {
+                // 情境 1: 編輯「自己」的現有專案 (覆蓋)
+                if (currentProjectId && (!projectOwnerId || projectOwnerId === user.uid)) {
+                    await updateDoc(doc(db, "users", user.uid, "projects", currentProjectId), {
+                        name: title, data: xmlText, updatedAt: serverTimestamp()
+                    });
+                    alert("✅ 雲端更新成功！");
+                } 
+                // 情境 2: 新建專案 或 改編別人的作品 (另存)
+                else {
+                    const snap = await getDocs(query(collection(db, "users", user.uid, "projects")));
+                    if (snap.size >= 10) return alert("❌ 空間不足 (限 10 個)，請先刪除舊作品。");
+
+                    const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), {
+                        name: title, data: xmlText, isPublic: false, updatedAt: serverTimestamp()
+                    });
+                    currentProjectId = newDoc.id; 
+                    projectOwnerId = user.uid;
+                    alert("✅ 已成功儲存至雲端！");
+                    updatePublishUI(false);
+                }
+            } catch (e) { alert("儲存失敗: " + e.message); }
+        };
+
+        // --- 📢 發布分享功能 ---
+        window.togglePublish = async () => {
+            const user = auth.currentUser;
+            if (!currentProjectId || projectOwnerId !== user.uid) return alert("⚠️ 請先儲存專案後再發布！");
+
+            try {
+                const projectRef = doc(db, "users", user.uid, "projects", currentProjectId);
+                const snap = await getDoc(projectRef);
+                const newState = !(snap.data().isPublic || false);
+
+                await updateDoc(projectRef, { isPublic: newState });
+                updatePublishUI(newState);
+                alert(newState ? "🎉 已公開！大家可以在『探索』看到它了。" : "🔒 已設為不公開。");
+            } catch (e) { alert("發布失敗"); }
+        };
+
+        function updatePublishUI(isPublic) {
+            const btn = document.getElementById('publish-btn');
+            const status = document.getElementById('publish-status');
+            btn.style.display = 'block';
+            if (isPublic) {
+                status.innerText = "● 已發布"; status.style.color = "#4AF2A1";
+                btn.innerText = "取消發布"; btn.classList.add('active');
+            } else {
+                status.innerText = "● 未發布"; status.style.color = "#FFE082";
+                btn.innerText = "發布作品"; btn.classList.remove('active');
+            }
+        }
+
+        // 本地下載與匯入
+        window.downloadProject = () => {
+            const title = document.getElementById('project-title-input').value || "my_project";
+            const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+            const blob = new Blob([xmlText], {type: 'text/xml'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${title}.xml`; a.click();
+        };
+
+        window.importProject = (input) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                workspace.clear();
+                Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(e.target.result), workspace);
+            };
+            reader.readAsText(input.files[0]);
+        };
+
+        // 初始化偵測
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('user-info').innerText = "👤 " + user.email.split('@')[0];
+                if (currentProjectId) {
+                    const loadUid = projectOwnerId || user.uid;
+                    const snap = await getDoc(doc(db, "users", loadUid, "projects", currentProjectId));
+                    if (snap.exists()) {
+                        const d = snap.data();
+                        document.getElementById('project-title-input').value = d.name;
+                        Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(d.data), workspace);
+                        if (loadUid === user.uid) updatePublishUI(d.isPublic || false);
+                    }
+                }
+            } else { location.href = 'login.html'; }
+        });
+
+        window.addEventListener('resize', () => Blockly.svgResize(workspace));
+    </script>
+</body>
+</html>

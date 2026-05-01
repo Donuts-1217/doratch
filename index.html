@@ -1,66 +1,124 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>Chat Login</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-body { font-family:"微軟正黑體"; display:flex; justify-content:center; align-items:center; height:100vh; background:#f2f5fa; }
-button { padding:10px 20px; font-size:16px; cursor:pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Blocks Pro - 創意積木平台</title>
+    <style>
+        :root { --main-blue: #4C97FF; --dark-blue: #357ae8; --bg-gray: #f8f9fa; }
+        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: var(--bg-gray); color: #333; }
+        
+        /* 導覽列 */
+        nav { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--main-blue); cursor: pointer; }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        
+        /* 英雄區 (Hero Section) */
+        .hero { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #4C97FF 0%, #357ae8 100%); color: white; padding: 0 20px; }
+        .hero h1 { font-size: 3.5rem; margin: 0 0 20px; letter-spacing: -1px; }
+        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 600px; line-height: 1.6; margin-bottom: 40px; }
+        
+        /* 按鈕樣式 */
+        .btn { padding: 12px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; transition: 0.3s; cursor: pointer; border: none; font-size: 1rem; }
+        .btn-primary { background: white; color: var(--main-blue); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+        .btn-outline { border: 2px solid white; color: white; background: transparent; }
+        .btn-outline:hover { background: white; color: var(--main-blue); }
+        .btn-nav { background: var(--main-blue); color: white; padding: 8px 20px; font-size: 0.9rem; }
+
+        /* 特色介紹 */
+        .features { padding: 80px 5%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; background: white; }
+        .feat-card { text-align: center; padding: 20px; }
+        .feat-card i { font-size: 3rem; color: var(--main-blue); margin-bottom: 20px; display: block; }
+        .feat-card h3 { margin-bottom: 10px; }
+        .feat-card p { color: #666; font-size: 0.95rem; }
+
+        #auth-status { display: none; } /* 初始隱藏，待 JS 判斷 */
+    </style>
 </head>
 <body>
 
-<button id="googleSignIn">使用 Google 登入</button>
+    <nav>
+        <div class="logo">🧩 Creative Blocks</div>
+        <div class="nav-links" id="nav-content">
+            <span>載入中...</span>
+        </div>
+    </nav>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+    <div class="hero">
+        <h1>用積木，堆疊你的無限創意</h1>
+        <p>一個專為學生設計的視覺化程式平台。支援雲端存檔、班級管理與實時模擬執行，讓寫程式變得跟玩遊戲一樣簡單！</p>
+        
+        <div id="hero-actions">
+            </div>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
-  authDomain: "chat-52c0d.firebaseapp.com",
-  projectId: "chat-52c0d",
-  storageBucket: "chat-52c0d.firebasestorage.app",
-  messagingSenderId: "449329325475",
-  appId: "1:449329325475:web:75f255c4055360dc9e6616",
-};
+    <section class="features">
+        <div class="feat-card">
+            <i>☁️</i>
+            <h3>雲端儲存</h3>
+            <p>支援 10 個專案雲端備份，隨時隨地在不同裝置繼續你的創作。</p>
+        </div>
+        <div class="feat-card">
+            <i>🏫</i>
+            <h3>班級系統</h3>
+            <p>輸入代碼即可加入老師的教室，輕鬆管理學習進度。</p>
+        </div>
+        <div class="feat-card">
+            <i>🚀</i>
+            <h3>高效執行</h3>
+            <p>搭載實時編譯器，積木拼完立即看見結果，除錯更直覺。</p>
+        </div>
+    </section>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-// 檢查是否已登入
-onAuthStateChanged(auth,user=>{
-  if(user) window.location.href="chat.html";
-});
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+            authDomain: "chat-52c0d.firebaseapp.com",
+            projectId: "chat-52c0d",
+            storageBucket: "chat-52c0d.firebasestorage.app",
+            messagingSenderId: "449329325475",
+            appId: "1:449329325475:web:75f255c4055360dc9e6616"
+        };
 
-// 登入
-document.getElementById("googleSignIn").onclick = async () => {
-  const result = await signInWithPopup(auth, provider);
-  const user = result.user;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
 
-  // 新增或更新 Firestore Users
-  const userRef = doc(db,"Users",user.uid);
-  const userSnap = await getDoc(userRef);
-  if(!userSnap.exists()){
-    await setDoc(userRef,{
-      email: user.email,
-      name: user.displayName,
-      nickname: user.displayName,
-      role:"general",
-      friends:[],
-      groups:[],
-      stickyNote:""
-    });
-  }
+        const navContent = document.getElementById('nav-content');
+        const heroActions = document.getElementById('hero-actions');
 
-  // 登入成功跳轉聊天頁
-  window.location.href = "chat.html";
-};
-</script>
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.emailVerified) {
+                // 已登入狀態
+                navContent.innerHTML = `
+                    <a href="dashboard.html" style="text-decoration:none; color:#333;">我的班級</a>
+                    <a href="projects.html" style="text-decoration:none; color:#333;">我的專案</a>
+                    <button class="btn btn-nav" onclick="window.logout()">登出</button>
+                `;
+                heroActions.innerHTML = `
+                    <a href="page.html" class="btn btn-primary">開始編程</a>
+                    <a href="dashboard.html" class="btn btn-outline" style="margin-left:15px;">進入教室</a>
+                `;
+            } else {
+                // 未登入狀態
+                navContent.innerHTML = `
+                    <a href="login.html" style="text-decoration:none; color:#333; font-weight:bold;">登入 / 註冊</a>
+                `;
+                heroActions.innerHTML = `
+                    <a href="login.html" class="btn btn-primary">立即免費開始</a>
+                `;
+            }
+        });
 
+        // 登出功能
+        window.logout = () => {
+            signOut(auth).then(() => {
+                location.reload();
+            });
+        };
+    </script>
 </body>
 </html>

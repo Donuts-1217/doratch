@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的班級控制台 - Creative Blocks</title>
+    <style>
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
+            --scratch-orange: #FFAB19; --scratch-green: #4CB050; --danger: #FF4D4D;
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
+        
+        nav { background: var(--scratch-blue); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
+        
+        .nav-actions { display: flex; gap: 12px; }
+        .btn-nav { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .btn-nav:hover { background: white; color: var(--scratch-blue); }
+
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        
+        .class-card { background: white; border-radius: 15px; border: 1px solid #E0E0E0; overflow: hidden; transition: 0.3s; cursor: pointer; position: relative; }
+        .class-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+
+        .class-banner { height: 100px; background: linear-gradient(135deg, var(--scratch-blue), var(--scratch-purple)); padding: 20px; color: white; display: flex; flex-direction: column; justify-content: flex-end; }
+        .class-banner h3 { margin: 0; font-size: 1.3rem; }
+
+        .btn-delete { 
+            position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; 
+            border: none; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold;
+            cursor: pointer; opacity: 0; transition: 0.2s; z-index: 10;
+        }
+        .class-card:hover .btn-delete { opacity: 1; }
+
+        .class-info { padding: 20px; font-size: 14px; color: #666; display: flex; justify-content: space-between; align-items: center; }
+        .role-tag { padding: 4px 10px; border-radius: 5px; font-weight: bold; font-size: 11px; }
+        .role-teacher { background: #E1F5FE; color: #0288D1; }
+        .role-student { background: #F3E5F5; color: #7B1FA2; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 350px; position: relative; }
+        input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #EEE; border-radius: 10px; box-sizing: border-box; }
+        .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+    <div class="nav-actions">
+        <button class="btn-nav" style="background:var(--scratch-orange); border:none;" onclick="openModal('joinModal')">🔑 加入班級</button>
+        <button class="btn-nav" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header-title"><h2>我的班級面板</h2></div>
+    <div id="class-list" class="class-grid"></div>
+</div>
+
+<div id="joinModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>加入班級</h3>
+        <input type="text" id="join-code" placeholder="輸入班級代碼">
+        <button class="btn-submit" style="background:var(--scratch-blue); color:white;" onclick="joinClass()">加入</button>
+        <button class="btn-submit" style="background:none; color:#999;" onclick="closeModal('joinModal')">取消</button>
+    </div>
+</div>
+
+<div id="createModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>建立新班級</h3>
+        <input type="text" id="create-name" placeholder="班級名稱">
+        <button class="btn-submit" style="background:var(--scratch-green); color:white;" onclick="createClass()">建立</button>
+        <button class="btn-submit" style="background:none; color:#999;" onclick="closeModal('createModal')">取消</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        storageBucket: "chat-52c0d.firebasestorage.app",
+        messagingSenderId: "449329325475",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+    // 渲染班級
+    async function fetchClasses(user) {
+        const listDiv = document.getElementById('class-list');
+        listDiv.innerHTML = "讀取中...";
+        
+        const qT = query(collection(db, "classes"), where("teacherId", "==", user.uid));
+        const qS = query(collection(db, "classes"), where("students", "array-contains", user.uid));
+        
+        const [tSnap, sSnap] = await Promise.all([getDocs(qT), getDocs(qS)]);
+        listDiv.innerHTML = "";
+        
+        const allDocs = [...tSnap.docs, ...sSnap.docs].filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+
+        allDocs.forEach(d => {
+            const data = d.data();
+            const isTeacher = data.teacherId === user.uid;
+            const cid = d.id;
+
+            const card = document.createElement('div');
+            card.className = 'class-card';
+            card.onclick = () => location.href = `class_view.html?id=${cid}`;
+
+            card.innerHTML = `
+                <div class="class-banner">
+                    ${isTeacher ? `<button class="btn-delete" data-id="${cid}">刪除</button>` : ''}
+                    <div style="font-size:12px;">代碼: ${cid}</div>
+                    <h3>${data.className}</h3>
+                </div>
+                <div class="class-info">
+                    <span class="role-tag ${isTeacher ? 'role-teacher' : 'role-student'}">${isTeacher?'老師':'學生'}</span>
+                    <span>老師: ${data.teacherEmail.split('@')[0]}</span>
+                </div>
+            `;
+
+            // 處理刪除按鈕
+            if (isTeacher) {
+                card.querySelector('.btn-delete').onclick = (e) => {
+                    e.stopPropagation(); // 防止觸發卡片跳轉
+                    handleDelete(cid);
+                };
+            }
+            listDiv.appendChild(card);
+        });
+    }
+
+    // 刪除邏輯
+    window.handleDelete = async (cid) => {
+        if (!confirm("確定要永久刪除這個班級嗎？")) return;
+        try {
+            await deleteDoc(doc(db, "classes", cid));
+            alert("已刪除");
+            location.reload();
+        } catch (e) { alert("刪除失敗"); }
+    };
+
+    // 建立邏輯
+    window.createClass = async () => {
+        const name = document.getElementById('create-name').value.trim();
+        if (!name) return;
+        const code = "C" + Math.random().toString(36).substr(2, 5).toUpperCase();
+        await setDoc(doc(db, "classes", code), {
+            className: name, teacherId: auth.currentUser.uid,
+            teacherEmail: auth.currentUser.email, students: [], createdAt: new Date()
+        });
+        location.reload();
+    };
+
+    // 加入邏輯
+    window.joinClass = async () => {
+        const code = document.getElementById('join-code').value.trim().toUpperCase();
+        const ref = doc(db, "classes", code);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+            await updateDoc(ref, { students: arrayUnion(auth.currentUser.uid) });
+            alert("成功加入");
+            location.reload();
+        } else { alert("查無此代碼"); }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) fetchClasses(user);
+        else location.href = 'login.html';
+    });
+</script>
+</body>
+</html>

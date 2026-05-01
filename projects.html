@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>我的雲端專案 - Creative Blocks</title>
+    <style>
+        :root { --main-blue: #4C97FF; --bg-color: #F4F7F9; --text-dark: #333; }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: var(--text-dark); }
+        
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #DDD; padding-bottom: 15px; }
+        h1 { margin: 0; color: var(--main-blue); font-size: 1.8rem; }
+
+        /* 儲存量進度條 */
+        .usage-bar { background: #E0E0E0; border-radius: 10px; height: 10px; width: 200px; overflow: hidden; margin-top: 5px; }
+        #progress-fill { background: var(--main-blue); height: 100%; width: 0%; transition: 0.5s; }
+        .usage-text { font-size: 13px; color: #666; }
+
+        /* 專案卡片佈局 */
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #EEE; display: flex; flex-direction: column; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .card h3 { margin: 0 0 10px; font-size: 1.2rem; color: #222; word-break: break-all; }
+        .card p { font-size: 12px; color: #888; margin-bottom: 20px; }
+
+        .actions { margin-top: auto; display: flex; gap: 10px; }
+        .btn { border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
+        .btn-open { background: var(--main-blue); color: white; }
+        .btn-del { background: #FFEDED; color: #FF4D4D; }
+        .btn-del:hover { background: #FF4D4D; color: white; }
+
+        .empty-state { text-align: center; grid-column: 1 / -1; padding: 50px; color: #999; }
+        .back-btn { background: #FFF; border: 1px solid #DDD; padding: 8px 15px; border-radius: 6px; text-decoration: none; color: #555; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>☁️ 我的雲端專案</h1>
+            <div class="usage-text">雲端空間使用量: <span id="count-num">0</span> / 10</div>
+            <div class="usage-bar"><div id="progress-fill"></div></div>
+        </div>
+        <a href="page.html" class="back-btn">⬅ 回到工作台</a>
+    </header>
+
+    <div class="project-grid" id="project-list">
+        <div class="empty-state">正在讀取專案列表...</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase 配置 (請確保與 page.html 一致)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        storageBucket: "chat-52c0d.firebasestorage.app",
+        messagingSenderId: "449329325475",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = 'login.html'; // 未登入跳回登入頁
+        } else {
+            loadProjects(user.uid);
+        }
+    });
+
+    async function loadProjects(uid) {
+        const listDiv = document.getElementById('project-list');
+        const countNum = document.getElementById('count-num');
+        const progressFill = document.getElementById('progress-fill');
+
+        try {
+            // 抓取該用戶的專案，並按時間排序
+            const q = query(collection(db, "users", uid, "projects"), orderBy("updatedAt", "desc"));
+            const snapshot = await getDocs(q);
+            
+            listDiv.innerHTML = "";
+            const total = snapshot.size;
+            
+            // 更新進度條與文字
+            countNum.innerText = total;
+            progressFill.style.width = (total * 10) + "%";
+
+            if (total === 0) {
+                listDiv.innerHTML = `<div class="empty-state">你還沒有任何雲端專案，快去建立一個吧！</div>`;
+                return;
+            }
+
+            snapshot.forEach((projectDoc) => {
+                const data = projectDoc.data();
+                const time = data.updatedAt ? data.updatedAt.toDate().toLocaleString() : "未知時間";
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${data.name || "未命名專案"}</h3>
+                    <p>最後更新：${time}</p>
+                    <div class="actions">
+                        <button class="btn btn-open" onclick="openProject('${projectDoc.id}')">開啟專案</button>
+                        <button class="btn btn-del" onclick="deleteProject('${projectDoc.id}')">刪除</button>
+                    </div>
+                `;
+                listDiv.appendChild(card);
+            });
+        } catch (error) {
+            console.error(error);
+            listDiv.innerHTML = `<div class="empty-state" style="color:red;">讀取失敗，請確認 Firebase Firestore 規則已開啟。</div>`;
+        }
+    }
+
+    // 開啟專案 (跳轉回 page.html 並帶入 load 參數)
+    window.openProject = (id) => {
+        window.location.href = `page.html?load=${id}`;
+    };
+
+    // 刪除專案
+    window.deleteProject = async (id) => {
+        if (!confirm("確定要永久刪除這個雲端專案嗎？")) return;
+        
+        try {
+            const user = auth.currentUser;
+            await deleteDoc(doc(db, "users", user.uid, "projects", id));
+            alert("專案已刪除");
+            location.reload(); // 重新整理列表
+        } catch (e) {
+            alert("刪除失敗：" + e.message);
+        }
+    };
+</script>
+
+</body>
+</html>

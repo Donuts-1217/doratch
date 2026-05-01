@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>帳號驗證登入 - 創意積木</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: #4C97FF; margin: 0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+        .login-box { background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 360px; }
+        h2 { color: #4C97FF; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #4C97FF; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
+        .btn-login { background: #4CAF50; color: white; }
+        .btn-login:hover { background: #45a049; }
+        .btn-register { background: #FF8C1A; color: white; }
+        .btn-register:hover { background: #e67e17; }
+        .msg { color: #d93025; font-size: 13px; margin-top: 12px; min-height: 18px; font-weight: bold; }
+        .info { color: #1a73e8; font-size: 13px; margin-top: 12px; line-height: 1.5; }
+        .footer-link { margin-top: 25px; display: block; color: #888; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>登入中心</h2>
+        <p>須完成 Email 驗證方可進入系統</p>
+        
+        <input type="email" id="email" placeholder="電子郵件 (Email)" required>
+        <input type="password" id="password" placeholder="密碼 (至少 6 位)" required>
+        
+        <div id="message" class="msg"></div>
+        <div id="info-msg" class="info"></div>
+
+        <div class="btn-group">
+            <button id="btn-login" class="btn-login">安全登入</button>
+            <button id="btn-register" class="btn-register">註冊並發送驗證信</button>
+        </div>
+        
+        <a href="main.html" class="footer-link">← 回到主頁面</a>
+    </div>
+
+    <script type="module">
+        // 引入 Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+            authDomain: "chat-52c0d.firebaseapp.com",
+            projectId: "chat-52c0d",
+            storageBucket: "chat-52c0d.firebasestorage.app",
+            messagingSenderId: "449329325475",
+            appId: "1:449329325475:web:75f255c4055360dc9e6616",
+            measurementId: "G-8R8648H53V"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const emailInp = document.getElementById('email');
+        const passInp = document.getElementById('password');
+        const msgDiv = document.getElementById('message');
+        const infoDiv = document.getElementById('info-msg');
+
+        // 清除訊息的輔助函數
+        const clearMsgs = () => { msgDiv.innerText = ""; infoDiv.innerText = ""; };
+
+        // --- 註冊並發送驗證信 ---
+        document.getElementById('btn-register').addEventListener('click', async () => {
+            clearMsgs();
+            const email = emailInp.value;
+            const pass = passInp.value;
+
+            if(!email || pass.length < 6) {
+                msgDiv.innerText = "❌ 請填寫正確的 Email 且密碼至少 6 位";
+                return;
+            }
+
+            try {
+                infoDiv.innerText = "正在建立帳號...";
+                const res = await createUserWithEmailAndPassword(auth, email, pass);
+                
+                // 發送驗證信
+                await sendEmailVerification(res.user);
+                
+                // 註冊後先登出，避免自動登入未驗證狀態
+                await signOut(auth);
+                
+                infoDiv.innerText = "✅ 帳號已建立！驗證信已寄至 " + email + "，請點擊信中連結後再登入。";
+            } catch (error) {
+                infoDiv.innerText = "";
+                console.error(error.code);
+                if (error.code === 'auth/email-already-in-use') {
+                    msgDiv.innerText = "❌ 此 Email 已被註冊，請直接登入。";
+                } else if (error.code === 'auth/invalid-email') {
+                    msgDiv.innerText = "❌ Email 格式錯誤。";
+                } else {
+                    msgDiv.innerText = "❌ 錯誤：" + error.message;
+                }
+            }
+        });
+
+        // --- 登入並檢查驗證狀態 ---
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            clearMsgs();
+            try {
+                infoDiv.innerText = "登入驗證中...";
+                const res = await signInWithEmailAndPassword(auth, emailInp.value, passInp.value);
+                
+                // 檢查是否已點擊驗證連結
+                if (res.user.emailVerified) {
+                    infoDiv.innerText = "🎉 驗證成功，正在導向...";
+                    window.location.href = 'main.html';
+                } else {
+                    msgDiv.innerText = "⚠️ 帳號尚未驗證！請先去信箱收信。";
+                    // 沒驗證就強制登出
+                    await signOut(auth);
+                }
+            } catch (error) {
+                infoDiv.innerText = "";
+                console.error(error.code);
+                msgDiv.innerText = "❌ 登入失敗：帳號密碼錯誤或尚未註冊。";
+            }
+        });
+    </script>
+</body>
+</html>

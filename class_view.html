@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>班級詳情 - Creative Blocks</title>
+    <style>
+        :root { --scratch-blue: #4C97FF; }
+        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; }
+        nav { background: var(--scratch-blue); color: white; padding: 15px 5%; display: flex; align-items: center; gap: 20px; }
+        .container { max-width: 900px; margin: 30px auto; padding: 20px; }
+        .header-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .section { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
+        .member-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #EEE; }
+        .btn-back { color: white; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="dashboard.html" class="btn-back">⬅ 返回面板</a>
+    <h2 id="nav-class-name">讀取中...</h2>
+</nav>
+
+<div class="container">
+    <div class="header-card">
+        <h1 id="class-title">班級名稱</h1>
+        <p id="class-meta" style="color: #666;"></p>
+    </div>
+
+    <div class="section">
+        <h3>👥 班級成員</h3>
+        <div id="member-list">載入成員中...</div>
+    </div>
+
+    <div class="section">
+        <h3>📂 班級作品集 (開發中)</h3>
+        <p style="color: #999;">未來這裡將顯示所有學生的公開作業...</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        storageBucket: "chat-52c0d.firebasestorage.app",
+        messagingSenderId: "449329325475",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const classId = new URLSearchParams(window.location.search).get('id');
+
+    async function loadClassDetail() {
+        if (!classId) return;
+        const snap = await getDoc(doc(db, "classes", classId));
+        
+        if (snap.exists()) {
+            const data = snap.data();
+            document.title = `${data.className} - Creative Blocks`;
+            document.getElementById('nav-class-name').innerText = data.className;
+            document.getElementById('class-title').innerText = data.className;
+            document.getElementById('class-meta').innerText = `代碼：${classId} | 老師：${data.teacherEmail}`;
+            
+            // 顯示成員數量
+            const memberList = document.getElementById('member-list');
+            const studentCount = data.students ? data.students.length : 0;
+            memberList.innerHTML = `目前共有 ${studentCount} 位學生。`;
+            
+            // (進階：如果需要顯示姓名，則需根據 UID 再去 users 集合抓取資料)
+        } else {
+            alert("找不到該班級！");
+            location.href = "dashboard.html";
+        }
+    }
+
+    loadClassDetail();
+</script>
+</body>
+</html>

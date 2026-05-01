@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>探索作品 - Creative Blocks</title>
+    <style>
+        :root { --scratch-blue: #4C97FF; --scratch-purple: #855CD6; }
+        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
+        
+        /* 頂部導航 */
+        nav { background: var(--scratch-blue); color: white; padding: 10px 5%; display: flex; align-items: center; gap: 20px; }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
+        .search-bar { flex: 1; max-width: 500px; display: flex; }
+        .search-bar input { width: 100%; padding: 8px 15px; border: none; border-radius: 20px; outline: none; }
+
+        /* 主區塊 */
+        .container { padding: 30px 5%; }
+        .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title h2 { color: #555; margin: 0; }
+
+        /* 作品網格 */
+        .explore-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+        
+        /* 作品卡片 (仿 Scratch 風格) */
+        .project-card { background: white; border-radius: 10px; overflow: hidden; border: 1px solid #DDD; transition: 0.3s; cursor: pointer; position: relative; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--scratch-blue); }
+        
+        .project-thumb { width: 100%; height: 140px; background: #E0E0E0; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: #BBB; }
+        
+        .project-info { padding: 12px; display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; background: #DDD; border-radius: 4px; flex-shrink: 0; }
+        .details { overflow: hidden; }
+        .details strong { display: block; font-size: 14px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .details span { font-size: 12px; color: #888; }
+
+        /* 標籤篩選 */
+        .filter-tags { display: flex; gap: 10px; margin-bottom: 30px; }
+        .tag { background: white; padding: 6px 15px; border-radius: 20px; border: 1px solid #DDD; font-size: 14px; cursor: pointer; font-weight: bold; color: #666; }
+        .tag.active { background: var(--scratch-purple); color: white; border-color: var(--scratch-purple); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="window.location.href='index.html'">🧩 Creative Blocks</div>
+    <div class="search-bar">
+        <input type="text" placeholder="搜尋作品...">
+    </div>
+    <div id="auth-links" style="margin-left: auto;">
+        </div>
+</nav>
+
+<div class="container">
+    <div class="filter-tags">
+        <div class="tag active">全部作品</div>
+        <div class="tag">最新上傳</div>
+        <div class="tag">熱門專案</div>
+        <div class="tag">教學範例</div>
+    </div>
+
+    <div class="section-title">
+        <h2>大家都在做什麼？</h2>
+    </div>
+
+    <div class="explore-grid" id="explore-list">
+        <div style="color:#999;">正在探索宇宙中的作品...</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collectionGroup, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        storageBucket: "chat-52c0d.firebasestorage.app",
+        messagingSenderId: "449329325475",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 1. 處理導覽列登入狀態
+    onAuthStateChanged(auth, (user) => {
+        const authLinks = document.getElementById('auth-links');
+        if (user) {
+            authLinks.innerHTML = `<button onclick="window.location.href='projects.html'" style="background:none; border:1px solid white; color:white; padding:5px 15px; border-radius:15px; cursor:pointer;">我的東西</button>`;
+        } else {
+            authLinks.innerHTML = `<a href="login.html" style="color:white; text-decoration:none; font-weight:bold;">登入</a>`;
+        }
+    });
+
+    // 2. 核心功能：探索所有使用者的公開作品
+    // 注意：這裡使用 collectionGroup 需要在 Firebase 控制台建立索引
+    async function loadExploreProjects() {
+        const listDiv = document.getElementById('explore-list');
+        
+        try {
+            // 抓取所有路徑下名為 "projects" 的集合 (跨使用者抓取)
+            const q = query(collectionGroup(db, "projects"), orderBy("updatedAt", "desc"), limit(20));
+            const snapshot = await getDocs(q);
+            
+            listDiv.innerHTML = "";
+            
+            if (snapshot.empty) {
+                listDiv.innerHTML = "目前還沒有公開作品。";
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const projectId = doc.id;
+                // 嘗試取得該專案的使用者 ID (從路徑解析)
+                const userId = doc.ref.parent.parent.id;
+
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.onclick = () => window.location.href = `page.html?load=${projectId}&user=${userId}`;
+                
+                card.innerHTML = `
+                    <div class="project-thumb">🧩</div>
+                    <div class="project-info">
+                        <div class="user-avatar"></div>
+                        <div class="details">
+                            <strong>${data.name || "未命名專案"}</strong>
+                            <span>by 創作者</span>
+                        </div>
+                    </div>
+                `;
+                listDiv.appendChild(card);
+            });
+        } catch (e) {
+            console.error(e);
+            listDiv.innerHTML = "無法載入探索內容，請確認資料庫權限。";
+        }
+    }
+
+    loadExploreProjects();
+</script>
+</body>
+</html>
