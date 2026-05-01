@@ -127,6 +127,7 @@
                 <button class="btn-icon" onclick="openModal('private')">➕ 私訊</button>
                 <button class="btn-icon" style="background:#5865F2;" onclick="openModal('group')">👥 群聊</button>
                 <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 建立伺服器</button>
+                <button class="btn-icon" style="background:#f47f24; margin-top:5px;" onclick="openModal('joinServer')">🔑 加入伺服器</button>
             </div>
         </div>
         <div class="chat-list" id="chat-list">
@@ -164,7 +165,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -236,20 +237,23 @@
 
             chats.forEach(chat => {
                 let displayName = chat.name || "未命名";
+                let rawName = displayName;
                 let icon = '💬';
                 if (chat.type === 'private') {
                     icon = '👤';
                     displayName = (chat.participantEmails || []).find(e => e !== currentUser.email) || "未知使用者";
                     displayName = displayName.split('@')[0];
+                    rawName = displayName;
                 } else if (chat.type === 'server') {
                     icon = '🏫';
+                    displayName += ` <span style="font-size:10px; opacity:0.7; font-weight:normal;">(代碼: ${chat.id})</span>`;
                 } else {
                     icon = '👥';
                 }
 
                 const item = document.createElement('div');
                 item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
-                item.onclick = () => openChat(chat.id, displayName, icon, chat.type, chat.teacherId);
+                item.onclick = () => openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
                 
                 const timeStr = chat.updatedAt ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
 
@@ -280,13 +284,16 @@
         
         // 更新樣式
         document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-        
-        const inviteBtnHtml = chatType === 'group' ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">➕ 邀請成員</button>` : '';
+        const activeItem = Array.from(document.querySelectorAll('.chat-item')).find(el => el.onclick.toString().includes(chatId));
+        if (activeItem) activeItem.classList.add('active');
+
+        const displayTitle = chatType === 'server' ? `${chatName} <span style="font-size:12px; color:#949ba4;">(代碼: ${chatId})</span>` : chatName;
+        const inviteBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">➕ 邀請成員</button>` : '';
         
         const mainDiv = document.getElementById('chat-main');
         mainDiv.innerHTML = `
-            <div class="chat-header" style="display:flex; align-items:center;">
-                <span style="color:#949ba4; margin-right:10px; font-size:20px;">#</span> ${chatName}
+            <div class="chat-header">
+                <h3 id="current-chat-name" style="margin: 0; font-size: 1.1rem;">${icon} ${displayTitle}</h3>
                 ${inviteBtnHtml}
             </div>
             <div class="messages-area" id="messages-area"></div>
@@ -508,6 +515,9 @@
         } else if (mode === 'server') {
             title.innerText = '建立伺服器';
             input.placeholder = '請為伺服器取個名稱';
+        } else if (mode === 'joinServer') {
+            title.innerText = '加入伺服器';
+            input.placeholder = '請輸入 6 碼伺服器代碼';
         } else if (mode === 'invite') {
             title.innerText = '邀請成員加入';
             input.placeholder = '請輸入要邀請的 Email';
@@ -584,15 +594,49 @@
                 }
                 
             } else if (modalMode === 'group' || modalMode === 'server') {
-                const newChat = await addDoc(collection(db, "chats"), {
-                    type: modalMode,
-                    participants: [currentUser.uid],
-                    teacherId: currentUser.uid,
-                    name: inputVal,
-                    lastMessage: modalMode === 'server' ? '伺服器已建立' : '群組已建立',
-                    updatedAt: serverTimestamp()
-                });
-                openChat(newChat.id, inputVal, modalMode === 'server' ? '🏫' : '👥', modalMode, currentUser.uid);
+                let chatId;
+                if (modalMode === 'server') {
+                    chatId = "S" + Math.random().toString(36).substr(2, 5).toUpperCase();
+                    await setDoc(doc(db, "chats", chatId), {
+                        type: 'server',
+                        participants: [currentUser.uid],
+                        teacherId: currentUser.uid,
+                        name: inputVal,
+                        lastMessage: '伺服器已建立',
+                        updatedAt: serverTimestamp()
+                    });
+                } else {
+                    const newChat = await addDoc(collection(db, "chats"), {
+                        type: 'group',
+                        participants: [currentUser.uid],
+                        teacherId: currentUser.uid,
+                        name: inputVal,
+                        lastMessage: '群組已建立',
+                        updatedAt: serverTimestamp()
+                    });
+                    chatId = newChat.id;
+                }
+                openChat(chatId, inputVal, modalMode === 'server' ? '🏫' : '👥', modalMode, currentUser.uid);
+            } else if (modalMode === 'joinServer') {
+                const code = inputVal.toUpperCase();
+                const chatRef = doc(db, "chats", code);
+                const chatSnap = await getDoc(chatRef);
+                
+                if (chatSnap.exists() && chatSnap.data().type === 'server') {
+                    const groupCount = await checkGroupLimit();
+                    if (groupCount >= 20) {
+                        alert("加入失敗：您最多只能加入 20 個群組或伺服器！");
+                        closeModal();
+                        return;
+                    }
+                    await updateDoc(chatRef, {
+                        participants: arrayUnion(currentUser.uid)
+                    });
+                    alert("成功加入伺服器！");
+                    openChat(code, chatSnap.data().name, '🏫', 'server', chatSnap.data().teacherId);
+                } else {
+                    alert("查無此伺服器代碼，或是該代碼非伺服器！");
+                }
             } else if (modalMode === 'invite') {
                 const targetEmail = inputVal.toLowerCase();
                 const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
