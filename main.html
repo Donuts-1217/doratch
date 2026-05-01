@@ -35,9 +35,14 @@
         .dropdown-item:hover { background: #f0f2f5; }
 
         /* --- 主內容區 --- */
-        .hero { background: white; padding: 40px 5%; text-align: center; border-bottom: 1px solid #ddd; }
-        .hero h1 { margin: 0; font-size: 2rem; color: var(--scratch-blue); }
-        .hero p { color: #666; margin-top: 10px; }
+        .hero { background: linear-gradient(135deg, var(--scratch-blue), var(--scratch-purple)); padding: 60px 5%; text-align: center; color: white; }
+        .hero h1 { margin: 0; font-size: 2.5rem; text-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .hero p { color: rgba(255,255,255,0.9); margin-top: 10px; font-size: 1.1rem; }
+
+        /* 搜尋列 */
+        .search-container { max-width: 600px; margin: -25px auto 30px auto; padding: 0 20px; position: relative; z-index: 10; }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; }
+        .search-input:focus { box-shadow: 0 10px 30px rgba(76, 151, 255, 0.3); transform: translateY(-2px); }
 
         .container { padding: 30px 5%; }
         .section-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -49,11 +54,11 @@
             gap: 20px;
         }
         .project-card {
-            background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; cursor: pointer;
-            border: 1px solid #eee;
+            background: white; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); cursor: pointer;
+            border: 1px solid #eee; display: flex; flex-direction: column;
         }
-        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+        .project-card:hover { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-color: transparent; }
         .project-thumb { height: 140px; background: #eef4ff; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
         
         .project-info { padding: 15px; }
@@ -100,6 +105,10 @@
     <p>看看其他小小程式設計師分享的精彩積木作品！</p>
 </div>
 
+<div class="search-container">
+    <input type="text" id="search-input" class="search-input" placeholder="🔍 搜尋作品名稱或作者..." oninput="handleSearch()">
+</div>
+
 <div class="container">
     <div class="section-title">✨ 最新發布</div>
     <div id="project-grid" class="project-grid">
@@ -136,65 +145,41 @@
         }
     });
 
+    let allProjects = [];
+
     async function fetchPublicProjects() {
         const grid = document.getElementById('project-grid');
+        grid.innerHTML = "<div class='loading'>正在抓取最新作品...</div>";
         try {
-            // 移除 orderBy 以避免 Firebase 複合索引要求，改由前端排序
-            const q = query(
-                collectionGroup(db, "projects"), 
-                where("isPublic", "==", true)
-            );
-
+            const q = query(collectionGroup(db, "projects"), where("isPublic", "==", true));
             const querySnapshot = await getDocs(q);
-            grid.innerHTML = "";
-
+            
             if (querySnapshot.empty) {
                 grid.innerHTML = "<div class='loading'>目前還沒有公開的作品，去成為第一個發布的人吧！</div>";
                 return;
             }
 
-            // 前端排序
-            const docs = [];
-            querySnapshot.forEach(doc => docs.push(doc));
-            docs.sort((a, b) => {
-                const t1 = a.data().updatedAt ? a.data().updatedAt.toMillis() : 0;
-                const t2 = b.data().updatedAt ? b.data().updatedAt.toMillis() : 0;
-                return t2 - t1;
-            });
-
-            docs.forEach((doc) => {
+            allProjects = [];
+            querySnapshot.forEach(doc => {
                 const data = doc.data();
-                const pid = doc.id;
-                const authorId = doc.ref.parent.parent.id; // 從 path 獲取作者 UID
-
-                // --- 修正 split('@') 報錯的關鍵防護 ---
                 const email = data.authorEmail || "unknown@user";
                 const displayName = email.includes('@') ? email.split('@')[0] : "匿名用戶";
                 const projectName = data.name || "未命名作品";
-                const remixBadge = data.originalPid ? `<span style="background:#855CD6; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; flex-shrink:0;">♻️ Remix</span>` : "";
-
-                const card = document.createElement('div');
-                card.className = 'project-card';
-                card.onclick = () => {
-                    // 跳轉至編輯器
-                    location.href = `page.html?load=${pid}&from=${authorId}`;
-                };
-
-                card.innerHTML = `
-                    <div class="project-thumb">🧩</div>
-                    <div class="project-info">
-                        <div class="project-name" style="display:flex; align-items:center;">
-                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${projectName}</span>
-                            ${remixBadge}
-                        </div>
-                        <div class="project-author">
-                            <img src="https://ui-avatars.com/api/?name=${email}&size=20&background=random">
-                            ${displayName}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
+                
+                allProjects.push({
+                    id: doc.id,
+                    authorId: doc.ref.parent.parent.id,
+                    data: data,
+                    email: email,
+                    displayName: displayName,
+                    projectName: projectName,
+                    updatedAt: data.updatedAt ? data.updatedAt.toMillis() : 0
+                });
             });
+
+            allProjects.sort((a, b) => b.updatedAt - a.updatedAt);
+            renderProjects(allProjects);
+
         } catch (e) {
             console.error("Fetch Error:", e);
             if (e.message.includes("index")) {
@@ -204,6 +189,54 @@
             }
         }
     }
+
+    function renderProjects(projects) {
+        const grid = document.getElementById('project-grid');
+        grid.innerHTML = "";
+        
+        if (projects.length === 0) {
+            grid.innerHTML = "<div class='loading'>找不到符合條件的作品 😢</div>";
+            return;
+        }
+
+        projects.forEach(proj => {
+            const remixBadge = proj.data.originalPid ? `<span style="background:#855CD6; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; flex-shrink:0;">♻️ Remix</span>` : "";
+
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.onclick = () => location.href = `page.html?load=${proj.id}&from=${proj.authorId}`;
+
+            card.innerHTML = `
+                <div class="project-thumb">🧩</div>
+                <div class="project-info">
+                    <div class="project-name" style="display:flex; align-items:center;">
+                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${proj.projectName}</span>
+                        ${remixBadge}
+                    </div>
+                    <div class="project-author">
+                        <img src="https://ui-avatars.com/api/?name=${proj.email}&size=20&background=random">
+                        ${proj.displayName}
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    window.handleSearch = () => {
+        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+        if (!keyword) {
+            renderProjects(allProjects);
+            return;
+        }
+        
+        const filtered = allProjects.filter(proj => {
+            return proj.projectName.toLowerCase().includes(keyword) || 
+                   proj.displayName.toLowerCase().includes(keyword);
+        });
+        
+        renderProjects(filtered);
+    };
 
     window.handleLogout = () => {
         if(confirm("確定要登出嗎？")) {
