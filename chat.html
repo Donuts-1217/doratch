@@ -160,8 +160,9 @@
         if (!user) { location.href = 'login.html'; return; }
         currentUser = user;
         
-        document.getElementById('nav-username').innerText = user.email.split('@')[0];
-        document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+        const currentEmail = user.email || "guest@user";
+        document.getElementById('nav-username').innerText = currentEmail.split('@')[0];
+        document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${currentEmail}&background=random`;
         document.getElementById('nav-avatar').style.display = 'block';
 
         try {
@@ -346,7 +347,8 @@
         try {
             if (modalMode === 'private') {
                 const targetEmail = inputVal.toLowerCase();
-                if (targetEmail === currentUser.email.toLowerCase()) {
+                const currentEmail = currentUser.email || "";
+                if (targetEmail === currentEmail.toLowerCase() && currentEmail !== "") {
                     alert("不能跟自己發私訊喔！");
                     throw new Error("Self chat");
                 }
@@ -418,6 +420,9 @@
             closeModal();
         } catch (e) {
             console.error(e);
+            if (e.message !== "User not found" && e.message !== "Self chat") {
+                alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
+            }
         } finally {
             btn.disabled = false;
             btn.innerText = "確認";
