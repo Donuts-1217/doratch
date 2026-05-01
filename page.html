@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creative Blocks Pro - 編程工作台</title>
+    <title>Creative Blocks Pro - 工作台</title>
     
     <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
     <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
@@ -13,110 +13,89 @@
 
     <style>
         :root {
-            --primary: #4C97FF;
-            --secondary: #855CD6;
-            --success: #4CB050;
-            --warning: #FFAB19;
-            --danger: #FF4D4D;
-            --bg-light: #F0F2F5;
-            --nav-height: 60px;
+            --primary: #4C97FF; --secondary: #855CD6; --success: #4CB050;
+            --warning: #FFAB19; --danger: #FF4D4D; --bg-light: #F0F2F5;
         }
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Noto Sans TC', sans-serif; background: var(--bg-light); overflow: hidden; }
 
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: 'Noto Sans TC', sans-serif; background: var(--bg-light); overflow: hidden; }
-
-        /* --- 頂部導覽 --- */
-        nav {
-            background: var(--primary); color: white; height: var(--nav-height);
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100;
-        }
+        /* 導覽列 */
+        nav { background: var(--primary); color: white; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
-        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; letter-spacing: -1px; }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
+        #project-title-input { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 8px; width: 180px; }
+        
+        /* 提示條 */
+        #remix-banner { background: #FFF9C4; color: #856404; padding: 8px; font-size: 13px; text-align: center; display: none; border-bottom: 1px solid #FFEE58; }
 
-        #project-title-input {
-            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255,255,255,0.3);
-            color: white; padding: 8px 15px; border-radius: 8px; font-size: 14px; width: 200px;
-        }
-        #project-title-input:focus { background: white; color: #333; outline: none; }
-
-        /* --- Remix 狀態條 --- */
-        #remix-banner {
-            background: #FFF9C4; color: #856404; padding: 10px 20px;
-            font-size: 14px; font-weight: bold; display: none; text-align: center;
-            border-bottom: 1px solid #FFEE58;
-        }
-
-        /* --- 主容器 --- */
+        /* 主佈局 */
         #main-layout { display: flex; flex: 1; overflow: hidden; padding: 10px; gap: 10px; }
-        
-        #blocklyArea { flex: 1; background: white; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
-        #blocklyDiv { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+        #blocklyArea { flex: 1; background: white; border-radius: 12px; position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        #blocklyDiv { position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 12px; }
 
-        #stage-area { width: 400px; display: flex; flex-direction: column; gap: 10px; }
+        #side-panel { width: 350px; display: flex; flex-direction: column; gap: 10px; }
+        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         
-        /* --- 控制面板 --- */
-        .panel { background: white; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .stage-view { flex: 1; display: flex; flex-direction: column; }
-        #console-output { flex: 1; background: #f8f9fa; border-radius: 10px; padding: 15px; font-family: monospace; overflow-y: auto; font-size: 14px; border: 1px solid #eee; }
-
-        /* --- 按鈕樣式 --- */
-        .btn { border: none; padding: 10px 18px; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        .btn-run { background: var(--success); color: white; }
+        /* 按鈕樣式 */
+        .btn { border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; justify-content: center; }
+        .btn-run { background: var(--success); color: white; width: 100%; font-size: 1.1rem; }
         .btn-save { background: var(--primary); color: white; }
         .btn-remix { background: var(--warning); color: #856404; }
-        .btn-ghost { background: #eee; color: #555; }
-        
-        .publish-tag { font-size: 12px; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.1); }
+        .btn-ghost { background: #f0f0f0; color: #555; font-size: 12px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        #console-output { height: 200px; background: #263238; color: #80CBC4; padding: 12px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; overflow-y: auto; white-space: pre-wrap; }
+        .publish-status { font-size: 12px; display: flex; align-items: center; gap: 5px; }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="nav-left">
-        <div class="logo" onclick="location.href='main.html'">🧩 CREATIVE BLOCKS</div>
-        <input type="text" id="project-title-input" placeholder="作品標題">
-        <span id="save-status" style="font-size: 12px; opacity: 0.8;"></span>
+        <div class="logo" onclick="location.href='main.html'">🧩 CREATIVE</div>
+        <input type="text" id="project-title-input" placeholder="未命名作品">
     </div>
     <div class="nav-right">
-        <div id="publish-ui" style="display: none; align-items: center; gap: 10px;">
-            <span id="status-text" class="publish-tag">草稿</span>
-            <button class="btn btn-ghost" style="padding: 5px 10px; font-size: 12px;" onclick="togglePublish()">發布/取消</button>
+        <div id="publish-area" style="display:none; align-items:center; gap:10px;">
+            <div class="publish-status"><span id="dot">○</span> <span id="status-text">草稿</span></div>
+            <button class="btn btn-ghost" onclick="togglePublish()">切換發布狀態</button>
         </div>
-        <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="location.href='profile.html'">
-            <img id="user-avatar" src="" style="width:32px; height:32px; border-radius:50%; border:2px solid white;">
-            <span id="user-email" style="font-size:14px; font-weight:bold;"></span>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <img id="u-avatar" style="width:30px; height:30px; border-radius:50%;">
+            <span id="u-name" style="font-size:12px;">載入中...</span>
         </div>
     </div>
 </nav>
 
-<div id="remix-banner">🌀 這是一個改編作品，點擊「改編 (Remix)」來儲存到你的帳號。</div>
+<div id="remix-banner">🌀 這是他人的作品，修改後請點擊「改編」以存入你的帳號。</div>
 
 <div id="main-layout">
     <div id="blocklyArea">
         <div id="blocklyDiv"></div>
     </div>
 
-    <div id="stage-area">
-        <div class="panel" style="display: flex; gap: 10px;">
-            <button class="btn btn-run" onclick="runCode()">🚩 執行</button>
-            <button class="btn btn-ghost" onclick="resetStage()">🛑 停止</button>
-            <div style="flex:1"></div>
-            <button id="main-action-btn" class="btn btn-save">☁️ 儲存作品</button>
+    <div id="side-panel">
+        <div class="card">
+            <button class="btn btn-run" onclick="runJS()">🚩 執行程式</button>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button id="main-action-btn" class="btn btn-save" style="flex:1">☁️ 儲存作品</button>
+                <button class="btn btn-ghost" onclick="resetWorkspace()">🛑 重置</button>
+            </div>
         </div>
 
-        <div class="panel stage-view">
-            <div style="margin-bottom:10px; font-weight:bold; color:#666; font-size:13px; display:flex; justify-content:space-between;">
-                <span>輸出控制台</span>
-                <span onclick="document.getElementById('console-output').innerHTML=''" style="cursor:pointer; font-weight:normal;">清空</span>
-            </div>
-            <div id="console-output">準備就緒...</div>
-            <div id="remix-origin-info" style="font-size:11px; color:#aaa; margin-top:10px; display:none;"></div>
+        <div class="card" style="flex:1; display:flex; flex-direction:column;">
+            <div style="font-weight:bold; margin-bottom:8px; font-size:13px; color:#666;">輸出控制台</div>
+            <div id="console-output">等待執行...</div>
         </div>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <button class="btn btn-ghost" onclick="downloadXML()">💾 導出 XML</button>
-            <button class="btn btn-ghost" onclick="location.href='projects.html'">📁 作品集</button>
+
+        <div class="card">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                <button class="btn btn-ghost" onclick="exportXML()">💾 導出 XML</button>
+                <button class="btn btn-ghost" onclick="document.getElementById('file-input').click()">📥 導入 XML</button>
+                <input type="file" id="file-input" style="display:none" accept=".xml" onchange="importXML(this)">
+                
+                <button class="btn btn-ghost" onclick="location.href='projects.html'" style="grid-column: span 2;">📁 返回作品集</button>
+            </div>
+            <div id="remix-info" style="font-size:11px; color:#aaa; margin-top:10px; text-align:center; display:none;"></div>
         </div>
     </div>
 </div>
@@ -134,6 +113,7 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // 使用你 firebase-config.js 裡的配置
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
         authDomain: "chat-52c0d.firebaseapp.com",
@@ -147,86 +127,86 @@
 
     let isOwner = true;
     let currentPid = new URLSearchParams(window.location.search).get('load');
-    let fromUid = new URLSearchParams(window.location.search).get('from');
+    let authorId = new URLSearchParams(window.location.search).get('from');
 
+    // 初始化 Blockly
     const workspace = Blockly.inject('blocklyDiv', {
         toolbox: document.getElementById('toolbox'),
         media: 'https://unpkg.com/blockly/media/',
-        zoom: { controls: true, wheel: true }
+        zoom: { controls: true, wheel: true, startScale: 1.0 }
     });
 
+    // 身份驗證與資料載入
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = 'login.html'; return; }
         
-        document.getElementById('user-email').innerText = user.email.split('@')[0];
-        document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+        document.getElementById('u-name').innerText = user.email.split('@')[0];
+        document.getElementById('u-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
 
-        if (currentPid && fromUid) {
-            isOwner = (user.uid === fromUid);
-            const docRef = doc(db, "users", fromUid, "projects", currentPid);
-            const snap = await getDoc(docRef);
-
+        if (currentPid && authorId) {
+            isOwner = (user.uid === authorId);
+            const snap = await getDoc(doc(db, "users", authorId, "projects", currentPid));
+            
             if (snap.exists()) {
                 const data = snap.data();
+                // 載入積木
                 Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(data.data), workspace);
                 document.getElementById('project-title-input').value = data.name;
 
-                const mainBtn = document.getElementById('main-action-btn');
+                const actionBtn = document.getElementById('main-action-btn');
                 if (isOwner) {
-                    mainBtn.innerHTML = "☁️ 儲存變更";
-                    mainBtn.onclick = () => handleUpdate();
-                    document.getElementById('publish-ui').style.display = 'flex';
-                    syncPublishUI(data.isPublic);
+                    actionBtn.onclick = () => handleUpdate();
+                    document.getElementById('publish-area').style.display = 'flex';
+                    updateUIStatus(data.isPublic);
                 } else {
-                    mainBtn.innerHTML = "🌀 改編 (Remix)";
-                    mainBtn.className = "btn btn-remix";
-                    mainBtn.onclick = () => handleRemix(data);
+                    // Remix 模式
+                    actionBtn.innerText = "🌀 改編 (Remix)";
+                    actionBtn.className = "btn btn-remix";
+                    actionBtn.onclick = () => handleRemix(data);
                     document.getElementById('remix-banner').style.display = 'block';
-                    if(data.remixFrom) {
-                        const info = document.getElementById('remix-origin-info');
-                        info.innerText = `此作品原創自: ${data.authorEmail}`;
+                    if (data.authorEmail) {
+                        const info = document.getElementById('remix-info');
+                        info.innerText = `原創作者: ${data.authorEmail}`;
                         info.style.display = 'block';
                     }
                 }
             }
         } else {
-            // 新作品模式
+            // 新增作品模式
             document.getElementById('main-action-btn').onclick = () => handleCreate();
         }
     });
 
-    // 1. 本人更新作品
+    // --- 核心功能：雲端操作 ---
+
     async function handleUpdate() {
-        const title = document.getElementById('project-title-input').value;
+        const title = document.getElementById('project-title-input').value || "未命名";
         const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         await updateDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid), {
             name: title, data: xml, updatedAt: serverTimestamp()
         });
-        alert("儲存成功！");
+        alert("✅ 已儲存變更");
     }
 
-    // 2. 訪客改編作品 (Remix)
     async function handleRemix(oldData) {
-        if(!confirm("確定要將此作品改編並存入你的作品集嗎？")) return;
+        if(!confirm("要將此作品複製到你的帳號下嗎？")) return;
         const title = document.getElementById('project-title-input').value;
         const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         
         const newDoc = await addDoc(collection(db, "users", auth.currentUser.uid, "projects"), {
-            name: title + " (Remix)",
+            name: title + " (改編)",
             data: xml,
             authorEmail: auth.currentUser.email,
             isPublic: false,
-            remixFrom: oldData.authorEmail,
+            remixFrom: oldData.authorEmail || "未知",
             createdAt: serverTimestamp()
         });
-        
-        alert("改編成功！正在跳轉到你的新作品...");
+        alert("🎉 改編成功！已存入你的作品集。");
         location.href = `page.html?load=${newDoc.id}&from=${auth.currentUser.uid}`;
     }
 
-    // 3. 建立全新作品
     async function handleCreate() {
-        const title = document.getElementById('project-title-input').value || "未命名作品";
+        const title = document.getElementById('project-title-input').value || "新作品";
         const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         const newDoc = await addDoc(collection(db, "users", auth.currentUser.uid, "projects"), {
             name: title, data: xml, authorEmail: auth.currentUser.email,
@@ -235,36 +215,65 @@
         location.href = `page.html?load=${newDoc.id}&from=${auth.currentUser.uid}`;
     }
 
-    // 發布切換
-    window.togglePublish = async () => {
-        const snap = await getDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid));
-        const newState = !snap.data().isPublic;
-        await updateDoc(doc(db, "users", auth.currentUser.uid, "projects", currentPid), { isPublic: newState });
-        syncPublishUI(newState);
+    // --- 核心功能：導入/導出 ---
+
+    window.exportXML = () => {
+        const title = document.getElementById('project-title-input').value || "project";
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        const blob = new Blob([xml], {type: 'text/xml'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = title + ".xml";
+        a.click();
     };
 
-    function syncPublishUI(isPublic) {
-        const tag = document.getElementById('status-text');
-        tag.innerText = isPublic ? "已發布" : "草稿";
-        tag.style.background = isPublic ? "#4AF2A1" : "#eee";
-    }
+    window.importXML = (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                workspace.clear();
+                const xmlDom = Blockly.utils.xml.textToDom(e.target.result);
+                Blockly.Xml.domToWorkspace(xmlDom, workspace);
+                alert("📥 本地檔案已成功導入工作區");
+            } catch (err) { alert("❌ 檔案格式錯誤"); }
+        };
+        reader.readAsText(file);
+        input.value = ""; // 重置 input
+    };
 
-    window.runCode = () => {
+    // --- 其他 UI 控制 ---
+
+    window.runJS = () => {
         const code = Blockly.JavaScript.workspaceToCode(workspace);
         const out = document.getElementById('console-output');
         out.innerHTML = "";
         try {
-            eval(code); 
-        } catch (e) { out.innerHTML += `<span style="color:red">錯誤: ${e}</span>`; }
+            // 將原本的 window.alert 重新導向到控制台
+            const originalAlert = window.alert;
+            window.alert = (msg) => { out.innerHTML += `> ${msg}\n`; };
+            eval(code);
+            window.alert = originalAlert; // 跑完還原
+        } catch (e) { out.innerHTML += `<span style="color:#FF5252">執行錯誤: ${e}</span>`; }
     };
-    
-    window.downloadXML = () => {
-        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-        const link = document.createElement('a');
-        link.href = 'data:text/xml;charset=utf-8,' + encodeURIComponent(xml);
-        link.download = 'project.xml';
-        link.click();
+
+    window.togglePublish = async () => {
+        const ref = doc(db, "users", auth.currentUser.uid, "projects", currentPid);
+        const snap = await getDoc(ref);
+        const newState = !snap.data().isPublic;
+        await updateDoc(ref, { isPublic: newState });
+        updateUIStatus(newState);
     };
+
+    function updateUIStatus(isPublic) {
+        document.getElementById('dot').innerText = isPublic ? "●" : "○";
+        document.getElementById('dot').style.color = isPublic ? "#4AF2A1" : "#bbb";
+        document.getElementById('status-text').innerText = isPublic ? "已發布" : "草稿";
+    }
+
+    window.resetWorkspace = () => { if(confirm("確定要清空工作區嗎？")) workspace.clear(); };
+    window.addEventListener('resize', () => Blockly.svgResize(workspace));
 </script>
 
 </body>
