@@ -142,12 +142,16 @@
         if (!user) { location.href = 'login.html'; return; }
         currentUser = user;
         
-        // 記錄/更新使用者，以便他人透過 Email 搜尋
-        await setDoc(doc(db, "users", user.uid), {
-            email: user.email,
-            uid: user.uid,
-            lastSeen: serverTimestamp()
-        }, { merge: true });
+        try {
+            // 記錄/更新使用者，以便他人透過 Email 搜尋
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email || "",
+                uid: user.uid,
+                lastSeen: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.warn("無法更新線上狀態（可能是權限問題，但不影響使用）", e);
+        }
 
         loadChats();
     });
@@ -178,11 +182,11 @@
             });
 
             chats.forEach(chat => {
-                let displayName = chat.name;
+                let displayName = chat.name || "未命名";
                 let icon = '👥';
                 if (chat.type === 'private') {
                     icon = '👤';
-                    displayName = chat.participantEmails.find(e => e !== currentUser.email) || "未知使用者";
+                    displayName = (chat.participantEmails || []).find(e => e !== currentUser.email) || "未知使用者";
                     displayName = displayName.split('@')[0];
                 }
 
@@ -231,12 +235,12 @@
             snapshot.forEach(docSnap => {
                 const msg = docSnap.data();
                 const isMe = msg.senderId === currentUser.uid;
-                const senderName = isMe ? "我" : msg.senderEmail.split('@')[0];
+                const senderName = isMe ? "我" : (msg.senderEmail || "未知").split('@')[0];
                 
                 html += `
                     <div class="message-row ${isMe ? 'me' : 'others'}">
-                        ${!isMe ? \`<div class="message-sender">\${senderName}</div>\` : ''}
-                        <div class="message-bubble">\${msg.text}</div>
+                        ${!isMe ? `<div class="message-sender">${senderName}</div>` : ''}
+                        <div class="message-bubble">${msg.text}</div>
                     </div>
                 `;
             });
@@ -327,16 +331,15 @@
                 }
                 const targetUid = userSnap.docs[0].id;
 
-                // 檢查是否已有現存對話 (前端檢查)
+                // 檢查是否已有現存對話 (前端檢查，避免依賴 Firebase 複合索引)
                 const chatQuery = query(collection(db, "chats"), 
-                    where("type", "==", "private"),
                     where("participants", "array-contains", currentUser.uid)
                 );
                 const chatSnap = await getDocs(chatQuery);
                 let existingChatId = null;
                 chatSnap.forEach(docSnap => {
                     const data = docSnap.data();
-                    if (data.participants.includes(targetUid)) {
+                    if (data.type === 'private' && data.participants.includes(targetUid)) {
                         existingChatId = docSnap.id;
                     }
                 });
