@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>聊天室 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
+            --scratch-orange: #FFAB19; --scratch-green: #4CB050; --bg-light: #F0F2F5;
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        /* 導覽列 */
+        nav { background: var(--scratch-blue); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); flex-shrink: 0; z-index: 10; }
+        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
+        .nav-links { display: flex; align-items: center; }
+        .nav-link { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; margin-left: 20px; }
+        .nav-link:hover { opacity: 1; }
+        
+        /* 聊天主容器 */
+        .chat-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* 左側列表區 */
+        .sidebar { width: 300px; background: white; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+        .sidebar-header h3 { margin: 0; font-size: 16px; color: #333; }
+        .action-btns { display: flex; gap: 5px; }
+        .btn-icon { background: var(--scratch-blue); color: white; border: none; border-radius: 5px; cursor: pointer; padding: 5px 8px; font-size: 12px; font-weight: bold; }
+        .btn-icon.group { background: var(--scratch-purple); }
+        
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { padding: 15px; border-bottom: 1px solid #f0f0f0; cursor: pointer; display: flex; flex-direction: column; transition: 0.2s; }
+        .chat-item:hover { background: #f9f9f9; }
+        .chat-item.active { background: #eef4ff; border-left: 4px solid var(--scratch-blue); }
+        .chat-name { font-weight: bold; color: #333; margin-bottom: 5px; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .chat-preview { font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* 右側對話區 */
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #fff; }
+        .chat-header { height: 60px; padding: 0 20px; border-bottom: 1px solid #ddd; display: flex; align-items: center; background: #fafafa; font-weight: bold; font-size: 18px; color: #333; box-shadow: 0 2px 5px rgba(0,0,0,0.02); z-index: 5; }
+        
+        .messages-area { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-light); display: flex; flex-direction: column; gap: 15px; }
+        .message-row { display: flex; flex-direction: column; max-width: 70%; }
+        .message-row.me { align-self: flex-end; align-items: flex-end; }
+        .message-row.others { align-self: flex-start; align-items: flex-start; }
+        
+        .message-sender { font-size: 11px; color: #999; margin-bottom: 2px; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
+        .message-row.me .message-bubble { background: var(--scratch-blue); color: white; border-bottom-right-radius: 4px; }
+        .message-row.others .message-bubble { background: white; color: #333; border: 1px solid #eee; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        /* 輸入區 */
+        .input-area { height: 70px; border-top: 1px solid #ddd; padding: 0 20px; display: flex; align-items: center; gap: 10px; background: white; }
+        .input-box { flex: 1; padding: 12px 20px; border: 1px solid #ccc; border-radius: 25px; font-size: 14px; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: var(--scratch-blue); }
+        .btn-send { background: var(--scratch-blue); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-send:hover { transform: scale(1.05); }
+        .btn-send:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; width: 350px; }
+        .modal-content h3 { margin-top: 0; color: #333; }
+        .modal-content input { width: 100%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-modal { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        
+        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; background: var(--bg-light); }
+        .empty-state i { font-size: 50px; margin-bottom: 10px; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
+    <div class="nav-links">
+        <a href="main.html" class="nav-link">探索</a>
+        <a href="dashboard.html" class="nav-link">班級</a>
+        <a href="projects.html" class="nav-link">作品</a>
+        <a href="chat.html" class="nav-link" style="color:var(--scratch-orange);">💬 聊天室</a>
+    </div>
+</nav>
+
+<div class="chat-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>💬 聊天室</h3>
+            <div class="action-btns">
+                <button class="btn-icon" onclick="openModal('private')">➕ 私訊</button>
+                <button class="btn-icon group" onclick="openModal('group')">👥 群聊</button>
+            </div>
+        </div>
+        <div class="chat-list" id="chat-list">
+            <div style="padding:20px; text-align:center; color:#999; font-size:13px;">讀取中...</div>
+        </div>
+    </div>
+    
+    <div class="chat-main" id="chat-main">
+        <div class="empty-state">
+            <i>💬</i>
+            <p>選擇或發起一個對話開始聊天吧！</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modal-title">新增</h3>
+        <input type="text" id="modal-input" placeholder="...">
+        <div class="modal-actions">
+            <button class="btn-modal" style="background:#eee; color:#333;" onclick="closeModal()">取消</button>
+            <button class="btn-modal" style="background:var(--scratch-blue); color:white;" onclick="submitModal()" id="modal-submit">確認</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let currentChatId = null;
+    let unsubscribeMessages = null;
+    let modalMode = ''; // 'private' or 'group'
+
+    // 1. 確認登入狀態並確保 User 存在目錄中
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { location.href = 'login.html'; return; }
+        currentUser = user;
+        
+        // 記錄/更新使用者，以便他人透過 Email 搜尋
+        await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            uid: user.uid,
+            lastSeen: serverTimestamp()
+        }, { merge: true });
+
+        loadChats();
+    });
+
+    // 2. 監聽並渲染聊天室列表
+    function loadChats() {
+        const q = query(
+            collection(db, "chats"),
+            where("participants", "array-contains", currentUser.uid)
+        );
+
+        onSnapshot(q, (snapshot) => {
+            const listDiv = document.getElementById('chat-list');
+            listDiv.innerHTML = '';
+            
+            if (snapshot.empty) {
+                listDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#999; font-size:13px;">目前還沒有對話紀錄</div>';
+                return;
+            }
+
+            // 在前端進行排序，避免需要 Firebase 建立複合索引 (Composite Index)
+            const chats = [];
+            snapshot.forEach(docSnap => chats.push({ id: docSnap.id, ...docSnap.data() }));
+            chats.sort((a, b) => {
+                const t1 = a.updatedAt ? a.updatedAt.toMillis() : 0;
+                const t2 = b.updatedAt ? b.updatedAt.toMillis() : 0;
+                return t2 - t1;
+            });
+
+            chats.forEach(chat => {
+                let displayName = chat.name;
+                let icon = '👥';
+                if (chat.type === 'private') {
+                    icon = '👤';
+                    displayName = chat.participantEmails.find(e => e !== currentUser.email) || "未知使用者";
+                    displayName = displayName.split('@')[0];
+                }
+
+                const item = document.createElement('div');
+                item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
+                item.onclick = () => openChat(chat.id, displayName, icon);
+                
+                const timeStr = chat.updatedAt ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+
+                item.innerHTML = `
+                    <div class="chat-name">${icon} ${displayName} <span style="margin-left:auto; font-size:10px; color:#aaa; font-weight:normal;">${timeStr}</span></div>
+                    <div class="chat-preview">${chat.lastMessage || '開始聊天吧！'}</div>
+                `;
+                listDiv.appendChild(item);
+            });
+        });
+    }
+
+    // 3. 開啟特定聊天室
+    window.openChat = (chatId, chatName, icon) => {
+        currentChatId = chatId;
+        
+        // 更新樣式
+        document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+        
+        const mainDiv = document.getElementById('chat-main');
+        mainDiv.innerHTML = `
+            <div class="chat-header">${icon} ${chatName}</div>
+            <div class="messages-area" id="messages-area"></div>
+            <div class="input-area">
+                <input type="text" id="msg-input" class="input-box" placeholder="輸入訊息... (按 Enter 發送)" onkeypress="if(event.key==='Enter') sendMessage()">
+                <button class="btn-send" id="btn-send" onclick="sendMessage()">➤</button>
+            </div>
+        `;
+
+        if (unsubscribeMessages) unsubscribeMessages();
+
+        const q = query(
+            collection(db, "chats", chatId, "messages"),
+            orderBy("createdAt", "asc")
+        );
+
+        unsubscribeMessages = onSnapshot(q, (snapshot) => {
+            const msgArea = document.getElementById('messages-area');
+            let html = '';
+            snapshot.forEach(docSnap => {
+                const msg = docSnap.data();
+                const isMe = msg.senderId === currentUser.uid;
+                const senderName = isMe ? "我" : msg.senderEmail.split('@')[0];
+                
+                html += `
+                    <div class="message-row ${isMe ? 'me' : 'others'}">
+                        ${!isMe ? \`<div class="message-sender">\${senderName}</div>\` : ''}
+                        <div class="message-bubble">\${msg.text}</div>
+                    </div>
+                `;
+            });
+            msgArea.innerHTML = html;
+            msgArea.scrollTop = msgArea.scrollHeight;
+        });
+        
+        setTimeout(() => document.getElementById('msg-input').focus(), 100);
+    };
+
+    // 4. 傳送訊息
+    window.sendMessage = async () => {
+        if (!currentChatId) return;
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        input.disabled = true;
+        document.getElementById('btn-send').disabled = true;
+
+        try {
+            await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                senderId: currentUser.uid,
+                senderEmail: currentUser.email,
+                text: text,
+                createdAt: serverTimestamp()
+            });
+
+            await updateDoc(doc(db, "chats", currentChatId), {
+                lastMessage: text,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            alert("傳送失敗: " + e.message);
+        } finally {
+            input.disabled = false;
+            document.getElementById('btn-send').disabled = false;
+            input.focus();
+        }
+    };
+
+    // 5. Modal 控制邏輯
+    window.openModal = (mode) => {
+        modalMode = mode;
+        const modal = document.getElementById('modal');
+        const title = document.getElementById('modal-title');
+        const input = document.getElementById('modal-input');
+        
+        if (mode === 'private') {
+            title.innerText = '發起私訊';
+            input.placeholder = '請輸入對方的註冊 Email';
+        } else {
+            title.innerText = '建立群聊';
+            input.placeholder = '請為群組取個名稱';
+        }
+        
+        input.value = '';
+        modal.style.display = 'flex';
+        input.focus();
+    };
+
+    window.closeModal = () => document.getElementById('modal').style.display = 'none';
+
+    window.submitModal = async () => {
+        const inputVal = document.getElementById('modal-input').value.trim();
+        if (!inputVal) return;
+        
+        const btn = document.getElementById('modal-submit');
+        btn.disabled = true;
+        btn.innerText = "請稍候...";
+
+        try {
+            if (modalMode === 'private') {
+                const targetEmail = inputVal.toLowerCase();
+                if (targetEmail === currentUser.email.toLowerCase()) {
+                    alert("不能跟自己發私訊喔！");
+                    throw new Error("Self chat");
+                }
+
+                // 透過 Email 尋找使用者 UID
+                const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
+                const userSnap = await getDocs(userQuery);
+                
+                if (userSnap.empty) {
+                    alert("找不到此 Email 的聯絡人！對方可能尚未登入過聊天室。");
+                    throw new Error("User not found");
+                }
+                const targetUid = userSnap.docs[0].id;
+
+                // 檢查是否已有現存對話 (前端檢查)
+                const chatQuery = query(collection(db, "chats"), 
+                    where("type", "==", "private"),
+                    where("participants", "array-contains", currentUser.uid)
+                );
+                const chatSnap = await getDocs(chatQuery);
+                let existingChatId = null;
+                chatSnap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.participants.includes(targetUid)) {
+                        existingChatId = docSnap.id;
+                    }
+                });
+
+                if (existingChatId) {
+                    openChat(existingChatId, targetEmail.split('@')[0], '👤');
+                } else {
+                    const newChat = await addDoc(collection(db, "chats"), {
+                        type: 'private',
+                        participants: [currentUser.uid, targetUid],
+                        participantEmails: [currentUser.email, targetEmail],
+                        name: '',
+                        lastMessage: '新對話',
+                        updatedAt: serverTimestamp()
+                    });
+                    openChat(newChat.id, targetEmail.split('@')[0], '👤');
+                }
+                
+            } else if (modalMode === 'group') {
+                const newChat = await addDoc(collection(db, "chats"), {
+                    type: 'group',
+                    participants: [currentUser.uid],
+                    name: inputVal,
+                    lastMessage: '群組已建立',
+                    updatedAt: serverTimestamp()
+                });
+                openChat(newChat.id, inputVal, '👥');
+            }
+            closeModal();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "確認";
+        }
+    };
+</script>
+
+</body>
+</html>
