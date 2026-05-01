@@ -174,7 +174,16 @@
         <block type="text_append"></block>
         <block type="text_length"></block>
         <block type="text_print"></block>
-        <block type="text_prompt_ext"></block>
+    </category>
+    <category name="偵測 (Sensing)" colour="#5CB1D6">
+        <block type="scratch_ask">
+            <value name="QUESTION">
+                <shadow type="text">
+                    <field name="TEXT">你的名字是什麼？</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="scratch_answer"></block>
     </category>
     <category name="清單 (Lists)" colour="#745CA6">
         <block type="lists_create_with"></block>
@@ -234,6 +243,35 @@
     let currentPid = new URLSearchParams(window.location.search).get('load');
     let authorUid = new URLSearchParams(window.location.search).get('from');
     let isOwner = true;
+
+    // --- 定義自訂偵測 (Sensing) 積木 ---
+    Blockly.Blocks['scratch_ask'] = {
+        init: function() {
+            this.appendValueInput("QUESTION").setCheck("String").appendField("詢問");
+            this.appendDummyInput().appendField("並等待");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#5CB1D6');
+            this.setTooltip("顯示提示框並等待使用者輸入");
+        }
+    };
+    Blockly.JavaScript['scratch_ask'] = function(block) {
+        var question = Blockly.JavaScript.valueToCode(block, 'QUESTION', Blockly.JavaScript.ORDER_ATOMIC) || "''";
+        return `window._scratchAnswer = window.prompt(${question}) || '';\n`;
+    };
+
+    Blockly.Blocks['scratch_answer'] = {
+        init: function() {
+            this.appendDummyInput().appendField("回覆");
+            this.setOutput(true, "String");
+            this.setColour('#5CB1D6');
+            this.setTooltip("取得最近一次詢問的回覆內容");
+        }
+    };
+    Blockly.JavaScript['scratch_answer'] = function(block) {
+        return ['window._scratchAnswer || ""', Blockly.JavaScript.ORDER_ATOMIC];
+    };
 
     // --- 定義自訂畫布積木 ---
     Blockly.Blocks['canvas_init'] = {
