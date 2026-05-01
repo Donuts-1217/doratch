@@ -125,7 +125,8 @@
             <h3>💬 聊天室</h3>
             <div class="action-btns">
                 <button class="btn-icon" onclick="openModal('private')">➕ 私訊</button>
-                <button class="btn-icon group" onclick="openModal('group')">👥 群聊</button>
+                <button class="btn-icon" style="background:#5865F2;" onclick="openModal('group')">👥 群聊</button>
+                <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 建立伺服器</button>
             </div>
         </div>
         <div class="chat-list" id="chat-list">
@@ -163,7 +164,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -269,11 +270,13 @@
     }
 
     let currentChatTeacherId = null;
+    let currentChatType = null;
 
     // 3. 開啟特定聊天室
     window.openChat = (chatId, chatName, icon, chatType, teacherId) => {
         currentChatId = chatId;
         currentChatTeacherId = teacherId;
+        currentChatType = chatType;
         
         // 更新樣式
         document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
@@ -325,7 +328,8 @@
             
             const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
             const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
-            const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 老師</span>` : '';
+            const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
+            const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
             
             let contentHtml = '';
             if (msg.type === 'file') {
@@ -376,6 +380,23 @@
         setTimeout(() => document.getElementById('msg-input').focus(), 100);
     };
 
+    // 私訊滿 300 條清理機制
+    async function trimPrivateMessages(chatId) {
+        if (currentChatType !== 'private') return;
+        try {
+            const msgsQuery = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+            const msgsSnap = await getDocs(msgsQuery);
+            if (msgsSnap.size > 300) {
+                const deleteCount = msgsSnap.size - 300;
+                for (let i = 0; i < deleteCount; i++) {
+                    await deleteDoc(msgsSnap.docs[i].ref);
+                }
+            }
+        } catch (e) {
+            console.error("清理舊訊息失敗:", e);
+        }
+    }
+
     // 4. 傳送文字訊息
     window.sendMessage = async () => {
         if (!currentChatId) return;
@@ -399,6 +420,8 @@
                 lastMessage: text,
                 updatedAt: serverTimestamp()
             });
+            
+            trimPrivateMessages(currentChatId);
         } catch (e) {
             alert("傳送失敗: " + e.message);
         } finally {
@@ -434,6 +457,8 @@
                     lastMessage: "📁 傳送了檔案",
                     updatedAt: serverTimestamp()
                 });
+                
+                trimPrivateMessages(currentChatId);
             } catch(err) {
                 alert("檔案傳送失敗：" + err.message);
             }
@@ -455,6 +480,18 @@
         URL.revokeObjectURL(url);
     };
 
+    // 檢查群組數量限制 (最多 20 個)
+    async function checkGroupLimit() {
+        const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+        const snap = await getDocs(q);
+        let count = 0;
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.type === 'group' || data.type === 'server') count++;
+        });
+        return count;
+    }
+
     // 5. Modal 控制邏輯
     window.openModal = (mode) => {
         modalMode = mode;
@@ -468,8 +505,11 @@
         } else if (mode === 'group') {
             title.innerText = '建立群聊';
             input.placeholder = '請為群組取個名稱';
+        } else if (mode === 'server') {
+            title.innerText = '建立伺服器';
+            input.placeholder = '請為伺服器取個名稱';
         } else if (mode === 'invite') {
-            title.innerText = '邀請成員加入群組';
+            title.innerText = '邀請成員加入';
             input.placeholder = '請輸入要邀請的 Email';
         }
         
@@ -489,6 +529,15 @@
         btn.innerText = "請稍候...";
 
         try {
+            if (modalMode === 'group' || modalMode === 'server') {
+                const groupCount = await checkGroupLimit();
+                if (groupCount >= 20) {
+                    alert("您最多只能加入 20 個群組或伺服器！");
+                    closeModal();
+                    return;
+                }
+            }
+
             if (modalMode === 'private') {
                 const targetEmail = inputVal.toLowerCase();
                 const currentEmail = currentUser.email || "";
@@ -507,7 +556,7 @@
                 }
                 const targetUid = userSnap.docs[0].id;
 
-                // 檢查是否已有現存對話 (前端檢查，避免依賴 Firebase 複合索引)
+                // 檢查是否已有現存對話
                 const chatQuery = query(collection(db, "chats"), 
                     where("participants", "array-contains", currentUser.uid)
                 );
@@ -521,7 +570,7 @@
                 });
 
                 if (existingChatId) {
-                    openChat(existingChatId, targetEmail.split('@')[0], '👤', 'private');
+                    openChat(existingChatId, targetEmail.split('@')[0], '👤', 'private', null);
                 } else {
                     const newChat = await addDoc(collection(db, "chats"), {
                         type: 'private',
@@ -531,18 +580,19 @@
                         lastMessage: '新對話',
                         updatedAt: serverTimestamp()
                     });
-                    openChat(newChat.id, targetEmail.split('@')[0], '👤', 'private');
+                    openChat(newChat.id, targetEmail.split('@')[0], '👤', 'private', null);
                 }
                 
-            } else if (modalMode === 'group') {
+            } else if (modalMode === 'group' || modalMode === 'server') {
                 const newChat = await addDoc(collection(db, "chats"), {
-                    type: 'group',
+                    type: modalMode,
                     participants: [currentUser.uid],
+                    teacherId: currentUser.uid,
                     name: inputVal,
-                    lastMessage: '群組已建立',
+                    lastMessage: modalMode === 'server' ? '伺服器已建立' : '群組已建立',
                     updatedAt: serverTimestamp()
                 });
-                openChat(newChat.id, inputVal, '👥', 'group');
+                openChat(newChat.id, inputVal, modalMode === 'server' ? '🏫' : '👥', modalMode, currentUser.uid);
             } else if (modalMode === 'invite') {
                 const targetEmail = inputVal.toLowerCase();
                 const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
@@ -564,7 +614,7 @@
             closeModal();
         } catch (e) {
             console.error(e);
-            if (e.message !== "User not found" && e.message !== "Self chat") {
+            if (e && e.message !== "User not found" && e.message !== "Self chat") {
                 alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
             }
         } finally {

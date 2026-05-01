@@ -155,22 +155,41 @@
         } catch (e) { alert("刪除失敗"); }
     };
 
+    // 檢查群組數量限制 (最多 20 個)
+    async function checkGroupLimit() {
+        const q = query(collection(db, "chats"), where("participants", "array-contains", auth.currentUser.uid));
+        const snap = await getDocs(q);
+        let count = 0;
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.type === 'group' || data.type === 'server') count++;
+        });
+        return count;
+    }
+
     // 建立邏輯
     window.createClass = async () => {
         const name = document.getElementById('create-name').value.trim();
         if (!name) return;
-        const code = "C" + Math.random().toString(36).substr(2, 5).toUpperCase();
+        
         try {
+            const groupCount = await checkGroupLimit();
+            if (groupCount >= 20) {
+                alert("建立失敗：您最多只能加入 20 個群組或伺服器！");
+                return;
+            }
+
+            const code = "C" + Math.random().toString(36).substr(2, 5).toUpperCase();
             await setDoc(doc(db, "classes", code), {
                 className: name, teacherId: auth.currentUser.uid,
                 teacherEmail: auth.currentUser.email, students: [], createdAt: new Date()
             });
             await setDoc(doc(db, "chats", code), {
-                type: 'server',
+                type: 'group',
                 name: name,
                 teacherId: auth.currentUser.uid,
                 participants: [auth.currentUser.uid],
-                lastMessage: '伺服器已建立',
+                lastMessage: '班級群組已建立',
                 updatedAt: serverTimestamp()
             });
             location.reload();
@@ -184,11 +203,17 @@
         const snap = await getDoc(ref);
         if (snap.exists()) {
             try {
+                const groupCount = await checkGroupLimit();
+                if (groupCount >= 20) {
+                    alert("加入失敗：您最多只能加入 20 個群組或伺服器！");
+                    return;
+                }
+
                 await updateDoc(ref, { students: arrayUnion(auth.currentUser.uid) });
                 await updateDoc(doc(db, "chats", code), { 
                     participants: arrayUnion(auth.currentUser.uid) 
                 });
-                alert("成功加入班級與專屬伺服器！");
+                alert("成功加入班級與專屬群組！");
                 location.reload();
             } catch(e) { alert("加入失敗：" + e.message); }
         } else { alert("查無此代碼"); }
