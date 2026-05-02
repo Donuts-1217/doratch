@@ -106,13 +106,8 @@
             <input type="text" id="q-options" placeholder="2, 3, 4, 5">
         </div>
         <div class="form-group">
-            <label>正確答案是哪一個？</label>
-            <select id="q-answer">
-                <option value="0">第 1 個選項</option>
-                <option value="1">第 2 個選項</option>
-                <option value="2">第 3 個選項</option>
-                <option value="3">第 4 個選項</option>
-            </select>
+            <label>正確答案是第幾個？</label>
+            <input type="number" id="q-answer" value="1" min="1" placeholder="填寫序號，例如 1 代表第一個選項">
         </div>
         <div class="form-group">
             <label>難度</label>
@@ -234,11 +229,18 @@
     window.closeQModal = () => document.getElementById('q-modal').style.display = 'none';
 
     window.saveQuestion = async () => {
+        const text = document.getElementById('q-text').value;
+        const optionsStr = document.getElementById('q-options').value;
+        const ansIdx = parseInt(document.getElementById('q-answer').value) - 1; // 轉為 0-indexed
+        const diff = parseInt(document.getElementById('q-diff').value);
+
+        if(!text || !optionsStr || isNaN(ansIdx)) return alert("請填寫完整題目資訊！");
+
         const q = {
-            text: document.getElementById('q-text').value,
-            options: document.getElementById('q-options').value.split(',').map(s => s.trim()),
-            answer: parseInt(document.getElementById('q-answer').value),
-            diff: parseInt(document.getElementById('q-diff').value),
+            text: text,
+            options: optionsStr.split(',').map(s => s.trim()).filter(s => s !== ""),
+            answer: ansIdx,
+            diff: diff,
             author: auth.currentUser.uid
         };
         await addDoc(collection(db, "questions"), q);
