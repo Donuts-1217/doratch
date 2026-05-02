@@ -8,6 +8,7 @@
         :root { 
             --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
             --scratch-orange: #FFAB19; --scratch-green: #4CB050; 
+            --danger: #FF4D4D;
         }
         body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
         
@@ -15,35 +16,36 @@
         .btn-back { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; }
         .btn-back:hover { opacity: 1; }
 
-        /* Classroom 橫幅 */
         .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
         .class-banner { 
             background: linear-gradient(135deg, #4C97FF, #855CD6); 
-            height: 200px; border-radius: 12px; padding: 30px; 
+            height: 180px; border-radius: 12px; padding: 30px; 
             color: white; display: flex; flex-direction: column; justify-content: flex-end;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative;
         }
         .class-banner h1 { margin: 0; font-size: 2.2rem; }
         .class-banner p { margin: 5px 0 0 0; opacity: 0.9; font-size: 1.1rem; }
 
-        /* 分頁切換 */
         .tabs { display: flex; border-bottom: 1px solid #ddd; margin-top: 10px; background: white; border-radius: 8px 8px 0 0; }
-        .tab { padding: 15px 30px; cursor: pointer; font-weight: bold; color: #5f6368; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .tab { padding: 15px 25px; cursor: pointer; font-weight: bold; color: #5f6368; border-bottom: 3px solid transparent; transition: 0.2s; }
         .tab:hover { background: #f8f9fa; color: var(--scratch-blue); }
         .tab.active { color: var(--scratch-blue); border-bottom-color: var(--scratch-blue); }
 
-        .content-section { display: none; padding: 30px 0; }
+        .content-section { display: none; padding: 30px 0; min-height: 400px; }
         .content-section.active { display: block; }
 
-        /* 區塊卡片 */
-        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; color: #3c4043; }
+        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; color: #3c4043; display: flex; align-items: center; justify-content: space-between; }
 
-        /* 成員列表 */
-        .member-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
-        .member-avatar { width: 36px; height: 36px; border-radius: 50%; margin-right: 15px; }
-        .member-name { font-weight: 500; color: #3c4043; }
-        .role-badge { margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #e8f0fe; color: #1967d2; font-weight: bold; }
+        /* 作業列表樣式 */
+        .assignment-item { display: flex; align-items: center; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 15px; transition: 0.2s; background: white; }
+        .assignment-item:hover { border-color: var(--scratch-blue); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .assignment-icon { width: 45px; height: 45px; background: #e8f0fe; color: #1967d2; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 20px; }
+        .assignment-info { flex: 1; }
+        .assignment-title { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+        .assignment-due { font-size: 12px; color: #888; }
+        .btn-view { padding: 8px 16px; border-radius: 6px; background: #f1f3f4; color: #3c4043; font-weight: bold; cursor: pointer; border: none; }
+        .btn-view:hover { background: #e8eaed; }
 
         /* 作品牆 */
         .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
@@ -52,10 +54,18 @@
         .project-thumb { height: 120px; background: #f0f7ff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
         .project-info { padding: 12px; }
         .project-name { font-weight: bold; font-size: 14px; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .project-author { font-size: 12px; color: #666; display: flex; align-items: center; gap: 5px; }
 
-        .btn-action { display: inline-block; background: var(--scratch-blue); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: 0.2s; }
-        .btn-action:hover { background: var(--scratch-purple); transform: scale(1.02); }
+        /* 繳交列表樣式 (老師看) */
+        .sub-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .btn-publish { margin-left: auto; padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; font-size: 12px; cursor: pointer; transition: 0.2s; }
+        .btn-publish.active { background: var(--scratch-green); color: white; border-color: var(--scratch-green); }
+
+        /* Modal 樣式 */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 400px; max-height: 80vh; overflow-y: auto; }
+        .modal-content h3 { margin-top: 0; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
+        .btn-confirm { width: 100%; padding: 12px; background: var(--scratch-blue); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
         .loading { text-align: center; padding: 50px; color: #999; }
     </style>
@@ -75,7 +85,8 @@
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('stream')">動態</div>
-        <div class="tab" onclick="switchTab('projects')">班級作品</div>
+        <div class="tab" onclick="switchTab('classwork')">課堂作業</div>
+        <div class="tab" onclick="switchTab('projects')">班級牆 (推薦作品)</div>
         <div class="tab" onclick="switchTab('people')">成員</div>
     </div>
 
@@ -83,18 +94,27 @@
     <div id="section-stream" class="content-section active">
         <div class="card">
             <h3>班級資訊</h3>
-            <div id="stream-info">
-                <p id="class-code-display" style="font-size: 1.2rem; font-weight: bold; color: var(--scratch-orange);"></p>
-                <p>歡迎來到本班級！這裡您可以與老師及同學交流、分享您的創意積木作品。</p>
-                <a id="btn-go-chat" href="#" class="btn-action">💬 開啟班級聊天室</a>
-            </div>
+            <p id="class-code-display" style="font-size: 1.2rem; font-weight: bold; color: var(--scratch-orange);"></p>
+            <p>歡迎來到本班級！請在「課堂作業」中查看並繳交老師出的題目。</p>
+            <a id="btn-go-chat" href="#" class="btn-action" style="display:inline-block; background:var(--scratch-blue); color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:bold;">💬 開啟班級聊天室</a>
         </div>
     </div>
 
-    <!-- 作品分頁 -->
+    <!-- 課堂作業分頁 -->
+    <div id="section-classwork" class="content-section">
+        <div class="card">
+            <h3>
+                📝 作業列表
+                <button id="btn-add-assignment" class="btn-view" style="background:var(--scratch-green); color:white; display:none;" onclick="openModal('modal-assignment')">+ 發布新作業</button>
+            </h3>
+            <div id="assignment-list"></div>
+        </div>
+    </div>
+
+    <!-- 作品分頁 (僅顯示老师發佈的作品) -->
     <div id="section-projects" class="content-section">
         <div class="project-grid" id="project-list">
-            <div class="loading">正在抓取班級作品...</div>
+            <div class="loading">正在抓取老師推薦作品...</div>
         </div>
     </div>
 
@@ -111,10 +131,38 @@
     </div>
 </div>
 
+<!-- 發布作業 Modal -->
+<div id="modal-assignment" class="modal" onclick="if(event.target==this)closeModal('modal-assignment')">
+    <div class="modal-content">
+        <h3>發布新作業</h3>
+        <input type="text" id="assign-title" placeholder="作業標題">
+        <textarea id="assign-desc" placeholder="作業說明/要求" rows="4"></textarea>
+        <button class="btn-confirm" onclick="publishAssignment()">確認發布</button>
+    </div>
+</div>
+
+<!-- 繳交作業 Modal -->
+<div id="modal-submit" class="modal" onclick="if(event.target==this)closeModal('modal-submit')">
+    <div class="modal-content">
+        <h3>繳交作業</h3>
+        <p style="font-size: 14px; color: #666;">請從您的專案中選擇一個繳交：</p>
+        <select id="my-project-select"></select>
+        <button class="btn-confirm" id="btn-submit-confirm">確認繳交</button>
+    </div>
+</div>
+
+<!-- 查看繳交名單 Modal (老師用) -->
+<div id="modal-subs" class="modal" onclick="if(event.target==this)closeModal('modal-subs')">
+    <div class="modal-content" style="width: 500px;">
+        <h3>學生繳交狀況</h3>
+        <div id="subs-list"></div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collectionGroup, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, collectionGroup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -129,133 +177,230 @@
 
     const classId = new URLSearchParams(window.location.search).get('id');
     let currentClassData = null;
-    let allMemberUids = [];
+    let isTeacher = false;
+
+    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
     window.switchTab = (tabName) => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         
-        event.target.classList.add('active');
+        event.currentTarget.classList.add('active');
         document.getElementById(`section-${tabName}`).classList.add('active');
 
-        if (tabName === 'projects') loadClassProjects();
+        if (tabName === 'classwork') loadAssignments();
+        if (tabName === 'projects') loadPublishedProjects();
         if (tabName === 'people') loadMembers();
     };
 
-    async function loadClassDetail() {
-        if (!classId) {
-            location.href = "dashboard.html";
+    async function init() {
+        if (!classId) return location.href = "dashboard.html";
+        
+        const snap = await getDoc(doc(db, "classes", classId));
+        if (!snap.exists()) return alert("班級不存在");
+        
+        currentClassData = snap.data();
+        document.getElementById('nav-title').innerText = currentClassData.className;
+        document.getElementById('banner-name').innerText = currentClassData.className;
+        document.getElementById('banner-meta').innerText = `老師：${currentClassData.teacherEmail.split('@')[0]}`;
+        document.getElementById('btn-go-chat').href = `chat.html?open=${classId}`;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                isTeacher = user.uid === currentClassData.teacherId;
+                if (isTeacher) {
+                    document.getElementById('btn-add-assignment').style.display = 'block';
+                    document.getElementById('class-code-display').innerText = `班級代碼：${classId}`;
+                }
+            }
+        });
+    }
+
+    // --- 作業相關 ---
+    window.publishAssignment = async () => {
+        const title = document.getElementById('assign-title').value.trim();
+        const desc = document.getElementById('assign-desc').value.trim();
+        if (!title) return alert("請輸入標題");
+
+        try {
+            await addDoc(collection(db, "classes", classId, "assignments"), {
+                title, desc, createdAt: serverTimestamp()
+            });
+            closeModal('modal-assignment');
+            loadAssignments();
+        } catch (e) { alert("發布失敗"); }
+    };
+
+    async function loadAssignments() {
+        const list = document.getElementById('assignment-list');
+        list.innerHTML = '<div class="loading">讀取作業中...</div>';
+
+        const q = query(collection(db, "classes", classId, "assignments"), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        
+        list.innerHTML = '';
+        if (snap.empty) {
+            list.innerHTML = '<p style="color:#999; text-align:center;">目前尚無作業。</p>';
             return;
         }
 
-        const snap = await getDoc(doc(db, "classes", classId));
-        if (snap.exists()) {
-            const data = snap.data();
-            currentClassData = data;
-            allMemberUids = [data.teacherId, ...(data.students || [])];
+        snap.forEach(d => {
+            const data = d.data();
+            const aid = d.id;
+            const item = document.createElement('div');
+            item.className = 'assignment-item';
+            item.innerHTML = `
+                <div class="assignment-icon">📋</div>
+                <div class="assignment-info">
+                    <div class="assignment-title">${data.title}</div>
+                    <div class="assignment-due">${data.desc || '無說明'}</div>
+                </div>
+                <button class="btn-view" onclick="openAssignmentDetail('${aid}', '${data.title}')">${isTeacher ? '檢視繳交' : '繳交作業'}</button>
+            `;
+            list.appendChild(item);
+        });
+    }
 
-            document.getElementById('nav-title').innerText = data.className;
-            document.getElementById('banner-name').innerText = data.className;
-            document.getElementById('banner-meta').innerText = `老師：${data.teacherEmail.split('@')[0]}`;
-            document.getElementById('btn-go-chat').href = `chat.html?open=${classId}`;
+    window.openAssignmentDetail = async (aid, title) => {
+        if (isTeacher) {
+            // 老師：查看所有人的繳交紀錄
+            openModal('modal-subs');
+            const list = document.getElementById('subs-list');
+            list.innerHTML = '載入中...';
             
-            onAuthStateChanged(auth, (user) => {
-                if (user && user.uid === data.teacherId) {
-                    document.getElementById('class-code-display').innerText = `班級代碼：${classId}`;
-                }
+            const q = collection(db, "classes", classId, "assignments", aid, "submissions");
+            const snap = await getDocs(q);
+            
+            list.innerHTML = '';
+            if (snap.empty) list.innerHTML = '<p>尚未有人繳交。</p>';
+            
+            snap.forEach(d => {
+                const s = d.data();
+                const sid = d.id;
+                const row = document.createElement('div');
+                row.className = 'sub-item';
+                row.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;">${s.studentEmail.split('@')[0]}</div>
+                        <a href="page.html?load=${s.projectId}&from=${s.studentId}" target="_blank" style="font-size:12px; color:var(--scratch-blue);">查看作品：${s.projectName}</a>
+                    </div>
+                    <button class="btn-publish ${s.isPublished ? 'active' : ''}" onclick="togglePublish('${aid}', '${sid}', ${s.isPublished})">
+                        ${s.isPublished ? '🌟 已上牆' : '推上牆面'}
+                    </button>
+                `;
+                list.appendChild(row);
             });
         } else {
-            alert("找不到該班級！");
-            location.href = "dashboard.html";
+            // 學生：開啟繳交視窗
+            openModal('modal-submit');
+            const select = document.getElementById('my-project-select');
+            select.innerHTML = '<option>載入作品中...</option>';
+            
+            const q = query(collection(db, "users", auth.currentUser.uid, "projects"));
+            const pSnap = await getDocs(q);
+            select.innerHTML = '';
+            pSnap.forEach(pd => {
+                const p = pd.data();
+                select.innerHTML += `<option value="${pd.id}">${p.name || '未命名'}</option>`;
+            });
+
+            document.getElementById('btn-submit-confirm').onclick = async () => {
+                const pid = select.value;
+                const pName = select.options[select.selectedIndex].text;
+                if (!pid) return;
+                
+                try {
+                    await setDoc(doc(db, "classes", classId, "assignments", aid, "submissions", auth.currentUser.uid), {
+                        studentId: auth.currentUser.uid,
+                        studentEmail: auth.currentUser.email,
+                        projectId: pid,
+                        projectName: pName,
+                        isPublished: false,
+                        submittedAt: serverTimestamp()
+                    });
+                    alert("繳交成功！");
+                    closeModal('modal-submit');
+                } catch(e) { alert("繳交失敗"); }
+            };
         }
+    };
+
+    window.togglePublish = async (aid, sid, current) => {
+        try {
+            await updateDoc(doc(db, "classes", classId, "assignments", aid, "submissions", sid), {
+                isPublished: !current
+            });
+            openAssignmentDetail(aid, ''); // 重新載入
+        } catch (e) { console.error(e); }
+    };
+
+    // --- 牆面作品相關 ---
+    async function loadPublishedProjects() {
+        const grid = document.getElementById('project-list');
+        grid.innerHTML = '<div class="loading">正在抓取老師推薦作品...</div>';
+
+        try {
+            // 使用 collectionGroup 搜尋所有 submissions 且 isPublished 為 true
+            // 注意：這裡需要建立 Firestore 複合索引，若尚未建立，前端 query 可能失敗
+            // 為了簡便，我們改為遍歷目前班級的所有作業，抓取其已發佈的 submission
+            const projects = [];
+            const assignSnap = await getDocs(collection(db, "classes", classId, "assignments"));
+            
+            for (const aDoc of assignSnap.docs) {
+                const subSnap = await getDocs(query(collection(db, "classes", classId, "assignments", aDoc.id, "submissions"), where("isPublished", "==", true)));
+                subSnap.forEach(sd => projects.push(sd.data()));
+            }
+
+            grid.innerHTML = '';
+            if (projects.length === 0) {
+                grid.innerHTML = '<div class="loading">目前尚無作品上牆，請等待老師推薦！</div>';
+                return;
+            }
+
+            projects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.onclick = () => location.href = `page.html?load=${proj.projectId}&from=${proj.studentId}`;
+                card.innerHTML = `
+                    <div class="project-thumb">🌟</div>
+                    <div class="project-info">
+                        <div class="project-name">${proj.projectName}</div>
+                        <div style="font-size:12px; color:#888;">作者：${proj.studentEmail.split('@')[0]}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } catch (e) { grid.innerHTML = '<div class="loading">載入牆面失敗。</div>'; }
     }
 
     async function loadMembers() {
         const tList = document.getElementById('teacher-list');
         const sList = document.getElementById('student-list');
-        tList.innerHTML = '<div class="loading">讀取中...</div>';
-        sList.innerHTML = '<div class="loading">讀取中...</div>';
+        tList.innerHTML = ''; sList.innerHTML = '';
 
-        try {
-            const teacherSnap = await getDoc(doc(db, "users", currentClassData.teacherId));
-            if (teacherSnap.exists()) {
-                renderMember(tList, teacherSnap.data(), true);
-            }
+        const teacherSnap = await getDoc(doc(db, "users", currentClassData.teacherId));
+        if (teacherSnap.exists()) renderMember(tList, teacherSnap.data(), true);
 
-            sList.innerHTML = '';
-            if (!currentClassData.students || currentClassData.students.length === 0) {
-                sList.innerHTML = '<p style="color:#999; padding:10px;">目前尚無同學加入。</p>';
-            } else {
-                for (const uid of currentClassData.students) {
-                    const uSnap = await getDoc(doc(db, "users", uid));
-                    if (uSnap.exists()) renderMember(sList, uSnap.data(), false);
-                }
-            }
-        } catch (e) { console.error(e); }
+        for (const uid of (currentClassData.students || [])) {
+            const uSnap = await getDoc(doc(db, "users", uid));
+            if (uSnap.exists()) renderMember(sList, uSnap.data(), false);
+        }
     }
 
-    function renderMember(container, userData, isTeacher) {
-        if (container.querySelector('.loading')) container.innerHTML = '';
-        const email = userData.email || "unknown@user";
-        const name = email.split('@')[0];
-        const avatar = `https://ui-avatars.com/api/?name=${email}&background=random`;
-
+    function renderMember(container, userData, isT) {
+        const email = userData.email || "";
         const div = document.createElement('div');
-        div.className = 'member-row';
+        div.style = "display:flex; align-items:center; padding:10px; border-bottom:1px solid #f0f0f0;";
         div.innerHTML = `
-            <img src="${avatar}" class="member-avatar">
-            <span class="member-name">${name}</span>
-            ${isTeacher ? '<span class="role-badge">老師</span>' : ''}
+            <img src="https://ui-avatars.com/api/?name=${email}&background=random" style="width:32px; border-radius:50%; margin-right:10px;">
+            <span style="font-weight:bold;">${email.split('@')[0]}</span>
+            ${isT ? '<span style="margin-left:auto; font-size:11px; background:#e8f0fe; color:#1967d2; padding:3px 8px; border-radius:4px;">老師</span>' : ''}
         `;
         container.appendChild(div);
     }
 
-    async function loadClassProjects() {
-        const grid = document.getElementById('project-list');
-        grid.innerHTML = '<div class="loading">正在抓取班級作品...</div>';
-
-        try {
-            const q = query(collectionGroup(db, "projects"), where("isPublic", "==", true));
-            const snap = await getDocs(q);
-            
-            const classProjects = [];
-            snap.forEach(docSnap => {
-                const pData = docSnap.data();
-                const authorId = docSnap.ref.parent.parent.id;
-                if (allMemberUids.includes(authorId)) {
-                    classProjects.push({ id: docSnap.id, authorId, ...pData });
-                }
-            });
-
-            grid.innerHTML = '';
-            if (classProjects.length === 0) {
-                grid.innerHTML = '<div class="loading">本班級尚無公開分享的作品 😢</div>';
-                return;
-            }
-
-            classProjects.forEach(proj => {
-                const card = document.createElement('div');
-                card.className = 'project-card';
-                card.onclick = () => location.href = `page.html?load=${proj.id}&from=${proj.authorId}`;
-                card.innerHTML = `
-                    <div class="project-thumb">🧩</div>
-                    <div class="project-info">
-                        <div class="project-name">${proj.name || '未命名'}</div>
-                        <div class="project-author">
-                            <img src="https://ui-avatars.com/api/?name=${proj.authorEmail}&size=16&background=random" style="border-radius:50%">
-                            ${(proj.authorEmail || "").split('@')[0]}
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        } catch (e) {
-            console.error(e);
-            grid.innerHTML = '<div class="loading">作品載入失敗。</div>';
-        }
-    }
-
-    loadClassDetail();
+    init();
 </script>
 
 </body>
