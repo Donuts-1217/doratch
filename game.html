@@ -88,7 +88,7 @@
 
 <div class="app-container">
     <aside class="sidebar-main">
-        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
         
         <a href="index.html" class="nav-item">🏠 平台首頁</a>
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
@@ -130,7 +130,7 @@
         <div class="boss-raid-container">
             <div id="combo-display" class="combo-text">COMBO 0</div>
             <div class="boss-image-container" id="boss-container">
-                <img id="boss-img" class="boss-image" src="https://via.placeholder.com/300?text=BOSS">
+                <img id="boss-img" class="boss-image" src="boss_memory_leak_1777713895437.png">
             </div>
             <h2 id="boss-name" style="margin-top:0; font-size:2rem; font-weight:900;">載入中...</h2>
             <div class="boss-hp-container">
@@ -143,16 +143,15 @@
             </div>
         </div>
     </div>
+
+    <div class="mode-section">
+        <div class="section-title">🎮 其他模式</div>
+        <div class="game-grid">
             <div class="game-card" style="grid-column: 1 / -1; border: 2px solid var(--secondary);" onclick="startGame('codewar')">
                 <div style="font-size: 40px; margin-bottom: 15px;">⚔️</div>
                 <h3>代碼戰爭: 指令塔防</h3>
                 <p>類似貓咪大戰爭的橫向塔防！召喚你的代碼軍團 (input, print, if-else) 攻陷對手主機。<br><span style="color:var(--secondary); font-weight:bold;">✨ 提示：可以先去「指令實驗室」升級你的指令！</span></p>
             </div>
-        </div>
-    </div>
-
-    <div class="mode-section">
-        <div class="game-grid">
             <div class="game-card" onclick="startGame('2048')"><h3>🧩 2048: 數據融合</h3></div>
             <div class="game-card" onclick="startGame('runner')"><h3>⚡ Cyber Runner: 跑酷</h3></div>
             <div class="game-card" onclick="openDuelLobby()"><h3>⚔️ 1v1 代碼決鬥</h3></div>
@@ -178,7 +177,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection, setDoc, updateDoc, increment, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, getDocs, collection, setDoc, updateDoc, increment, onSnapshot, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -471,17 +470,23 @@
             const field = document.getElementById('pvp-battlefield');
             field.innerHTML = '';
 
-            // Local simulation for smooth rendering
-            p1Units.forEach(u => {
-                let blocked = p2Units.some(e => e.x > u.x && e.x - u.x < 30) || (640 - u.x < 30);
-                if(!blocked) u.x += u.speed;
-                renderUnit(u, 'p1', field);
-            });
-            p2Units.forEach(u => {
-                let blocked = p1Units.some(e => u.x > e.x && u.x - e.x < 30) || (u.x - 60 < 30);
-                if(!blocked) u.x -= u.speed;
-                renderUnit(u, 'p2', field);
-            });
+        function renderUnitOnField(u, side, field) {
+            const div = document.createElement('div');
+            div.style = `position:absolute; left:${u.x}px; bottom:0; font-size:20px; transition:0.1s; transform:translateX(-50%);`;
+            div.innerHTML = `${u.icon}<div style="width:20px; height:3px; background:#334155; border-radius:2px; margin-top:2px; overflow:hidden;"><div style="width:${(u.hp/u.maxHp)*20}px; height:100%; background:${side==='p1'?'#4CB050':'#EF4444'};"></div></div>`;
+            field.appendChild(div);
+        }
+
+        p1Units.forEach(u => {
+            let blocked = p2Units.some(e => e.x > u.x && e.x - u.x < 30) || (640 - u.x < 30);
+            if(!blocked) u.x += u.speed;
+            renderUnitOnField(u, 'p1', field);
+        });
+        p2Units.forEach(u => {
+            let blocked = p1Units.some(e => u.x > e.x && u.x - e.x < 30) || (u.x - 60 < 30);
+            if(!blocked) u.x -= u.speed;
+            renderUnitOnField(u, 'p2', field);
+        });
 
             // Master (P1) handles the HP deduction and synchronization logic
             if(myRole === 'p1') {
