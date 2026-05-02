@@ -24,6 +24,16 @@
         .section-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 25px; display: flex; align-items: center; gap: 15px; }
         .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
 
+        /* Conquest Map Style */
+        .conquest-map { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; }
+        .tile { aspect-ratio: 1; background: #334155; border-radius: 12px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid transparent; }
+        .tile:hover { transform: scale(1.05); background: #475569; }
+        .tile.occupied { background: var(--primary); color: white; border-color: white; box-shadow: 0 0 15px var(--primary); }
+        .tile.locked { opacity: 0.5; cursor: not-allowed; }
+        .tile.difficulty-1 { border-color: var(--scratch-green); }
+        .tile.difficulty-2 { border-color: var(--scratch-orange); }
+        .tile.difficulty-3 { border-color: var(--scratch-purple); }
+
         .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
         .game-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
         .game-card:hover { transform: translateY(-10px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(76, 151, 255, 0.15); }
@@ -65,7 +75,19 @@
     </div>
 
     <div class="mode-section">
-        <div class="section-title">🔥 熱門競技</div>
+        <div class="section-title">🏆 旗艦競技 (PaGamO 模式)</div>
+        <div class="game-grid">
+            <div class="game-card" style="grid-column: 1 / -1; border: 2px solid var(--primary);" onclick="startGame('conquest')">
+                <div class="card-icon" style="background:rgba(76, 151, 255, 0.2); color:var(--primary);">🏰</div>
+                <div class="card-info">
+                    <h3>邏輯攻城戰: 領土擴張</h3>
+                    <p>這是一個融合了 PaGamO 精神的策略遊戲。在 5x5 的版圖上，透過回答邏輯與程式題目來攻佔領地。不同的地形代表不同的難度，你能統一整個邏輯王國嗎？</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mode-section">
         <div class="game-grid">
             <div class="game-card" onclick="startGame('2048')">
                 <div class="card-icon">🧩</div>
@@ -79,6 +101,19 @@
                 <div class="card-info">
                     <h3>Cyber Runner: 超時空跑酷</h3>
                     <p>極速反應挑戰！在霓虹賽道上閃避 Bug 與錯誤代碼，收集正確的指令球。速度會隨時間不斷提升。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mode-section">
+        <div class="section-title">⚔️ 社交對戰 (1v1 PK)</div>
+        <div class="game-grid">
+            <div class="game-card" style="border: 2px solid var(--accent);" onclick="openDuelLobby()">
+                <div class="card-icon" style="background:rgba(133, 92, 214, 0.2); color:var(--accent);">⚔️</div>
+                <div class="card-info">
+                    <h3>1v1 代碼決鬥</h3>
+                    <p>邀請同學進行即時對戰！輸入房間代碼，看看誰的邏輯反應最快。勝者可贏得雙倍金幣獎勵。</p>
                 </div>
             </div>
         </div>
@@ -117,7 +152,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -142,6 +177,8 @@
         if(mode === '2048') init2048();
         else if(mode === 'runner') initRunner();
         else if(mode === 'color') initStroop();
+        else if(mode === 'conquest') initConquest();
+        else if(mode === 'duel') initDuel(arguments[1]);
     };
 
     window.exitGame = async () => {
@@ -306,6 +343,189 @@
         };
         next();
     }
+
+    // --- Logic Conquest Logic ---
+    function initConquest() {
+        document.getElementById('game-title').innerText = "邏輯攻城戰: 領土擴張";
+        const container = document.getElementById('game-content');
+        container.innerHTML = `<div id="conquest-quiz" style="display:none; margin-bottom:20px; width:100%;"></div><div class="conquest-map" id="conquest-map"></div><p style="margin-top:20px; color:#94A3B8;">點擊深灰色地塊進行挑戰，攻佔相連的領土！</p>`;
+        
+        let mapData = Array(25).fill(0).map((_,i) => ({ id:i, status:'empty', diff: Math.floor(Math.random()*3)+1 }));
+        mapData[12].status = 'occupied'; // 起點
+
+        const isAdjacent = (idx) => {
+            const row = Math.floor(idx / 5);
+            const col = idx % 5;
+            const neighbors = [
+                idx - 5, idx + 5, // 上下
+                col > 0 ? idx - 1 : -1, // 左
+                col < 4 ? idx + 1 : -1  // 右
+            ];
+            return neighbors.some(n => n >= 0 && n < 25 && mapData[n].status === 'occupied');
+        };
+
+        window.renderMap = () => {
+            const el = document.getElementById('conquest-map'); el.innerHTML = '';
+            mapData.forEach((tile, i) => {
+                const adj = isAdjacent(i);
+                const div = document.createElement('div');
+                div.className = `tile difficulty-${tile.diff} ${tile.status==='occupied'?'occupied':''} ${(!adj && tile.status!=='occupied')?'locked':''}`;
+                div.innerHTML = tile.status === 'occupied' ? '👑' : (tile.diff === 1 ? '🌲' : (tile.diff === 2 ? '🏜️' : '🌋'));
+                div.onclick = () => { 
+                    if(tile.status === 'empty' && adj) startTileQuiz(i);
+                    else if(!adj && tile.status === 'empty') alert("你只能攻佔相鄰的領土！");
+                };
+                el.appendChild(div);
+            });
+            document.getElementById('score').innerText = mapData.filter(t=>t.status==='occupied').length;
+        };
+
+        const startTileQuiz = (idx) => {
+            const tile = mapData[idx];
+            const quizArea = document.getElementById('conquest-quiz');
+            quizArea.style.display = 'block';
+            document.getElementById('conquest-map').style.display = 'none';
+            
+            // 隨機題目庫 (根據難度)
+            const bank = [
+                { q:"如果 a=5, b=3, 則 a > b 是什麼？", a:"TRUE", d:1 },
+                { q:"哪一個是重複執行 10 次的程式標記？", a:"LOOP", d:1 },
+                { q:"二進位 101 等於十進位的多少？", a:"5", d:2 },
+                { q:"排序演算法中，最快的是哪一個？", a:"QuickSort", d:3 },
+                { q:"! (TRUE && FALSE) 的結果是？", a:"TRUE", d:2 }
+            ];
+            const filtered = bank.filter(q => q.d === tile.diff);
+            const item = filtered.length ? filtered[Math.floor(Math.random()*filtered.length)] : bank[0];
+            
+            quizArea.innerHTML = `<div style="background:var(--bg); padding:30px; border-radius:20px; border:1px solid var(--primary); text-align:center;">
+                <div style="font-size:1.5rem; margin-bottom:20px;">挑戰 ${tile.diff===1?'森林':(tile.diff===2?'沙漠':'火山')}：<br>${item.q}</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <button class="option-btn" style="background:#1e293b; color:white; border:1px solid #444;" onclick="resolveQuiz(${idx}, '${item.a}', '${item.a}')">${item.a}</button>
+                    <button class="option-btn" style="background:#1e293b; color:white; border:1px solid #444;" onclick="resolveQuiz(${idx}, 'WRONG', '${item.a}')">錯誤選項</button>
+                </div>
+            </div>`;
+        };
+
+        window.resolveQuiz = (idx, choice, correct) => {
+            if(choice === correct) {
+                mapData[idx].status = 'occupied';
+                earned += mapData[idx].diff * 50;
+                alert("攻佔成功！領土擴張。");
+            } else {
+                alert("挑戰失敗，領地防禦太強了！");
+            }
+            document.getElementById('conquest-quiz').style.display = 'none';
+            document.getElementById('conquest-map').style.display = 'grid';
+            document.getElementById('earned').innerText = earned;
+            renderMap();
+        };
+
+        renderMap();
+    }
+
+    // --- 1v1 Duel Logic ---
+    window.openDuelLobby = () => {
+        const code = prompt("請輸入 4 位數房間代碼 (建立或加入)：");
+        if(!code || code.length !== 4) return;
+        initDuel(code);
+    };
+
+    async function initDuel(roomId) {
+        document.getElementById('game-title').innerText = `1v1 決鬥 - 房間：${roomId}`;
+        document.getElementById('game-overlay').style.display = 'block';
+        const container = document.getElementById('game-content');
+        container.innerHTML = `<div id="duel-status" style="font-size:1.5rem; margin-bottom:40px;">正在連線至戰場...</div><div id="duel-battle" style="display:none; width:100%; text-align:center;"></div>`;
+        
+        const duelRef = doc(db, "duels", roomId);
+        const snap = await getDoc(duelRef);
+        
+        let myRole = '';
+        if(!snap.exists()) {
+            await setDoc(duelRef, { 
+                p1: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100 },
+                p2: null, status: 'waiting', qIdx: 0, createdAt: serverTimestamp() 
+            });
+            myRole = 'p1';
+        } else {
+            const data = snap.data();
+            if(data.p1.uid === auth.currentUser.uid) myRole = 'p1';
+            else {
+                await updateDoc(duelRef, { 
+                    p2: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100 },
+                    status: 'battling' 
+                });
+                myRole = 'p2';
+            }
+        }
+
+        const questions = [
+            { q: "x=10, y=20, 則 x > y || x < y 是？", a: "TRUE" },
+            { q: "HTML 的超連結標籤是？", a: "<a>" },
+            { q: "Python 中輸出文字的函數是？", a: "print" },
+            { q: "二進位 1111 是十進位的多少？", a: "15" }
+        ];
+
+        onSnapshot(duelRef, (s) => {
+            const data = s.data();
+            if(!data) return;
+            const statusDiv = document.getElementById('duel-status');
+            const battleDiv = document.getElementById('duel-battle');
+
+            if(data.status === 'waiting') {
+                statusDiv.innerText = "⌛ 等待對手加入房間...";
+                statusDiv.style.display = 'block';
+                battleDiv.style.display = 'none';
+            } else if(data.status === 'battling') {
+                statusDiv.style.display = 'none';
+                battleDiv.style.display = 'block';
+                const q = questions[data.qIdx % questions.length];
+                battleDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-around; margin-bottom:40px; font-weight:900;">
+                        <div style="color:${data.p1.hp<50?'#EF4444':'#4C97FF'}">🛡️ ${data.p1.name} [HP: ${data.p1.hp}]</div>
+                        <div style="font-size:2rem; color:var(--secondary);">VS</div>
+                        <div style="color:${data.p2.hp<50?'#EF4444':'#4C97FF'}">🗡️ ${data.p2.name} [HP: ${data.p2.hp}]</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.05); padding:40px; border-radius:24px; border:2px solid var(--accent); box-shadow: 0 0 30px rgba(133, 92, 214, 0.2);">
+                        <div style="font-size:2rem; margin-bottom:30px;">${q.q}</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                            <button class="option-btn" style="background:#1e293b; color:white; border:1px solid #444; padding:20px; border-radius:12px; cursor:pointer;" onclick="duelAnswer('${roomId}', '${q.a}', '${q.a}', '${myRole}')">${q.a}</button>
+                            <button class="option-btn" style="background:#1e293b; color:white; border:1px solid #444; padding:20px; border-radius:12px; cursor:pointer;" onclick="duelAnswer('${roomId}', 'WRONG', '${q.a}', '${myRole}')">錯誤選項</button>
+                        </div>
+                    </div>
+                `;
+            } else if(data.status === 'finished') {
+                const winner = data.p1.hp > 0 ? data.p1.name : data.p2.name;
+                const isMeWinner = winner === auth.currentUser.email.split('@')[0];
+                battleDiv.innerHTML = `
+                    <h1 style="color:var(--secondary); font-size:3rem; margin-bottom:10px;">🏆 ${isMeWinner?'你贏了！':'你輸了...'}</h1>
+                    <p style="font-size:1.5rem; color:#94A3B8;">勝利者：${winner}</p>
+                    ${isMeWinner ? '<p style="color:var(--primary);">獲得獎勵 💰 100 金幣！</p>' : ''}
+                    <button class="btn-exit" style="margin-top:20px;" onclick="exitGame()">返回大廳</button>
+                `;
+                if(isMeWinner && earned === 0) earned = 100;
+            }
+        });
+    }
+
+    window.duelAnswer = async (roomId, choice, correct, role) => {
+        const ref = doc(db, "duels", roomId);
+        const snap = await getDoc(ref);
+        const data = snap.data();
+        if(data.status !== 'battling') return;
+
+        if(choice === correct) {
+            const oppRole = role === 'p1' ? 'p2' : 'p1';
+            const newHp = Math.max(0, data[oppRole].hp - 25);
+            const updates = { [`${oppRole}.hp`]: newHp, qIdx: increment(1) };
+            if(newHp === 0) updates.status = 'finished';
+            await updateDoc(ref, updates);
+        } else {
+            // 答錯暫時不扣血，但失去領先機會
+            const myRole = role;
+            const newHp = Math.max(0, data[myRole].hp - 5);
+            await updateDoc(ref, { [`${myRole}.hp`]: newHp });
+        }
+    };
 
 </script>
 
