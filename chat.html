@@ -233,6 +233,27 @@
         }
 
         loadChats();
+
+        // 處理自動開啟聊天室 (?open=ID)
+        const urlParams = new URLSearchParams(window.location.search);
+        const openId = urlParams.get('open');
+        if (openId) {
+            try {
+                const snap = await getDoc(doc(db, "chats", openId));
+                if (snap.exists()) {
+                    const d = snap.data();
+                    if (d.participants.includes(user.uid)) {
+                        let name = d.name || "未命名";
+                        let icon = d.type === 'server' ? '🏫' : (d.type === 'private' ? '👤' : '👥');
+                        if (d.type === 'private') {
+                            const otherEmail = (d.participantEmails || []).find(e => e !== user.email) || "未知";
+                            name = otherEmail.split('@')[0];
+                        }
+                        openChat(openId, name, icon, d.type, d.teacherId);
+                    }
+                }
+            } catch (err) { console.error("自動開啟聊天室失敗:", err); }
+        }
     });
 
     // 2. 監聽並渲染聊天室列表

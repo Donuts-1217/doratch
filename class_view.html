@@ -3,83 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <title>班級詳情 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --scratch-blue: #4C97FF; }
-        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; }
-        nav { background: var(--scratch-blue); color: white; padding: 15px 5%; display: flex; align-items: center; gap: 20px; }
-        .container { max-width: 900px; margin: 30px auto; padding: 20px; }
-        .header-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .section { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; }
-        .member-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #EEE; }
-        .btn-back { color: white; text-decoration: none; font-weight: bold; }
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
+            --scratch-orange: #FFAB19; --scratch-green: #4CB050; 
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
+        
+        nav { background: var(--scratch-blue); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; gap: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .btn-back { color: white; text-decoration: none; font-weight: bold; font-size: 14px; opacity: 0.9; }
+        .btn-back:hover { opacity: 1; }
+
+        /* Classroom 橫幅 */
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .class-banner { 
+            background: linear-gradient(135deg, #4C97FF, #855CD6); 
+            height: 200px; border-radius: 12px; padding: 30px; 
+            color: white; display: flex; flex-direction: column; justify-content: flex-end;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .class-banner h1 { margin: 0; font-size: 2.2rem; }
+        .class-banner p { margin: 5px 0 0 0; opacity: 0.9; font-size: 1.1rem; }
+
+        /* 分頁切換 */
+        .tabs { display: flex; border-bottom: 1px solid #ddd; margin-top: 10px; background: white; border-radius: 8px 8px 0 0; }
+        .tab { padding: 15px 30px; cursor: pointer; font-weight: bold; color: #5f6368; border-bottom: 3px solid transparent; transition: 0.2s; }
+        .tab:hover { background: #f8f9fa; color: var(--scratch-blue); }
+        .tab.active { color: var(--scratch-blue); border-bottom-color: var(--scratch-blue); }
+
+        .content-section { display: none; padding: 30px 0; }
+        .content-section.active { display: block; }
+
+        /* 區塊卡片 */
+        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; color: #3c4043; }
+
+        /* 成員列表 */
+        .member-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f1f3f4; }
+        .member-avatar { width: 36px; height: 36px; border-radius: 50%; margin-right: 15px; }
+        .member-name { font-weight: 500; color: #3c4043; }
+        .role-badge { margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #e8f0fe; color: #1967d2; font-weight: bold; }
+
+        /* 作品牆 */
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .project-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #eee; cursor: pointer; transition: 0.2s; }
+        .project-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .project-thumb { height: 120px; background: #f0f7ff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+        .project-info { padding: 12px; }
+        .project-name { font-weight: bold; font-size: 14px; color: #333; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .project-author { font-size: 12px; color: #666; display: flex; align-items: center; gap: 5px; }
+
+        .btn-action { display: inline-block; background: var(--scratch-blue); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 15px; transition: 0.2s; }
+        .btn-action:hover { background: var(--scratch-purple); transform: scale(1.02); }
+
+        .loading { text-align: center; padding: 50px; color: #999; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="dashboard.html" class="btn-back">⬅ 返回面板</a>
-    <h2 id="nav-class-name">讀取中...</h2>
+    <a href="dashboard.html" class="btn-back">⬅ 返回控制台</a>
+    <span id="nav-title" style="font-weight: 900; font-size: 1.1rem;">班級詳情</span>
 </nav>
 
 <div class="container">
-    <div class="header-card">
-        <h1 id="class-title">班級名稱</h1>
-        <p id="class-meta" style="color: #666;"></p>
+    <div class="class-banner">
+        <h1 id="banner-name">載入中...</h1>
+        <p id="banner-meta"></p>
     </div>
 
-    <div class="section">
-        <h3>👥 班級成員</h3>
-        <div id="member-list">載入成員中...</div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('stream')">動態</div>
+        <div class="tab" onclick="switchTab('projects')">班級作品</div>
+        <div class="tab" onclick="switchTab('people')">成員</div>
     </div>
 
-    <div class="section">
-        <h3>📂 班級作品集 (開發中)</h3>
-        <p style="color: #999;">未來這裡將顯示所有學生的公開作業...</p>
+    <!-- 動態分頁 -->
+    <div id="section-stream" class="content-section active">
+        <div class="card">
+            <h3>班級資訊</h3>
+            <div id="stream-info">
+                <p id="class-code-display" style="font-size: 1.2rem; font-weight: bold; color: var(--scratch-orange);"></p>
+                <p>歡迎來到本班級！這裡您可以與老師及同學交流、分享您的創意積木作品。</p>
+                <a id="btn-go-chat" href="#" class="btn-action">💬 開啟班級聊天室</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 作品分頁 -->
+    <div id="section-projects" class="content-section">
+        <div class="project-grid" id="project-list">
+            <div class="loading">正在抓取班級作品...</div>
+        </div>
+    </div>
+
+    <!-- 成員分頁 -->
+    <div id="section-people" class="content-section">
+        <div class="card">
+            <h3>老師</h3>
+            <div id="teacher-list"></div>
+        </div>
+        <div class="card">
+            <h3>同學</h3>
+            <div id="student-list"></div>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collectionGroup, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
         authDomain: "chat-52c0d.firebaseapp.com",
         projectId: "chat-52c0d",
-        storageBucket: "chat-52c0d.firebasestorage.app",
-        messagingSenderId: "449329325475",
         appId: "1:449329325475:web:75f255c4055360dc9e6616"
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
 
     const classId = new URLSearchParams(window.location.search).get('id');
+    let currentClassData = null;
+    let allMemberUids = [];
+
+    window.switchTab = (tabName) => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(`section-${tabName}`).classList.add('active');
+
+        if (tabName === 'projects') loadClassProjects();
+        if (tabName === 'people') loadMembers();
+    };
 
     async function loadClassDetail() {
-        if (!classId) return;
+        if (!classId) {
+            location.href = "dashboard.html";
+            return;
+        }
+
         const snap = await getDoc(doc(db, "classes", classId));
-        
         if (snap.exists()) {
             const data = snap.data();
-            document.title = `${data.className} - Creative Blocks`;
-            document.getElementById('nav-class-name').innerText = data.className;
-            document.getElementById('class-title').innerText = data.className;
-            document.getElementById('class-meta').innerText = `代碼：${classId} | 老師：${data.teacherEmail}`;
+            currentClassData = data;
+            allMemberUids = [data.teacherId, ...(data.students || [])];
+
+            document.getElementById('nav-title').innerText = data.className;
+            document.getElementById('banner-name').innerText = data.className;
+            document.getElementById('banner-meta').innerText = `老師：${data.teacherEmail.split('@')[0]}`;
+            document.getElementById('btn-go-chat').href = `chat.html?open=${classId}`;
             
-            // 顯示成員數量
-            const memberList = document.getElementById('member-list');
-            const studentCount = data.students ? data.students.length : 0;
-            memberList.innerHTML = `目前共有 ${studentCount} 位學生。`;
-            
-            // (進階：如果需要顯示姓名，則需根據 UID 再去 users 集合抓取資料)
+            onAuthStateChanged(auth, (user) => {
+                if (user && user.uid === data.teacherId) {
+                    document.getElementById('class-code-display').innerText = `班級代碼：${classId}`;
+                }
+            });
         } else {
             alert("找不到該班級！");
             location.href = "dashboard.html";
         }
     }
 
+    async function loadMembers() {
+        const tList = document.getElementById('teacher-list');
+        const sList = document.getElementById('student-list');
+        tList.innerHTML = '<div class="loading">讀取中...</div>';
+        sList.innerHTML = '<div class="loading">讀取中...</div>';
+
+        try {
+            const teacherSnap = await getDoc(doc(db, "users", currentClassData.teacherId));
+            if (teacherSnap.exists()) {
+                renderMember(tList, teacherSnap.data(), true);
+            }
+
+            sList.innerHTML = '';
+            if (!currentClassData.students || currentClassData.students.length === 0) {
+                sList.innerHTML = '<p style="color:#999; padding:10px;">目前尚無同學加入。</p>';
+            } else {
+                for (const uid of currentClassData.students) {
+                    const uSnap = await getDoc(doc(db, "users", uid));
+                    if (uSnap.exists()) renderMember(sList, uSnap.data(), false);
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function renderMember(container, userData, isTeacher) {
+        if (container.querySelector('.loading')) container.innerHTML = '';
+        const email = userData.email || "unknown@user";
+        const name = email.split('@')[0];
+        const avatar = `https://ui-avatars.com/api/?name=${email}&background=random`;
+
+        const div = document.createElement('div');
+        div.className = 'member-row';
+        div.innerHTML = `
+            <img src="${avatar}" class="member-avatar">
+            <span class="member-name">${name}</span>
+            ${isTeacher ? '<span class="role-badge">老師</span>' : ''}
+        `;
+        container.appendChild(div);
+    }
+
+    async function loadClassProjects() {
+        const grid = document.getElementById('project-list');
+        grid.innerHTML = '<div class="loading">正在抓取班級作品...</div>';
+
+        try {
+            const q = query(collectionGroup(db, "projects"), where("isPublic", "==", true));
+            const snap = await getDocs(q);
+            
+            const classProjects = [];
+            snap.forEach(docSnap => {
+                const pData = docSnap.data();
+                const authorId = docSnap.ref.parent.parent.id;
+                if (allMemberUids.includes(authorId)) {
+                    classProjects.push({ id: docSnap.id, authorId, ...pData });
+                }
+            });
+
+            grid.innerHTML = '';
+            if (classProjects.length === 0) {
+                grid.innerHTML = '<div class="loading">本班級尚無公開分享的作品 😢</div>';
+                return;
+            }
+
+            classProjects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.onclick = () => location.href = `page.html?load=${proj.id}&from=${proj.authorId}`;
+                card.innerHTML = `
+                    <div class="project-thumb">🧩</div>
+                    <div class="project-info">
+                        <div class="project-name">${proj.name || '未命名'}</div>
+                        <div class="project-author">
+                            <img src="https://ui-avatars.com/api/?name=${proj.authorEmail}&size=16&background=random" style="border-radius:50%">
+                            ${(proj.authorEmail || "").split('@')[0]}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        } catch (e) {
+            console.error(e);
+            grid.innerHTML = '<div class="loading">作品載入失敗。</div>';
+        }
+    }
+
     loadClassDetail();
 </script>
+
 </body>
 </html>
