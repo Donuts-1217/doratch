@@ -519,10 +519,12 @@
             let { xp = 0, lv = 1 } = uSnap.data() || {};
             
             let xpReward = 100;
-            if (currentMissionLv.includes("LV2")) xpReward = 250;
-            if (currentMissionLv.includes("LV3")) xpReward = 500;
+            let coinReward = 50;
+            if (currentMissionLv.includes("LV2")) { xpReward = 250; coinReward = 150; }
+            if (currentMissionLv.includes("LV3")) { xpReward = 500; coinReward = 400; }
             
             let newXp = xp + xpReward;
+            let newCoins = (uSnap.data().coins || 0) + coinReward;
             let newLv = lv;
             let levelUp = false;
             
@@ -533,14 +535,14 @@
                 levelUp = true;
             }
             
-            await updateDoc(uRef, { xp: newXp, lv: newLv });
+            await updateDoc(uRef, { xp: newXp, lv: newLv, coins: newCoins });
             
             // 2. 標記任務繳交
             const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
             await updateDoc(subRef, { status: 'turned-in', submittedAt: serverTimestamp() });
 
             // 3. 成功特效與提示
-            const msg = levelUp ? `🎊 恭喜升級到 LV.${newLv}！\n獲得了 ${xpReward} XP！` : `✅ 任務完成！獲得了 ${xpReward} XP！`;
+            const msg = levelUp ? `🎊 恭喜升級到 LV.${newLv}！\n獲得了 ${xpReward} XP 與 💰 ${coinReward} 金幣！` : `✅ 任務完成！獲得了 ${xpReward} XP 與 💰 ${coinReward} 金幣！`;
             alert(msg);
             
             location.href = `class_view.html?id=${cid}`;

@@ -49,6 +49,7 @@
 <nav>
     <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
     <div class="nav-actions">
+        <a href="shop.html" class="btn-nav" style="text-decoration:none; background:#FFF8E1; color:#F57C00; border-color:#FFE082;">🛒 創意商城</a>
         <a href="chat.html" class="btn-nav" style="text-decoration:none; background:white; color:var(--scratch-blue);">💬 聊天室</a>
         <button class="btn-nav" style="background:var(--scratch-orange); border:none;" onclick="openModal('joinModal')">🔑 加入班級</button>
         <button class="btn-nav" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
@@ -68,6 +69,7 @@
                 <div id="xp-bar" style="background:linear-gradient(to right, var(--scratch-blue), var(--scratch-purple)); height:100%; width:0%; transition:1s;"></div>
             </div>
             <div style="font-size:12px; color:#999; margin-top:5px; text-align:right;"><span id="user-xp">0</span> / <span id="next-lv-xp">500</span> XP</div>
+            <div style="font-weight:900; color:#F57C00; margin-top:5px;">💰 <span id="user-coins-dash">0</span> Coins</div>
         </div>
         <button class="btn-nav" style="background:var(--scratch-orange); color:white; border:none; height:auto; padding:15px 25px;" onclick="openModal('rankModal')">🏆 等級排行榜</button>
     </div>
@@ -142,6 +144,7 @@
         document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
         document.getElementById('user-level').innerText = data.lv || 1;
         document.getElementById('user-xp').innerText = data.xp || 0;
+        document.getElementById('user-coins-dash').innerText = data.coins || 0;
         
         const nextXp = (data.lv || 1) * 500;
         document.getElementById('next-lv-xp').innerText = nextXp;

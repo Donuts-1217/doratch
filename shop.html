@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>創意商城 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; 
+            --scratch-purple: #855CD6; --scratch-green: #4CB050;
+            --bg-light: #F0F2F5; --card-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); margin: 0; padding: 0; }
+        
+        nav { background: white; padding: 0 5%; height: 70px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 15px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: 900; font-size: 1.5rem; color: var(--scratch-blue); cursor: pointer; }
+        
+        .user-wallet { background: #FFF8E1; border: 2px solid #FFE082; padding: 8px 20px; border-radius: 30px; font-weight: 900; color: #F57C00; display: flex; align-items: center; gap: 10px; }
+
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+
+        .item-card { background: white; border-radius: 20px; padding: 20px; text-align: center; box-shadow: var(--card-shadow); transition: 0.3s; border: 2px solid transparent; }
+        .item-card:hover { transform: translateY(-8px); border-color: var(--scratch-orange); }
+        .item-icon { font-size: 50px; margin-bottom: 15px; display: block; }
+        .item-name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
+        .item-desc { font-size: 13px; color: #777; margin-bottom: 15px; min-height: 40px; }
+        .item-price { font-weight: 900; color: #F57C00; font-size: 1.2rem; margin-bottom: 15px; }
+        
+        .btn-buy { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-buy.available { background: var(--scratch-orange); color: white; }
+        .btn-buy.owned { background: #EEE; color: #999; cursor: default; }
+        .btn-buy:active { transform: scale(0.95); }
+
+        .category-title { font-weight: 900; font-size: 1.5rem; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks Mall</div>
+    <div class="user-wallet">
+        <span>💰 金幣：</span>
+        <span id="user-coins">0</span>
+    </div>
+</nav>
+
+<div class="container">
+    <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px;">
+        <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
+        <p style="margin:10px 0 0; opacity:0.9;">使用任務獲得的金幣，兌換你的專屬個性化道具！</p>
+    </div>
+
+    <div class="category-title">🎨 個人風格</div>
+    <div class="shop-grid" id="style-items"></div>
+
+    <div class="category-title">🚀 實用道具</div>
+    <div class="shop-grid" id="utility-items"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const itemsBank = [
+        { id: 'theme_dark', category: 'style', name: '深淵黑主題', desc: '為你的編輯器換上酷炫的深色模式', price: 1000, icon: '🌑' },
+        { id: 'title_pro', category: 'style', name: '【資深開發者】稱號', desc: '在排行榜與聊天室顯示你的尊貴稱號', price: 500, icon: '🎖️' },
+        { id: 'avatar_robot', category: 'style', name: '機械戰警頭像', desc: '解鎖專屬機器人頭像框', price: 300, icon: '🤖' },
+        { id: 'boost_xp', category: 'utility', name: 'XP 加倍卡 (1次)', desc: '下一項任務獲得雙倍經驗值', price: 200, icon: '⚡' },
+        { id: 'hint_ticket', category: 'utility', name: '任務提示券', desc: '直接解鎖任務的所有進階提示', price: 150, icon: '🎫' },
+        { id: 'fireworks', category: 'utility', name: '舞台煙火效果', desc: '在執行成功時噴發華麗煙火', price: 600, icon: '🎆' }
+    ];
+
+    let currentUserData = null;
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) return location.href = 'login.html';
+        loadMallData(user);
+    });
+
+    async function loadMallData(user) {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        currentUserData = snap.data() || { coins: 0, inventory: [] };
+        document.getElementById('user-coins').innerText = currentUserData.coins || 0;
+        renderItems();
+    }
+
+    function renderItems() {
+        const styleList = document.getElementById('style-items');
+        const utilList = document.getElementById('utility-items');
+        styleList.innerHTML = ''; utilList.innerHTML = '';
+
+        itemsBank.forEach(item => {
+            const isOwned = (currentUserData.inventory || []).includes(item.id);
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            div.innerHTML = `
+                <span class="item-icon">${item.icon}</span>
+                <div class="item-name">${item.name}</div>
+                <div class="item-desc">${item.desc}</div>
+                <div class="item-price">💰 ${item.price}</div>
+                <button class="btn-buy ${isOwned?'owned':'available'}" onclick="buyItem('${item.id}', ${item.price})">
+                    ${isOwned ? '已擁有' : '立即購買'}
+                </button>
+            `;
+            if(item.category === 'style') styleList.appendChild(div);
+            else utilList.appendChild(div);
+        });
+    }
+
+    window.buyItem = async (id, price) => {
+        if((currentUserData.inventory || []).includes(id)) return;
+        if(currentUserData.coins < price) return alert("金幣不足！快去完成任務賺錢吧！");
+
+        if(!confirm(`確定要花費 💰 ${price} 購買此物品嗎？`)) return;
+
+        try {
+            const ref = doc(db, "users", auth.currentUser.uid);
+            await updateDoc(ref, {
+                coins: increment(-price),
+                inventory: arrayUnion(id)
+            });
+            alert("購買成功！快去個人面板查看吧！");
+            loadMallData(auth.currentUser);
+        } catch(e) { alert("購買失敗：" + e.message); }
+    };
+</script>
+</body>
+</html>
