@@ -21,11 +21,23 @@
         .game-icon { font-size: 50px; margin-bottom: 15px; display: block; }
         .game-title { font-weight: 900; font-size: 1.2rem; }
 
-        #play-area { display: none; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); margin-top: 20px; }
+        #play-area { display: none; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); margin-top: 20px; min-height: 400px; position: relative; }
         .question { font-size: 2rem; font-weight: 900; margin-bottom: 30px; }
         .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .option-btn { padding: 20px; border: 2px solid #eee; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; background: white; }
         .option-btn:hover { background: #f8f9fa; border-color: var(--scratch-blue); }
+        
+        /* Dino Game Canvas */
+        #game-canvas { background: #f9f9f9; border-radius: 15px; display: none; margin: 0 auto; border: 1px solid #ddd; }
+        
+        /* Memory Game */
+        .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .memory-card { height: 80px; background: var(--scratch-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2rem; cursor: pointer; transition: 0.3s; color: transparent; }
+        .memory-card.flipped { background: white; color: black; border: 2px solid var(--scratch-blue); transform: rotateY(180deg); }
+        .memory-card.matched { background: var(--scratch-green); color: white; cursor: default; visibility: hidden; }
+
+        /* Tower/Catcher Info */
+        #game-info { position: absolute; top: 10px; right: 20px; font-size: 14px; color: #666; font-weight: bold; }
         
         .stats { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; font-weight: 900; }
         .coin-win { color: var(--scratch-orange); }
@@ -62,16 +74,47 @@
                 <p style="font-size:13px; color:#999;">程式基礎！數字與二進位轉換</p>
             </div>
         </div>
+
+        <h2 style="margin:40px 0 20px; font-weight:900;">🎈 休閒娛樂區</h2>
+        <div class="mode-grid">
+            <div class="game-card" onclick="startGame('dino')">
+                <span class="game-icon">🦖</span>
+                <div class="game-title">積木跳跳樂</div>
+                <p style="font-size:13px; color:#999;">避開障礙物，挑戰最高分 (Space 跳躍)</p>
+            </div>
+            <div class="game-card" onclick="startGame('memory')">
+                <span class="game-icon">🧠</span>
+                <div class="game-title">記憶對對碰</div>
+                <p style="font-size:13px; color:#999;">找出成對的積木圖標</p>
+            </div>
+        </div>
+
+        <h2 style="margin:40px 0 20px; font-weight:900;">🕹️ 街機挑戰區</h2>
+        <div class="mode-grid">
+            <div class="game-card" onclick="startGame('catcher')">
+                <span class="game-icon">📥</span>
+                <div class="game-title">接積木大挑戰</div>
+                <p style="font-size:13px; color:#999;">移動籃子接住掉落的積木 (左右鍵)</p>
+            </div>
+            <div class="game-card" onclick="startGame('tower')">
+                <span class="game-icon">🏗️</span>
+                <div class="game-title">積木疊疊樂</div>
+                <p style="font-size:13px; color:#999;">精準點擊，疊出最高的積木塔</p>
+            </div>
+        </div>
     </div>
 
     <div id="play-area">
         <div class="stats">
-            <span>得分：<span id="score">0</span></span>
+            <span id="score-label">得分：<span id="score">0</span></span>
             <span class="coin-win">獲得金幣：+<span id="earned">0</span></span>
         </div>
-        <div id="q-container" class="question">載入題目中...</div>
+        <div id="game-info"></div>
+        <div id="q-container" class="question">載入中...</div>
+        <canvas id="game-canvas" width="600" height="400"></canvas>
         <div id="options" class="options"></div>
-        <div class="back-btn" onclick="exitGame()">放棄並回到大廳</div>
+        <div id="memory-board" class="memory-grid"></div>
+        <div class="back-btn" onclick="exitGame()">離開遊戲</div>
     </div>
 </div>
 
@@ -89,6 +132,7 @@
     let score = 0;
     let earned = 0;
     let currentAns = '';
+    let gameInterval = null;
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) return location.href = 'login.html';
@@ -101,10 +145,27 @@
         score = 0; earned = 0;
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('play-area').style.display = 'block';
-        nextQuestion();
+        document.getElementById('game-canvas').style.display = 'none';
+        document.getElementById('game-canvas').height = 200; // default
+        document.getElementById('options').style.display = 'none';
+        document.getElementById('memory-board').style.display = 'none';
+        document.getElementById('q-container').style.display = 'none';
+        document.getElementById('game-info').innerText = '';
+        
+        if(mode === 'dino') startDino();
+        else if(mode === 'memory') startMemory();
+        else if(mode === 'catcher') startCatcher();
+        else if(mode === 'tower') startTower();
+        else {
+            document.getElementById('options').style.display = 'grid';
+            document.getElementById('q-container').style.display = 'block';
+            nextQuestion();
+        }
     };
 
     window.exitGame = () => {
+        if(gameInterval) clearInterval(gameInterval);
+        window.onkeydown = null;
         if(earned > 0) updateCoins(earned);
         document.getElementById('lobby').style.display = 'block';
         document.getElementById('play-area').style.display = 'none';
@@ -164,17 +225,179 @@
         });
     }
 
-    function checkAns(o) {
-        if(o === currentAns) {
-            score++;
-            earned += 10;
+    // --- Dino Game ---
+    function startDino() {
+        const canvas = document.getElementById('game-canvas');
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        let dino = { x: 50, y: 150, w: 40, h: 40, dy: 0, jumping: false };
+        let obstacles = [];
+        let frame = 0;
+
+        window.onkeydown = (e) => { if(e.code==='Space' && !dino.jumping) { dino.dy = -12; dino.jumping = true; } };
+
+        gameInterval = setInterval(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Dino physics
+            dino.y += dino.dy;
+            dino.dy += 0.6; // gravity
+            if(dino.y > 150) { dino.y = 150; dino.dy = 0; dino.jumping = false; }
+            
+            ctx.fillStyle = 'var(--scratch-blue)';
+            ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+
+            // Obstacles
+            if(frame % 100 === 0) obstacles.push({ x: 600, y: 160, w: 30, h: 30 });
+            obstacles.forEach((o, i) => {
+                o.x -= 5;
+                ctx.fillStyle = 'var(--scratch-orange)';
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+
+                // Collision
+                if(o.x < dino.x + dino.w && o.x + o.w > dino.x && o.y < dino.y + dino.h) {
+                    clearInterval(gameInterval);
+                    alert(`遊戲結束！最高分：${score}\n獎勵 💰 ${earned} 金幣！`);
+                    exitGame();
+                }
+            });
+            
+            obstacles = obstacles.filter(o => o.x > -50);
+            frame++;
+            if(frame % 20 === 0) { score++; earned = Math.floor(score/10); }
             document.getElementById('score').innerText = score;
             document.getElementById('earned').innerText = earned;
-            nextQuestion();
-        } else {
-            alert(`答錯了！正確答案是 ${currentAns}\n總共賺得 💰 ${earned} 金幣！`);
-            exitGame();
-        }
+        }, 20);
+    }
+
+    // --- Memory Game ---
+    function startMemory() {
+        const board = document.getElementById('memory-board');
+        board.style.display = 'grid';
+        board.innerHTML = '';
+        const icons = ['🧩', '🚀', '🤖', '💡', '🎮', '🔢', '🎨', '💾'];
+        let cards = [...icons, ...icons];
+        shuffle(cards);
+
+        let flipped = [];
+        cards.forEach((icon, i) => {
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            card.dataset.icon = icon;
+            card.onclick = () => {
+                if(flipped.length < 2 && !card.classList.contains('flipped')) {
+                    card.classList.add('flipped');
+                    card.innerText = icon;
+                    flipped.push(card);
+                    if(flipped.length === 2) {
+                        if(flipped[0].dataset.icon === flipped[1].dataset.icon) {
+                            setTimeout(() => {
+                                flipped.forEach(c => c.classList.add('matched'));
+                                flipped = [];
+                                score++; earned += 20;
+                                document.getElementById('score').innerText = score;
+                                document.getElementById('earned').innerText = earned;
+                                if(document.querySelectorAll('.memory-card:not(.matched)').length === 0) {
+                                    alert("恭喜！全部配對成功！");
+                                    exitGame();
+                                }
+                            }, 500);
+                        } else {
+                            setTimeout(() => {
+                                flipped.forEach(c => { c.classList.remove('flipped'); c.innerText = ''; });
+                                flipped = [];
+                            }, 1000);
+                        }
+                    }
+                }
+            };
+            board.appendChild(card);
+        });
+    }
+
+    // --- Catcher Game ---
+    function startCatcher() {
+        const canvas = document.getElementById('game-canvas');
+        canvas.style.display = 'block'; canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        let player = { x: 275, y: 360, w: 50, h: 20 };
+        let items = [];
+        let missed = 0;
+
+        window.onkeydown = (e) => {
+            if(e.code==='ArrowLeft' && player.x > 0) player.x -= 30;
+            if(e.code==='ArrowRight' && player.x < 550) player.x += 30;
+        };
+
+        gameInterval = setInterval(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'var(--scratch-blue)';
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            if(Math.random() < 0.05) items.push({ x: Math.random()*570, y: 0, r: 10 });
+            items.forEach((item, i) => {
+                item.y += 4;
+                ctx.fillStyle = 'var(--scratch-orange)';
+                ctx.beginPath(); ctx.arc(item.x, item.y, item.r, 0, Math.PI*2); ctx.fill();
+
+                if(item.y > 360 && item.x > player.x && item.x < player.x + player.w) {
+                    items.splice(i, 1); score++; earned += 5;
+                } else if(item.y > 400) {
+                    items.splice(i, 1); missed++;
+                    if(missed >= 5) {
+                        clearInterval(gameInterval);
+                        alert("漏掉太多積木了！遊戲結束。");
+                        exitGame();
+                    }
+                }
+            });
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = earned;
+            document.getElementById('game-info').innerText = `生命值：${5-missed}`;
+        }, 30);
+    }
+
+    // --- Tower Game ---
+    function startTower() {
+        const canvas = document.getElementById('game-canvas');
+        canvas.style.display = 'block'; canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        let blocks = [{ x: 200, y: 370, w: 200, h: 30 }];
+        let current = { x: 0, y: 340, w: 200, h: 30, dir: 1 };
+        let speed = 5;
+
+        window.onkeydown = (e) => {
+            if(e.code==='Space' || e.code==='Enter') {
+                const prev = blocks[blocks.length-1];
+                if(current.x + current.w < prev.x || current.x > prev.x + prev.w) {
+                    clearInterval(gameInterval); alert("歪掉了！塔倒了。"); exitGame();
+                } else {
+                    const newX = Math.max(current.x, prev.x);
+                    const newW = Math.min(current.x + current.w, prev.x + prev.w) - newX;
+                    blocks.push({ x: newX, y: current.y, w: newW, h: 30 });
+                    score++; earned += 50;
+                    current = { x: 0, y: current.y - 30, w: newW, h: 30, dir: 1 };
+                    speed += 0.5;
+                    if(current.y < 50) { 
+                        blocks.forEach(b => b.y += 30);
+                        current.y += 30;
+                    }
+                }
+            }
+        };
+
+        gameInterval = setInterval(() => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            blocks.forEach(b => { ctx.fillStyle = 'var(--scratch-green)'; ctx.fillRect(b.x, b.y, b.w, b.h); });
+            
+            current.x += current.dir * speed;
+            if(current.x + current.w > 600 || current.x < 0) current.dir *= -1;
+            ctx.fillStyle = 'var(--scratch-blue)';
+            ctx.fillRect(current.x, current.y, current.w, current.h);
+
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = earned;
+        }, 30);
     }
 
     function shuffle(array) {
