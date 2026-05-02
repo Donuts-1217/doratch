@@ -47,6 +47,7 @@
     <div id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')">📊 系統概況</div>
     <div id="menu-users" class="nav-item" onclick="showTab('users')">👥 使用者管理</div>
     <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
+    <div id="menu-announcements" class="nav-item" onclick="showTab('announcements')">📢 公告管理</div>
     <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px;">快速切換</div>
     <div class="nav-item" onclick="location.href='dashboard.html'">🏠 班級面板</div>
     <div class="nav-item" onclick="location.href='lab.html'">🧪 指令實驗室</div>
@@ -237,10 +238,11 @@
         document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
         document.getElementById('tab-questions').style.display = tab === 'questions' ? 'block' : 'none';
         document.getElementById('tab-announcements').style.display = tab === 'announcements' ? 'block' : 'none';
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        if(event) event.target.classList.add('active');
         
-        // 切換時自動重新整理數據
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const activeMenu = document.getElementById(`menu-${tab}`);
+        if(activeMenu) activeMenu.classList.add('active');
+        
         if(tab === 'users') loadUsers();
         if(tab === 'questions') loadQuestions();
         if(tab === 'announcements') loadAnnouncements();
