@@ -21,11 +21,12 @@
         
         /* --- 頂部導覽列 --- */
         nav { 
-            background: var(--scratch-blue); color: white; padding: 0 20px; 
-            display: flex; align-items: center; height: 55px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 100; gap: 10px; 
+            background: #0B0E14; color: white; padding: 0 20px; 
+            display: flex; align-items: center; height: 65px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 1000; gap: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .nav-logo { font-weight: 900; font-size: 1.2rem; cursor: pointer; white-space: nowrap; margin-right: 10px; }
+        .nav-logo { font-weight: 900; font-size: 1.1rem; cursor: pointer; white-space: nowrap; margin-right: 15px; color: var(--scratch-blue); }
         .project-title-container { flex: 1; display: flex; align-items: center; gap: 10px; }
         #project-title-input {
             background: rgba(255,255,255,0.2); border: none; color: white;
@@ -47,14 +48,14 @@
 
         /* --- 下拉選單 Wrapper --- */
         .user-profile-wrapper { position: relative; padding: 10px 0; }
-        .user-profile { display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; }
+        .user-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .dropdown-menu {
-            position: absolute; top: 50px; right: 0; width: 150px; background: white; border-radius: 8px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-            display: none; flex-direction: column; padding: 5px 0; z-index: 1001;
+            position: absolute; top: 55px; right: 0; width: 180px; background: #1E293B; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; flex-direction: column; padding: 10px 0; z-index: 2000; border: 1px solid rgba(255,255,255,0.1);
         }
         .user-profile-wrapper:hover .dropdown-menu { display: flex; }
-        .dropdown-item { padding: 8px 15px; color: #333; text-decoration: none; font-size: 13px; cursor: pointer; }
-        .dropdown-item:hover { background: #f0f2f5; }
+        .dropdown-item { padding: 10px 20px; color: #CBD5E1; text-decoration: none; font-size: 14px; cursor: pointer; transition: 0.2s; }
+        .dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
 
         /* --- 主內容區佈局 --- */
         #main-container { display: flex; flex: 1; overflow: hidden; }
@@ -102,35 +103,40 @@
 <body>
 
 <nav>
-    <div class="nav-logo" onclick="location.href='main.html'">🧩 CREATIVE BLOCKS</div>
+    <div class="nav-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
+    
     <div class="project-title-container">
-        <input type="text" id="project-title-input" value="未命名作品">
-        <span id="remix-badge" style="display:none; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="if(window.gotoOriginal) window.gotoOriginal()"></span>
-        <span id="status-text">☁️ 已連線</span>
+        <input type="text" id="project-title-input" value="未命名專案">
+        <span id="remix-badge" style="display:none; font-size:11px; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:20px; color:#94A3B8;"></span>
+        <span id="stage-status" style="font-size:12px; font-weight:bold; color:#64748B;">⚪️ 編輯中</span>
     </div>
 
     <div class="nav-actions">
-        <a href="game.html" class="btn-nav" style="text-decoration:none; background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7;">🎮 邏輯遊戲</a>
-        <a href="shop.html" class="btn-nav" style="text-decoration:none; background:#FFF8E1; color:#F57C00; border-color:#FFE082;">🛒 創意商城</a>
-        <div style="display:flex; align-items:center; gap:5px; margin-right:10px;">
-            <input type="checkbox" id="is-public-check"><label for="is-public-check" style="font-size:13px;">發布</label>
+        <div style="display:flex; align-items:center; gap:8px; margin-right:15px; color:#94A3B8; font-size:13px;">
+            <input type="checkbox" id="is-public-check" style="width:auto; margin:0;"><label for="is-public-check">公開發布</label>
         </div>
-        <button class="btn btn-run" onclick="executeCode()">▶️ 執行</button>
-        <button id="main-action-btn" class="btn btn-save" onclick="handleSave()">💾 雲端儲存</button>
-        <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">📤 上載</button>
-        <button class="btn btn-outline" onclick="downloadProject()">📥 下載</button>
+        
+        <button class="btn btn-run" onclick="executeCode()">▶️ 執行程式</button>
+        <button id="main-action-btn" class="btn btn-save" onclick="handleSave()">💾 儲存</button>
+        
+        <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
+
+        <button class="btn btn-outline" style="border:none;" onclick="document.getElementById('file-input').click()">📤 上載</button>
+        <button class="btn btn-outline" style="border:none;" onclick="downloadProject()">📥 下載</button>
         <input type="file" id="file-input" style="display:none" accept=".xml" onchange="importProject(this)">
 
         <div class="user-profile-wrapper">
             <div class="user-profile">
-                <img id="nav-avatar" src="" style="width:24px; height:24px; border-radius:50%; display:none;">
-                <span id="nav-username" style="font-size:12px;">載入中</span>
+                <img id="nav-avatar" src="" style="width:28px; height:28px; border-radius:50%; display:none;">
+                <span id="nav-username" style="font-size:13px; font-weight:bold; color:white;">載入中...</span>
             </div>
             <div class="dropdown-menu">
-                <a href="projects.html" class="dropdown-item">📁 作品集</a>
-                <a href="dashboard.html" class="dropdown-item">🏫 班級</a>
-                <a href="chat.html" class="dropdown-item" style="color:var(--scratch-orange); font-weight:bold;">💬 聊天室</a>
-                <div class="dropdown-item" onclick="handleLogout()" style="color:var(--danger);">🚪 登出</div>
+                <a href="dashboard.html" class="dropdown-item">🏠 我的班級</a>
+                <a href="game.html" class="dropdown-item">🎮 指令塔防</a>
+                <a href="shop.html" class="dropdown-item">🛒 創意商城</a>
+                <a href="chat.html" class="dropdown-item" style="color:var(--scratch-orange); font-weight:bold;">💬 交流大廳</a>
+                <div style="height:1px; background:rgba(255,255,255,0.1); margin:5px 0;"></div>
+                <div class="dropdown-item" onclick="handleLogout()" style="color:var(--danger);">🚪 安全登出</div>
             </div>
         </div>
     </div>
@@ -281,7 +287,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Firebase 配置
     const firebaseConfig = {
