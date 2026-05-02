@@ -178,7 +178,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, addDoc, deleteDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, updateDoc, setDoc, addDoc, deleteDoc, increment, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);

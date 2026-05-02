@@ -106,30 +106,44 @@
         .member-item:hover .member-name { color: white; }
         .kick-btn { background: #FF4D4D; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; opacity: 0; transition: 0.2s; white-space: nowrap; }
         .member-item:hover .kick-btn { opacity: 1; }
+
+        /* 全域導覽列樣式 */
+        .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
+        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--primary); cursor: pointer; }
+        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { color: var(--primary); border-left: 4px solid var(--primary); }
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .main-chat-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks Chat</div>
-    <div class="nav-actions">
-        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); border:none;">🛠️ 管理面板</a>
-        <a href="lab.html" class="btn-nav" style="background:#F3E5F5; color:#7B1FA2;">🧪 指令實驗室</a>
-        <a href="game.html" class="btn-nav" style="background:#E8F5E9; color:#2E7D32;">🎮 邏輯遊戲</a>
-        <a href="shop.html" class="btn-nav" style="background:#FFF8E1; color:#F57C00;">🛒 創意商城</a>
-        <a href="chat.html" class="btn-nav" style="background:white; color:var(--primary);">💬 聊天室</a>
-        <div class="user-profile-wrapper">
-            <div class="user-profile">
-                <img id="nav-avatar" src="" style="width:24px; height:24px; border-radius:50%;">
-                <span id="nav-username">載入中</span>
-            </div>
-            <div class="dropdown-menu">
-                <a href="profile.html" class="dropdown-item">個人設定</a>
-                <div class="dropdown-item" onclick="handleLogout()">登出</div>
+<div class="app-container">
+    <aside class="sidebar-main">
+        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        <a href="dashboard.html" class="nav-item">🏠 我的班級</a>
+        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
+        <a href="game.html" class="nav-item">🎮 指令塔防</a>
+        <a href="shop.html" class="nav-item">🛒 創意商城</a>
+        <a href="chat.html" class="nav-item active">💬 交流大廳</a>
+        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
+        
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+                <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
             </div>
         </div>
-    </div>
-</nav>
+    </aside>
+
+    <div class="main-chat-wrapper">
 
 <div class="chat-container">
     <div class="sidebar">
@@ -209,62 +223,53 @@
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
 
-    // 1. 確認登入狀態並確保 User 存在目錄中
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) { location.href = 'login.html'; return; }
+    onAuthStateChanged(auth, async user => {
+        if (!user) return location.href = "login.html";
         currentUser = user;
-        
-        const currentEmail = user.email || "guest@user";
-        document.getElementById('nav-username').innerText = currentEmail.split('@')[0];
-        document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${currentEmail}&background=random`;
-        document.getElementById('nav-avatar').style.display = 'block';
 
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-
-        // 權限控制按鈕
-        let role = userData?.role || 'student';
-        if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-        if(role === 'admin' || role === 'teacher') {
-            const adminLink = document.getElementById('admin-link');
-            if(adminLink) {
-                adminLink.style.display = 'inline-block';
-                adminLink.innerText = role === 'admin' ? '🛠️ 開發者面板' : '❓ 題庫管理';
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById('side-coins').innerText = data.coins || 0;
+            document.getElementById('side-username').innerText = user.email.split('@')[0];
+            document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            
+            let role = data.role || 'student';
+            if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
+            if(role === 'admin' || role === 'teacher') {
+                const adminLink = document.getElementById('admin-link-main');
+                if(adminLink) {
+                    adminLink.style.display = 'flex';
+                    adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
+                }
             }
         }
 
         try {
-            // 記錄/更新使用者，以便他人透過 Email 搜尋
-            await setDoc(doc(db, "users", user.uid), {
+            await setDoc(userRef, {
                 email: user.email || "",
                 uid: user.uid,
                 lastSeen: serverTimestamp()
             }, { merge: true });
-        } catch (e) {
-            console.warn("無法更新線上狀態（可能是權限問題，但不影響使用）", e);
-        }
+        } catch (e) {}
 
         loadChats();
 
-        // 處理自動開啟聊天室 (?open=ID)
         const urlParams = new URLSearchParams(window.location.search);
         const openId = urlParams.get('open');
         if (openId) {
-            try {
-                const snap = await getDoc(doc(db, "chats", openId));
-                if (snap.exists()) {
-                    const d = snap.data();
-                    if (d.participants.includes(user.uid)) {
-                        let name = d.name || "未命名";
-                        let icon = d.type === 'server' ? '🏫' : (d.type === 'private' ? '👤' : '👥');
-                        if (d.type === 'private') {
-                            const otherEmail = (d.participantEmails || []).find(e => e !== user.email) || "未知";
-                            name = otherEmail.split('@')[0];
-                        }
-                        openChat(openId, name, icon, d.type, d.teacherId);
-                    }
+            const snap = await getDoc(doc(db, "chats", openId));
+            if (snap.exists() && snap.data().participants.includes(user.uid)) {
+                const d = snap.data();
+                let name = d.name || "未命名";
+                let icon = d.type === 'server' ? '🏫' : (d.type === 'private' ? '👤' : '👥');
+                if (d.type === 'private') {
+                    const otherEmail = (d.participantEmails || []).find(e => e !== user.email) || "未知";
+                    name = otherEmail.split('@')[0];
                 }
-            } catch (err) { console.error("自動開啟聊天室失敗:", err); }
+                openChat(openId, name, icon, d.type, d.teacherId);
+            }
         }
     });
 
@@ -914,3 +919,5 @@
 
 </body>
 </html>
+    </div>
+</div>

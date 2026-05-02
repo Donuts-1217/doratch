@@ -41,29 +41,49 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 30px; border-radius: 20px; width: 350px; position: relative; }
         input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #EEE; border-radius: 10px; box-sizing: border-box; }
-        .btn-submit { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
-        
         .announcement-bar { background: white; border-left: 5px solid var(--scratch-orange); padding: 15px 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .ann-title { font-weight: 900; color: var(--scratch-orange); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .ann-content { font-size: 14px; color: #555; line-height: 1.6; }
+
+        /* 全域導覽列樣式 */
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--scratch-blue); cursor: pointer; }
+        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { color: var(--scratch-blue); border-left: 4px solid var(--scratch-blue); }
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .main-content { flex: 1; margin-left: 260px; padding: 40px; }
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
-    <div class="nav-actions">
-        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); color:white; border:none;">🛠️ 開發者面板</a>
-        <a href="lab.html" class="btn-nav" style="text-decoration:none; background:#F3E5F5; color:#7B1FA2; border-color:#D1C4E9;">🧪 指令實驗室</a>
-        <a href="game.html" class="btn-nav" style="text-decoration:none; background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7;">🎮 邏輯遊戲</a>
-        <a href="shop.html" class="btn-nav" style="text-decoration:none; background:#FFF8E1; color:#F57C00; border-color:#FFE082;">🛒 創意商城</a>
-        <a href="chat.html" class="btn-nav" style="text-decoration:none; background:white; color:var(--scratch-blue);">💬 聊天室</a>
-        <button class="btn-nav" style="background:var(--scratch-orange); border:none;" onclick="openModal('joinModal')">🔑 加入班級</button>
-        <button class="btn-nav" id="btn-create-class" style="display:none;" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
-    </div>
-</nav>
+<div class="app-container">
+    <aside class="sidebar-main">
+        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        <a href="dashboard.html" class="nav-item active">🏠 我的班級</a>
+        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
+        <a href="game.html" class="nav-item">🎮 指令塔防</a>
+        <a href="shop.html" class="nav-item">🛒 創意商城</a>
+        <a href="chat.html" class="nav-item">💬 交流大廳</a>
+        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--scratch-purple);">🛠️ 管理面板</a>
+        
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+                <button onclick="signOut(auth)" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
+            </div>
+        </div>
+    </aside>
 
-<div class="container">
+    <main class="main-content">
+        <div id="announcement-section" style="display:none;"></div>
+        
     <!-- 使用者數據卡片 -->
     <div id="user-stats-card" class="card" style="margin-bottom:30px; display:flex; align-items:center; gap:25px; padding:25px; background:white; border-radius:var(--radius-lg); box-shadow:0 10px 30px rgba(0,0,0,0.05);">
         <img id="user-avatar" src="" style="width:70px; height:70px; border-radius:50%; border:3px solid var(--scratch-blue);">
@@ -88,8 +108,15 @@
 
     <div id="announcement-section" style="display:none;"></div>
 
-    <div class="header-title"><h2>我的班級面板</h2></div>
-    <div id="class-list" class="class-grid"></div>
+        <div class="header-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="margin:0;">我的班級面板</h2>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-nav" style="background:var(--scratch-orange); border:none; padding:10px 20px; border-radius:10px; color:white; font-weight:bold; cursor:pointer;" onclick="openModal('joinModal')">🔑 加入班級</button>
+                <button class="btn-nav" id="btn-create-class" style="display:none; background:var(--scratch-green); border:none; padding:10px 20px; border-radius:10px; color:white; font-weight:bold; cursor:pointer;" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
+            </div>
+        </div>
+        <div id="class-list" class="class-grid"></div>
+    </main>
 </div>
 
 <!-- 排行榜 Modal -->
@@ -162,20 +189,22 @@
             role = 'admin';
         }
         
-        // 權限控制：管理員與老師看到不同的入口文字
+        // 權限控制
         if(role === 'admin' || role === 'teacher') {
-            const adminLink = document.getElementById('admin-link');
-            adminLink.style.display = 'inline-block';
-            adminLink.innerText = role === 'admin' ? '🛠️ 開發者面板' : '❓ 題庫管理';
-            
+            const adminLink = document.getElementById('admin-link-main');
+            adminLink.style.display = 'flex';
+            adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
             document.getElementById('btn-create-class').style.display = 'inline-block';
         }
 
         document.getElementById('user-name').innerText = user.email.split('@')[0];
+        document.getElementById('side-username').innerText = user.email.split('@')[0];
         document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+        document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
         document.getElementById('user-level').innerText = data.lv || 1;
         document.getElementById('user-xp').innerText = data.xp || 0;
         document.getElementById('user-coins-dash').innerText = data.coins || 0;
+        document.getElementById('side-coins').innerText = data.coins || 0;
         
         // APCS 統計
         const apcs = data.apcs_stats || { lv1: 0, lv2: 0, lv3: 0 };

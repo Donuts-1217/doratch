@@ -65,21 +65,46 @@
         .btn-nav { text-decoration:none; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
         .btn-nav:hover { background: white; color: var(--bg); }
         .nav-actions { display: flex; gap: 10px; align-items: center; }
+
+        /* 全域導覽列樣式 */
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--primary); cursor: pointer; }
+        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { color: var(--primary); border-left: 4px solid var(--primary); }
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .main-content { flex: 1; margin-left: 260px; padding: 40px; }
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
-    <div class="nav-actions">
-        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); border:none;">🛠️ 管理面板</a>
-        <a href="lab.html" class="btn-nav" style="background:#F3E5F5; color:#7B1FA2;">🧪 指令實驗室</a>
-        <a href="game.html" class="btn-nav" style="background:#E8F5E9; color:#2E7D32;">🎮 邏輯遊戲</a>
-        <a href="shop.html" class="btn-nav" style="background:#FFF8E1; color:#F57C00;">🛒 創意商城</a>
-        <a href="chat.html" class="btn-nav" style="background:white; color:var(--primary);">💬 聊天室</a>
-        <div class="coin-display">💰 <span id="user-coins">0</span></div>
-    </div>
-</nav>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar-main">
+        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        <a href="dashboard.html" class="nav-item">🏠 我的班級</a>
+        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
+        <a href="game.html" class="nav-item active">🎮 指令塔防</a>
+        <a href="shop.html" class="nav-item">🛒 創意商城</a>
+        <a href="chat.html" class="nav-item">💬 交流大廳</a>
+        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
+        
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+                <button onclick="signOut(auth)" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
 
 <div class="container">
     <div class="hero">
@@ -143,22 +168,16 @@
     let userMaxStage = 1;
 
     onAuthStateChanged(auth, async u => {
-        if(!u) return location.href="login.html";
-        fetchUserData(u.uid);
-        fetchGlobalQuestions();
+        if (u) {
+            fetchUserData(u.uid);
+            fetchGlobalQuestions();
+        } else {
+            location.href = "login.html";
+        }
     });
 
     async function fetchUserData(uid) {
         const snap = await getDoc(doc(db, "users", uid));
-        const data = snap.data();
-        document.getElementById('user-coins').innerText = data?.coins || 0;
-        if(data?.unitLevels) userUnitLevels = data.unitLevels;
-        if(data?.maxStage) userMaxStage = data.maxStage;
-
-        // 權限控制按鈕
-        let role = data?.role || 'student';
-        if (auth.currentUser.email === 'chianghansen0302@gmail.com') role = 'admin';
-        
         if(role === 'admin' || role === 'teacher') {
             const adminLink = document.getElementById('admin-link');
             adminLink.style.display = 'inline-block';
@@ -485,3 +504,5 @@
 </script>
 </body>
 </html>
+    </main>
+</div>
