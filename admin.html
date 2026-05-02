@@ -43,9 +43,9 @@
 <body>
 
 <div class="sidebar">
-    <div style="padding: 0 30px 30px; font-weight: 900; color: var(--primary); font-size: 1.2rem;">DEV PANEL</div>
-    <div class="nav-item active" onclick="showTab('users')">👥 用戶管理</div>
-    <div class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
+    <div style="padding: 0 30px 30px; font-weight: 900; color: var(--primary); font-size: 1.2rem;">管理面板</div>
+    <div id="menu-users" class="nav-item active" onclick="showTab('users')">👥 用戶管理</div>
+    <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
     <div class="nav-item" onclick="location.href='dashboard.html'">🏠 返回首頁</div>
     <div id="init-box" style="display:none; margin-top:auto; padding:20px; background:rgba(239, 68, 68, 0.1); border-top:1px solid rgba(239, 68, 68, 0.2);">
         <p style="font-size:12px; color:#FCA5A5; margin-bottom:10px;">⚠️ 偵測到無管理員帳號</p>
@@ -151,8 +151,8 @@
         const userData = snap.data();
         myRole = userData?.role || 'student';
         
-        if(myRole !== 'admin') {
-            // 檢查是否完全沒有 admin，如果是，則顯示初始化按鈕
+        if(myRole !== 'admin' && myRole !== 'teacher') {
+            // 檢查是否完全沒有 admin
             const adminQuery = await getDocs(collection(db, "users"));
             let adminExists = false;
             adminQuery.forEach(d => { if(d.data().role === 'admin') adminExists = true; });
@@ -161,12 +161,17 @@
                 document.getElementById('init-box').style.display = 'block';
                 alert("系統初始化：偵測到目前無任何開發者。請點擊左下方「設為首位開發者」按鈕取得權限。");
             } else {
-                alert("權限不足！只有開發者能進入此面板。");
+                alert("權限不足！只有老師或開發者能進入此面板。");
                 location.href = "dashboard.html";
                 return;
             }
         } else {
-            loadUsers();
+            if(myRole === 'teacher') {
+                document.getElementById('menu-users').style.display = 'none';
+                showTab('questions');
+            } else {
+                loadUsers();
+            }
             loadQuestions();
         }
     });
@@ -197,8 +202,13 @@
                 <td>${u.email}</td>
                 <td><span class="badge badge-${u.role || 'student'}">${u.role || 'student'}</span></td>
                 <td>
-                    <button class="btn btn-primary" onclick="setRole('${d.id}', 'teacher')">設為老師</button>
-                    <button class="btn" style="background:#334155;" onclick="setRole('${d.id}', 'student')">降為學生</button>
+                    <select class="role-select" onchange="setRole('${d.id}', this.value)" style="width:auto; padding:5px; font-size:12px;">
+                        <option value="student" ${u.role==='student'?'selected':''}>學生 (Student)</option>
+                        <option value="teacher" ${u.role==='teacher'?'selected':''}>老師 (Teacher)</option>
+                        <option value="admin" ${u.role==='admin'?'selected':''}>開發者 (Admin)</option>
+                        <option value="moderator" ${u.role==='moderator'?'selected':''}>板主 (Moderator)</option>
+                        <option value="vip" ${u.role==='vip'?'selected':''}>VIP 會員</option>
+                    </select>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -232,14 +242,15 @@
         list.innerHTML = '';
         snap.forEach(d => {
             const q = d.data();
+            const canDelete = q.author === auth.currentUser.uid || myRole === 'admin';
             const div = document.createElement('div');
             div.style = "padding:20px; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center;";
             div.innerHTML = `
                 <div>
                     <div style="font-weight:bold;">${q.text}</div>
-                    <div style="font-size:12px; color:#64748B;">選項：${q.options.join(' / ')} | 答案索引：${q.answer}</div>
+                    <div style="font-size:12px; color:#64748B;">選項：${q.options.join(' / ')} | 難度：${q.diff}</div>
                 </div>
-                <button class="btn btn-danger" onclick="deleteQ('${d.id}')">刪除</button>
+                ${canDelete ? `<button class="btn btn-danger" onclick="deleteQ('${d.id}')">刪除</button>` : `<span style="font-size:12px; color:#444;">無刪除權限</span>`}
             `;
             list.appendChild(div);
         });

@@ -155,12 +155,9 @@
             role = 'admin';
         }
         
-        // 權限控制：只有真正的管理員能看到進入按鈕
-        if(role === 'admin') {
+        // 權限控制：管理員與老師都能看到管理入口
+        if(role === 'admin' || role === 'teacher') {
             document.getElementById('admin-link').style.display = 'inline-block';
-        }
-        
-        if(role === 'teacher' || role === 'admin') {
             document.getElementById('btn-create-class').style.display = 'inline-block';
         }
 
