@@ -190,7 +190,7 @@
     onAuthStateChanged(auth, async u => {
         if(!u) return location.href="login.html";
         
-        // --- 寫死超級管理員絕對權限 ---
+        // --- 超級管理員絕對權限 ---
         if (u.email === 'chianghansen0302@gmail.com') {
             const ref = doc(db, "users", u.uid);
             const snap = await getDoc(ref);
@@ -198,9 +198,7 @@
                 await updateDoc(ref, { role: 'admin' });
             }
             myRole = 'admin';
-            loadUsers();
-            loadQuestions();
-            loadAnnouncements();
+            loadUsers(); loadQuestions(); loadAnnouncements(); loadLogs();
             showTab('dashboard');
             return;
         }
@@ -216,13 +214,18 @@
         }
 
         if(myRole === 'teacher') {
+            document.getElementById('menu-dashboard').style.display = 'none';
             document.getElementById('menu-users').style.display = 'none';
+            document.getElementById('menu-logs').style.display = 'none';
             showTab('questions');
-        } else {
-                loadUsers();
-            }
             loadQuestions();
             loadAnnouncements();
+        } else {
+            loadUsers();
+            loadQuestions();
+            loadAnnouncements();
+            loadLogs();
+            showTab('dashboard');
         }
     });
 
