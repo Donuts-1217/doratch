@@ -62,13 +62,23 @@
         .shield-active { position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 3px solid #4C97FF; border-radius: 25px; animation: pulse 1s infinite; pointer-events: none; }
         @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
         .frozen { filter: grayscale(1) blur(2px); pointer-events: none; }
+        .btn-nav { text-decoration:none; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-nav:hover { background: white; color: var(--bg); }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="logo" onclick="location.href='dashboard.html'">Creative Arena</div>
-    <div class="coin-display">💰 <span id="user-coins">0</span></div>
+    <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+    <div class="nav-actions">
+        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); border:none;">🛠️ 管理面板</a>
+        <a href="lab.html" class="btn-nav" style="background:#F3E5F5; color:#7B1FA2;">🧪 指令實驗室</a>
+        <a href="game.html" class="btn-nav" style="background:#E8F5E9; color:#2E7D32;">🎮 邏輯遊戲</a>
+        <a href="shop.html" class="btn-nav" style="background:#FFF8E1; color:#F57C00;">🛒 創意商城</a>
+        <a href="chat.html" class="btn-nav" style="background:white; color:var(--primary);">💬 聊天室</a>
+        <div class="coin-display">💰 <span id="user-coins">0</span></div>
+    </div>
 </nav>
 
 <div class="container">
@@ -142,6 +152,16 @@
         const data = snap.data();
         document.getElementById('user-coins').innerText = data?.coins || 0;
         if(data?.unitLevels) userUnitLevels = data.unitLevels;
+
+        // 權限控制按鈕
+        let role = data?.role || 'student';
+        if (auth.currentUser.email === 'chianghansen0302@gmail.com') role = 'admin';
+        
+        if(role === 'admin' || role === 'teacher') {
+            const adminLink = document.getElementById('admin-link');
+            adminLink.style.display = 'inline-block';
+            adminLink.innerText = role === 'admin' ? '🛠️ 開發者面板' : '❓ 題庫管理';
+        }
     }
 
     async function fetchGlobalQuestions() {

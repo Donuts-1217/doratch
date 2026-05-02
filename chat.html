@@ -15,9 +15,10 @@
         /* 導覽列 */
         nav { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 10; }
         .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; color: var(--primary); letter-spacing: 1px; }
-        .nav-links { display: flex; align-items: center; }
-        .nav-link { color: var(--text-muted); text-decoration: none; font-weight: bold; font-size: 14px; margin-left: 20px; transition: 0.3s; }
-        .nav-link:hover { color: var(--primary); }
+        .btn-nav { text-decoration:none; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-nav:hover { background: var(--primary); color: white; }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
+
         /* --- 下拉選單 Wrapper --- */
         .user-profile-wrapper { position: relative; padding: 10px 0; margin-left: 20px; }
         .user-profile { display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(255,255,255,0.05); padding: 6px 15px; border-radius: 50px; color: white; border: 1px solid rgba(255,255,255,0.1); }
@@ -25,6 +26,30 @@
         .user-profile-wrapper:hover .dropdown-menu { display: flex; }
         .dropdown-item { padding: 10px 20px; color: var(--text-muted); text-decoration: none; font-size: 13px; cursor: pointer; transition: 0.2s; }
         .dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks Chat</div>
+    <div class="nav-actions">
+        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); border:none;">🛠️ 管理面板</a>
+        <a href="lab.html" class="btn-nav" style="background:#F3E5F5; color:#7B1FA2;">🧪 指令實驗室</a>
+        <a href="game.html" class="btn-nav" style="background:#E8F5E9; color:#2E7D32;">🎮 邏輯遊戲</a>
+        <a href="shop.html" class="btn-nav" style="background:#FFF8E1; color:#F57C00;">🛒 創意商城</a>
+        <a href="chat.html" class="btn-nav" style="background:white; color:var(--primary);">💬 聊天室</a>
+        <div class="user-profile-wrapper">
+            <div class="user-profile">
+                <img id="nav-avatar" src="" style="width:24px; height:24px; border-radius:50%;">
+                <span id="nav-username">使用者</span>
+            </div>
+            <div class="dropdown-menu">
+                <a href="profile.html" class="dropdown-item">個人設定</a>
+                <div class="dropdown-item" onclick="auth.signOut()">登出</div>
+            </div>
+        </div>
+    </div>
+</nav>
         
         /* 聊天主容器 - Discord Style */
         .chat-container { display: flex; flex: 1; overflow: hidden; background: var(--bg); color: var(--text); }

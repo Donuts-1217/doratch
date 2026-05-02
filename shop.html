@@ -46,15 +46,24 @@
         .btn-spin:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
 
         .category-title { font-weight: 900; font-size: 1.5rem; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
+        .btn-nav { text-decoration:none; background: rgba(0,0,0,0.05); color: #444; border: 1px solid rgba(0,0,0,0.1); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-nav:hover { background: var(--scratch-blue); color: white; }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks Mall</div>
-    <div class="user-wallet">
-        <span>💰 金幣：</span>
-        <span id="user-coins">0</span>
+    <div class="nav-actions">
+        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--scratch-purple); color:white; border:none;">🛠️ 管理面板</a>
+        <a href="lab.html" class="btn-nav" style="background:#F3E5F5; color:#7B1FA2;">🧪 指令實驗室</a>
+        <a href="game.html" class="btn-nav" style="background:#E8F5E9; color:#2E7D32;">🎮 邏輯遊戲</a>
+        <a href="shop.html" class="btn-nav" style="background:#FFF8E1; color:#F57C00;">🛒 創意商城</a>
+        <a href="chat.html" class="btn-nav" style="background:white; color:var(--scratch-blue);">💬 聊天室</a>
+        <div class="user-wallet">
+            <span>💰 <span id="user-coins">0</span></span>
+        </div>
     </div>
 </nav>
 
@@ -121,6 +130,16 @@
         const snap = await getDoc(doc(db, "users", user.uid));
         currentUserData = snap.data() || { coins: 0, inventory: [], lastSpin: 0 };
         document.getElementById('user-coins').innerText = currentUserData.coins || 0;
+
+        // 權限控制按鈕
+        let role = currentUserData.role || 'student';
+        if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
+        if(role === 'admin' || role === 'teacher') {
+            const adminLink = document.getElementById('admin-link');
+            adminLink.style.display = 'inline-block';
+            adminLink.innerText = role === 'admin' ? '🛠️ 開發者面板' : '❓ 題庫管理';
+        }
+
         renderItems();
         checkSpinStatus();
     }

@@ -46,7 +46,12 @@
     <div style="padding: 0 30px 30px; font-weight: 900; color: var(--primary); font-size: 1.2rem;">管理面板</div>
     <div id="menu-users" class="nav-item active" onclick="showTab('users')">👥 用戶管理</div>
     <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
-    <div class="nav-item" onclick="location.href='dashboard.html'">🏠 返回首頁</div>
+    <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px;">快速切換</div>
+    <div class="nav-item" onclick="location.href='dashboard.html'">🏠 班級面板</div>
+    <div class="nav-item" onclick="location.href='lab.html'">🧪 指令實驗室</div>
+    <div class="nav-item" onclick="location.href='game.html'">🎮 邏輯遊戲</div>
+    <div class="nav-item" onclick="location.href='shop.html'">🛒 創意商城</div>
+    <div class="nav-item" onclick="location.href='chat.html'">💬 聊天室</div>
     <div id="init-box" style="display:none; margin-top:auto; padding:20px; background:rgba(239, 68, 68, 0.1); border-top:1px solid rgba(239, 68, 68, 0.2);">
         <p style="font-size:12px; color:#FCA5A5; margin-bottom:10px;">⚠️ 偵測到無管理員帳號</p>
         <button class="btn btn-danger" style="width:100%;" onclick="setupFirstAdmin()">設為首位開發者</button>
@@ -101,8 +106,13 @@
             <input type="text" id="q-options" placeholder="2, 3, 4, 5">
         </div>
         <div class="form-group">
-            <label>正確答案 (從 0 開始的索引)</label>
-            <input type="number" id="q-answer" value="0">
+            <label>正確答案是哪一個？</label>
+            <select id="q-answer">
+                <option value="0">第 1 個選項</option>
+                <option value="1">第 2 個選項</option>
+                <option value="2">第 3 個選項</option>
+                <option value="3">第 4 個選項</option>
+            </select>
         </div>
         <div class="form-group">
             <label>難度</label>
@@ -248,7 +258,7 @@
             div.innerHTML = `
                 <div>
                     <div style="font-weight:bold;">${q.text}</div>
-                    <div style="font-size:12px; color:#64748B;">選項：${q.options.join(' / ')} | 難度：${q.diff}</div>
+                    <div style="font-size:12px; color:#64748B;">選項：${q.options.join(' / ')} | 正確答案：第 ${q.answer + 1} 個 | 難度：${q.diff}</div>
                 </div>
                 ${canDelete ? `<button class="btn btn-danger" onclick="deleteQ('${d.id}')">刪除</button>` : `<span style="font-size:12px; color:#444;">無刪除權限</span>`}
             `;
