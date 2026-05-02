@@ -133,6 +133,20 @@
 
     onAuthStateChanged(auth, async u => {
         if(!u) return location.href="login.html";
+        
+        // --- 寫死超級管理員絕對權限 ---
+        if (u.email === 'chianghansen0302@gmail.com') {
+            const ref = doc(db, "users", u.uid);
+            const snap = await getDoc(ref);
+            if(snap.exists() && snap.data().role !== 'admin') {
+                await updateDoc(ref, { role: 'admin' });
+            }
+            myRole = 'admin';
+            loadUsers();
+            loadQuestions();
+            return;
+        }
+
         const snap = await getDoc(doc(db, "users", u.uid));
         const userData = snap.data();
         myRole = userData?.role || 'student';
