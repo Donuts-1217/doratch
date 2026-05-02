@@ -107,6 +107,14 @@
 
         .empty-state { text-align: center; padding: 60px; color: #999; }
         .empty-state i { font-size: 4rem; display: block; margin-bottom: 20px; opacity: 0.3; }
+
+        /* 對話氣泡樣式 */
+        .comment-item { margin-bottom: 15px; display: flex; flex-direction: column; max-width: 85%; }
+        .comment-item.me { align-self: flex-end; align-items: flex-end; }
+        .comment-bubble { padding: 10px 15px; border-radius: 18px; font-size: 14px; position: relative; line-height: 1.5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .comment-item.me .comment-bubble { background: var(--scratch-blue); color: white; border-bottom-right-radius: 4px; }
+        .comment-item.other .comment-bubble { background: #f1f3f4; color: #333; border-bottom-left-radius: 4px; }
+        .comment-name { font-size: 11px; color: #999; margin-bottom: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -194,8 +202,8 @@
                     <div id="det-hints" style="color:#444; font-size:16px; line-height:1.8; background:white; padding:20px; border-radius:16px; border:1px solid #eee;"></div>
                 </div>
 
-                <div class="comment-section">
-                    <h4 style="margin:0 0 15px;">💬 師生私人對話</h4>
+                <div class="comment-section" id="comment-box" style="display:none;">
+                    <h4 style="margin:0 0 15px;">💬 師生私人對話：<span id="chat-with" style="color:var(--scratch-blue);">...</span></h4>
                     <div id="comment-list" style="max-height:250px; overflow-y:auto; margin-bottom:15px; padding-right:10px;"></div>
                     <div style="display:flex; gap:10px; background:white; padding:5px; border-radius:50px; border:1px solid #ddd; padding-left:15px;">
                         <input type="text" id="comment-input" style="flex:1; border:none; outline:none;" placeholder="對老師或學生說點什麼...">
@@ -493,15 +501,17 @@
             gList.innerHTML += `<li><input type="checkbox"> <span>${g}</span></li>`;
         });
 
-        document.getElementById('student-panel').style.display='none';
         document.getElementById('teacher-panel').style.display='none';
         document.getElementById('teacher-review').style.display='none';
+        document.getElementById('comment-box').style.display='none';
 
         if(isTeacher) {
             document.getElementById('teacher-panel').style.display='block';
             loadGrading();
         } else {
             document.getElementById('student-panel').style.display='block';
+            document.getElementById('comment-box').style.display='block';
+            document.getElementById('chat-with').innerText = '與老師對話';
             targetSid = currentUser.uid;
             loadMySub();
             listenC();
@@ -511,7 +521,8 @@
     window.backToHome = () => {
         document.getElementById('home-view').style.display='block';
         document.getElementById('detail-view').style.display='none';
-        if(unsub) unsub();
+        document.getElementById('comment-box').style.display='none';
+        if(unsub) { unsub(); unsub = null; }
     };
 
     async function loadMySub() {
@@ -592,11 +603,17 @@
     }
 
     window.postComment = async () => {
-        const txt = document.getElementById('comment-input').value.trim(); if(!txt) return;
-        await addDoc(collection(db, "classes", classId, "assignments", currentAssignId, "submissions", targetSid, "comments"), {
-            userName: currentUser.email.split('@')[0], text: txt, createdAt: serverTimestamp()
-        });
-        document.getElementById('comment-input').value = '';
+        const txt = document.getElementById('comment-input').value.trim(); 
+        if(!txt || !targetSid) return;
+        try {
+            await addDoc(collection(db, "classes", classId, "assignments", currentAssignId, "submissions", targetSid, "comments"), {
+                userName: currentUser.email.split('@')[0], 
+                text: txt, 
+                createdAt: serverTimestamp(),
+                uid: currentUser.uid
+            });
+            document.getElementById('comment-input').value = '';
+        } catch(e) { alert("發送失敗：" + e.message); }
     };
 
     async function loadGrading() {
@@ -611,9 +628,14 @@
             const u = uSnap.data();
             const div = document.createElement('div');
             div.className = 'grading-row';
+            div.style.background = 'white'; div.style.marginBottom = '10px'; div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
             div.onclick = () => { targetSid = uid; showReview(u, sub); listenC(); };
             div.innerHTML = `
-                <div style="flex:1; font-weight:bold;">${u.email.split('@')[0]}</div>
+                <img src="https://ui-avatars.com/api/?name=${u.email}&background=random" style="width:35px; height:35px; border-radius:50%; margin-right:12px;">
+                <div style="flex:1;">
+                    <div style="font-weight:900;">${u.email.split('@')[0]}</div>
+                    <div style="font-size:11px; color:var(--scratch-purple);">LV.${u.lv || 1} • ${u.xp || 0} XP</div>
+                </div>
                 <div class="work-status ${sub.status==='turned-in'?'done':''}">${sub.status==='turned-in'?'已繳交':'未完成'}</div>
             `;
             list.appendChild(div);
@@ -624,8 +646,13 @@
     function showReview(u, s) {
         document.getElementById('teacher-panel').style.display='none';
         document.getElementById('teacher-review').style.display='block';
-        document.getElementById('review-name').innerText = u.email.split('@')[0];
+        document.getElementById('comment-box').style.display='block';
+        const name = u.email.split('@')[0];
+        document.getElementById('review-name').innerText = name;
+        document.getElementById('chat-with').innerText = `與 ${name} 對話中`;
+        
         const list = document.getElementById('review-atts'); list.innerHTML = '';
+        if((s.atts||[]).length === 0) list.innerHTML = '<p style="color:#999; font-size:13px;">該學生尚未添加任何附件作品。</p>';
         (s.atts||[]).forEach(a => {
             list.innerHTML += `<div class="attachment-item" style="padding:15px; border:1px solid #eee; border-radius:12px; display:flex; justify-content:space-between; align-items:center; background:#fff; margin-bottom:10px;">
                 <a href="page.html?load=${a.id}&from=${u.uid}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold;">🧩 ${a.name}</a>
@@ -641,7 +668,13 @@
         alert("已成功推薦該作品至榮譽牆！");
     };
 
-    window.closeReview = () => { document.getElementById('teacher-panel').style.display='block'; document.getElementById('teacher-review').style.display='none'; };
+    window.closeReview = () => { 
+        document.getElementById('teacher-panel').style.display='block'; 
+        document.getElementById('teacher-review').style.display='none'; 
+        document.getElementById('comment-box').style.display='none';
+        targetSid = null;
+        if(unsub) { unsub(); unsub = null; }
+    };
 
     async function loadGallery() {
         const grid = document.getElementById('gallery-list');
