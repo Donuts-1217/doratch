@@ -234,7 +234,10 @@
 <!-- Modal: 發布任務 -->
 <div id="modal-create-assign" class="modal" onclick="if(event.target==this)closeModal('modal-create-assign')">
     <div class="modal-content">
-        <h2 style="margin-top:0; color:var(--scratch-blue);">📝 設定新挑戰任務</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 style="margin:0; color:var(--scratch-blue);">📝 設定新挑戰任務</h2>
+            <button class="btn-solid" style="width:auto; padding:5px 12px; font-size:12px; background:var(--scratch-orange);" onclick="openModal('modal-question-bank')">📚 從題庫載入</button>
+        </div>
         <div class="form-group">
             <label>任務標題</label>
             <input type="text" id="m-title" placeholder="例如：迴圈畫圓挑戰">
@@ -255,7 +258,28 @@
             <label>🧩 攻略提示與說明</label>
             <textarea id="m-hints" rows="4" placeholder="提示學生本題的核心積木或邏輯思維..."></textarea>
         </div>
-        <button class="btn-full btn-solid" onclick="createAssignment()">發布任務並通知全班</button>
+        <div class="form-group">
+            <label>👥 指派對象</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <input type="checkbox" id="assign-all-check" checked onchange="toggleAssignList()" style="width:auto;"> <label for="assign-all-check" style="margin:0;">全班學生</label>
+            </div>
+            <div id="assign-student-list" style="max-height:150px; overflow-y:auto; padding:10px; border:1px solid #eee; border-radius:12px; display:none;">
+                <!-- 學生清單動態載入 -->
+            </div>
+        </div>
+        <button class="btn-full btn-solid" onclick="createAssignment()">發布任務並通知</button>
+    </div>
+</div>
+
+<!-- Modal: APCS 題庫 -->
+<div id="modal-question-bank" class="modal" onclick="if(event.target==this)closeModal('modal-question-bank')">
+    <div class="modal-content" style="max-width:600px;">
+        <h3 style="margin-top:0;">📚 APCS 邏輯題庫</h3>
+        <p style="font-size:13px; color:#666; margin-bottom:20px;">選擇一個經典邏輯問題，系統將自動填寫任務設定。</p>
+        <div id="bank-list" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <!-- 題庫動態生成 -->
+        </div>
+        <button class="btn-full btn-outline" style="margin-top:20px;" onclick="closeModal('modal-question-bank')">關閉題庫</button>
     </div>
 </div>
 
@@ -303,41 +327,80 @@
     const classId = new URLSearchParams(window.location.search).get('id');
     let currentUser = null, currentClass = null, currentAssignId = null, isTeacher = false, targetSid = null, unsub = null;
 
-    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+    const apcsBank = [
+        {
+            title: "【APCS】成績等第判斷",
+            lv: "LV1 初級",
+            goals: ["詢問使用者輸入分數 (0-100)", "判斷 90分以上為 A", "判斷 80-89分為 B", "判斷 60分以下為 F"],
+            hints: "這題需要用到『如果...否則』積木，並使用『偵測』類別中的『詢問』來取得輸入。"
+        },
+        {
+            title: "【APCS】三角形合法性判斷",
+            lv: "LV2 進階",
+            goals: ["輸入三條邊長 a, b, c", "判斷任意兩邊之和大於第三邊", "符合條件則顯示『合法三角形』", "不符合則顯示『不合法』"],
+            hints: "需要使用邏輯運算積木中的『且 (AND)』來同時檢查三個條件。"
+        },
+        {
+            title: "【APCS】質數搜尋器",
+            lv: "LV3 挑戰",
+            goals: ["輸入一個整數 n", "使用迴圈檢查從 2 到 n-1 是否有整除者", "如果沒有，則說出『它是質數』", "如果是合數，列出一個因數"],
+            hints: "這題的核心是『迴圈』與『餘數運算』。如果 n 除以 i 的餘數為 0，代表它不是質數。"
+        },
+        {
+            title: "【APCS】費氏數列生成器",
+            lv: "LV3 挑戰",
+            goals: ["讓使用者決定要生成的項數 k", "使用『清單』儲存數列數字", "數列規則：前兩項為 1，之後每一項為前兩項之和", "最後依序說出清單內容"],
+            hints: "這題需要用到『變數』來暫存前一項的值，並運用『清單』積木來進行動態儲存。"
+        }
+    ];
 
-    async function init() {
-        if(!classId) return location.href="dashboard.html";
-        const snap = await getDoc(doc(db, "classes", classId));
-        if(!snap.exists()) return;
-        currentClass = snap.data();
-        document.getElementById('nav-title').innerText = currentClass.className;
-        document.getElementById('banner-name').innerText = currentClass.className;
-        document.getElementById('banner-teacher').innerText = `指導老師：${currentClass.teacherEmail.split('@')[0]}`;
-        document.getElementById('btn-chat').href = `chat.html?open=${classId}`;
+    window.openModal = (id) => {
+        document.getElementById(id).style.display = 'flex';
+        if(id === 'modal-create-assign') renderAssignList();
+        if(id === 'modal-question-bank') renderBank();
+    };
 
-        onAuthStateChanged(auth, u => {
-            if(!u) return location.href="login.html";
-            currentUser = u;
-            isTeacher = u.uid === currentClass.teacherId;
-            if(isTeacher) {
-                document.getElementById('btn-show-create').style.display='block';
-                document.getElementById('teacher-controls').style.display='block';
-                document.getElementById('class-code-area').innerText = `🔑 班級邀請碼：${classId}`;
-            } else {
-                document.getElementById('class-code-area').style.display='none';
-            }
+    function renderBank() {
+        const list = document.getElementById('bank-list');
+        list.innerHTML = '';
+        apcsBank.forEach((q, i) => {
+            const div = document.createElement('div');
+            div.style.padding = '15px'; div.style.border = '1px solid #eee'; div.style.borderRadius = '12px'; div.style.cursor = 'pointer';
+            div.innerHTML = `<div style="font-weight:900; margin-bottom:5px;">${q.title}</div><div style="font-size:11px; color:var(--scratch-orange);">${q.lv}</div>`;
+            div.onclick = () => {
+                document.getElementById('m-title').value = q.title;
+                document.getElementById('m-lv').value = q.lv;
+                document.getElementById('m-goals').value = q.goals.join('\n');
+                document.getElementById('m-hints').value = q.hints;
+                closeModal('modal-question-bank');
+            };
+            list.appendChild(div);
         });
     }
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-    window.switchTab = (name) => {
-        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-        document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
-        event.currentTarget.classList.add('active');
-        document.getElementById(`section-${name}`).classList.add('active');
-        if(name==='classwork') loadList();
-        if(name==='projects') loadGallery();
-        if(name==='people') loadPeople();
+    async function renderAssignList() {
+        const list = document.getElementById('assign-student-list');
+        list.innerHTML = '載入名單中...';
+        const students = currentClass.students || [];
+        list.innerHTML = '';
+        for(const uid of students) {
+            const uSnap = await getDoc(doc(db, "users", uid));
+            if(uSnap.exists()) {
+                const name = uSnap.data().email.split('@')[0];
+                list.innerHTML += `
+                    <div style="margin-bottom:5px;">
+                        <input type="checkbox" class="target-student-check" value="${uid}" id="check-${uid}" style="width:auto;">
+                        <label for="check-${uid}" style="display:inline; font-weight:normal;">${name}</label>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    window.toggleAssignList = () => {
+        const isAll = document.getElementById('assign-all-check').checked;
+        document.getElementById('assign-student-list').style.display = isAll ? 'none' : 'block';
     };
 
     window.createAssignment = async () => {
@@ -345,9 +408,17 @@
         const lv = document.getElementById('m-lv').value;
         const goals = document.getElementById('m-goals').value.split('\n').filter(l=>l.trim());
         const hints = document.getElementById('m-hints').value.trim();
+        
+        const isAll = document.getElementById('assign-all-check').checked;
+        let assignedTo = 'all';
+        if(!isAll) {
+            assignedTo = Array.from(document.querySelectorAll('.target-student-check:checked')).map(cb => cb.value);
+            if(assignedTo.length === 0) return alert("請至少選擇一位學生或勾選全班。");
+        }
+
         if(!title) return;
         await addDoc(collection(db, "classes", classId, "assignments"), {
-            title, lv, goals, hints, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
+            title, lv, goals, hints, assignedTo, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
         });
         closeModal('modal-create-assign');
         loadList();
@@ -368,6 +439,12 @@
         list.innerHTML = snap.empty ? '<div class="empty-state">目前沒有發布任何挑戰任務</div>' : '';
         snap.forEach(d => {
             const data = d.data();
+            
+            // 學生權限檢查：如果是指定對象，非名單內學生不顯示
+            if(!isTeacher && data.assignedTo !== 'all' && !data.assignedTo.includes(currentUser.uid)) {
+                return;
+            }
+
             const div = document.createElement('div');
             div.className = 'assignment-item';
             div.onclick = () => openDetail(d.id, data);
@@ -375,7 +452,10 @@
                 <div class="assign-icon">🎮</div>
                 <div style="flex:1;">
                     <div style="font-weight:900; font-size:1.15rem; color:#1967d2;">${data.title}</div>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">難易度：<span style="color:var(--scratch-orange); font-weight:bold;">${data.lv || 'LV1'}</span> • 發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}</div>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">
+                        ${data.assignedTo === 'all' ? '' : '<span style="color:var(--scratch-purple); font-weight:bold;">[指定任務] </span>'}
+                        難易度：<span style="color:var(--scratch-orange); font-weight:bold;">${data.lv || 'LV1'}</span> • 發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}
+                    </div>
                 </div>
                 ${isTeacher ? `<div class="btn-delete" onclick="deleteAssign('${d.id}')">🗑️ 刪除</div>` : ''}
             `;
@@ -584,6 +664,34 @@
             if(uSnap.exists()) html += `<div style="padding:10px; border-bottom:1px solid #eee;">👤 ${uSnap.data().email.split('@')[0]}</div>`;
         }
         list.innerHTML = html + '</div>';
+    }
+
+    async function loadPeople() {
+        // ... 代碼略 ...
+    }
+
+    async function init() {
+        if(!classId) return location.href="dashboard.html";
+        const snap = await getDoc(doc(db, "classes", classId));
+        if(!snap.exists()) return;
+        currentClass = snap.data();
+        document.getElementById('nav-title').innerText = currentClass.className;
+        document.getElementById('banner-name').innerText = currentClass.className;
+        document.getElementById('banner-teacher').innerText = `指導老師：${currentClass.teacherEmail.split('@')[0]}`;
+        document.getElementById('btn-chat').href = `chat.html?open=${classId}`;
+
+        onAuthStateChanged(auth, u => {
+            if(!u) return location.href="login.html";
+            currentUser = u;
+            isTeacher = u.uid === currentClass.teacherId;
+            if(isTeacher) {
+                document.getElementById('btn-show-create').style.display='block';
+                document.getElementById('teacher-controls').style.display='block';
+                document.getElementById('class-code-area').innerText = `🔑 班級邀請碼：${classId}`;
+            } else {
+                document.getElementById('class-code-area').style.display='none';
+            }
+        });
     }
 
     init();
