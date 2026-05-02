@@ -666,10 +666,6 @@
         list.innerHTML = html + '</div>';
     }
 
-    async function loadPeople() {
-        // ... 代碼略 ...
-    }
-
     async function init() {
         if(!classId) return location.href="dashboard.html";
         const snap = await getDoc(doc(db, "classes", classId));
@@ -691,6 +687,7 @@
             } else {
                 document.getElementById('class-code-area').style.display='none';
             }
+            loadList(); // 初始化載入列表
         });
     }
 
