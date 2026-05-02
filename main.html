@@ -73,6 +73,13 @@
         <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
         <a href="index.html" class="nav-item">🏠 平台首頁</a>
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
+        
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
+        <a href="page.html" class="nav-item">🚀 創作空間</a>
+        <a href="main.html?view=mine" class="nav-item">📂 我的作品</a>
+        <a href="main.html" class="nav-item">🌍 探索中心</a>
+
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
         <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
         <a href="game.html" class="nav-item">🎮 指令塔防</a>
         <a href="shop.html" class="nav-item">🛒 創意商城</a>
@@ -165,14 +172,27 @@
     }
 
     async function fetchProjects() {
-        const q = query(collectionGroup(db, "projects"), where("isPublic", "==", true));
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('view');
+        const gridTitle = document.getElementById('grid-title');
+        
+        let q;
+        if (view === 'mine' && auth.currentUser) {
+            if(gridTitle) gridTitle.innerText = "📂 我的作品集";
+            // 查詢自己的所有專案 (不論是否公開)
+            q = query(collection(db, "users", auth.currentUser.uid, "projects"), orderBy("updatedAt", "desc"));
+        } else {
+            if(gridTitle) gridTitle.innerText = "🌍 全球探索中心";
+            q = query(collectionGroup(db, "projects"), where("isPublic", "==", true), orderBy("updatedAt", "desc"));
+        }
+
         const snap = await getDocs(q);
         projects = [];
         snap.forEach(doc => {
             const d = doc.data();
             projects.push({
                 id: doc.id,
-                owner: doc.ref.parent.parent.id,
+                owner: view === 'mine' ? auth.currentUser.uid : doc.ref.parent.parent.id,
                 ...d,
                 author: d.authorEmail?.split('@')[0] || '匿名'
             });

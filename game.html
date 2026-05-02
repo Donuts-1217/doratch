@@ -86,13 +86,19 @@
 </head>
 <body>
 
-<body>
-
 <div class="app-container">
     <aside class="sidebar-main">
         <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        
         <a href="index.html" class="nav-item">🏠 平台首頁</a>
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
+        
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
+        <a href="page.html" class="nav-item">🚀 創作空間</a>
+        <a href="main.html?view=mine" class="nav-item">📂 我的作品</a>
+        <a href="main.html" class="nav-item">🌍 探索中心</a>
+
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
         <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
         <a href="game.html" class="nav-item active">🎮 指令塔防</a>
         <a href="shop.html" class="nav-item">🛒 創意商城</a>
@@ -106,7 +112,7 @@
                     <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
                     <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
                 </div>
-                <button onclick="signOut(auth)" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
+                <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
             </div>
         </div>
     </aside>

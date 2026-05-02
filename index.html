@@ -149,10 +149,10 @@
             const hero = document.getElementById('hero-actions');
             if (user) {
                 nav.innerHTML = `
-                    <a href="main.html">探索牆</a>
+                    <a href="main.html">探索中心</a>
                     <a href="dashboard.html">我的班級</a>
                     <a href="game.html" style="color:var(--primary);">🎮 競技場</a>
-                    <a href="shop.html" style="color:var(--secondary);">🛒 商城</a>
+                    <a href="shop.html" style="color:var(--secondary);">🛒 創意商城</a>
                     <button class="btn" style="padding:10px 20px; font-size:14px; background:rgba(255,255,255,0.05); color:white; border:1px solid #334155; border-radius:12px; cursor:pointer;" onclick="window.handleLogout()">登出</button>
                 `;
                 hero.innerHTML = `
@@ -160,7 +160,7 @@
                     <a href="dashboard.html" class="btn btn-outline">進入工作空間</a>
                 `;
             } else {
-                nav.innerHTML = `<a href="main.html">探索作品</a><a href="login.html" style="color:var(--primary);">登入競技場</a>`;
+                nav.innerHTML = `<a href="main.html">作品探索</a><a href="login.html" style="color:var(--primary);">登入競技場</a>`;
                 hero.innerHTML = `<a href="login.html" class="btn btn-primary">立即開始冒險</a><a href="main.html" class="btn btn-outline">看看大家的作品</a>`;
             }
         });
