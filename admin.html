@@ -47,6 +47,10 @@
     <div class="nav-item active" onclick="showTab('users')">👥 用戶管理</div>
     <div class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
     <div class="nav-item" onclick="location.href='dashboard.html'">🏠 返回首頁</div>
+    <div id="init-box" style="display:none; margin-top:auto; padding:20px; background:rgba(239, 68, 68, 0.1); border-top:1px solid rgba(239, 68, 68, 0.2);">
+        <p style="font-size:12px; color:#FCA5A5; margin-bottom:10px;">⚠️ 偵測到無管理員帳號</p>
+        <button class="btn btn-danger" style="width:100%;" onclick="setupFirstAdmin()">設為首位開發者</button>
+    </div>
 </div>
 
 <div class="main">
@@ -130,15 +134,36 @@
     onAuthStateChanged(auth, async u => {
         if(!u) return location.href="login.html";
         const snap = await getDoc(doc(db, "users", u.uid));
-        myRole = snap.data()?.role || 'student';
+        const userData = snap.data();
+        myRole = userData?.role || 'student';
+        
         if(myRole !== 'admin') {
-            alert("權限不足！只有開發者能進入此面板。");
-            location.href = "dashboard.html";
-            return;
+            // 檢查是否完全沒有 admin，如果是，則顯示初始化按鈕
+            const adminQuery = await getDocs(collection(db, "users"));
+            let adminExists = false;
+            adminQuery.forEach(d => { if(d.data().role === 'admin') adminExists = true; });
+            
+            if(!adminExists) {
+                document.getElementById('init-box').style.display = 'block';
+                alert("系統初始化：偵測到目前無任何開發者。請點擊左下方「設為首位開發者」按鈕取得權限。");
+            } else {
+                alert("權限不足！只有開發者能進入此面板。");
+                location.href = "dashboard.html";
+                return;
+            }
+        } else {
+            loadUsers();
+            loadQuestions();
         }
-        loadUsers();
-        loadQuestions();
     });
+
+    window.setupFirstAdmin = async () => {
+        if(confirm("確定要將此帳號設為首位開發者嗎？這將開啟最高管理權限。")) {
+            await updateDoc(doc(db, "users", auth.currentUser.uid), { role: 'admin' });
+            alert("權限提升成功！即將重新整理。");
+            location.reload();
+        }
+    };
 
     window.showTab = (tab) => {
         document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
