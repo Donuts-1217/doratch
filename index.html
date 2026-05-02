@@ -117,14 +117,14 @@
 
     <section class="showcase">
         <div class="section-title">
-            <h2>社區精彩作品</h2>
-            <p>看看大家都在創造什麼！</p>
+            <h2>社群創意預覽 ✨</h2>
+            <p>加入我們，探索來自全球的精彩專案！</p>
         </div>
         <div class="project-grid" id="gallery-grid">
-            <!-- 由 JS 動態載入 -->
+            <!-- 僅顯示 3 個精選作品作為預覽 -->
         </div>
         <div style="text-align:center; margin-top:50px;">
-            <a href="main.html" class="btn btn-outline">查看更多作品</a>
+            <a href="main.html" class="btn btn-outline">探索更多公開作品</a>
         </div>
     </section>
 
@@ -159,31 +159,31 @@
         const heroActions = document.getElementById('hero-actions');
 
         onAuthStateChanged(auth, (user) => {
-            if (user && user.emailVerified) {
+            if (user) {
                 navContent.innerHTML = `
-                    <a href="main.html">作品探索</a>
+                    <a href="main.html">探索牆</a>
                     <a href="dashboard.html">我的班級</a>
                     <a href="projects.html">個人專案</a>
-                    <a href="chat.html" style="color:var(--main-orange);">💬 聊天室</a>
+                    <a href="shop.html" style="color:#F57C00;">🛒 商城</a>
                     <button class="btn" style="padding:8px 15px; font-size:12px; background:#eee;" onclick="window.logout()">登出</button>
                 `;
                 heroActions.innerHTML = `
-                    <a href="page.html" class="btn btn-primary">開始編程</a>
+                    <a href="page.html" class="btn btn-primary">🚀 開始編程</a>
                     <a href="dashboard.html" class="btn btn-outline">進入教室</a>
                 `;
             } else {
                 navContent.innerHTML = `
-                    <a href="main.html">作品探索</a>
+                    <a href="main.html">探索作品</a>
                     <a href="login.html" style="color:var(--main-blue);">登入 / 註冊</a>
                 `;
                 heroActions.innerHTML = `
                     <a href="login.html" class="btn btn-primary">立即免費開始</a>
-                    <a href="main.html" class="btn btn-outline">探索作品</a>
+                    <a href="main.html" class="btn btn-outline">看看大家的作品</a>
                 `;
             }
         });
 
-        // 載入精彩作品預覽
+        // 載入 3 個精選作品
         async function loadPreview() {
             const grid = document.getElementById('gallery-grid');
             try {
@@ -192,28 +192,28 @@
                 grid.innerHTML = '';
                 snap.forEach(doc => {
                     const p = doc.data();
-                    const authorId = doc.ref.parent.parent.id;
                     const card = document.createElement('div');
                     card.className = 'project-card';
+                    card.style.cursor = 'pointer';
                     card.innerHTML = `
                         <div class="p-thumb">🧩</div>
                         <div class="p-info">
                             <div class="p-name">${p.name || '未命名'}</div>
-                            <div class="p-author">by ${(p.authorEmail || "").split('@')[0]}</div>
+                            <div class="p-author">by ${p.authorEmail?.split('@')[0]}</div>
                         </div>
                     `;
-                    card.onclick = () => location.href = `page.html?load=${doc.id}&from=${authorId}`;
+                    card.onclick = () => location.href = `page.html?load=${doc.id}&from=${doc.ref.parent.parent.id}`;
                     grid.appendChild(card);
                 });
             } catch (e) {
-                grid.innerHTML = '<p style="color:#999; text-align:center; width:100%;">暫時無法載入作品</p>';
+                grid.innerHTML = '<p style="color:#999;">暫時無法載入預覽</p>';
             }
         }
 
         loadPreview();
 
         window.logout = () => {
-            signOut(auth).then(() => location.reload());
+            if(confirm("確定要登出嗎？")) signOut(auth).then(() => location.reload());
         };
     </script>
 </body>

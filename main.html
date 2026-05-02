@@ -42,7 +42,16 @@
         /* 搜尋列 */
         .search-container { max-width: 600px; margin: -25px auto 30px auto; padding: 0 20px; position: relative; z-index: 10; }
         .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-size: 16px; outline: none; box-sizing: border-box; transition: 0.3s; }
-        .search-input:focus { box-shadow: 0 10px 30px rgba(76, 151, 255, 0.3); transform: translateY(-2px); }
+        .search-input:focus { box-shadow: 0 15px 45px rgba(76, 151, 255, 0.4); transform: translateY(-3px); }
+
+        /* 分類標籤 */
+        .filter-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+        .tab-btn { 
+            padding: 10px 25px; border-radius: 50px; background: white; border: 1px solid #ddd;
+            font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px; color: #555;
+        }
+        .tab-btn:hover { border-color: var(--scratch-blue); color: var(--scratch-blue); }
+        .tab-btn.active { background: var(--scratch-blue); color: white; border-color: var(--scratch-blue); box-shadow: 0 5px 15px rgba(76, 151, 255, 0.3); }
 
         .container { padding: 30px 5%; }
         .section-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
@@ -106,13 +115,21 @@
 </div>
 
 <div class="search-container">
-    <input type="text" id="search-input" class="search-input" placeholder="🔍 搜尋作品名稱或作者..." oninput="handleSearch()">
+    <input type="text" id="search-input" class="search-input" placeholder="🔍 搜尋精彩作品名稱或作者..." oninput="handleSearch()">
 </div>
 
 <div class="container">
-    <div class="section-title">✨ 最新發布</div>
+    <div class="filter-tabs">
+        <button class="tab-btn active" onclick="filterBy('all')">🌈 全部作品</button>
+        <button class="tab-btn" onclick="filterBy('logic')">🧩 邏輯挑戰</button>
+        <button class="tab-btn" onclick="filterBy('game')">🎮 趣味遊戲</button>
+        <button class="tab-btn" onclick="filterBy('art')">🎨 藝術創作</button>
+        <button class="tab-btn" onclick="filterBy('remix')">♻️ 改編作品</button>
+    </div>
+
+    <div class="section-title">✨ 最新探索</div>
     <div id="project-grid" class="project-grid">
-        <div class="loading">正在抓取最新作品...</div>
+        <div class="loading">正在為您挑選最棒的作品...</div>
     </div>
 </div>
 
@@ -229,12 +246,29 @@
             renderProjects(allProjects);
             return;
         }
+        const filtered = allProjects.filter(proj => 
+            proj.projectName.toLowerCase().includes(keyword) || 
+            proj.displayName.toLowerCase().includes(keyword)
+        );
+        renderProjects(filtered);
+    };
+
+    window.filterBy = (tag) => {
+        // 更新 UI
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if(tag === 'all') return renderProjects(allProjects);
+        if(tag === 'remix') return renderProjects(allProjects.filter(p => p.data.originalPid));
         
-        const filtered = allProjects.filter(proj => {
-            return proj.projectName.toLowerCase().includes(keyword) || 
-                   proj.displayName.toLowerCase().includes(keyword);
+        // 關鍵字篩選
+        const filtered = allProjects.filter(p => {
+            const name = p.projectName.toLowerCase();
+            if(tag === 'logic') return name.includes('apcs') || name.includes('邏輯') || name.includes('判斷');
+            if(tag === 'game') return name.includes('遊戲') || name.includes('game');
+            if(tag === 'art') return name.includes('畫') || name.includes('藝術') || name.includes('設計');
+            return true;
         });
-        
         renderProjects(filtered);
     };
 
