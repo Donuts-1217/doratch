@@ -32,6 +32,19 @@
         .btn-buy.owned { background: #EEE; color: #999; cursor: default; }
         .btn-buy:active { transform: scale(0.95); }
 
+        /* 大轉盤樣式 */
+        .game-section { background: white; border-radius: 25px; padding: 40px; text-align: center; margin-bottom: 40px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; }
+        .wheel-container { position: relative; width: 300px; height: 300px; margin: 0 auto 30px; }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #333; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); background: conic-gradient(
+            #FFAB19 0deg 60deg, #4C97FF 60deg 120deg, #855CD6 120deg 180deg, 
+            #4CB050 180deg 240deg, #FF4D4D 240deg 300deg, #FFD700 300deg 360deg
+        ); }
+        .wheel-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 50px; background: #333; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; }
+        .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; border-radius: 50%; border: 5px solid #333; z-index: 5; }
+        .wheel-text { position: absolute; width: 100%; height: 100%; top: 0; left: 0; font-weight: bold; color: white; font-size: 14px; }
+        .btn-spin { padding: 15px 40px; border-radius: 30px; border: none; background: var(--scratch-orange); color: white; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 171, 25, 0.4); }
+        .btn-spin:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+
         .category-title { font-weight: 900; font-size: 1.5rem; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
@@ -49,6 +62,20 @@
     <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px;">
         <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
         <p style="margin:10px 0 0; opacity:0.9;">使用任務獲得的金幣，兌換你的專屬個性化道具！</p>
+    </div>
+
+    <!-- 幸運大轉盤 -->
+    <div class="game-section">
+        <h2 style="margin-top:0;">🎡 每日幸運大轉盤</h2>
+        <p style="color:#666; margin-bottom:30px;">每天可以免費轉一次，最高可獲得 200 金幣！</p>
+        <div class="wheel-container">
+            <div class="wheel-pointer"></div>
+            <div id="lucky-wheel" class="wheel">
+                <div class="wheel-center"></div>
+            </div>
+        </div>
+        <button id="btn-spin" class="btn-spin" onclick="spinWheel()">立即抽獎！</button>
+        <p id="spin-timer" style="margin-top:15px; color:#999; font-size:13px;"></p>
     </div>
 
     <div class="category-title">🎨 個人風格</div>
@@ -92,10 +119,62 @@
 
     async function loadMallData(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
-        currentUserData = snap.data() || { coins: 0, inventory: [] };
+        currentUserData = snap.data() || { coins: 0, inventory: [], lastSpin: 0 };
         document.getElementById('user-coins').innerText = currentUserData.coins || 0;
         renderItems();
+        checkSpinStatus();
     }
+
+    function checkSpinStatus() {
+        const last = currentUserData.lastSpin || 0;
+        const now = Date.now();
+        const diff = now - last;
+        const coolDown = 24 * 60 * 60 * 1000; // 24小時
+
+        const btn = document.getElementById('btn-spin');
+        const timer = document.getElementById('spin-timer');
+
+        if(diff < coolDown) {
+            btn.disabled = true;
+            const hours = Math.ceil((coolDown - diff) / (1000 * 60 * 60));
+            timer.innerText = `下次抽獎還需等待約 ${hours} 小時`;
+        } else {
+            btn.disabled = false;
+            timer.innerText = "今日免費次數已準備就緒！";
+        }
+    }
+
+    window.spinWheel = async () => {
+        const btn = document.getElementById('btn-spin');
+        btn.disabled = true;
+
+        const wheel = document.getElementById('lucky-wheel');
+        const randomDegree = Math.floor(Math.random() * 360) + 1800; // 旋轉至少 5 圈
+        wheel.style.transform = `rotate(${randomDegree}deg)`;
+
+        // 旋轉動畫結束後結算 (4秒)
+        setTimeout(async () => {
+            const actualDegree = randomDegree % 360;
+            let prize = 10;
+            if(actualDegree < 60) prize = 50;
+            else if(actualDegree < 120) prize = 20;
+            else if(actualDegree < 180) prize = 100;
+            else if(actualDegree < 240) prize = 30;
+            else if(actualDegree < 300) prize = 10;
+            else prize = 200;
+
+            alert(`🎉 恭喜！你抽中了 💰 ${prize} 金幣！`);
+            
+            try {
+                const ref = doc(db, "users", auth.currentUser.uid);
+                await updateDoc(ref, {
+                    coins: increment(prize),
+                    lastSpin: Date.now()
+                });
+                loadMallData(auth.currentUser);
+            } catch(e) { console.error(e); }
+        }, 4000);
+    };
 
     function renderItems() {
         const styleList = document.getElementById('style-items');

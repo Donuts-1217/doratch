@@ -545,7 +545,7 @@
             if(passed) {
                 resultDiv.innerHTML = "🎉 驗證通過！你可以繳交了。";
                 resultDiv.style.color = "var(--scratch-green)";
-                document.getElementById('btn-submit-task').style.display = 'block';
+                if(!isTeacher) document.getElementById('btn-submit-task').style.display = 'block';
             } else {
                 resultDiv.innerHTML = "❌ 輸出結果不完全正確，再試試看！";
                 resultDiv.style.color = "red";
@@ -578,6 +578,14 @@
             let newLv = lv;
             let levelUp = false;
             
+            // APCS 能力累積
+            let apcs_stats = uSnap.data().apcs_stats || { lv1: 0, lv2: 0, lv3: 0 };
+            if(document.getElementById('mission-title').innerText.includes("【APCS】")) {
+                if(currentMissionLv.includes("LV1")) apcs_stats.lv1 = (apcs_stats.lv1 || 0) + 1;
+                else if(currentMissionLv.includes("LV2")) apcs_stats.lv2 = (apcs_stats.lv2 || 0) + 1;
+                else if(currentMissionLv.includes("LV3")) apcs_stats.lv3 = (apcs_stats.lv3 || 0) + 1;
+            }
+            
             // 檢查升級 (每 500*lv 一級)
             while (newXp >= newLv * 500) {
                 newXp -= (newLv * 500);
@@ -585,7 +593,7 @@
                 levelUp = true;
             }
             
-            await updateDoc(uRef, { xp: newXp, lv: newLv, coins: newCoins });
+            await updateDoc(uRef, { xp: newXp, lv: newLv, coins: newCoins, apcs_stats });
             
             // 2. 標記任務繳交
             const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);

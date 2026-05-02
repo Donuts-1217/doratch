@@ -70,7 +70,12 @@
                 <div id="xp-bar" style="background:linear-gradient(to right, var(--scratch-blue), var(--scratch-purple)); height:100%; width:0%; transition:1s;"></div>
             </div>
             <div style="font-size:12px; color:#999; margin-top:5px; text-align:right;"><span id="user-xp">0</span> / <span id="next-lv-xp">500</span> XP</div>
-            <div style="font-weight:900; color:#F57C00; margin-top:5px;">💰 <span id="user-coins-dash">0</span> Coins</div>
+            <div style="font-weight:900; color:#F57C00; margin-top:5px; display:flex; align-items:center; gap:10px;">
+                <span>💰 <span id="user-coins-dash">0</span> Coins</span>
+                <span style="color:#999; font-weight:normal; font-size:12px;">|</span>
+                <span style="color:var(--scratch-blue);">📊 APCS 能力：<span id="apcs-total">0</span> 題</span>
+            </div>
+            <div id="apcs-badges" style="margin-top:10px; display:flex; gap:5px;"></div>
         </div>
         <button class="btn-nav" style="background:var(--scratch-orange); color:white; border:none; height:auto; padding:15px 25px;" onclick="openModal('rankModal')">🏆 等級排行榜</button>
     </div>
@@ -146,6 +151,17 @@
         document.getElementById('user-level').innerText = data.lv || 1;
         document.getElementById('user-xp').innerText = data.xp || 0;
         document.getElementById('user-coins-dash').innerText = data.coins || 0;
+        
+        // APCS 統計
+        const apcs = data.apcs_stats || { lv1: 0, lv2: 0, lv3: 0 };
+        const total = (apcs.lv1 || 0) + (apcs.lv2 || 0) + (apcs.lv3 || 0);
+        document.getElementById('apcs-total').innerText = total;
+        
+        const badges = document.getElementById('apcs-badges');
+        badges.innerHTML = '';
+        if(apcs.lv1 > 0) badges.innerHTML += `<span title="APCS Lv1" style="background:#E3F2FD; color:#1976D2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">💠 基礎邏輯 x${apcs.lv1}</span>`;
+        if(apcs.lv2 > 0) badges.innerHTML += `<span title="APCS Lv2" style="background:#F3E5F5; color:#7B1FA2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🌀 複合控制 x${apcs.lv2}</span>`;
+        if(apcs.lv3 > 0) badges.innerHTML += `<span title="APCS Lv3" style="background:#FFF3E0; color:#E65100; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🔥 演算法實踐 x${apcs.lv3}</span>`;
         
         const nextXp = (data.lv || 1) * 500;
         document.getElementById('next-lv-xp').innerText = nextXp;
@@ -272,7 +288,6 @@
         } catch (e) { alert("建立失敗：" + e.message); }
     };
 
-    // 加入邏輯
     window.joinClass = async () => {
         const code = document.getElementById('join-code').value.trim().toUpperCase();
         const ref = doc(db, "classes", code);
