@@ -216,10 +216,10 @@
         if(myRole === 'teacher') {
             document.getElementById('menu-dashboard').style.display = 'none';
             document.getElementById('menu-users').style.display = 'none';
+            document.getElementById('menu-announcements').style.display = 'none';
             document.getElementById('menu-logs').style.display = 'none';
             showTab('questions');
             loadQuestions();
-            loadAnnouncements();
         } else {
             loadUsers();
             loadQuestions();
