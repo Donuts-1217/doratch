@@ -3,122 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creative Blocks Pro - 創意積木平台</title>
+    <title>Creative Blocks Pro - 引領未來的積木程式平台</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --main-blue: #4C97FF; --dark-blue: #357ae8; --bg-gray: #f8f9fa; }
-        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: var(--bg-gray); color: #333; }
+        :root { 
+            --main-blue: #4C97FF; --main-purple: #855CD6; --main-orange: #FFAB19;
+            --dark-bg: #0b0e14; --glass-bg: rgba(255, 255, 255, 0.05);
+        }
+        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: white; color: #333; overflow-x: hidden; }
         
         /* 導覽列 */
-        nav { background: white; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .logo { font-size: 1.5rem; font-weight: 800; color: var(--main-blue); cursor: pointer; }
-        .nav-links { display: flex; gap: 20px; align-items: center; }
-        
+        nav { 
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); 
+            height: 70px; display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 5%; position: fixed; width: 90%; top: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .logo { font-size: 1.6rem; font-weight: 900; color: var(--main-blue); cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .nav-links { display: flex; gap: 25px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #555; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: var(--main-blue); }
+
         /* 英雄區 (Hero Section) */
-        .hero { height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; background: linear-gradient(135deg, #4C97FF 0%, #357ae8 100%); color: white; padding: 0 20px; }
-        .hero h1 { font-size: 3.5rem; margin: 0 0 20px; letter-spacing: -1px; }
-        .hero p { font-size: 1.2rem; opacity: 0.9; max-width: 600px; line-height: 1.6; margin-bottom: 40px; }
+        .hero { 
+            min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            text-align: center; background: radial-gradient(circle at top right, #eef5ff, white);
+            padding: 0 20px; position: relative; overflow: hidden;
+        }
+        .hero-badge { 
+            background: #e8f0fe; color: #1967d2; padding: 6px 16px; border-radius: 20px; 
+            font-size: 12px; font-weight: 900; margin-bottom: 20px; border: 1px solid #c2d7fa;
+        }
+        .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin: 0; font-weight: 900; line-height: 1.1; letter-spacing: -2px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--main-blue), var(--main-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.2rem; color: #666; max-width: 650px; line-height: 1.6; margin: 30px 0 40px; }
         
-        /* 按鈕樣式 */
-        .btn { padding: 12px 30px; border-radius: 50px; font-weight: bold; text-decoration: none; transition: 0.3s; cursor: pointer; border: none; font-size: 1rem; }
-        .btn-primary { background: white; color: var(--main-blue); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
-        .btn-outline { border: 2px solid white; color: white; background: transparent; }
-        .btn-outline:hover { background: white; color: var(--main-blue); }
-        .btn-nav { background: var(--main-blue); color: white; padding: 8px 20px; font-size: 0.9rem; }
+        .btn { padding: 16px 35px; border-radius: 12px; font-weight: 900; text-decoration: none; transition: 0.3s; cursor: pointer; border: none; font-size: 1rem; display: inline-block; }
+        .btn-primary { background: var(--main-blue); color: white; box-shadow: 0 10px 25px rgba(76, 151, 255, 0.4); }
+        .btn-primary:hover { transform: translateY(-3px); background: #357ae8; box-shadow: 0 15px 35px rgba(76, 151, 255, 0.5); }
+        .btn-outline { border: 2px solid #ddd; color: #555; background: white; margin-left: 15px; }
+        .btn-outline:hover { border-color: var(--main-blue); color: var(--main-blue); }
 
-        /* 特色介紹 */
-        .features { padding: 80px 5%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; background: white; }
-        .feat-card { text-align: center; padding: 20px; }
-        .feat-card i { font-size: 3rem; color: var(--main-blue); margin-bottom: 20px; display: block; }
-        .feat-card h3 { margin-bottom: 10px; }
-        .feat-card p { color: #666; font-size: 0.95rem; }
+        /* 背景裝飾 */
+        .floating-box { position: absolute; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); z-index: -1; animation: float 6s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
-        #auth-status { display: none; } /* 初始隱藏，待 JS 判斷 */
+        /* 特色區 */
+        .section-title { text-align: center; margin-bottom: 60px; }
+        .section-title h2 { font-size: 2.5rem; font-weight: 900; }
+        
+        .features { padding: 100px 10%; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; background: #fafafa; }
+        .feat-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; }
+        .feat-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+        .feat-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 25px; }
+
+        /* 作品預覽區 */
+        .showcase { padding: 100px 5%; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 40px; }
+        .project-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #eee; transition: 0.3s; }
+        .project-card:hover { transform: scale(1.02); }
+        .p-thumb { height: 160px; background: #f0f7ff; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        .p-info { padding: 20px; }
+        .p-name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
+        .p-author { color: #888; font-size: 13px; }
+
+        footer { background: #0b0e14; color: white; padding: 60px 5%; text-align: center; }
+        .footer-logo { font-size: 1.5rem; font-weight: 900; color: var(--main-blue); margin-bottom: 20px; }
+        .footer-links { display: flex; justify-content: center; gap: 30px; margin: 30px 0; }
+        .footer-links a { color: #888; text-decoration: none; font-size: 14px; }
+        .copyright { font-size: 12px; color: #555; }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">🧩 Creative Blocks</div>
+        <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
         <div class="nav-links" id="nav-content">
             <span>載入中...</span>
         </div>
     </nav>
 
     <div class="hero">
-        <h1>用積木，堆疊你的無限創意</h1>
-        <p>一個專為學生設計的視覺化程式平台。支援雲端存檔、班級管理與實時模擬執行，讓寫程式變得跟玩遊戲一樣簡單！</p>
+        <div class="floating-box" style="top: 20%; left: 10%; animation-delay: 0s;">🧩 Move Forward</div>
+        <div class="floating-box" style="top: 60%; right: 15%; animation-delay: -2s;">🚀 Fast Execution</div>
+        <div class="floating-box" style="bottom: 15%; left: 20%; animation-delay: -4s;">👥 Collaboration</div>
+
+        <div class="hero-badge">✨ 全新改版：支援 Discord 式實時協作</div>
+        <h1>用積木，堆疊你的<br><span>無限創意與夢想</span></h1>
+        <p>不再只是孤獨地寫程式。在這裡，你可以加入班級、與同學即時聊天、分享作品，並在視覺化的環境中輕鬆掌握邏輯。</p>
         
         <div id="hero-actions">
-            </div>
+            <div class="loading">正在準備您的工作空間...</div>
+        </div>
     </div>
 
     <section class="features">
         <div class="feat-card">
-            <i>☁️</i>
-            <h3>雲端儲存</h3>
-            <p>支援 10 個專案雲端備份，隨時隨地在不同裝置繼續你的創作。</p>
+            <div class="feat-icon" style="background:#e8f0fe; color:var(--main-blue);">🏫</div>
+            <h3>雲端教室系統</h3>
+            <p>完美整合 Google Classroom 體驗。老師出題、學生繳交、私人留言討論，還有榮譽作品牆展示優秀創意。</p>
         </div>
         <div class="feat-card">
-            <i>🏫</i>
-            <h3>班級系統</h3>
-            <p>輸入代碼即可加入老師的教室，輕鬆管理學習進度。</p>
+            <div class="feat-icon" style="background:#f3e8ff; color:var(--main-purple);">💬</div>
+            <h3>實時協作通訊</h3>
+            <p>內建 Discord 風格聊天室。支援伺服器、群聊與私訊，甚至能直接在對話中「發送專案檔」供他人檢視。</p>
         </div>
         <div class="feat-card">
-            <i>🚀</i>
-            <h3>高效執行</h3>
-            <p>搭載實時編譯器，積木拼完立即看見結果，除錯更直覺。</p>
+            <div class="feat-icon" style="background:#fff4e5; color:var(--main-orange);">🌍</div>
+            <h3>全球作品探索</h3>
+            <p>在探索牆上發現來自世界各地的精彩專案。一鍵收藏、學習他人的邏輯，並激發自己的創作靈感。</p>
         </div>
     </section>
+
+    <section class="showcase">
+        <div class="section-title">
+            <h2>社區精彩作品</h2>
+            <p>看看大家都在創造什麼！</p>
+        </div>
+        <div class="project-grid" id="gallery-grid">
+            <!-- 由 JS 動態載入 -->
+        </div>
+        <div style="text-align:center; margin-top:50px;">
+            <a href="main.html" class="btn btn-outline">查看更多作品</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">🧩 Creative Blocks</div>
+        <div class="footer-links">
+            <a href="#">使用條款</a>
+            <a href="#">隱私政策</a>
+            <a href="#">教學文檔</a>
+            <a href="login.html">會員登入</a>
+        </div>
+        <p class="copyright">&copy; 2026 Creative Blocks Pro. All Rights Reserved. </p>
+    </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collectionGroup, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
             authDomain: "chat-52c0d.firebaseapp.com",
             projectId: "chat-52c0d",
-            storageBucket: "chat-52c0d.firebasestorage.app",
-            messagingSenderId: "449329325475",
             appId: "1:449329325475:web:75f255c4055360dc9e6616"
         };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
         const navContent = document.getElementById('nav-content');
         const heroActions = document.getElementById('hero-actions');
 
         onAuthStateChanged(auth, (user) => {
             if (user && user.emailVerified) {
-                // 已登入狀態
                 navContent.innerHTML = `
-                    <a href="dashboard.html" style="text-decoration:none; color:#333; margin-right:15px;">我的班級</a>
-                    <a href="projects.html" style="text-decoration:none; color:#333; margin-right:15px;">我的專案</a>
-                    <a href="chat.html" style="text-decoration:none; color:var(--scratch-orange); font-weight:bold; margin-right:15px;">💬 聊天室</a>
-                    <button class="btn btn-nav" onclick="window.logout()">登出</button>
+                    <a href="main.html">作品探索</a>
+                    <a href="dashboard.html">我的班級</a>
+                    <a href="projects.html">個人專案</a>
+                    <a href="chat.html" style="color:var(--main-orange);">💬 聊天室</a>
+                    <button class="btn" style="padding:8px 15px; font-size:12px; background:#eee;" onclick="window.logout()">登出</button>
                 `;
                 heroActions.innerHTML = `
                     <a href="page.html" class="btn btn-primary">開始編程</a>
-                    <a href="dashboard.html" class="btn btn-outline" style="margin-left:15px;">進入教室</a>
+                    <a href="dashboard.html" class="btn btn-outline">進入教室</a>
                 `;
             } else {
-                // 未登入狀態
                 navContent.innerHTML = `
-                    <a href="login.html" style="text-decoration:none; color:#333; font-weight:bold;">登入 / 註冊</a>
+                    <a href="main.html">作品探索</a>
+                    <a href="login.html" style="color:var(--main-blue);">登入 / 註冊</a>
                 `;
                 heroActions.innerHTML = `
                     <a href="login.html" class="btn btn-primary">立即免費開始</a>
+                    <a href="main.html" class="btn btn-outline">探索作品</a>
                 `;
             }
         });
 
-        // 登出功能
+        // 載入精彩作品預覽
+        async function loadPreview() {
+            const grid = document.getElementById('gallery-grid');
+            try {
+                const q = query(collectionGroup(db, "projects"), where("isPublic", "==", true), limit(3));
+                const snap = await getDocs(q);
+                grid.innerHTML = '';
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    const authorId = doc.ref.parent.parent.id;
+                    const card = document.createElement('div');
+                    card.className = 'project-card';
+                    card.innerHTML = `
+                        <div class="p-thumb">🧩</div>
+                        <div class="p-info">
+                            <div class="p-name">${p.name || '未命名'}</div>
+                            <div class="p-author">by ${(p.authorEmail || "").split('@')[0]}</div>
+                        </div>
+                    `;
+                    card.onclick = () => location.href = `page.html?load=${doc.id}&from=${authorId}`;
+                    grid.appendChild(card);
+                });
+            } catch (e) {
+                grid.innerHTML = '<p style="color:#999; text-align:center; width:100%;">暫時無法載入作品</p>';
+            }
+        }
+
+        loadPreview();
+
         window.logout = () => {
-            signOut(auth).then(() => {
-                location.reload();
-            });
+            signOut(auth).then(() => location.reload());
         };
     </script>
 </body>
