@@ -19,126 +19,120 @@
 
         .container { max-width: 1060px; margin: 30px auto; padding: 0 20px; }
         
-        /* 橫幅強化 */
         .class-banner { 
             background: linear-gradient(135deg, #4C97FF, #855CD6); 
-            height: 200px; border-radius: var(--radius-lg); padding: 40px; 
+            height: 180px; border-radius: var(--radius-lg); padding: 40px; 
             color: white; display: flex; flex-direction: column; justify-content: flex-end;
             box-shadow: 0 8px 30px rgba(76, 151, 255, 0.2); margin-bottom: 30px;
             position: relative; overflow: hidden;
         }
-        .class-banner::after { content: "🧩"; position: absolute; right: 40px; bottom: -20px; font-size: 120px; opacity: 0.1; transform: rotate(-15deg); }
-        .class-banner h1 { margin: 0; font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; }
+        .class-banner h1 { margin: 0; font-size: 2.2rem; font-weight: 900; }
 
-        /* 分隔更明顯的分頁欄 */
-        .tabs-container { background: white; border-radius: var(--radius-md); padding: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; display: flex; gap: 5px; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; color: #5f6368; border-radius: 12px; transition: 0.3s; }
-        .tab:hover { background: #f8f9fa; color: var(--scratch-blue); }
-        .tab.active { background: #e8f0fe; color: var(--scratch-blue); }
+        /* 分頁導航 */
+        .tabs-container { background: white; border-radius: 50px; padding: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; display: flex; gap: 5px; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: bold; color: #5f6368; border-radius: 50px; transition: 0.3s; }
+        .tab:hover { background: #f1f3f4; }
+        .tab.active { background: var(--scratch-blue); color: white; box-shadow: 0 4px 10px rgba(76, 151, 255, 0.3); }
 
-        .content-section { display: none; min-height: 400px; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content-section { display: none; animation: fadeIn 0.3s ease; }
         .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 卡片更圓潤 */
-        .card { background: white; border-radius: var(--radius-lg); padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid rgba(0,0,0,0.03); }
-        .card h3 { margin-top: 0; border-bottom: 2px solid #f1f3f4; padding-bottom: 20px; font-weight: 900; font-size: 1.2rem; }
+        .card { background: white; border-radius: var(--radius-lg); padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin-bottom: 25px; }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 15px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; }
 
-        /* 作業列表更美觀 */
+        /* 任務列表 */
         .assignment-item { 
-            display: flex; align-items: center; padding: 20px 25px; 
-            border: 1px solid #f1f3f4; border-radius: var(--radius-md); 
-            margin-bottom: 15px; cursor: pointer; background: white; transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            display: flex; align-items: center; padding: 20px; background: white;
+            border-radius: var(--radius-md); border: 1px solid #eee; margin-bottom: 15px;
+            cursor: pointer; transition: 0.3s;
         }
-        .assignment-item:hover { transform: scale(1.01); border-color: var(--scratch-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .assignment-icon { width: 48px; height: 48px; background: #e8f0fe; color: #1967d2; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 20px; }
+        .assignment-item:hover { border-color: var(--scratch-blue); transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .assign-icon { width: 45px; height: 45px; background: #e8f0fe; color: #1967d2; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 20px; }
 
-        /* 作業詳情 - 響應式佈局 */
-        .detail-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; align-items: start; }
-        @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } .work-card { position: static; } }
+        /* 詳情頁佈局 */
+        .detail-grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; align-items: start; }
+        @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }
 
-        .info-panel h2 { font-size: 32px; font-weight: 900; color: #1967d2; margin-top: 0; margin-bottom: 10px; }
-        .info-panel .meta { font-size: 14px; color: #70757a; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        .info-panel .desc { line-height: 1.8; margin-bottom: 50px; font-size: 16px; color: #3c4043; min-height: 100px; }
-
-        /* 私人留言區 */
-        .comment-box { background: #f8f9fa; border-radius: var(--radius-md); padding: 25px; margin-top: 30px; border: 1px solid #eee; }
-        .comment-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
-        .comment-item { padding: 12px 18px; background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
-        .comment-name { font-weight: 900; color: var(--scratch-blue); font-size: 12px; margin-bottom: 4px; display: block; }
-        .comment-text { font-size: 14px; line-height: 1.5; }
-
-        /* 右側面板樣式 */
-        .side-panel { display: flex; flex-direction: column; gap: 20px; }
-        .work-card { background: white; border-radius: var(--radius-lg); padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #eee; position: sticky; top: 90px; }
-        .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f8f9fa; padding-bottom: 15px; }
-        .work-status { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #70757a; background: #f1f3f4; padding: 4px 10px; border-radius: 4px; }
-        .work-status.done { color: white; background: var(--scratch-green); }
+        .mission-info h2 { font-size: 32px; font-weight: 900; color: #1967d2; margin: 0 0 15px; }
+        .mission-badge { background: #e8f0fe; color: #1967d2; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; }
         
-        .attachment-item { display: flex; align-items: center; padding: 15px; border: 1px solid #eef0f2; border-radius: 14px; margin-bottom: 12px; background: #fff; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .attachment-item:hover { border-color: var(--scratch-blue); }
-        
-        .btn-full { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; font-size: 15px; }
-        .btn-solid { background: var(--scratch-blue); color: white; box-shadow: 0 4px 12px rgba(76, 151, 255, 0.3); }
-        .btn-solid:hover { background: #1967d2; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(76, 151, 255, 0.4); }
-        .btn-outline { background: white; color: var(--scratch-blue); border: 2px solid #e8f0fe; }
-        .btn-outline:hover { background: #e8f0fe; }
+        .mission-section { margin-top: 30px; }
+        .mission-section h4 { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: #3c4043; }
+        .mission-list { list-style: none; padding: 0; }
+        .mission-list li { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 15px; }
+        .mission-list li input { pointer-events: none; }
 
-        /* 老師端列表 */
-        .grading-row { display: flex; align-items: center; padding: 18px 25px; border-radius: var(--radius-md); margin-bottom: 8px; transition: 0.2s; border: 1px solid transparent; }
-        .grading-row:hover { background: #f8f9fa; border-color: #eee; }
-        .grading-row.active { background: #e8f0fe; border-color: var(--scratch-blue); }
+        /* 留言區 */
+        .comment-section { background: #f8f9fa; border-radius: var(--radius-md); padding: 25px; margin-top: 40px; }
+        .comment-item { padding: 10px 15px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 14px; }
+        .comment-name { font-weight: 900; color: var(--scratch-blue); font-size: 11px; margin-bottom: 2px; display: block; }
 
-        /* Modal 圓潤化 */
-        .modal-content { border-radius: var(--radius-lg); padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
-        .modal-btn { padding: 18px; border-radius: var(--radius-md); font-weight: bold; border: 2px solid #f1f3f4; }
-        
-        .loading { padding: 100px; font-weight: bold; color: #bbb; }
+        /* 右側管理卡片 */
+        .work-card { background: white; border-radius: var(--radius-lg); padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.08); border: 1px solid #eee; position: sticky; top: 90px; }
+        .work-card h4 { margin: 0 0 20px; display: flex; justify-content: space-between; }
+        .work-status { font-size: 11px; background: #eee; padding: 4px 10px; border-radius: 4px; font-weight: 900; }
+        .work-status.done { background: var(--scratch-green); color: white; }
+
+        .btn-full { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .btn-solid { background: var(--scratch-blue); color: white; }
+        .btn-solid:hover { background: #1967d2; transform: translateY(-2px); }
+        .btn-outline { border: 2px solid #e8f0fe; background: white; color: var(--scratch-blue); }
+
+        /* Modal */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .modal-content { background: white; padding: 40px; border-radius: var(--radius-lg); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 900; margin-bottom: 8px; font-size: 14px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; outline: none; font-family: inherit; box-sizing: border-box; }
+
+        .grading-row { display: flex; align-items: center; padding: 15px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .grading-row:hover { background: #f8f9fa; }
+        .grading-row.active { background: #e8f0fe; }
     </style>
 </head>
 <body>
 
 <nav>
-    <div class="btn-back" onclick="location.href='dashboard.html'">🧩 返回我的班級</div>
-    <span id="nav-title" style="font-weight: 900; font-size: 1.1rem; margin-left:auto;">班級詳情</span>
+    <div class="btn-back" onclick="location.href='dashboard.html'">🧩 我的教室</div>
+    <span id="nav-title" style="font-weight: 900; margin-left:auto;">正在載入...</span>
 </nav>
 
-<div class="container" id="main-container">
-    <div id="class-home-view">
+<div class="container">
+    <div id="home-view">
         <div class="class-banner">
             <h1 id="banner-name">載入中...</h1>
-            <p id="banner-meta"></p>
+            <p id="banner-teacher" style="opacity:0.8;"></p>
         </div>
 
         <div class="tabs-container">
-            <div class="tab active" onclick="switchTab('stream')">🏠 動態</div>
-            <div class="tab" onclick="switchTab('classwork')">📋 課堂作業</div>
-            <div class="tab" onclick="switchTab('projects')">🌟 班級牆</div>
-            <div class="tab" onclick="switchTab('people')">👥 成員</div>
+            <div class="tab active" onclick="switchTab('stream')">🏠 首頁動態</div>
+            <div class="tab" onclick="switchTab('classwork')">📋 課堂任務</div>
+            <div class="tab" onclick="switchTab('projects')">🌟 榮譽牆</div>
+            <div class="tab" onclick="switchTab('people')">👥 同學們</div>
         </div>
 
         <div id="section-stream" class="content-section active">
             <div class="card">
-                <h3>班級公告</h3>
-                <p id="class-code-display" style="font-size: 1.3rem; font-weight: 900; color: var(--scratch-orange); background: #fff8e1; display: inline-block; padding: 10px 20px; border-radius: 12px;"></p>
-                <p style="color:#666; margin: 20px 0;">歡迎來到此班級！您可以在這裡與老師討論、查看作業、以及欣賞同學們的精彩作品。</p>
-                <a id="btn-go-chat" href="#" class="btn-solid" style="display:inline-block; width:auto; text-decoration:none; border-radius:30px;">💬 前往班級討論區</a>
+                <h3>📢 班級公告</h3>
+                <p id="class-code-area" style="font-weight:900; color:var(--scratch-orange); background:#fff8e1; padding:10px 20px; border-radius:10px; display:inline-block;"></p>
+                <p>歡迎來到 Creative Blocks！請點擊「課堂任務」查看老師發布的挑戰。</p>
+                <a id="btn-chat" href="#" class="btn-solid" style="display:inline-block; width:auto; text-decoration:none; padding:10px 25px; border-radius:30px;">💬 進入即時討論區</a>
             </div>
         </div>
 
         <div id="section-classwork" class="content-section">
             <div class="card">
                 <h3>
-                    📝 所有作業
-                    <button id="btn-add-assignment" class="btn-solid" style="width:auto; background:var(--scratch-green); display:none; padding:8px 20px; font-size:14px;" onclick="openModal('modal-create-assign')">+ 發布作業</button>
+                    🎯 挑戰任務
+                    <button id="btn-show-create" class="btn-solid" style="width:auto; padding:8px 15px; font-size:13px; background:var(--scratch-green); display:none;" onclick="openModal('modal-create-assign')">+ 發布新任務</button>
                 </h3>
                 <div id="assignment-list"></div>
             </div>
         </div>
 
         <div id="section-projects" class="content-section">
-            <div class="project-grid" id="project-list"></div>
+            <div class="card"><h3>🌟 榮譽作品展示</h3><div id="gallery-list"></div></div>
         </div>
 
         <div id="section-people" class="content-section">
@@ -146,55 +140,52 @@
         </div>
     </div>
 
-    <!-- 作業詳情 View -->
-    <div id="assignment-detail-view" style="display:none;">
-        <div style="margin-bottom:25px;"><span class="btn-back" style="color:var(--scratch-blue); font-weight:900;" onclick="backToHome()">⬅ 返回作業列表</span></div>
+    <!-- 任務詳情 (一鍵挑戰模式) -->
+    <div id="detail-view" style="display:none;">
+        <div style="margin-bottom:20px;"><span class="btn-back" style="color:var(--scratch-blue); font-weight:900;" onclick="backToHome()">⬅ 返回教室</span></div>
         <div class="detail-grid">
-            <div class="info-panel">
-                <h2 id="det-title">作業標題</h2>
-                <div class="meta" id="det-meta">老師姓名 • 發布日期</div>
-                <div class="desc" id="det-desc">說明內容...</div>
+            <div class="mission-info">
+                <span class="mission-badge" id="det-lv">LV1 初級</span>
+                <h2 id="det-title">任務標題</h2>
+                <div style="font-size:14px; color:#666; margin-bottom:20px;" id="det-meta">老師發布於...</div>
                 
-                <div class="comment-box">
-                    <h4 style="margin-top:0;">💬 私人留言</h4>
-                    <div class="comment-list" id="comment-list"></div>
-                    <div class="comment-input-area">
-                        <input type="text" id="comment-input" class="comment-input" placeholder="對老師說點什麼...">
-                        <button class="btn-solid" style="width:auto; padding:8px 20px; border-radius:20px; margin-top:0;" onclick="postComment()">傳送</button>
+                <div class="mission-section">
+                    <h4>🎯 任務目標</h4>
+                    <ul class="mission-list" id="det-goals"></ul>
+                </div>
+
+                <div class="mission-section">
+                    <h4>🧩 重點提示</h4>
+                    <p id="det-hints" style="color:#666; font-size:15px; line-height:1.6;"></p>
+                </div>
+
+                <div class="comment-section">
+                    <h4 style="margin:0 0 15px;">💬 私人留言 (僅師生可見)</h4>
+                    <div id="comment-list" style="max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="comment-input" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ddd;" placeholder="有問題想問嗎？">
+                        <button class="btn-solid" style="width:auto; padding:8px 15px;" onclick="postComment()">傳送</button>
                     </div>
                 </div>
             </div>
-            
+
             <div class="side-panel">
-                <!-- 學生看到的繳交區 -->
-                <div class="work-card" id="student-work-card">
-                    <div class="work-header">
-                        <span style="font-weight:900; font-size: 1.1rem;">您的作業</span>
-                        <span class="work-status" id="work-status">已指派</span>
-                    </div>
-                    <div id="attachment-list"></div>
-                    <div id="student-actions">
-                        <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 新增或建立</button>
-                        <button class="btn-full btn-solid" id="btn-submit-main" onclick="handleSubmit()">繳交</button>
-                    </div>
+                <!-- 學生側邊 -->
+                <div class="work-card" id="student-panel">
+                    <h4>您的挑戰狀況 <span class="work-status" id="work-status">已指派</span></h4>
+                    <div id="att-list"></div>
+                    <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 添加附件</button>
+                    <button class="btn-full btn-solid" id="btn-handin" onclick="handleSubmit()">繳交任務</button>
                 </div>
-
-                <!-- 老師看到的批改區 (初始隱藏) -->
-                <div class="work-card" id="teacher-grading-card" style="display:none;">
-                    <div class="work-header">
-                        <span style="font-weight:900; font-size: 1.1rem;">學生成績</span>
-                        <span id="teacher-total-stats" style="font-size:12px; color:#666;">載入中...</span>
-                    </div>
-                    <div class="grading-list" id="grading-list"></div>
+                <!-- 老師側邊 -->
+                <div class="work-card" id="teacher-panel" style="display:none;">
+                    <h4>學生成績回報 <span id="grading-count" style="font-size:11px; color:#666;"></span></h4>
+                    <div id="grading-list"></div>
                 </div>
-
-                <!-- 老師正在查看特定學生的作品時顯示 (初始隱藏) -->
-                <div class="work-card" id="teacher-review-card" style="display:none;">
-                    <div class="work-header">
-                        <span id="review-student-name" style="font-weight:900; font-size: 1.1rem;">學生作品</span>
-                        <span class="work-status" id="review-work-status">已繳交</span>
-                    </div>
-                    <div id="review-attachment-list"></div>
+                <!-- 老師查看特定學生 -->
+                <div class="work-card" id="teacher-review" style="display:none;">
+                    <h4>查看：<span id="review-name">學生</span></h4>
+                    <div id="review-atts"></div>
                     <button class="btn-full btn-outline" onclick="closeReview()">返回名單</button>
                 </div>
             </div>
@@ -202,382 +193,281 @@
     </div>
 </div>
 
-<!-- Modal 保持不變邏輯，僅外觀隨 CSS 改變 -->
+<!-- Modal: 發布任務 (結構化欄位) -->
 <div id="modal-create-assign" class="modal" onclick="if(event.target==this)closeModal('modal-create-assign')">
     <div class="modal-content">
-        <h3 style="text-align:center; margin-bottom:30px;">發布新作業</h3>
-        <input type="text" id="new-assign-title" placeholder="作業標題 (例如: 第一章挑戰)" style="padding:15px; border-radius:12px; margin-bottom:15px; border:2px solid #eee; width:100%; box-sizing:border-box;">
-        <textarea id="new-assign-desc" placeholder="請輸入詳細的作業說明與要求..." rows="6" style="width:100%; border:2px solid #eee; border-radius:12px; padding:15px; box-sizing:border-box; font-family:inherit;"></textarea>
-        <button class="btn-full btn-solid" onclick="createAssignment()">確認發布</button>
+        <h2 style="margin-top:0;">📝 設定新任務</h2>
+        <div class="form-group">
+            <label>任務標題</label>
+            <input type="text" id="m-title" placeholder="例如：貓咪跑步大賽">
+        </div>
+        <div class="form-group">
+            <label>難易度</label>
+            <select id="m-lv" style="width:100%; padding:10px; border-radius:10px; border:2px solid #eee;">
+                <option value="LV1 初級">LV1 初級</option>
+                <option value="LV2 進階">LV2 進階</option>
+                <option value="LV3 挑戰">LV3 挑戰</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>🎯 任務目標 (每行一個)</label>
+            <textarea id="m-goals" rows="4" placeholder="1. 讓貓咪說你好&#10;2. 重複執行10次"></textarea>
+        </div>
+        <div class="form-group">
+            <label>🧩 重點提示</label>
+            <textarea id="m-hints" rows="3" placeholder="提示學生該用什麼積木..."></textarea>
+        </div>
+        <button class="btn-full btn-solid" onclick="createAssignment()">確認發布任務</button>
     </div>
 </div>
 
+<!-- 其他 Modal 略... -->
 <div id="modal-add-source" class="modal" onclick="if(event.target==this)closeModal('modal-add-source')">
     <div class="modal-content">
         <h3>添加附件</h3>
-        <div class="modal-btn" onclick="showCloudProjects()">☁️ 雲端專案 (僅限已發布)</div>
-        <div class="modal-btn" onclick="document.getElementById('local-file').click()">💻 本機上傳 (.xml)</div>
-        <input type="file" id="local-file" accept=".xml" style="display:none" onchange="handleLocalUpload(this)">
+        <div style="padding:15px; border:1px solid #eee; border-radius:12px; margin-bottom:10px; cursor:pointer;" onclick="showCloud()">☁️ 雲端專案</div>
+        <div style="padding:15px; border:1px solid #eee; border-radius:12px; margin-bottom:10px; cursor:pointer;" onclick="document.getElementById('file-up').click()">💻 本機上傳</div>
+        <input type="file" id="file-up" accept=".xml" style="display:none;" onchange="handleUp(this)">
     </div>
 </div>
-
-<div id="modal-cloud-list" class="modal" onclick="if(event.target==this)closeModal('modal-cloud-list')">
-    <div class="modal-content">
-        <h3>選擇作品</h3>
-        <div id="cloud-proj-list" style="max-height:350px; overflow-y:auto; padding-right:10px;"></div>
-    </div>
+<div id="modal-cloud" class="modal" onclick="if(event.target==this)closeModal('modal-cloud')">
+    <div class="modal-content"><h3>選擇專案</h3><div id="cloud-list"></div></div>
 </div>
 
 <script type="module">
-    // ... 原有 JS 邏輯保持不變 ...
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
-        authDomain: "chat-52c0d.firebaseapp.com",
-        projectId: "chat-52c0d",
-        appId: "1:449329325475:web:75f255c4055360dc9e6616"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const classId = new URLSearchParams(window.location.search).get('id');
-    let currentUser = null;
-    let currentClassData = null;
-    let currentAssignmentId = null;
-    let currentTargetStudentId = null;
-    let isTeacher = false;
-    let unsubComments = null;
+    let currentUser = null, currentClass = null, currentAssignId = null, isTeacher = false, targetSid = null, unsub = null;
 
     window.openModal = (id) => document.getElementById(id).style.display = 'flex';
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
     async function init() {
-        if (!classId) return location.href = "dashboard.html";
+        if(!classId) return location.href="dashboard.html";
         const snap = await getDoc(doc(db, "classes", classId));
-        if (!snap.exists()) return;
-        currentClassData = snap.data();
-        
-        document.getElementById('nav-title').innerText = currentClassData.className;
-        document.getElementById('banner-name').innerText = currentClassData.className;
-        document.getElementById('banner-meta').innerText = `老師：${currentClassData.teacherEmail.split('@')[0]}`;
-        document.getElementById('btn-go-chat').href = `chat.html?open=${classId}`;
+        if(!snap.exists()) return;
+        currentClass = snap.data();
+        document.getElementById('nav-title').innerText = currentClass.className;
+        document.getElementById('banner-name').innerText = currentClass.className;
+        document.getElementById('banner-teacher').innerText = `老師：${currentClass.teacherEmail.split('@')[0]}`;
+        document.getElementById('btn-chat').href = `chat.html?open=${classId}`;
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) return location.href = "login.html";
-            currentUser = user;
-            isTeacher = user.uid === currentClassData.teacherId;
-            if (isTeacher) {
-                document.getElementById('btn-add-assignment').style.display = 'block';
-                document.getElementById('class-code-display').innerText = `班級代碼：${classId}`;
+        onAuthStateChanged(auth, u => {
+            if(!u) return location.href="login.html";
+            currentUser = u;
+            isTeacher = u.uid === currentClass.teacherId;
+            if(isTeacher) {
+                document.getElementById('btn-show-create').style.display='block';
+                document.getElementById('class-code-area').innerText = `班級代碼：${classId}`;
             } else {
-                document.getElementById('class-code-display').style.display = 'none';
+                document.getElementById('class-code-area').style.display='none';
             }
         });
     }
 
-    window.switchTab = (tabName) => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    window.switchTab = (name) => {
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        document.getElementById(`section-${tabName}`).classList.add('active');
-
-        if (tabName === 'classwork') loadAssignments();
-        // if (tabName === 'projects') loadGallery();
-        if (tabName === 'people') loadPeople();
+        document.getElementById(`section-${name}`).classList.add('active');
+        if(name==='classwork') loadList();
+        if(name==='people') loadPeople();
     };
 
     window.createAssignment = async () => {
-        const title = document.getElementById('new-assign-title').value.trim();
-        const desc = document.getElementById('new-assign-desc').value.trim();
-        if (!title) return;
+        const title = document.getElementById('m-title').value;
+        const lv = document.getElementById('m-lv').value;
+        const goals = document.getElementById('m-goals').value.split('\n').filter(l=>l.trim());
+        const hints = document.getElementById('m-hints').value;
+        if(!title) return;
         await addDoc(collection(db, "classes", classId, "assignments"), {
-            title, desc, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
+            title, lv, goals, hints, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
         });
         closeModal('modal-create-assign');
-        loadAssignments();
+        loadList();
     };
 
-    async function loadAssignments() {
+    async function loadList() {
         const list = document.getElementById('assignment-list');
-        list.innerHTML = '<div class="loading">正在獲取作業...</div>';
+        list.innerHTML = '載入中...';
         const q = query(collection(db, "classes", classId, "assignments"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
-        list.innerHTML = snap.empty ? '<p style="text-align:center; color:#999; padding:20px;">老師尚未發布作業</p>' : '';
+        list.innerHTML = snap.empty ? '<p style="color:#999; text-align:center;">目前沒有任務</p>' : '';
         snap.forEach(d => {
             const data = d.data();
             const div = document.createElement('div');
             div.className = 'assignment-item';
-            div.onclick = () => openAssignmentDetail(d.id, data);
+            div.onclick = () => openDetail(d.id, data);
             div.innerHTML = `
-                <div class="assignment-icon">📋</div>
+                <div class="assign-icon">🎮</div>
                 <div style="flex:1;">
                     <div style="font-weight:900; font-size:1.1rem; color:#1967d2;">${data.title}</div>
-                    <div style="font-size:12px; color:#70757a; margin-top:3px;">${data.teacherName} 發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}</div>
+                    <div style="font-size:12px; color:#666;">難易度：${data.lv || 'LV1'}</div>
                 </div>
             `;
             list.appendChild(div);
         });
     }
 
-    window.openAssignmentDetail = async (aid, data) => {
-        currentAssignmentId = aid;
-        document.getElementById('class-home-view').style.display = 'none';
-        document.getElementById('assignment-detail-view').style.display = 'block';
-        
+    window.openDetail = (aid, data) => {
+        currentAssignId = aid;
+        document.getElementById('home-view').style.display='none';
+        document.getElementById('detail-view').style.display='block';
         document.getElementById('det-title').innerText = data.title;
-        document.getElementById('det-meta').innerText = `${data.teacherName} • ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}`;
-        document.getElementById('det-desc').innerText = data.desc;
+        document.getElementById('det-lv').innerText = data.lv || 'LV1';
+        document.getElementById('det-hints').innerText = data.hints || '無提示';
+        document.getElementById('det-meta').innerText = `${data.teacherName} 發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}`;
+        
+        const gList = document.getElementById('det-goals');
+        gList.innerHTML = '';
+        (data.goals || []).forEach(g => {
+            gList.innerHTML += `<li><input type="checkbox"> <span>${g}</span></li>`;
+        });
 
-        // 重置視圖
-        document.getElementById('student-work-card').style.display = 'none';
-        document.getElementById('teacher-grading-card').style.display = 'none';
-        document.getElementById('teacher-review-card').style.display = 'none';
+        document.getElementById('student-panel').style.display='none';
+        document.getElementById('teacher-panel').style.display='none';
+        document.getElementById('teacher-review').style.display='none';
 
-        if (isTeacher) {
-            document.getElementById('teacher-grading-card').style.display = 'block';
-            loadGradingList();
+        if(isTeacher) {
+            document.getElementById('teacher-panel').style.display='block';
+            loadGrading();
         } else {
-            document.getElementById('student-work-card').style.display = 'block';
-            currentTargetStudentId = currentUser.uid;
-            loadMySubmission();
-            listenComments();
+            document.getElementById('student-panel').style.display='block';
+            targetSid = currentUser.uid;
+            loadMySub();
+            listenC();
         }
     };
 
     window.backToHome = () => {
-        document.getElementById('class-home-view').style.display = 'block';
-        document.getElementById('assignment-detail-view').style.display = 'none';
-        if (unsubComments) unsubComments();
+        document.getElementById('home-view').style.display='block';
+        document.getElementById('detail-view').style.display='none';
+        if(unsub) unsub();
     };
 
-    async function loadMySubmission() {
-        const subRef = doc(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentUser.uid);
-        const snap = await getDoc(subRef);
-        const list = document.getElementById('attachment-list');
-        const status = document.getElementById('work-status');
-        const btn = document.getElementById('btn-submit-main');
-        const btnAdd = document.getElementById('btn-add-att');
-
+    async function loadMySub() {
+        const snap = await getDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid));
+        const list = document.getElementById('att-list'), st = document.getElementById('work-status'), btn = document.getElementById('btn-handin');
         list.innerHTML = '';
-        if (snap.exists()) {
+        if(snap.exists()) {
             const d = snap.data();
-            status.innerText = d.status === 'turned-in' ? '已繳交' : '已指派';
-            status.className = `work-status ${d.status === 'turned-in' ? 'done' : ''}`;
-            btn.innerText = d.status === 'turned-in' ? '取消繳交' : '繳交作業';
-            btn.className = `btn-full btn-solid ${d.status === 'turned-in' ? 'unsubmit' : ''}`;
-            btnAdd.style.display = d.status === 'turned-in' ? 'none' : 'block';
-
-            (d.attachments || []).forEach((att, index) => {
-                const div = document.createElement('div');
-                div.className = 'attachment-item';
-                div.innerHTML = `
-                    <span style="font-weight:bold;">🧩 ${att.name}</span>
-                    ${d.status !== 'turned-in' ? `<span class="btn-remove-att" onclick="removeAttachment(${index})">×</span>` : ''}
-                `;
-                list.appendChild(div);
+            st.innerText = d.status==='turned-in'?'已繳交':'已指派';
+            st.className = `work-status ${d.status==='turned-in'?'done':''}`;
+            btn.innerText = d.status==='turned-in'?'取消繳交':'繳交任務';
+            (d.atts||[]).forEach((a,i)=> {
+                list.innerHTML += `<div class="attachment-item">🧩 ${a.name}</div>`;
             });
-        } else {
-            status.innerText = '已指派';
-            btn.innerText = '標示為完成';
-            btnAdd.style.display = 'block';
         }
     }
 
     window.handleSubmit = async () => {
-        const subRef = doc(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentUser.uid);
-        const snap = await getDoc(subRef);
-        const currentStatus = snap.exists() ? snap.data().status : 'assigned';
-
-        if (currentStatus === 'turned-in') {
-            await updateDoc(subRef, { status: 'assigned' });
+        const ref = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
+        const snap = await getDoc(ref);
+        const next = snap.exists() && snap.data().status === 'turned-in' ? 'assigned' : 'turned-in';
+        if(!snap.exists()) {
+            await setDoc(ref, { studentId: currentUser.uid, status: next, atts: [], submittedAt: serverTimestamp() });
         } else {
-            if (!snap.exists()) {
-                await setDoc(subRef, {
-                    studentId: currentUser.uid, studentEmail: currentUser.email,
-                    status: 'turned-in', attachments: [], submittedAt: serverTimestamp()
-                });
-            } else {
-                await updateDoc(subRef, { status: 'turned-in', submittedAt: serverTimestamp() });
-            }
+            await updateDoc(ref, { status: next, submittedAt: serverTimestamp() });
         }
-        loadMySubmission();
+        loadMySub();
     };
 
-    window.showCloudProjects = async () => {
-        closeModal('modal-add-source');
-        openModal('modal-cloud-list');
-        const list = document.getElementById('cloud-proj-list');
-        list.innerHTML = '<p class="loading">讀取中...</p>';
-        
-        const q = query(collection(db, "users", currentUser.uid, "projects"), where("isPublic", "==", true));
-        const snap = await getDocs(q);
-        list.innerHTML = snap.empty ? '<p style="text-align:center; color:#999;">您目前沒有已公開的作品</p>' : '';
-        snap.forEach(d => {
-            const p = d.data();
+    window.showCloud = async () => {
+        closeModal('modal-add-source'); openModal('modal-cloud');
+        const list = document.getElementById('cloud-list');
+        list.innerHTML = '載入中...';
+        const snap = await getDocs(query(collection(db, "users", currentUser.uid, "projects"), where("isPublic","==",true)));
+        list.innerHTML = snap.empty ? '無公開作品' : '';
+        snap.forEach(d=> {
             const div = document.createElement('div');
-            div.className = 'modal-btn';
-            div.onclick = () => addAttachment({ id: d.id, name: p.name || '未命名' });
-            div.innerText = p.name || '未命名';
+            div.style.padding='10px'; div.style.borderBottom='1px solid #eee'; div.style.cursor='pointer';
+            div.innerText = d.data().name;
+            div.onclick = async () => {
+                await updateDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid), {
+                    atts: arrayUnion({ id: d.id, name: d.data().name })
+                });
+                closeModal('modal-cloud'); loadMySub();
+            };
             list.appendChild(div);
         });
     };
 
-    window.handleLocalUpload = async (input) => {
-        const file = input.files[0];
-        if (!file) return;
+    window.handleUp = (input) => {
+        const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const xml = e.target.result;
-            const projRef = await addDoc(collection(db, "users", currentUser.uid, "projects"), {
-                name: file.name.replace('.xml', '') + " (上傳)",
-                code: xml, isPublic: true, createdAt: serverTimestamp()
+            const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
+            await updateDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid), {
+                atts: arrayUnion({ id: ref.id, name: file.name })
             });
-            addAttachment({ id: projRef.id, name: file.name });
-            closeModal('modal-add-source');
+            closeModal('modal-add-source'); loadMySub();
         };
         reader.readAsText(file);
     };
 
-    async function addAttachment(att) {
-        const subRef = doc(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentUser.uid);
-        const snap = await getDoc(subRef);
-        if (!snap.exists()) {
-            await setDoc(subRef, {
-                studentId: currentUser.uid, studentEmail: currentUser.email,
-                status: 'assigned', attachments: [att], submittedAt: serverTimestamp()
-            });
-        } else {
-            await updateDoc(subRef, { attachments: arrayUnion(att) });
-        }
-        closeModal('modal-cloud-list');
-        loadMySubmission();
-    }
-
-    window.removeAttachment = async (index) => {
-        const subRef = doc(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentUser.uid);
-        const snap = await getDoc(subRef);
-        const atts = snap.data().attachments;
-        atts.splice(index, 1);
-        await updateDoc(subRef, { attachments: atts });
-        loadMySubmission();
-    };
-
-    function listenComments() {
-        if (unsubComments) unsubComments();
-        const colRef = collection(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentTargetStudentId, "comments");
-        const q = query(colRef, orderBy("createdAt", "asc"));
-        unsubComments = onSnapshot(q, (snap) => {
+    function listenC() {
+        if(unsub) unsub();
+        const q = query(collection(db, "classes", classId, "assignments", currentAssignId, "submissions", targetSid, "comments"), orderBy("createdAt", "asc"));
+        unsub = onSnapshot(q, snap => {
             const list = document.getElementById('comment-list');
             list.innerHTML = '';
-            snap.forEach(d => {
+            snap.forEach(d=> {
                 const c = d.data();
-                const div = document.createElement('div');
-                div.className = 'comment-item';
-                div.innerHTML = `<span class="comment-name">${c.userName}</span><span class="comment-text">${c.text}</span>`;
-                list.appendChild(div);
+                list.innerHTML += `<div class="comment-item"><span class="comment-name">${c.userName}</span>${c.text}</div>`;
             });
             list.scrollTop = list.scrollHeight;
         });
     }
 
     window.postComment = async () => {
-        const text = document.getElementById('comment-input').value.trim();
-        if (!text) return;
-        const colRef = collection(db, "classes", classId, "assignments", currentAssignmentId, "submissions", currentTargetStudentId, "comments");
-        await addDoc(colRef, {
-            uid: currentUser.uid, userName: currentUser.email.split('@')[0],
-            text, createdAt: serverTimestamp()
+        const txt = document.getElementById('comment-input').value; if(!txt) return;
+        await addDoc(collection(db, "classes", classId, "assignments", currentAssignId, "submissions", targetSid, "comments"), {
+            userName: currentUser.email.split('@')[0], text: txt, createdAt: serverTimestamp()
         });
         document.getElementById('comment-input').value = '';
     };
 
-    async function loadGradingList() {
-        const list = document.getElementById('grading-list');
-        list.innerHTML = '載入中...';
-        const q = collection(db, "classes", classId, "assignments", currentAssignmentId, "submissions");
-        const snap = await getDocs(q);
-        const totalStudents = (currentClassData.students || []).length;
-        let turnedInCount = 0;
-
-        list.innerHTML = '';
-        for (const uid of (currentClassData.students || [])) {
-            const sub = snap.docs.find(d => d.id === uid)?.data() || { status: 'assigned' };
-            if (sub.status === 'turned-in') turnedInCount++;
-            
+    async function loadGrading() {
+        const snap = await getDocs(collection(db, "classes", classId, "assignments", currentAssignId, "submissions"));
+        const list = document.getElementById('grading-list'); list.innerHTML = '';
+        let count = 0;
+        for (const uid of (currentClass.students || [])) {
+            const sub = snap.docs.find(d=>d.id===uid)?.data() || { status: 'assigned' };
+            if(sub.status==='turned-in') count++;
             const uSnap = await getDoc(doc(db, "users", uid));
-            if (!uSnap.exists()) continue;
+            if(!uSnap.exists()) continue;
             const u = uSnap.data();
             const div = document.createElement('div');
             div.className = 'grading-row';
-            div.onclick = () => {
-                currentTargetStudentId = uid;
-                showStudentWork(u, sub);
-                listenComments();
-            };
+            div.onclick = () => { targetSid = uid; showReview(u, sub); listenC(); };
             div.innerHTML = `
                 <div style="flex:1; font-weight:bold;">${u.email.split('@')[0]}</div>
                 <div class="work-status ${sub.status==='turned-in'?'done':''}">${sub.status==='turned-in'?'已繳交':'未繳交'}</div>
             `;
             list.appendChild(div);
         }
-        document.getElementById('teacher-total-stats').innerText = `${turnedInCount} / ${totalStudents} 已繳交`;
+        document.getElementById('grading-count').innerText = `${count} / ${(currentClass.students||[]).length} 已繳交`;
     }
 
-    function showStudentWork(user, sub) {
-        document.getElementById('teacher-grading-card').style.display = 'none';
-        document.getElementById('teacher-review-card').style.display = 'block';
-        document.getElementById('review-student-name').innerText = `${user.email.split('@')[0]} 的作品`;
-        
-        const list = document.getElementById('review-attachment-list');
-        list.innerHTML = (sub.attachments || []).length ? '' : '<p style="color:#999; font-size:13px; padding:10px;">尚無附件</p>';
-        (sub.attachments || []).forEach(att => {
-            const div = document.createElement('div');
-            div.className = 'attachment-item';
-            div.innerHTML = `
-                <a href="page.html?load=${att.id}&from=${user.uid}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold; flex:1;">🧩 ${att.name}</a>
-                <button class="btn-solid" style="width:auto; padding:5px 10px; font-size:11px;" onclick="togglePublish('${att.id}', '${user.uid}')">上牆</button>
-            `;
-            list.appendChild(div);
+    function showReview(u, s) {
+        document.getElementById('teacher-panel').style.display='none';
+        document.getElementById('teacher-review').style.display='block';
+        document.getElementById('review-name').innerText = u.email.split('@')[0];
+        const list = document.getElementById('review-atts'); list.innerHTML = '';
+        (s.atts||[]).forEach(a => {
+            list.innerHTML += `<div class="attachment-item"><a href="page.html?load=${a.id}&from=${u.uid}" target="_blank" style="text-decoration:none; color:inherit;">🧩 ${a.name}</a></div>`;
         });
-
-        const status = document.getElementById('review-work-status');
-        status.innerText = sub.status === 'turned-in' ? '已繳交' : '未繳交';
-        status.className = `work-status ${sub.status === 'turned-in' ? 'done' : ''}`;
     }
 
-    window.closeReview = () => {
-        document.getElementById('teacher-grading-card').style.display = 'block';
-        document.getElementById('teacher-review-card').style.display = 'none';
-        // 老師切換回全班清單時，清除目前的留言監聽嗎？這裡可以保留或重置
-    };
-
-    async function loadPeople() {
-        const list = document.getElementById('people-list');
-        list.innerHTML = '<div class="loading">載入中...</div>';
-        const teacherSnap = await getDoc(doc(db, "users", currentClassData.teacherId));
-        let html = '<div class="card"><h3>老師</h3>';
-        if (teacherSnap.exists()) {
-            const t = teacherSnap.data();
-            html += `<div style="display:flex; align-items:center; padding:10px;"><img src="https://ui-avatars.com/api/?name=${t.email}&background=random" style="width:36px; border-radius:50%; margin-right:15px;"><span style="font-weight:900;">${t.email.split('@')[0]}</span></div>`;
-        }
-        html += '</div><div class="card"><h3>同學</h3>';
-        if (!currentClassData.students || currentClassData.students.length === 0) {
-            html += '<p style="color:#999; padding:10px;">尚無同學</p>';
-        } else {
-            for (const uid of currentClassData.students) {
-                const uSnap = await getDoc(doc(db, "users", uid));
-                const u = uSnap.data();
-                html += `<div style="display:flex; align-items:center; padding:10px; border-bottom:1px solid #f8f9fa;"><img src="https://ui-avatars.com/api/?name=${u.email}&background=random" style="width:32px; border-radius:50%; margin-right:15px;"><span style="font-weight:bold;">${u.email.split('@')[0]}</span></div>`;
-            }
-        }
-        html += '</div>';
-        list.innerHTML = html;
-    }
+    window.closeReview = () => { document.getElementById('teacher-panel').style.display='block'; document.getElementById('teacher-review').style.display='none'; };
 
     init();
 </script>
