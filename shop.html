@@ -64,11 +64,9 @@
 </head>
 <body>
 
-<body>
-
 <div class="app-container">
     <aside class="sidebar-main">
-        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
+        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
         <a href="index.html" class="nav-item">🏠 平台首頁</a>
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
         
@@ -99,9 +97,15 @@
     <main class="main-content">
 
 <div class="container">
-    <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px;">
-        <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
-        <p style="margin:10px 0 0; opacity:0.9;">使用任務獲得的金幣，兌換你的專屬個性化道具！</p>
+    <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
+            <p style="margin:10px 0 0; opacity:0.9;">使用任務獲得的金幣，兌換你的專屬個性化道具！</p>
+        </div>
+        <div style="background:rgba(255,255,255,0.2); padding:12px 25px; border-radius:20px; text-align:center;">
+            <div style="font-size:11px; opacity:0.8;">我的金幣</div>
+            <div style="font-size:2rem; font-weight:900;">💰 <span id="user-coins">0</span></div>
+        </div>
     </div>
 
     <!-- 幸運大轉盤 -->
@@ -183,16 +187,12 @@
     async function loadMallData(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
         currentUserData = snap.data() || { coins: 0, inventory: [], lastSpin: 0 };
-        document.getElementById('user-coins').innerText = currentUserData.coins || 0;
-
-        // 權限控制按鈕
-        let role = currentUserData.role || 'student';
-        if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-        if(role === 'admin' || role === 'teacher') {
-            const adminLink = document.getElementById('admin-link');
-            adminLink.style.display = 'inline-block';
-            adminLink.innerText = role === 'admin' ? '🛠️ 開發者面板' : '❓ 題庫管理';
-        }
+        const coins = currentUserData.coins || 0;
+        // 更新頁首與側邊欄的金幣顯示
+        const userCoinsEl = document.getElementById('user-coins');
+        if (userCoinsEl) userCoinsEl.innerText = coins;
+        const sideCoinsEl = document.getElementById('side-coins');
+        if (sideCoinsEl) sideCoinsEl.innerText = coins;
 
         renderItems();
         checkSpinStatus();
