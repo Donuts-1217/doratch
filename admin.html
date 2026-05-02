@@ -193,10 +193,7 @@
         // --- 超級管理員絕對權限 ---
         if (u.email === 'chianghansen0302@gmail.com') {
             const ref = doc(db, "users", u.uid);
-            const snap = await getDoc(ref);
-            if(snap.exists() && snap.data().role !== 'admin') {
-                await updateDoc(ref, { role: 'admin' });
-            }
+            await setDoc(ref, { role: 'admin', email: u.email }, { merge: true });
             myRole = 'admin';
             loadUsers(); loadQuestions(); loadAnnouncements(); loadLogs();
             showTab('dashboard');
