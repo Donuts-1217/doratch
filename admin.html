@@ -17,6 +17,10 @@
         .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
         .nav-item.active { background: rgba(76, 151, 255, 0.1); color: var(--primary); border-left: 4px solid var(--primary); }
 
+        /* 全域導覽列樣式補充 */
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+
         /* Main Content */
         .main { flex: 1; overflow-y: auto; padding: 40px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
@@ -43,7 +47,7 @@
 <body>
 
 <div class="sidebar">
-    <div style="padding: 0 30px 30px; font-weight: 900; color: var(--primary); font-size: 1.2rem;">管理面板</div>
+    <div style="padding: 0 30px 30px; font-weight: 900; color: var(--primary); font-size: 1.2rem; cursor:pointer;" onclick="location.href='index.html'">🧩 Creative Blocks</div>
     <div id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')">📊 系統概況</div>
     <div id="menu-users" class="nav-item" onclick="showTab('users')">👥 使用者管理</div>
     <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
@@ -54,10 +58,17 @@
     <div class="nav-item" onclick="location.href='lab.html'">🧪 指令實驗室</div>
     <div class="nav-item" onclick="location.href='game.html'">🎮 邏輯遊戲</div>
     <div class="nav-item" onclick="location.href='shop.html'">🛒 創意商城</div>
-    <div class="nav-item" onclick="location.href='chat.html'">💬 聊天室</div>
-    <div id="init-box" style="display:none; margin-top:auto; padding:20px; background:rgba(239, 68, 68, 0.1); border-top:1px solid rgba(239, 68, 68, 0.2);">
-        <p style="font-size:12px; color:#FCA5A5; margin-bottom:10px;">⚠️ 偵測到無管理員帳號</p>
-        <button class="btn btn-danger" style="width:100%;" onclick="setupFirstAdmin()">設為首位開發者</button>
+    <div class="nav-item" onclick="location.href='chat.html'">💬 交流大廳</div>
+    
+    <div class="sidebar-footer">
+        <div class="user-mini-card">
+            <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
+            <div style="flex:1; overflow:hidden;">
+                <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+            </div>
+            <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
+        </div>
     </div>
 </div>
 
@@ -200,9 +211,15 @@
             return;
         }
 
+        window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+
         const snap = await getDoc(doc(db, "users", u.uid));
         const userData = snap.data();
         myRole = userData?.role || 'student';
+        
+        document.getElementById('side-coins').innerText = userData?.coins || 0;
+        document.getElementById('side-username').innerText = u.email.split('@')[0];
+        document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${u.email}&background=random`;
         
         if(myRole !== 'admin' && myRole !== 'teacher') {
             alert("權限不足！請聯繫管理員。");

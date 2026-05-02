@@ -189,6 +189,8 @@
             role = 'admin';
         }
         
+        window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+
         // 權限控制
         if(role === 'admin' || role === 'teacher') {
             const adminLink = document.getElementById('admin-link-main');

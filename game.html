@@ -185,7 +185,8 @@
 
     onAuthStateChanged(auth, async u => {
         if (u) {
-            fetchUserData(u.uid);
+            window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+            fetchUserData(u);
             fetchGlobalQuestions();
         } else {
             location.href = "login.html";
