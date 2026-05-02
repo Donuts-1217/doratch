@@ -56,8 +56,35 @@
 </nav>
 
 <div class="container">
+    <!-- 使用者數據卡片 -->
+    <div id="user-stats-card" class="card" style="margin-bottom:30px; display:flex; align-items:center; gap:25px; padding:25px; background:white; border-radius:var(--radius-lg); box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+        <img id="user-avatar" src="" style="width:70px; height:70px; border-radius:50%; border:3px solid var(--scratch-blue);">
+        <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h2 id="user-name" style="margin:0; font-size:1.5rem;">載入中...</h2>
+                <div style="font-weight:900; color:var(--scratch-purple); font-size:1.2rem;">LV. <span id="user-level">1</span></div>
+            </div>
+            <div style="background:#eee; height:12px; border-radius:10px; overflow:hidden; position:relative;">
+                <div id="xp-bar" style="background:linear-gradient(to right, var(--scratch-blue), var(--scratch-purple)); height:100%; width:0%; transition:1s;"></div>
+            </div>
+            <div style="font-size:12px; color:#999; margin-top:5px; text-align:right;"><span id="user-xp">0</span> / <span id="next-lv-xp">500</span> XP</div>
+        </div>
+        <button class="btn-nav" style="background:var(--scratch-orange); color:white; border:none; height:auto; padding:15px 25px;" onclick="openModal('rankModal')">🏆 等級排行榜</button>
+    </div>
+
     <div class="header-title"><h2>我的班級面板</h2></div>
     <div id="class-list" class="class-grid"></div>
+</div>
+
+<!-- 排行榜 Modal -->
+<div id="rankModal" class="modal-overlay">
+    <div class="modal-content" style="width:450px;">
+        <h3 style="text-align:center; margin-top:0;">🏆 全球等級排行榜</h3>
+        <div id="rank-list" style="margin:20px 0;">
+            <!-- 載入排行榜 -->
+        </div>
+        <button class="btn-submit" style="background:none; color:#999;" onclick="closeModal('rankModal')">關閉</button>
+    </div>
 </div>
 
 <div id="joinModal" class="modal-overlay">
@@ -96,8 +123,53 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.openModal = (id) => {
+        document.getElementById(id).style.display = 'flex';
+        if(id === 'rankModal') fetchLeaderboard();
+    };
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+    // 獲取使用者資料 (XP/LV)
+    async function fetchUserData(user) {
+        const ref = doc(db, "users", user.uid);
+        let snap = await getDoc(ref);
+        if (!snap.exists()) {
+            await setDoc(ref, { email: user.email, xp: 0, lv: 1 });
+            snap = await getDoc(ref);
+        }
+        const data = snap.data();
+        document.getElementById('user-name').innerText = user.email.split('@')[0];
+        document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+        document.getElementById('user-level').innerText = data.lv || 1;
+        document.getElementById('user-xp').innerText = data.xp || 0;
+        
+        const nextXp = (data.lv || 1) * 500;
+        document.getElementById('next-lv-xp').innerText = nextXp;
+        const progress = Math.min(((data.xp || 0) / nextXp) * 100, 100);
+        document.getElementById('xp-bar').style.width = progress + "%";
+    }
+
+    // 獲取排行榜
+    async function fetchLeaderboard() {
+        const listDiv = document.getElementById('rank-list');
+        listDiv.innerHTML = "載入中...";
+        const q = query(collection(db, "users"), orderBy("xp", "desc"), limit(10));
+        const snap = await getDocs(q);
+        listDiv.innerHTML = "";
+        let i = 1;
+        snap.forEach(d => {
+            const data = d.data();
+            const div = document.createElement('div');
+            div.style = "display:flex; align-items:center; gap:15px; padding:12px; border-bottom:1px solid #eee;";
+            div.innerHTML = `
+                <div style="font-weight:900; width:30px; color:${i<=3?'var(--scratch-orange)':'#999'}">#${i++}</div>
+                <img src="https://ui-avatars.com/api/?name=${data.email}&background=random" style="width:30px; height:30px; border-radius:50%;">
+                <div style="flex:1; font-weight:bold;">${data.email.split('@')[0]}</div>
+                <div style="color:var(--scratch-purple); font-weight:900;">LV.${data.lv || 1}</div>
+            `;
+            listDiv.appendChild(div);
+        });
+    }
 
     // 渲染班級
     async function fetchClasses(user) {
@@ -220,7 +292,10 @@
     };
 
     onAuthStateChanged(auth, (user) => {
-        if (user) fetchClasses(user);
+        if (user) {
+            fetchUserData(user);
+            fetchClasses(user);
+        }
         else location.href = 'login.html';
     });
 </script>

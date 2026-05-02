@@ -296,6 +296,7 @@
     let authorUid = urlParams.get('from');
     let aid = urlParams.get('aid'); // 任務 ID
     let cid = urlParams.get('cid'); // 班級 ID
+    let currentMissionLv = "LV1"; // 存儲難度
     let isOwner = true;
     let originalProjectData = null;
 
@@ -480,9 +481,10 @@
             const snap = await getDoc(doc(db, "classes", cid, "assignments", aid));
             if (snap.exists()) {
                 const data = snap.data();
+                currentMissionLv = data.lv || "LV1";
                 document.getElementById('mission-trigger').classList.add('has-mission');
                 document.getElementById('mission-title').innerText = data.title;
-                document.getElementById('mission-lv').innerText = data.lv || 'LV1';
+                document.getElementById('mission-lv').innerText = currentMissionLv;
                 document.getElementById('mission-hints').innerText = data.hints || '無提示。';
                 
                 const list = document.getElementById('mission-goals-list');
@@ -505,21 +507,48 @@
     };
 
     window.submitFromEditor = async () => {
-        if (!confirm("確定要現在儲存並繳交作業嗎？")) return;
-        // 先儲存
-        await handleSave(true); // 傳入 true 代表不顯示儲存成功的 Alert
+        if (!confirm("確定要現在儲存並繳交作業嗎？完成將獲得 XP 獎勵！")) return;
         
-        // 標記為繳交 (需引用 firebase setDoc/doc)
+        const user = auth.currentUser;
+        await handleSave(true); // 先儲存專案
+        
         try {
-            const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", auth.currentUser.uid);
-            const sSnap = await getDoc(subRef);
+            // 1. 給予 XP 獎勵
+            const uRef = doc(db, "users", user.uid);
+            const uSnap = await getDoc(uRef);
+            let { xp = 0, lv = 1 } = uSnap.data() || {};
             
-            // 這裡我們需要知道剛儲存的 Pid
-            // 簡化起見，我們先導向回班級頁面讓學生點擊正式繳交，
-            // 或者我們在儲存後直接 update submissions
-            alert("進度已儲存！請回班級頁面確認最終繳交附件。");
+            let xpReward = 100;
+            if (currentMissionLv.includes("LV2")) xpReward = 250;
+            if (currentMissionLv.includes("LV3")) xpReward = 500;
+            
+            let newXp = xp + xpReward;
+            let newLv = lv;
+            let levelUp = false;
+            
+            // 檢查升級 (每 500*lv 一級)
+            while (newXp >= newLv * 500) {
+                newXp -= (newLv * 500);
+                newLv++;
+                levelUp = true;
+            }
+            
+            await updateDoc(uRef, { xp: newXp, lv: newLv });
+            
+            // 2. 標記任務繳交
+            const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
+            await updateDoc(subRef, { status: 'turned-in', submittedAt: serverTimestamp() });
+
+            // 3. 成功特效與提示
+            const msg = levelUp ? `🎊 恭喜升級到 LV.${newLv}！\n獲得了 ${xpReward} XP！` : `✅ 任務完成！獲得了 ${xpReward} XP！`;
+            alert(msg);
+            
             location.href = `class_view.html?id=${cid}`;
-        } catch (e) { alert("繳交過程出錯：" + e.message); }
+        } catch (e) { 
+            console.error(e);
+            alert("繳交成功，但經驗值結算時發生一點問題：" + e.message);
+            location.href = `class_view.html?id=${cid}`;
+        }
     };
 
     // --- 4. 功能實現 ---
