@@ -210,7 +210,8 @@
                     <h4>您的挑戰狀態 <span class="work-status" id="work-status">已指派</span></h4>
                     <div id="att-list"></div>
                     <div id="student-work-actions">
-                        <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 新增附件作品</button>
+                        <button class="btn-full btn-solid" style="background:var(--scratch-purple);" onclick="location.href=`page.html?aid=${currentAssignId}&cid=${classId}`">🚀 開始挑戰任務</button>
+                        <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 手動添加附件</button>
                         <button class="btn-full btn-solid" id="btn-handin" onclick="handleSubmit()">正式繳交任務</button>
                     </div>
                 </div>

@@ -70,6 +70,33 @@
         .tab-btn.active { background: #444; color: white; border-radius: 4px; }
         
         #status-text { font-size: 11px; opacity: 0.7; margin-left: 5px; color: white; }
+
+        /* --- 任務面板 (Mission Panel) --- */
+        #mission-trigger {
+            position: fixed; bottom: 20px; left: 20px; z-index: 1000;
+            background: var(--scratch-purple); color: white; width: 60px; height: 60px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: 0.3s; border: 2px solid white;
+        }
+        #mission-trigger:hover { transform: scale(1.1) rotate(15deg); background: #9b72e6; }
+        #mission-trigger.has-mission { display: flex; }
+        #mission-trigger:not(.has-mission) { display: none; }
+
+        #mission-panel {
+            position: fixed; top: 70px; left: 20px; width: 320px; max-height: 80vh;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 999; display: none; flex-direction: column; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5); animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .mission-header { background: var(--scratch-purple); color: white; padding: 15px 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; }
+        .mission-body { padding: 20px; overflow-y: auto; flex: 1; }
+        .mission-goal-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
+        .mission-goal-item input { transform: scale(1.2); }
+        .mission-hint-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 13px; color: #795548; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -132,6 +159,29 @@
             <div id="console-out" style="flex:1; background: #000; color: #4af626; padding: 10px; font-family: monospace; font-size: 13px; overflow-y: auto;">> 等待執行...<br></div>
             <pre id="code-preview" style="flex:1; display:none; padding: 10px; color: #9cdcfe; font-family: 'Consolas', monospace; font-size: 13px; overflow: auto; margin: 0; background: #1e1e1e;"></pre>
         </div>
+    </div>
+</div>
+
+<!-- 任務面板 -->
+<div id="mission-trigger" onclick="toggleMissionPanel()" title="查看任務目標">🎯</div>
+<div id="mission-panel">
+    <div class="mission-header">
+        <span>🎯 任務挑戰中</span>
+        <span style="cursor:pointer; font-size: 20px;" onclick="toggleMissionPanel()">×</span>
+    </div>
+    <div class="mission-body">
+        <h3 id="mission-title" style="margin:0 0 5px; font-size:18px;">載入中...</h3>
+        <span id="mission-lv" class="btn" style="padding:2px 8px; font-size:10px; display:inline-block; margin-bottom:15px; background:#e8f0fe; color:#1967d2;">LV1</span>
+        
+        <div style="font-weight:900; font-size:14px; margin-bottom:10px;">目標清單：</div>
+        <div id="mission-goals-list"></div>
+        
+        <div id="mission-hint-area">
+            <div style="font-weight:900; font-size:14px; margin:20px 0 10px;">🧩 攻略提示：</div>
+            <div class="mission-hint-box" id="mission-hints"></div>
+        </div>
+        
+        <button class="btn btn-save" style="width:100%; margin-top:25px; padding:12px; justify-content:center;" onclick="submitFromEditor()">完成任務並繳交</button>
     </div>
 </div>
 
@@ -241,8 +291,11 @@
     const db = getFirestore(app);
 
     let workspace = null;
-    let currentPid = new URLSearchParams(window.location.search).get('load');
-    let authorUid = new URLSearchParams(window.location.search).get('from');
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentPid = urlParams.get('load');
+    let authorUid = urlParams.get('from');
+    let aid = urlParams.get('aid'); // 任務 ID
+    let cid = urlParams.get('cid'); // 班級 ID
     let isOwner = true;
     let originalProjectData = null;
 
@@ -415,7 +468,59 @@
                 if (d.data) { Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(d.data), workspace); }
             }
         }
+
+        // 如果是任務模式，載入任務資料
+        if (aid && cid) {
+            loadMissionInfo();
+        }
     });
+
+    async function loadMissionInfo() {
+        try {
+            const snap = await getDoc(doc(db, "classes", cid, "assignments", aid));
+            if (snap.exists()) {
+                const data = snap.data();
+                document.getElementById('mission-trigger').classList.add('has-mission');
+                document.getElementById('mission-title').innerText = data.title;
+                document.getElementById('mission-lv').innerText = data.lv || 'LV1';
+                document.getElementById('mission-hints').innerText = data.hints || '無提示。';
+                
+                const list = document.getElementById('mission-goals-list');
+                list.innerHTML = '';
+                (data.goals || []).forEach(g => {
+                    list.innerHTML += `<div class="mission-goal-item"><input type="checkbox"> <span>${g}</span></div>`;
+                });
+                
+                // 自動將專案標題改為任務名稱
+                if (!currentPid) {
+                    document.getElementById('project-title-input').value = `[任務] ${data.title}`;
+                }
+            }
+        } catch (e) { console.error("任務載入失敗", e); }
+    }
+
+    window.toggleMissionPanel = () => {
+        const panel = document.getElementById('mission-panel');
+        panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    };
+
+    window.submitFromEditor = async () => {
+        if (!confirm("確定要現在儲存並繳交作業嗎？")) return;
+        // 先儲存
+        await handleSave(true); // 傳入 true 代表不顯示儲存成功的 Alert
+        
+        // 標記為繳交 (需引用 firebase setDoc/doc)
+        try {
+            const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", auth.currentUser.uid);
+            const sSnap = await getDoc(subRef);
+            
+            // 這裡我們需要知道剛儲存的 Pid
+            // 簡化起見，我們先導向回班級頁面讓學生點擊正式繳交，
+            // 或者我們在儲存後直接 update submissions
+            alert("進度已儲存！請回班級頁面確認最終繳交附件。");
+            location.href = `class_view.html?id=${cid}`;
+        } catch (e) { alert("繳交過程出錯：" + e.message); }
+    };
 
     // --- 4. 功能實現 ---
 
@@ -495,7 +600,7 @@
     };
 
     // 雲端儲存
-    window.handleSave = async () => {
+    window.handleSave = async (silent = false) => {
         const user = auth.currentUser;
         const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         const title = document.getElementById('project-title-input').value;
@@ -506,7 +611,7 @@
                 await updateDoc(doc(db, "users", user.uid, "projects", currentPid), {
                     name: title, data: xmlText, isPublic: isPublic, updatedAt: serverTimestamp()
                 });
-                alert("儲存成功！");
+                if(!silent) alert("儲存成功！");
             } else {
                 const savePayload = {
                     name: title,
@@ -522,9 +627,24 @@
                 }
                 
                 const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), savePayload);
-                location.href = `page.html?load=${newDoc.id}`;
+                currentPid = newDoc.id; // 更新目前的 Pid
+                if(!silent) alert("已建立新專案並儲存！");
+                
+                // 如果是任務模式，自動幫學生關聯附件
+                if (aid && cid) {
+                    const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
+                    const sSnap = await getDoc(subRef);
+                    const att = { id: currentPid, name: title };
+                    if(!sSnap.exists()) {
+                        await setDoc(subRef, { studentId: user.uid, status: 'assigned', atts: [att], submittedAt: serverTimestamp() });
+                    } else {
+                        await updateDoc(subRef, { atts: arrayUnion(att) });
+                    }
+                }
+                
+                // location.href = `page.html?load=${newDoc.id}${aid?`&aid=${aid}&cid=${cid}`:''}`;
             }
-        } catch (e) { alert("儲存失敗: " + e.message); }
+        } catch (e) { if(!silent) alert("儲存失敗: " + e.message); }
     };
 
     // 下載
