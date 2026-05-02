@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>專案詳情 - Creative Blocks Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
+            --bg: #0F172A; --card-bg: #1E293B; --text: #F8FAFC;
+        }
+        body { margin: 0; font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        nav { 
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); 
+            height: 80px; display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 5%; position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo { font-size: 1.5rem; font-weight: 900; color: var(--primary); cursor: pointer; }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+        
+        .preview-pane { background: #000; border-radius: 32px; height: 500px; display: flex; align-items: center; justify-content: center; position: relative; border: 4px solid var(--card-bg); box-shadow: 0 20px 50px rgba(0,0,0,0.5); overflow: hidden; }
+        #project-canvas { background: white; }
+        
+        .info-pane { background: var(--card-bg); border-radius: 32px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); }
+        .project-title { font-size: 2rem; font-weight: 900; margin-bottom: 15px; }
+        .author-box { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .author-avatar { width: 50px; height: 50px; border-radius: 16px; border: 2px solid var(--primary); }
+        
+        .stats { display: flex; gap: 20px; margin-bottom: 40px; }
+        .stat-item { background: rgba(255,255,255,0.05); padding: 15px 25px; border-radius: 20px; text-align: center; flex: 1; }
+        .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: block; }
+        .stat-label { font-size: 0.8rem; color: #94A3B8; text-transform: uppercase; }
+
+        .actions { display: flex; flex-direction: column; gap: 15px; }
+        .btn { padding: 18px; border-radius: 16px; font-weight: 900; border: none; cursor: pointer; transition: 0.3s; font-size: 1.1rem; text-align: center; text-decoration: none; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(76, 151, 255, 0.2); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(76, 151, 255, 0.3); }
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
+        /* Description Area */
+        .desc-section { margin-top: 40px; }
+        .desc-section h3 { font-size: 1.2rem; color: #94A3B8; margin-bottom: 15px; }
+        .desc-text { line-height: 1.8; color: #E2E8F0; }
+
+        #run-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='index.html'">Creative Blocks Pro</div>
+    <div style="color:#94A3B8; font-weight:bold;">專案探索視窗</div>
+</nav>
+
+<div class="container">
+    <div class="main-content">
+        <div class="preview-pane">
+            <div id="run-overlay">
+                <div style="font-size:4rem; margin-bottom:20px;">🚀</div>
+                <button class="btn btn-primary" style="padding:15px 50px;" onclick="runProject()">點擊執行專案</button>
+            </div>
+            <canvas id="project-canvas" width="600" height="400" style="display:none;"></canvas>
+        </div>
+        
+        <div class="desc-section">
+            <h3>專案說明</h3>
+            <div class="desc-text" id="project-desc">這個作者很懶，什麼都沒留下...</div>
+        </div>
+    </div>
+
+    <div class="info-pane">
+        <div class="project-title" id="project-name">載入中...</div>
+        <div class="author-box">
+            <img class="author-avatar" id="author-avatar" src="">
+            <div>
+                <div style="font-weight:900; font-size:1.1rem;" id="author-name">...</div>
+                <div style="font-size:0.8rem; color:#94A3B8;">發布於 <span id="publish-date">2026/05/02</span></div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-val" id="view-count">0</span>
+                <span class="stat-label">瀏覽次數</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-val" id="remix-count">0</span>
+                <span class="stat-label">改編次數</span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a id="edit-link" href="#" class="btn btn-primary">⚡ 進入編輯 / Remix</a>
+            <button class="btn btn-accent" onclick="likeProject()">❤️ 給予鼓勵</button>
+            <button class="btn btn-outline" onclick="history.back()">⬅️ 返回探索牆</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const projectId = params.get('id');
+    const ownerId = params.get('owner');
+
+    let projectData = null;
+
+    onAuthStateChanged(auth, u => {
+        if(!u) location.href = 'login.html';
+        loadProject();
+    });
+
+    async function loadProject() {
+        if(!projectId || !ownerId) return;
+        const ref = doc(db, "users", ownerId, "projects", projectId);
+        const snap = await getDoc(ref);
+        if(snap.exists()) {
+            projectData = snap.data();
+            document.getElementById('project-name').innerText = projectData.name || '未命名專案';
+            const author = projectData.authorEmail?.split('@')[0] || '匿名';
+            document.getElementById('author-name').innerText = author;
+            document.getElementById('author-avatar').src = `https://ui-avatars.com/api/?name=${author}&background=random`;
+            document.getElementById('project-desc').innerText = projectData.description || '這個專案主要是用積木程式開發的創意作品。';
+            document.getElementById('edit-link').href = `page.html?load=${projectId}&from=${ownerId}`;
+            
+            // 增加瀏覽次數
+            updateDoc(ref, { views: increment(1) });
+            document.getElementById('view-count').innerText = (projectData.views || 0) + 1;
+            document.getElementById('remix-count').innerText = projectData.remixCount || 0;
+        }
+    }
+
+    window.runProject = () => {
+        document.getElementById('run-overlay').style.display = 'none';
+        document.getElementById('project-canvas').style.display = 'block';
+        alert("正在編譯積木代碼並啟動虛擬機...");
+        // 這裡可以整合 page.html 的執行邏輯，暫時以提示代替
+    };
+
+    window.likeProject = () => {
+        alert("感謝您的鼓勵！作者已收到您的愛心。");
+    };
+</script>
+</body>
+</html>

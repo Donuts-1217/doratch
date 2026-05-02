@@ -4,139 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creative Blocks Pro - 引領未來的積木程式平台</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --main-blue: #4C97FF; --main-purple: #855CD6; --main-orange: #FFAB19;
-            --dark-bg: #0b0e14; --glass-bg: rgba(255, 255, 255, 0.05);
+            --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
+            --bg: #0F172A; --card-bg: #1E293B; --text: #F8FAFC;
         }
-        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: white; color: #333; overflow-x: hidden; }
+        body { margin: 0; font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
         
         /* 導覽列 */
         nav { 
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); 
-            height: 70px; display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); 
+            height: 80px; display: flex; justify-content: space-between; align-items: center; 
             padding: 0 5%; position: fixed; width: 90%; top: 0; z-index: 1000;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        .logo { font-size: 1.6rem; font-weight: 900; color: var(--main-blue); cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .logo { font-size: 1.6rem; font-weight: 900; color: var(--primary); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
         .nav-links { display: flex; gap: 25px; align-items: center; }
-        .nav-links a { text-decoration: none; color: #555; font-weight: bold; font-size: 14px; transition: 0.3s; }
-        .nav-links a:hover { color: var(--main-blue); }
+        .nav-links a { text-decoration: none; color: #94A3B8; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .nav-links a:hover { color: var(--primary); }
 
-        /* 英雄區 (Hero Section) */
+        /* Hero Section */
         .hero { 
             min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            text-align: center; background: radial-gradient(circle at top right, #eef5ff, white);
-            padding: 0 20px; position: relative; overflow: hidden;
+            text-align: center; position: relative; padding: 0 20px;
+            background: radial-gradient(circle at 50% 50%, rgba(76, 151, 255, 0.1) 0%, transparent 50%);
         }
-        .hero-badge { 
-            background: #e8f0fe; color: #1967d2; padding: 6px 16px; border-radius: 20px; 
-            font-size: 12px; font-weight: 900; margin-bottom: 20px; border: 1px solid #c2d7fa;
+        .hero h1 { 
+            font-size: clamp(3rem, 10vw, 5.5rem); margin: 0; font-weight: 900; line-height: 1.1; 
+            background: linear-gradient(to bottom right, #FFFFFF, #94A3B8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin: 0; font-weight: 900; line-height: 1.1; letter-spacing: -2px; }
-        .hero h1 span { background: linear-gradient(135deg, var(--main-blue), var(--main-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 1.2rem; color: #666; max-width: 650px; line-height: 1.6; margin: 30px 0 40px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 1.3rem; color: #94A3B8; max-width: 700px; line-height: 1.6; margin: 30px 0 40px; }
         
-        .btn { padding: 16px 35px; border-radius: 12px; font-weight: 900; text-decoration: none; transition: 0.3s; cursor: pointer; border: none; font-size: 1rem; display: inline-block; }
-        .btn-primary { background: var(--main-blue); color: white; box-shadow: 0 10px 25px rgba(76, 151, 255, 0.4); }
-        .btn-primary:hover { transform: translateY(-3px); background: #357ae8; box-shadow: 0 15px 35px rgba(76, 151, 255, 0.5); }
-        .btn-outline { border: 2px solid #ddd; color: #555; background: white; margin-left: 15px; }
-        .btn-outline:hover { border-color: var(--main-blue); color: var(--main-blue); }
+        .btn { padding: 16px 40px; border-radius: 50px; font-weight: 900; text-decoration: none; transition: 0.3s; cursor: pointer; border: none; font-size: 1.1rem; display: inline-block; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 30px rgba(76, 151, 255, 0.3); }
+        .btn-primary:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 15px 40px rgba(76, 151, 255, 0.4); }
+        .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: white; background: transparent; margin-left: 15px; }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: var(--primary); }
 
-        /* 背景裝飾 */
-        .floating-box { position: absolute; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); z-index: -1; animation: float 6s infinite ease-in-out; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        /* 特色卡片 */
+        .features { padding: 100px 10%; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .feat-card { background: var(--card-bg); padding: 50px 40px; border-radius: 32px; border: 1px solid rgba(255,255,255,0.05); transition: 0.4s; }
+        .feat-card:hover { transform: translateY(-15px); border-color: var(--primary); box-shadow: 0 30px 60px rgba(0,0,0,0.3); }
+        .feat-icon { font-size: 40px; margin-bottom: 25px; background: rgba(255,255,255,0.05); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 20px; }
 
-        /* 特色區 */
-        .section-title { text-align: center; margin-bottom: 60px; }
-        .section-title h2 { font-size: 2.5rem; font-weight: 900; }
-        
-        .features { padding: 100px 10%; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; background: #fafafa; }
-        .feat-card { background: white; padding: 40px; border-radius: 24px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; }
-        .feat-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-        .feat-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 25px; }
+        /* 作品牆預覽 */
+        .showcase { padding: 100px 5%; background: rgba(0,0,0,0.2); }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; margin-top: 50px; }
+        .project-card { background: var(--card-bg); border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .project-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .p-thumb { height: 180px; background: #0b0e14; display: flex; align-items: center; justify-content: center; font-size: 4rem; }
+        .p-info { padding: 25px; }
+        .p-name { font-weight: 900; font-size: 1.2rem; margin-bottom: 10px; }
+        .p-author { color: #94A3B8; font-size: 14px; }
 
-        /* 作品預覽區 */
-        .showcase { padding: 100px 5%; }
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; margin-top: 40px; }
-        .project-card { background: white; border-radius: 16px; overflow: hidden; border: 1px solid #eee; transition: 0.3s; }
-        .project-card:hover { transform: scale(1.02); }
-        .p-thumb { height: 160px; background: #f0f7ff; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
-        .p-info { padding: 20px; }
-        .p-name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
-        .p-author { color: #888; font-size: 13px; }
+        footer { background: #0b0e14; color: white; padding: 100px 5%; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
+        .footer-links { display: flex; justify-content: center; gap: 40px; margin: 40px 0; }
+        .footer-links a { color: #64748B; text-decoration: none; transition: 0.3s; }
+        .footer-links a:hover { color: var(--primary); }
 
-        footer { background: #0b0e14; color: white; padding: 60px 5%; text-align: center; }
-        .footer-logo { font-size: 1.5rem; font-weight: 900; color: var(--main-blue); margin-bottom: 20px; }
-        .footer-links { display: flex; justify-content: center; gap: 30px; margin: 30px 0; }
-        .footer-links a { color: #888; text-decoration: none; font-size: 14px; }
-        .copyright { font-size: 12px; color: #555; }
+        /* 動態背景 */
+        .bg-dots { position: absolute; width: 100%; height: 100%; background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; z-index: -2; opacity: 0.5; }
     </style>
 </head>
 <body>
 
+    <div class="bg-dots"></div>
+
     <nav>
         <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
         <div class="nav-links" id="nav-content">
-            <span>載入中...</span>
+            <span style="color:#64748B;">Connecting...</span>
         </div>
     </nav>
 
     <div class="hero">
-        <div class="floating-box" style="top: 20%; left: 10%; animation-delay: 0s;">🧩 Move Forward</div>
-        <div class="floating-box" style="top: 60%; right: 15%; animation-delay: -2s;">🚀 Fast Execution</div>
-        <div class="floating-box" style="bottom: 15%; left: 20%; animation-delay: -4s;">👥 Collaboration</div>
-
-        <div class="hero-badge">✨ 全新改版：支援 Discord 式實時協作</div>
-        <h1>用積木，堆疊你的<br><span>無限創意與夢想</span></h1>
-        <p>不再只是孤獨地寫程式。在這裡，你可以加入班級、與同學即時聊天、分享作品，並在視覺化的環境中輕鬆掌握邏輯。</p>
+        <div style="background:rgba(76, 151, 255, 0.1); color:var(--primary); padding:8px 20px; border-radius:50px; font-weight:900; font-size:12px; margin-bottom:30px; letter-spacing:1px; border:1px solid rgba(76,151,255,0.2);">
+            ✨ 2026 全球同步：支援 APCS 自動檢測系統
+        </div>
+        <h1>編程，不只是代碼<br><span>更是無限的冒險</span></h1>
+        <p>結合 1v1 決鬥、領土攻城戰與專業 APCS 測評。這不僅是一個編程平台，更是你通往未來的數位競技場。</p>
         
         <div id="hero-actions">
-            <div class="loading">正在準備您的工作空間...</div>
+            <div style="color:#64748B;">Preparing Arena...</div>
         </div>
     </div>
 
     <section class="features">
         <div class="feat-card">
-            <div class="feat-icon" style="background:#e8f0fe; color:var(--main-blue);">🏫</div>
-            <h3>雲端教室系統</h3>
-            <p>完美整合 Google Classroom 體驗。老師出題、學生繳交、私人留言討論，還有榮譽作品牆展示優秀創意。</p>
+            <div class="feat-icon">🛡️</div>
+            <h3>APCS 能力認證</h3>
+            <p>實時檢測你的演算法與邏輯能力。每完成一個挑戰，系統將自動分析你的開發水平並賦予專業勳章。</p>
         </div>
         <div class="feat-card">
-            <div class="feat-icon" style="background:#f3e8ff; color:var(--main-purple);">💬</div>
-            <h3>實時協作通訊</h3>
-            <p>內建 Discord 風格聊天室。支援伺服器、群聊與私訊，甚至能直接在對話中「發送專案檔」供他人檢視。</p>
+            <div class="feat-icon">⚔️</div>
+            <h3>1v1 實時 PK</h3>
+            <p>在競技場中與同學進行邏輯對決！首創「代碼決鬥」模式，用速度與準確度贏得屬於你的榮耀與金幣。</p>
         </div>
         <div class="feat-card">
-            <div class="feat-icon" style="background:#fff4e5; color:var(--main-orange);">🌍</div>
-            <h3>全球作品探索</h3>
-            <p>在探索牆上發現來自世界各地的精彩專案。一鍵收藏、學習他人的邏輯，並激發自己的創作靈感。</p>
+            <div class="feat-icon">🏰</div>
+            <h3>領土攻城戰</h3>
+            <p>融合策略與學習。透過答題攻佔領土，建立屬於你的邏輯王國。支援多人同時在線競爭領地。</p>
         </div>
     </section>
 
     <section class="showcase">
-        <div class="section-title">
-            <h2>社群創意預覽 ✨</h2>
-            <p>加入我們，探索來自全球的精彩專案！</p>
+        <div style="text-align:center;">
+            <h2 style="font-size:2.5rem; font-weight:900;">社群創意牆 ✨</h2>
+            <p style="color:#94A3B8;">看看大家在競技場中創造了什麼驚人的作品</p>
         </div>
         <div class="project-grid" id="gallery-grid">
-            <!-- 僅顯示 3 個精選作品作為預覽 -->
+            <!-- 動態載入作品 -->
         </div>
-        <div style="text-align:center; margin-top:50px;">
-            <a href="main.html" class="btn btn-outline">探索更多公開作品</a>
+        <div style="text-align:center; margin-top:60px;">
+            <a href="main.html" class="btn btn-outline">進入探索中心</a>
         </div>
     </section>
 
     <footer>
-        <div class="footer-logo">🧩 Creative Blocks</div>
+        <div class="logo" style="margin-bottom:20px;">Creative Blocks Pro</div>
         <div class="footer-links">
-            <a href="#">使用條款</a>
-            <a href="#">隱私政策</a>
-            <a href="#">教學文檔</a>
-            <a href="login.html">會員登入</a>
+            <a href="#">開發文檔</a>
+            <a href="#">隱私權益</a>
+            <a href="#">APCS 指南</a>
+            <a href="login.html">進入競技場</a>
         </div>
-        <p class="copyright">&copy; 2026 Creative Blocks Pro. All Rights Reserved. </p>
+        <p style="color:#475569; font-size:13px;">&copy; 2026 Creative Blocks Pro. Powering the next generation of engineers.</p>
     </footer>
 
     <script type="module">
@@ -144,46 +139,32 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collectionGroup, query, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
-            authDomain: "chat-52c0d.firebaseapp.com",
-            projectId: "chat-52c0d",
-            appId: "1:449329325475:web:75f255c4055360dc9e6616"
-        };
-
+        const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        const navContent = document.getElementById('nav-content');
-        const heroActions = document.getElementById('hero-actions');
-
         onAuthStateChanged(auth, (user) => {
+            const nav = document.getElementById('nav-content');
+            const hero = document.getElementById('hero-actions');
             if (user) {
-                navContent.innerHTML = `
+                nav.innerHTML = `
                     <a href="main.html">探索牆</a>
                     <a href="dashboard.html">我的班級</a>
-                    <a href="projects.html">個人專案</a>
-                    <a href="shop.html" style="color:#F57C00;">🛒 商城</a>
-                    <button class="btn" style="padding:8px 15px; font-size:12px; background:#eee;" onclick="window.logout()">登出</button>
+                    <a href="game.html" style="color:var(--primary);">🎮 競技場</a>
+                    <a href="shop.html" style="color:var(--secondary);">🛒 商城</a>
+                    <button class="btn" style="padding:10px 20px; font-size:14px; background:rgba(255,255,255,0.05); color:white; border:1px solid #334155; border-radius:12px;" onclick="window.logout()">登出</button>
                 `;
-                heroActions.innerHTML = `
+                hero.innerHTML = `
                     <a href="page.html" class="btn btn-primary">🚀 開始編程</a>
-                    <a href="dashboard.html" class="btn btn-outline">進入教室</a>
+                    <a href="dashboard.html" class="btn btn-outline">進入工作空間</a>
                 `;
             } else {
-                navContent.innerHTML = `
-                    <a href="main.html">探索作品</a>
-                    <a href="login.html" style="color:var(--main-blue);">登入 / 註冊</a>
-                `;
-                heroActions.innerHTML = `
-                    <a href="login.html" class="btn btn-primary">立即免費開始</a>
-                    <a href="main.html" class="btn btn-outline">看看大家的作品</a>
-                `;
+                nav.innerHTML = `<a href="main.html">探索作品</a><a href="login.html" style="color:var(--primary);">登入競技場</a>`;
+                hero.innerHTML = `<a href="login.html" class="btn btn-primary">立即開始冒險</a><a href="main.html" class="btn btn-outline">看看大家的作品</a>`;
             }
         });
 
-        // 載入 3 個精選作品
         async function loadPreview() {
             const grid = document.getElementById('gallery-grid');
             try {
@@ -194,27 +175,20 @@
                     const p = doc.data();
                     const card = document.createElement('div');
                     card.className = 'project-card';
-                    card.style.cursor = 'pointer';
                     card.innerHTML = `
-                        <div class="p-thumb">🧩</div>
+                        <div class="p-thumb">🚀</div>
                         <div class="p-info">
-                            <div class="p-name">${p.name || '未命名'}</div>
-                            <div class="p-author">by ${p.authorEmail?.split('@')[0]}</div>
+                            <div class="p-name">${p.name || '未命名專案'}</div>
+                            <div class="p-author">Coder: ${p.authorEmail?.split('@')[0]}</div>
                         </div>
                     `;
-                    card.onclick = () => location.href = `page.html?load=${doc.id}&from=${doc.ref.parent.parent.id}`;
+                    card.onclick = () => location.href = `project.html?id=${doc.id}&owner=${doc.ref.parent.parent.id}`;
                     grid.appendChild(card);
                 });
-            } catch (e) {
-                grid.innerHTML = '<p style="color:#999;">暫時無法載入預覽</p>';
-            }
+            } catch (e) { console.error(e); grid.innerHTML = '<p style="color:#64748B;">目前沒有公開作品</p>'; }
         }
-
         loadPreview();
-
-        window.logout = () => {
-            if(confirm("確定要登出嗎？")) signOut(auth).then(() => location.reload());
-        };
+        window.logout = () => signOut(auth).then(() => location.reload());
     </script>
 </body>
 </html>

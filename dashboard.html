@@ -49,11 +49,12 @@
 <nav>
     <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
     <div class="nav-actions">
+        <a href="admin.html" id="admin-link" class="btn-nav" style="display:none; background:var(--accent); color:white; border:none;">🛠️ 開發者面板</a>
         <a href="game.html" class="btn-nav" style="text-decoration:none; background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7;">🎮 邏輯遊戲</a>
         <a href="shop.html" class="btn-nav" style="text-decoration:none; background:#FFF8E1; color:#F57C00; border-color:#FFE082;">🛒 創意商城</a>
         <a href="chat.html" class="btn-nav" style="text-decoration:none; background:white; color:var(--scratch-blue);">💬 聊天室</a>
         <button class="btn-nav" style="background:var(--scratch-orange); border:none;" onclick="openModal('joinModal')">🔑 加入班級</button>
-        <button class="btn-nav" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
+        <button class="btn-nav" id="btn-create-class" style="display:none;" onclick="openModal('createModal')">👨‍🏫 建立新班級</button>
     </div>
 </nav>
 
@@ -146,6 +147,12 @@
             snap = await getDoc(ref);
         }
         const data = snap.data();
+        const role = data.role || 'student';
+        
+        // 權限控制
+        if(role === 'admin') document.getElementById('admin-link').style.display = 'block';
+        if(role === 'teacher' || role === 'admin') document.getElementById('btn-create-class').style.display = 'block';
+
         document.getElementById('user-name').innerText = user.email.split('@')[0];
         document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
         document.getElementById('user-level').innerText = data.lv || 1;
