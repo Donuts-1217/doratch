@@ -54,28 +54,29 @@
         .assignment-item:hover { transform: scale(1.01); border-color: var(--scratch-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .assignment-icon { width: 48px; height: 48px; background: #e8f0fe; color: #1967d2; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 20px; }
 
-        /* 作業詳情 - 左右佈局強化 */
-        .detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: 35px; }
+        /* 作業詳情 - 響應式佈局 */
+        .detail-grid { display: grid; grid-template-columns: 1fr 360px; gap: 30px; align-items: start; }
+        @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } .work-card { position: static; } }
+
         .info-panel h2 { font-size: 32px; font-weight: 900; color: #1967d2; margin-top: 0; margin-bottom: 10px; }
         .info-panel .meta { font-size: 14px; color: #70757a; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        .info-panel .desc { line-height: 1.8; margin-bottom: 50px; font-size: 16px; color: #3c4043; }
+        .info-panel .desc { line-height: 1.8; margin-bottom: 50px; font-size: 16px; color: #3c4043; min-height: 100px; }
 
-        /* 私人留言區更圓潤 */
-        .comment-box { background: #f8f9fa; border-radius: var(--radius-md); padding: 20px; }
-        .comment-list { max-height: 250px; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; }
-        .comment-item { padding: 10px 15px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .comment-name { font-weight: bold; color: var(--scratch-blue); font-size: 12px; display: block; margin-bottom: 2px; }
-        .comment-text { font-size: 14px; }
-        .comment-input-area { display: flex; gap: 10px; background: white; padding: 5px; border-radius: 30px; border: 1px solid #ddd; padding-left: 15px; }
-        .comment-input { flex: 1; border: none; outline: none; font-size: 14px; }
+        /* 私人留言區 */
+        .comment-box { background: #f8f9fa; border-radius: var(--radius-md); padding: 25px; margin-top: 30px; border: 1px solid #eee; }
+        .comment-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+        .comment-item { padding: 12px 18px; background: white; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #f0f0f0; }
+        .comment-name { font-weight: 900; color: var(--scratch-blue); font-size: 12px; margin-bottom: 4px; display: block; }
+        .comment-text { font-size: 14px; line-height: 1.5; }
 
-        /* 右側作業卡片 */
-        .work-card { background: white; border-radius: var(--radius-lg); padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #eee; position: sticky; top: 90px; }
-        .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .work-status { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: #70757a; }
-        .work-status.done { color: var(--scratch-green); font-weight: 900; }
+        /* 右側面板樣式 */
+        .side-panel { display: flex; flex-direction: column; gap: 20px; }
+        .work-card { background: white; border-radius: var(--radius-lg); padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid #eee; position: sticky; top: 90px; }
+        .work-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f8f9fa; padding-bottom: 15px; }
+        .work-status { font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #70757a; background: #f1f3f4; padding: 4px 10px; border-radius: 4px; }
+        .work-status.done { color: white; background: var(--scratch-green); }
         
-        .attachment-item { display: flex; align-items: center; padding: 12px 15px; border: 1px solid #e0e0e0; border-radius: 12px; margin-bottom: 12px; background: #fff; transition: 0.2s; }
+        .attachment-item { display: flex; align-items: center; padding: 15px; border: 1px solid #eef0f2; border-radius: 14px; margin-bottom: 12px; background: #fff; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .attachment-item:hover { border-color: var(--scratch-blue); }
         
         .btn-full { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; font-size: 15px; }
@@ -164,22 +165,37 @@
                 </div>
             </div>
             
-            <div class="side-panel" id="student-side-panel">
-                <div class="work-card">
+            <div class="side-panel">
+                <!-- 學生看到的繳交區 -->
+                <div class="work-card" id="student-work-card">
                     <div class="work-header">
-                        <span style="font-weight:900;">您的作業</span>
+                        <span style="font-weight:900; font-size: 1.1rem;">您的作業</span>
                         <span class="work-status" id="work-status">已指派</span>
                     </div>
                     <div id="attachment-list"></div>
-                    <button class="btn-full btn-outline" id="btn-add-att" onclick="openModal('modal-add-source')">+ 新增附件</button>
-                    <button class="btn-full btn-solid" id="btn-submit-main" onclick="handleSubmit()">繳交作業</button>
+                    <div id="student-actions">
+                        <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 新增或建立</button>
+                        <button class="btn-full btn-solid" id="btn-submit-main" onclick="handleSubmit()">繳交</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="side-panel" id="teacher-side-panel" style="display:none;">
-                <div class="work-card">
-                    <h3 style="border:none; padding:0; margin-bottom:15px;">全班繳交狀況</h3>
+                <!-- 老師看到的批改區 (初始隱藏) -->
+                <div class="work-card" id="teacher-grading-card" style="display:none;">
+                    <div class="work-header">
+                        <span style="font-weight:900; font-size: 1.1rem;">學生成績</span>
+                        <span id="teacher-total-stats" style="font-size:12px; color:#666;">載入中...</span>
+                    </div>
                     <div class="grading-list" id="grading-list"></div>
+                </div>
+
+                <!-- 老師正在查看特定學生的作品時顯示 (初始隱藏) -->
+                <div class="work-card" id="teacher-review-card" style="display:none;">
+                    <div class="work-header">
+                        <span id="review-student-name" style="font-weight:900; font-size: 1.1rem;">學生作品</span>
+                        <span class="work-status" id="review-work-status">已繳交</span>
+                    </div>
+                    <div id="review-attachment-list"></div>
+                    <button class="btn-full btn-outline" onclick="closeReview()">返回名單</button>
                 </div>
             </div>
         </div>
@@ -317,13 +333,16 @@
         document.getElementById('det-meta').innerText = `${data.teacherName} • ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}`;
         document.getElementById('det-desc').innerText = data.desc;
 
+        // 重置視圖
+        document.getElementById('student-work-card').style.display = 'none';
+        document.getElementById('teacher-grading-card').style.display = 'none';
+        document.getElementById('teacher-review-card').style.display = 'none';
+
         if (isTeacher) {
-            document.getElementById('student-side-panel').style.display = 'none';
-            document.getElementById('teacher-side-panel').style.display = 'block';
+            document.getElementById('teacher-grading-card').style.display = 'block';
             loadGradingList();
         } else {
-            document.getElementById('student-side-panel').style.display = 'block';
-            document.getElementById('teacher-side-panel').style.display = 'none';
+            document.getElementById('student-work-card').style.display = 'block';
             currentTargetStudentId = currentUser.uid;
             loadMySubmission();
             listenComments();
@@ -482,45 +501,60 @@
         list.innerHTML = '載入中...';
         const q = collection(db, "classes", classId, "assignments", currentAssignmentId, "submissions");
         const snap = await getDocs(q);
+        const totalStudents = (currentClassData.students || []).length;
+        let turnedInCount = 0;
+
         list.innerHTML = '';
         for (const uid of (currentClassData.students || [])) {
             const sub = snap.docs.find(d => d.id === uid)?.data() || { status: 'assigned' };
+            if (sub.status === 'turned-in') turnedInCount++;
+            
             const uSnap = await getDoc(doc(db, "users", uid));
             if (!uSnap.exists()) continue;
             const u = uSnap.data();
             const div = document.createElement('div');
             div.className = 'grading-row';
             div.onclick = () => {
-                document.querySelectorAll('.grading-row').forEach(r => r.classList.remove('active'));
-                div.classList.add('active');
                 currentTargetStudentId = uid;
                 showStudentWork(u, sub);
                 listenComments();
             };
             div.innerHTML = `
                 <div style="flex:1; font-weight:bold;">${u.email.split('@')[0]}</div>
-                <div style="font-size:12px; color:${sub.status==='turned-in'?'var(--scratch-green)':'#999'}">${sub.status==='turned-in'?'✅ 已繳交':'⌛ 未繳交'}</div>
+                <div class="work-status ${sub.status==='turned-in'?'done':''}">${sub.status==='turned-in'?'已繳交':'未繳交'}</div>
             `;
             list.appendChild(div);
         }
+        document.getElementById('teacher-total-stats').innerText = `${turnedInCount} / ${totalStudents} 已繳交`;
     }
 
     function showStudentWork(user, sub) {
-        document.getElementById('det-title').innerText = `${user.email.split('@')[0]} 的作業附件`;
-        const list = document.getElementById('attachment-list');
-        list.innerHTML = (sub.attachments || []).length ? '' : '<p style="color:#999; font-size:13px;">該學生尚未添加附件</p>';
+        document.getElementById('teacher-grading-card').style.display = 'none';
+        document.getElementById('teacher-review-card').style.display = 'block';
+        document.getElementById('review-student-name').innerText = `${user.email.split('@')[0]} 的作品`;
+        
+        const list = document.getElementById('review-attachment-list');
+        list.innerHTML = (sub.attachments || []).length ? '' : '<p style="color:#999; font-size:13px; padding:10px;">尚無附件</p>';
         (sub.attachments || []).forEach(att => {
             const div = document.createElement('div');
             div.className = 'attachment-item';
-            div.innerHTML = `<a href="page.html?load=${att.id}&from=${user.uid}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold;">🧩 ${att.name}</a>`;
+            div.innerHTML = `
+                <a href="page.html?load=${att.id}&from=${user.uid}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold; flex:1;">🧩 ${att.name}</a>
+                <button class="btn-solid" style="width:auto; padding:5px 10px; font-size:11px;" onclick="togglePublish('${att.id}', '${user.uid}')">上牆</button>
+            `;
             list.appendChild(div);
         });
-        document.getElementById('student-side-panel').style.display = 'block';
-        document.getElementById('btn-add-att').style.display = 'none';
-        document.getElementById('btn-submit-main').style.display = 'none';
-        document.getElementById('work-status').innerText = sub.status === 'turned-in' ? '已繳交' : '未繳交';
-        document.getElementById('work-status').className = `work-status ${sub.status === 'turned-in' ? 'done' : ''}`;
+
+        const status = document.getElementById('review-work-status');
+        status.innerText = sub.status === 'turned-in' ? '已繳交' : '未繳交';
+        status.className = `work-status ${sub.status === 'turned-in' ? 'done' : ''}`;
     }
+
+    window.closeReview = () => {
+        document.getElementById('teacher-grading-card').style.display = 'block';
+        document.getElementById('teacher-review-card').style.display = 'none';
+        // 老師切換回全班清單時，清除目前的留言監聽嗎？這裡可以保留或重置
+    };
 
     async function loadPeople() {
         const list = document.getElementById('people-list');
