@@ -3,53 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <title>會員系統 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --scratch-blue: #4C97FF; --scratch-purple: #855CD6; }
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
+            --glass-bg: rgba(255, 255, 255, 0.95);
+        }
         body { 
             font-family: "Noto Sans TC", sans-serif; 
             background: linear-gradient(135deg, #4C97FF 0%, #855CD6 100%); 
             display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
+            overflow: hidden;
         }
+        
+        /* 動態背景球 */
+        .bg-circle {
+            position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1);
+            z-index: -1; animation: float 20s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(100px, 100px) rotate(360deg); }
+        }
+
         .auth-card { 
-            background: white; padding: 40px; border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2); width: 100%; max-width: 350px; text-align: center; 
+            background: var(--glass-bg); padding: 50px 40px; border-radius: 24px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15); width: 100%; max-width: 360px; 
+            text-align: center; backdrop-filter: blur(10px);
+            transition: 0.3s transform;
         }
-        .logo { font-size: 26px; font-weight: 900; color: var(--scratch-blue); margin-bottom: 10px; cursor: pointer; }
-        .subtitle { color: #888; font-size: 14px; margin-bottom: 25px; }
+        .auth-card:hover { transform: translateY(-5px); }
+        
+        .logo { font-size: 28px; font-weight: 900; color: var(--scratch-blue); margin-bottom: 8px; cursor: pointer; letter-spacing: -1px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; }
+        
+        #auth-title { font-size: 24px; font-weight: 900; color: #333; margin-bottom: 20px; }
+
+        .input-group { position: relative; margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; font-weight: bold; color: #888; margin-bottom: 5px; margin-left: 5px; }
         
         input { 
-            width: 100%; padding: 12px; margin: 10px 0; 
-            border: 2px solid #EEE; border-radius: 10px; box-sizing: border-box; 
-            outline: none; transition: 0.3s; font-size: 16px;
+            width: 100%; padding: 14px 18px; 
+            border: 2px solid #F0F0F0; border-radius: 12px; box-sizing: border-box; 
+            outline: none; transition: 0.3s; font-size: 16px; background: #FAFAFA;
         }
-        input:focus { border-color: var(--scratch-blue); }
+        input:focus { border-color: var(--scratch-blue); background: white; box-shadow: 0 0 0 4px rgba(76, 151, 255, 0.1); }
         
         .btn { 
-            width: 100%; padding: 12px; border: none; border-radius: 10px; 
-            font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; margin-top: 10px;
+            width: 100%; padding: 14px; border: none; border-radius: 12px; 
+            font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(76, 151, 255, 0.3);
         }
         .btn-primary { background: var(--scratch-blue); color: white; }
-        .btn-primary:hover { background: #357ABD; transform: translateY(-1px); }
+        .btn-primary:hover { background: #357ABD; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(76, 151, 255, 0.4); }
+        .btn-primary:active { transform: translateY(0); }
         
-        .toggle-link { margin-top: 20px; font-size: 14px; color: #666; }
-        .toggle-link span { color: var(--scratch-blue); cursor: pointer; font-weight: bold; text-decoration: underline; }
+        .toggle-link { margin-top: 25px; font-size: 14px; color: #777; }
+        .toggle-link span { color: var(--scratch-blue); cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .toggle-link span:hover { text-decoration: underline; }
         
-        #message-box { margin-top: 15px; font-size: 13px; padding: 10px; border-radius: 8px; display: none; }
-        .msg-error { background: #FFEBEE; color: #D32F2F; }
-        .msg-success { background: #E8F5E9; color: #2E7D32; }
+        #message-box { 
+            margin-bottom: 20px; font-size: 13px; padding: 12px 15px; border-radius: 12px; 
+            display: none; animation: fadeIn 0.3s ease; line-height: 1.5;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .msg-error { background: #FFF0F0; color: #E53935; border: 1px solid #FFCDD2; }
+        .msg-success { background: #F0FFF4; color: #2E7D32; border: 1px solid #C8E6C9; }
+        
+        .spam-notice { font-size: 11px; color: #FF8F00; font-weight: bold; margin-top: 8px; display: block; }
     </style>
 </head>
 <body>
 
+<div class="bg-circle" style="width: 300px; height: 300px; top: -100px; left: -100px;"></div>
+<div class="bg-circle" style="width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: -5s;"></div>
+
 <div class="auth-card">
     <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
     <div class="subtitle">啟發你的程式邏輯</div>
+    
     <h2 id="auth-title">會員登入</h2>
     
     <div id="message-box"></div>
 
-    <input type="email" id="email" placeholder="電子郵件 (Email)">
-    <input type="password" id="password" placeholder="密碼 (至少 6 位數)">
+    <div class="input-group">
+        <label>電子郵件</label>
+        <input type="email" id="email" placeholder="email@example.com">
+    </div>
+    
+    <div class="input-group">
+        <label>登入密碼</label>
+        <input type="password" id="password" placeholder="請輸入至少 6 位數密碼">
+    </div>
     
     <button id="main-btn" class="btn btn-primary" onclick="handleAuth()">登入</button>
 
@@ -82,10 +128,9 @@
 
     let mode = 'login';
 
-    // 顯示訊息提示
     function showMsg(text, type) {
         const box = document.getElementById('message-box');
-        box.innerText = text;
+        box.innerHTML = text;
         box.className = type === 'error' ? 'msg-error' : 'msg-success';
         box.style.display = 'block';
     }
@@ -113,29 +158,35 @@
         const password = document.getElementById('password').value.trim();
         if (!email || !password) return showMsg("請填寫完整資訊", "error");
 
+        const btn = document.getElementById('main-btn');
+        btn.disabled = true;
+        btn.innerText = "處理中...";
+
         try {
             if (mode === 'reg') {
-                // --- 註冊模式 ---
                 const res = await createUserWithEmailAndPassword(auth, email, password);
-                // 1. 發送驗證信
                 await sendEmailVerification(res.user);
-                // 2. 註冊後會自動登入，但因為未驗證，我們強制登出他
                 await signOut(auth);
                 
-                showMsg("✅ 註冊成功！驗證信已寄出，請點擊信中連結後再重新登入。", "success");
+                showMsg(`
+                    ✅ 註冊成功！驗證信已寄出。<br>
+                    請至信箱點擊連結後再登入。<br>
+                    <span class="spam-notice">⚠️ 若沒看到信件，請務必查看「垃圾郵件」資料夾！</span>
+                `, "success");
                 switchMode('login');
             } else {
-                // --- 登入模式 ---
                 const res = await signInWithEmailAndPassword(auth, email, password);
                 const user = res.user;
 
-                // 檢查是否驗證
                 if (user.emailVerified) {
                     showMsg("🎉 登入成功，正在導向...", "success");
-                    setTimeout(() => location.href = "main.html", 1000);
+                    setTimeout(() => location.href = "main.html", 800);
                 } else {
-                    // ❌ 未驗證，彈出警告並強制登出
-                    showMsg("⚠️ 您的 Email 尚未驗證！請先至信箱點擊連結。", "error");
+                    showMsg(`
+                        ⚠️ Email 尚未驗證！<br>
+                        請先至信箱點擊連結。<br>
+                        <span class="spam-notice">💡 找不到信嗎？請檢查「垃圾郵件」資料夾。</span>
+                    `, "error");
                     await signOut(auth);
                 }
             }
@@ -145,6 +196,9 @@
             if (error.code === 'auth/invalid-credential') errorMsg = "帳號或密碼錯誤";
             if (error.code === 'auth/weak-password') errorMsg = "密碼至少需要 6 位數";
             showMsg(errorMsg, "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = mode === 'reg' ? "註冊並發送驗證信" : "登入";
         }
     };
 </script>
