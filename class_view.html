@@ -360,6 +360,21 @@
         if(id === 'modal-question-bank') renderBank();
     };
 
+    window.switchTab = (name) => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        
+        // 找到觸發事件的元素並設為 active
+        if (event) {
+            event.currentTarget.classList.add('active');
+        }
+        
+        document.getElementById(`section-${name}`).classList.add('active');
+        if(name === 'classwork') loadList();
+        if(name === 'projects') loadGallery();
+        if(name === 'people') loadPeople();
+    };
+
     function renderBank() {
         const list = document.getElementById('bank-list');
         list.innerHTML = '';
@@ -426,7 +441,7 @@
 
     window.deleteAssign = async (aid) => {
         if(!confirm("確定要刪除此任務嗎？學生的繳交紀錄也會一併消失。")) return;
-        event.stopPropagation();
+        if(event) event.stopPropagation();
         await deleteDoc(doc(db, "classes", classId, "assignments", aid));
         loadList();
     };
@@ -620,7 +635,7 @@
     }
 
     window.publishToWall = async (pid, uid, name) => {
-        event.stopPropagation();
+        if(event) event.stopPropagation();
         const ref = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", uid);
         await updateDoc(ref, { isPublished: true, publishedName: name, publishedAuthor: currentUser.email.split('@')[0] });
         alert("已成功推薦該作品至榮譽牆！");
