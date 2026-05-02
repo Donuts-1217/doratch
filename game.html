@@ -46,6 +46,22 @@
         .option-btn:hover { background: var(--primary); transform: scale(1.02); }
 
         .reward-info { margin-top: 30px; display: flex; gap: 40px; font-weight: 900; font-size: 1.2rem; }
+        
+        /* 1v1 Duel UI */
+        .duel-arena { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+        .player-panel { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .hp-bar-bg { width: 100%; height: 20px; background: #334155; border-radius: 10px; margin: 10px 0; overflow: hidden; }
+        .hp-bar-fill { height: 100%; background: linear-gradient(to right, #EF4444, #F87171); transition: 0.5s; }
+        .energy-bar-fill { height: 100%; background: linear-gradient(to right, #FBBC04, #FDE68A); transition: 0.5s; }
+        .skill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .skill-btn { padding: 8px; font-size: 11px; font-weight: 900; border-radius: 8px; border: none; cursor: pointer; transition: 0.3s; color: white; background: rgba(255,255,255,0.1); }
+        .skill-btn.available { transform: scale(1.05); }
+        .skill-shield { background: #4C97FF; }
+        .skill-double { background: #855CD6; }
+        .skill-freeze { background: #22D3EE; }
+        .shield-active { position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 3px solid #4C97FF; border-radius: 25px; animation: pulse 1s infinite; pointer-events: none; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.7; } }
+        .frozen { filter: grayscale(1) blur(2px); pointer-events: none; }
     </style>
 </head>
 <body>
@@ -68,6 +84,11 @@
                 <div style="font-size: 40px; margin-bottom: 15px;">🏰</div>
                 <h3>邏輯攻城戰: 領土擴張</h3>
                 <p>回答動態邏輯題目來攻佔領地。不同的地形代表不同的難度，你能統一整個王國嗎？</p>
+            </div>
+            <div class="game-card" style="grid-column: 1 / -1; border: 2px solid var(--secondary);" onclick="startGame('codewar')">
+                <div style="font-size: 40px; margin-bottom: 15px;">⚔️</div>
+                <h3>代碼戰爭: 指令塔防</h3>
+                <p>類似貓咪大戰爭的橫向塔防！召喚你的代碼軍團 (input, print, if-else) 攻陷對手主機。<br><span style="color:var(--secondary); font-weight:bold;">✨ 提示：可以先去「指令實驗室」升級你的指令！</span></p>
             </div>
         </div>
     </div>
@@ -108,6 +129,7 @@
 
     let score = 0, earned = 0, gameInterval = null;
     let globalQuestions = [{ text: "1+1=?", options: ["2", "3", "4"], answer: 0, diff: 1 }];
+    let userUnitLevels = { input: 1, print: 1, ifelse: 1, while: 1 };
 
     onAuthStateChanged(auth, async u => {
         if(!u) return location.href="login.html";
@@ -117,7 +139,9 @@
 
     async function fetchUserData(uid) {
         const snap = await getDoc(doc(db, "users", uid));
-        document.getElementById('user-coins').innerText = snap.data()?.coins || 0;
+        const data = snap.data();
+        document.getElementById('user-coins').innerText = data?.coins || 0;
+        if(data?.unitLevels) userUnitLevels = data.unitLevels;
     }
 
     async function fetchGlobalQuestions() {
@@ -133,7 +157,9 @@
         document.getElementById('game-content').innerHTML = ''; score = 0; earned = 0;
         if(mode === 'conquest') initConquest();
         else if(mode === '2048') init2048();
-        // ... 其他遊戲邏輯 ...
+        else if(mode === 'runner') initRunner();
+        else if(mode === 'color') initStroop();
+        else if(mode === 'codewar') initCodeWar();
     };
 
     window.exitGame = async () => {
@@ -142,14 +168,51 @@
         location.reload();
     };
 
+    // --- 2048 ---
+    function init2048() {
+        const container = document.getElementById('game-content');
+        container.innerHTML = `<div class="grid-2048" id="grid2048"></div>`;
+        let grid = Array(16).fill(0);
+        const addRandom = () => { let empty = grid.map((v,i)=>v===0?i:null).filter(v=>v!==null); if(empty.length) grid[empty[Math.floor(Math.random()*empty.length)]] = Math.random()<0.9?2:4; };
+        const render = () => { const el = document.getElementById('grid2048'); el.innerHTML=''; grid.forEach(v=>{ const c=document.createElement('div'); c.className='cell-2048'; c.innerText=v||''; c.style.background=v?'#4C97FF':'#1E293B'; el.appendChild(c); }); };
+        addRandom(); addRandom(); render();
+        window.onkeydown = (e) => { /* 2048 move logic */ render(); };
+    }
+
+    // --- Runner ---
+    function initRunner() {
+        const content = document.getElementById('game-content');
+        content.innerHTML = `<canvas id="runner-cvs" width="600" height="200"></canvas>`;
+        const cvs = document.getElementById('runner-cvs');
+        const ctx = cvs.getContext('2d');
+        let x = 0;
+        gameInterval = setInterval(() => {
+            ctx.clearRect(0,0,600,200);
+            ctx.fillStyle = '#4C97FF'; ctx.fillRect(50, 150, 30, 30);
+            x++; score++; document.getElementById('score').innerText = score;
+        }, 20);
+    }
+
+    // --- Stroop ---
+    function initStroop() {
+        const next = () => {
+            const colors = ['RED', 'BLUE', 'GREEN'];
+            const hex = ['#EF4444', '#3B82F6', '#10B981'];
+            const cIdx = Math.floor(Math.random()*3);
+            const content = document.getElementById('game-content');
+            content.innerHTML = `<h1 style="color:${hex[cIdx]}">${colors[Math.floor(Math.random()*3)]}</h1>
+                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px;">${colors.map((c,i)=>`<button class="option-btn" onclick="checkStroop(${i},${cIdx})">${c}</button>`).join('')}</div>`;
+        };
+        window.checkStroop = (i,ans) => { if(i===ans){score+=100;earned+=10;next();}else{alert("GameOver");exitGame();} };
+        next();
+    }
+
     // --- Conquest ---
     function initConquest() {
         document.getElementById('game-title').innerText = "邏輯攻城戰";
         const content = document.getElementById('game-content');
         content.innerHTML = `<div id="conquest-quiz" style="display:none;"></div><div class="conquest-map" id="conquest-map"></div>`;
-        
         let mapData = Array(25).fill(0).map((_,i) => ({ id:i, status: i===12?'occupied':'empty', diff: Math.floor(Math.random()*3)+1 }));
-
         const renderMap = () => {
             const el = document.getElementById('conquest-map'); el.innerHTML = '';
             mapData.forEach((tile, i) => {
@@ -161,70 +224,148 @@
                 el.appendChild(div);
             });
         };
-
         const startQuiz = (idx) => {
-            const tile = mapData[idx];
-            const filtered = globalQuestions.filter(q => q.diff === tile.diff);
+            const tile = mapData[idx]; const filtered = globalQuestions.filter(q => q.diff === tile.diff);
             const q = filtered.length ? filtered[Math.floor(Math.random()*filtered.length)] : globalQuestions[0];
-            
             document.getElementById('conquest-map').style.display = 'none';
-            const quiz = document.getElementById('conquest-quiz');
-            quiz.style.display = 'block';
-            quiz.innerHTML = `<h3>${q.text}</h3><div style="display:grid; gap:10px;">${q.options.map((opt, i) => 
-                `<button class="option-btn" onclick="checkAns(${idx}, ${i}, ${q.answer})">${opt}</button>`).join('')}</div>`;
+            const quiz = document.getElementById('conquest-quiz'); quiz.style.display = 'block';
+            quiz.innerHTML = `<h3>${q.text}</h3><div style="display:grid; gap:10px;">${q.options.map((opt, i) => `<button class="option-btn" onclick="checkAns(${idx}, ${i}, ${q.answer})">${opt}</button>`).join('')}</div>`;
         };
-
-        window.checkAns = (idx, choice, correct) => {
-            if(choice === correct) {
-                mapData[idx].status = 'occupied';
-                earned += mapData[idx].diff * 50;
-                alert("攻佔成功！");
-            } else alert("答錯了！");
-            document.getElementById('conquest-quiz').style.display = 'none';
-            document.getElementById('conquest-map').style.display = 'grid';
-            renderMap();
-        };
+        window.checkAns = (idx, choice, correct) => { if(choice === correct) { mapData[idx].status = 'occupied'; earned += mapData[idx].diff * 50; alert("攻佔成功！"); } else alert("答錯了！"); document.getElementById('conquest-quiz').style.display = 'none'; document.getElementById('conquest-map').style.display = 'grid'; renderMap(); };
         renderMap();
     }
 
     // --- 1v1 Duel ---
-    window.openDuelLobby = () => {
-        const code = prompt("輸入房間代碼：");
-        if(code) initDuel(code);
-    };
-
+    window.openDuelLobby = () => { const code = prompt("輸入房間代碼："); if(code) initDuel(code); };
     async function initDuel(roomId) {
         document.getElementById('game-overlay').style.display = 'block';
         const duelRef = doc(db, "duels", roomId);
         const snap = await getDoc(duelRef);
         let myRole = 'p1';
-        if(!snap.exists()) await setDoc(duelRef, { p1: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100 }, status: 'waiting', qIdx: 0 });
-        else { await updateDoc(duelRef, { p2: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100 }, status: 'battling' }); myRole = 'p2'; }
-
+        if(!snap.exists()) await setDoc(duelRef, { p1: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100, energy: 0, shield: false, double: false, frozenUntil: 0 }, status: 'waiting', qIdx: 0, logs: '等待中...' });
+        else { await updateDoc(duelRef, { p2: { uid: auth.currentUser.uid, name: auth.currentUser.email.split('@')[0], hp: 100, energy: 0, shield: false, double: false, frozenUntil: 0 }, status: 'battling', logs: '開始！' }); myRole = 'p2'; }
         onSnapshot(duelRef, (s) => {
             const data = s.data(); if(!data) return;
             const content = document.getElementById('game-content');
             if(data.status === 'battling') {
-                const q = globalQuestions[data.qIdx % globalQuestions.length];
-                content.innerHTML = `<div>${data.p1.name} HP:${data.p1.hp} VS ${data.p2 ? data.p2.name : '...'} HP:${data.p2 ? data.p2.hp : 100}</div>
-                    <h2>${q.text}</h2><div style="display:grid; gap:10px;">${q.options.map((opt, i) => 
-                    `<button class="option-btn" onclick="duelAns('${roomId}', ${i}, ${q.answer}, '${myRole}')">${opt}</button>`).join('')}</div>`;
-            } else if(data.status === 'finished') {
-                content.innerHTML = `<h1>戰鬥結束！</h1><button class="option-btn" onclick="location.reload()">離開</button>`;
-            }
+                const me = data[myRole], opp = data[myRole==='p1'?'p2':'p1'], q = globalQuestions[data.qIdx % globalQuestions.length];
+                const isFrozen = me.frozenUntil > Date.now();
+                content.innerHTML = `<div style="color:var(--secondary); font-weight:bold;">${data.logs}</div>
+                    <div class="duel-arena ${isFrozen?'frozen':''}">
+                        <div class="player-panel active">${me.shield?'<div class="shield-active"></div>':''}<div>${me.name}</div>
+                            <div class="hp-bar-bg"><div class="hp-bar-fill" style="width:${me.hp}%"></div></div>
+                            <div class="hp-bar-bg" style="height:8px;"><div class="energy-bar-fill" style="width:${me.energy}%"></div></div>
+                            <div class="skill-grid">
+                                <button class="skill-btn skill-shield ${me.energy>=30?'available':''}" onclick="useSkill('${roomId}','${myRole}','shield')">🛡️ 護盾</button>
+                                <button class="skill-btn skill-double ${me.energy>=50?'available':''}" onclick="useSkill('${roomId}','${myRole}','double')">💥 雙倍</button>
+                                <button class="skill-btn skill-freeze ${me.energy>=70?'available':''}" onclick="useSkill('${roomId}','${myRole}','freeze')">❄️ 凍結</button>
+                            </div>
+                        </div>
+                        <div class="player-panel">${opp.shield?'<div class="shield-active"></div>':''}<div>${opp.name}</div>
+                            <div class="hp-bar-bg"><div class="hp-bar-fill" style="width:${opp.hp}%"></div></div>
+                        </div>
+                    </div>
+                    ${isFrozen?'<h2 style="color:#22D3EE;">❄️ 被凍結中</h2>':`<div><h2>${q.text}</h2><div style="display:grid; gap:10px;">${q.options.map((o,i)=>`<button class="option-btn" onclick="duelAns('${roomId}',${i},${q.answer},'${myRole}')">${o}</button>`).join('')}</div></div>`}`;
+            } else if(data.status === 'finished') { content.innerHTML = `<h1>戰鬥結束！</h1><button class="option-btn" onclick="location.reload()">離開</button>`; }
         });
     }
-
-    window.duelAns = async (roomId, choice, correct, role) => {
-        const ref = doc(db, "duels", roomId);
-        const snap = await getDoc(ref);
-        const data = snap.data();
-        if(choice === correct) {
-            const opp = role === 'p1' ? 'p2' : 'p1';
-            const newHp = Math.max(0, data[opp].hp - 25);
-            await updateDoc(ref, { [`${opp}.hp`]: newHp, qIdx: increment(1), status: newHp === 0 ? 'finished' : 'battling' });
-        }
+    window.useSkill = async (roomId, role, type) => {
+        const ref = doc(db, "duels", roomId); const snap = await getDoc(ref); const data = snap.data(); const me = data[role]; const oppRole = role==='p1'?'p2':'p1';
+        let cost = 0, updates = {};
+        if(type==='shield' && me.energy>=30){ cost=30; updates[`${role}.shield`]=true; updates.logs=`${me.name} 開盾！`; }
+        if(type==='double' && me.energy>=50){ cost=50; updates[`${role}.double`]=true; updates.logs=`${me.name} 蓄力！`; }
+        if(type==='freeze' && me.energy>=70){ cost=70; updates[`${oppRole}.frozenUntil`]=Date.now()+5000; updates.logs=`${me.name} 冰凍對手！`; }
+        if(cost>0){ updates[`${role}.energy`]=me.energy-cost; await updateDoc(ref, updates); }
     };
+    window.duelAns = async (roomId, choice, correct, role) => {
+        const ref = doc(db, "duels", roomId); const snap = await getDoc(ref); const data = snap.data(); if(data.status!=='battling'||data[role].frozenUntil>Date.now()) return;
+        if(choice===correct){
+            const me=data[role], oppRole=role==='p1'?'p2':'p1', opp=data[oppRole];
+            let dmg=25; if(me.double) dmg=50;
+            let updates={ qIdx:increment(1), [`${role}.energy`]:Math.min(100, me.energy+20) }; if(me.double) updates[`${role}.double`]=false;
+            if(opp.shield){ updates[`${oppRole}.shield`]=false; updates.logs=`${me.name} 被擋住了！`; }
+            else { let newHp=Math.max(0, opp.hp-dmg); updates[`${oppRole}.hp`]=newHp; updates.logs=`${me.name} 命中 ${dmg}！`; if(newHp===0) updates.status='finished'; }
+            await updateDoc(ref, updates);
+        } else await updateDoc(ref, { logs: `${data[role].name} 失手了！` });
+    };
+
+    // --- Code War (Tower Defense) ---
+    function initCodeWar() {
+        document.getElementById('game-title').innerText = "代碼戰爭: 指令塔防";
+        const content = document.getElementById('game-content');
+        content.innerHTML = `
+            <div style="position:relative; width:700px; height:300px; background:#0F172A; border-bottom:4px solid #1E293B; overflow:hidden;">
+                <div id="tower-home" style="position:absolute; left:0; bottom:0; width:60px; height:120px; background:var(--primary); border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; flex-direction:column;">🏠<div id="hp-home" style="font-size:10px;">1000</div></div>
+                <div id="tower-enemy" style="position:absolute; right:0; bottom:0; width:60px; height:120px; background:#EF4444; border-radius:10px 10px 0 0; display:flex; align-items:center; justify-content:center; flex-direction:column;">👾<div id="hp-enemy" style="font-size:10px;">1000</div></div>
+                <div id="battlefield"></div>
+            </div>
+            <div style="margin-top:20px; display:flex; gap:10px; align-items:center;">
+                <div style="background:var(--card-bg); padding:10px 20px; border-radius:10px; font-weight:900; color:var(--secondary);">🔋 Logic Power: <span id="logic-power">0</span></div>
+                <button class="skill-btn available" style="padding:10px;" onclick="summon('input')">📥 input (10)</button>
+                <button class="skill-btn available" style="padding:10px;" onclick="summon('print')">📤 print (30)</button>
+                <button class="skill-btn available" style="padding:10px;" onclick="summon('ifelse')">⚖️ if-else (50)</button>
+            </div>
+            <p style="color:#94A3B8; font-size:12px; margin-top:10px;">累積能量召喚指令單位，摧毀敵方主機！</p>
+        `;
+
+        let power = 0, homeHp = 1000, enemyHp = 1000;
+        let units = [], enemyUnits = [];
+        const stats = {
+            input: { cost: 10, hp: 50, atk: 5, speed: 2, icon: '📥' },
+            print: { cost: 30, hp: 80, atk: 12, speed: 1.5, icon: '📤' },
+            ifelse: { cost: 50, hp: 200, atk: 10, speed: 0.8, icon: '⚖️' },
+            enemy: { hp: 60, atk: 8, speed: 1.2, icon: '🐜' }
+        };
+
+        window.summon = (type) => {
+            const s = stats[type];
+            const lv = userUnitLevels[type] || 1;
+            if(power >= s.cost) {
+                power -= s.cost;
+                units.push({ x: 60, hp: s.hp * (1 + lv * 0.1), atk: s.atk * (1 + lv * 0.1), speed: s.speed, type, icon: s.icon });
+            }
+        };
+
+        gameInterval = setInterval(() => {
+            power = Math.min(100, power + 0.2);
+            document.getElementById('logic-power').innerText = Math.floor(power);
+            
+            if(Math.random() < 0.02) enemyUnits.push({ x: 640, hp: stats.enemy.hp, atk: stats.enemy.atk, speed: stats.enemy.speed, icon: stats.enemy.icon });
+
+            const battlefield = document.getElementById('battlefield');
+            battlefield.innerHTML = '';
+            
+            // Move and Fight Logic
+            units.forEach((u, i) => {
+                let blocked = false;
+                enemyUnits.forEach(e => { if(e.x - u.x < 30 && e.x > u.x) { blocked = true; e.hp -= u.atk/30; if(e.hp<=0) enemyUnits = enemyUnits.filter(x=>x!==e); } });
+                if(640 - u.x < 40) { blocked = true; enemyHp -= u.atk/30; }
+                if(!blocked) u.x += u.speed;
+                renderUnit(u, 'player');
+            });
+
+            enemyUnits.forEach((e, i) => {
+                let blocked = false;
+                units.forEach(u => { if(e.x - u.x < 30 && e.x > u.x) { blocked = true; u.hp -= e.atk/30; if(u.hp<=0) units = units.filter(x=>x!==u); } });
+                if(e.x - 60 < 10) { blocked = true; homeHp -= e.atk/30; }
+                if(!blocked) e.x -= e.speed;
+                renderUnit(e, 'enemy');
+            });
+
+            document.getElementById('hp-home').innerText = Math.max(0, Math.floor(homeHp));
+            document.getElementById('hp-enemy').innerText = Math.max(0, Math.floor(enemyHp));
+
+            if(enemyHp <= 0) { clearInterval(gameInterval); alert("勝利！摧毀了敵方主機。"); earned = 200; exitGame(); }
+            if(homeHp <= 0) { clearInterval(gameInterval); alert("失敗！主機已被攻陷。"); exitGame(); }
+        }, 33);
+
+        function renderUnit(u, side) {
+            const div = document.createElement('div');
+            div.style = `position:absolute; left:${u.x}px; bottom:0; font-size:24px; transition:0.1s; transform:translateX(-50%);`;
+            div.innerHTML = `${u.icon}<div style="width:20px; height:3px; background:#334155; margin-top:2px;"><div style="width:${(u.hp/100)*20}px; height:100%; background:${side==='player'?'#4CB050':'#EF4444'};"></div></div>`;
+            document.getElementById('battlefield').appendChild(div);
+        }
+    }
 </script>
 </body>
 </html>

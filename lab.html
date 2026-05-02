@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>指令實驗室 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6; --bg: #0F172A; --card-bg: #1E293B;
+            --text: #F8FAFC;
+        }
+        body { font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        nav { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); padding: 0 5%; height: 80px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .logo { font-weight: 900; font-size: 1.6rem; color: #4C97FF; cursor: pointer; }
+        
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .lab-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .unit-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid rgba(255,255,255,0.05); text-align: center; transition: 0.3s; }
+        .unit-card:hover { transform: translateY(-5px); border-color: var(--secondary); }
+        
+        .unit-icon { font-size: 60px; margin-bottom: 20px; }
+        .unit-level { font-size: 1.2rem; font-weight: 900; color: var(--secondary); margin-bottom: 10px; }
+        .stats { font-size: 14px; color: #94A3B8; margin-bottom: 20px; line-height: 1.6; }
+        
+        .btn-upgrade { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--secondary); color: white; font-weight: 900; cursor: pointer; transition: 0.2s; }
+        .btn-upgrade:hover:not(:disabled) { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-upgrade:disabled { opacity: 0.5; cursor: not-allowed; background: #475569; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='dashboard.html'">Creative Lab</div>
+    <div style="font-weight:900; color:var(--secondary);">💰 <span id="user-coins">0</span></div>
+</nav>
+
+<div class="container">
+    <h1 style="font-size:3rem; text-align:center; margin-bottom:10px;">指令實驗室</h1>
+    <p style="text-align:center; color:#94A3B8; margin-bottom:50px;">強化你的代碼指令，在「代碼戰爭」中橫掃千軍！</p>
+
+    <div class="lab-grid" id="lab-grid">
+        <!-- Units will load here -->
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let userData = null;
+    const unitStats = {
+        input: { name: "input() 指令", icon: "📥", baseHp: 50, baseAtk: 5, desc: "初階探路單位，便宜且速度快。" },
+        print: { name: "print() 指令", icon: "📤", baseHp: 80, baseAtk: 12, desc: "遠程攻擊單位，能穩定輸出傷害。" },
+        ifelse: { name: "if-else 判斷", icon: "⚖️", baseHp: 200, baseAtk: 10, desc: "重裝坦克，高血量負責在前排抵擋敵人。" }
+    };
+
+    onAuthStateChanged(auth, async u => {
+        if(!u) return location.href="login.html";
+        refreshUI();
+    });
+
+    async function refreshUI() {
+        const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        userData = snap.data();
+        document.getElementById('user-coins').innerText = userData.coins || 0;
+        
+        const grid = document.getElementById('lab-grid');
+        grid.innerHTML = '';
+        
+        const levels = userData.unitLevels || { input: 1, print: 1, ifelse: 1 };
+
+        Object.keys(unitStats).forEach(key => {
+            const unit = unitStats[key];
+            const lv = levels[key] || 1;
+            const upgradeCost = lv * 100;
+            const hp = Math.floor(unit.baseHp * (1 + lv * 0.1));
+            const atk = Math.floor(unit.baseAtk * (1 + lv * 0.1));
+
+            const card = document.createElement('div');
+            card.className = 'unit-card';
+            card.innerHTML = `
+                <div class="unit-icon">${unit.icon}</div>
+                <h3 style="margin:0;">${unit.name}</h3>
+                <div class="unit-level">Lv. ${lv}</div>
+                <div class="stats">
+                    HP: ${hp} | ATK: ${atk}<br>
+                    ${unit.desc}
+                </div>
+                <button class="btn-upgrade" onclick="upgradeUnit('${key}', ${upgradeCost})" ${userData.coins < upgradeCost ? 'disabled' : ''}>
+                    ${userData.coins < upgradeCost ? '金幣不足' : `升級 (💰 ${upgradeCost})`}
+                </button>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    window.upgradeUnit = async (key, cost) => {
+        if(userData.coins < cost) return;
+        
+        const ref = doc(db, "users", auth.currentUser.uid);
+        const updates = {
+            coins: increment(-cost),
+            [`unitLevels.${key}`]: (userData.unitLevels?.[key] || 1) + 1
+        };
+        
+        await updateDoc(ref, updates);
+        alert("升級成功！");
+        refreshUI();
+    };
+</script>
+</body>
+</html>
