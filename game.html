@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>邏輯競技場 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --scratch-blue: #4C97FF; --scratch-green: #4CB050; 
+            --scratch-orange: #FFAB19; --scratch-purple: #855CD6;
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
+        nav { background: white; padding: 0 5%; height: 70px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .logo { font-weight: 900; font-size: 1.5rem; color: var(--scratch-green); cursor: pointer; }
+        
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; text-align: center; }
+        .mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        
+        .game-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; border: 2px solid transparent; }
+        .game-card:hover { transform: translateY(-5px); border-color: var(--scratch-green); }
+        .game-icon { font-size: 50px; margin-bottom: 15px; display: block; }
+        .game-title { font-weight: 900; font-size: 1.2rem; }
+
+        #play-area { display: none; background: white; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); margin-top: 20px; }
+        .question { font-size: 2rem; font-weight: 900; margin-bottom: 30px; }
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-btn { padding: 20px; border: 2px solid #eee; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; background: white; }
+        .option-btn:hover { background: #f8f9fa; border-color: var(--scratch-blue); }
+        
+        .stats { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; font-weight: 900; }
+        .coin-win { color: var(--scratch-orange); }
+        
+        .back-btn { margin-top: 20px; color: #999; cursor: pointer; font-size: 14px; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="location.href='dashboard.html'">🎮 邏輯競技場</div>
+    <div style="font-weight:900; color:var(--scratch-orange);">💰 我的金幣：<span id="user-coins">0</span></div>
+</nav>
+
+<div class="container">
+    <div id="lobby">
+        <h1 style="margin:0; font-size:2.5rem; font-weight:900;">鍛鍊你的<span style="color:var(--scratch-green);">程式思維</span></h1>
+        <p style="color:#666;">挑戰各種邏輯題目，獲得金幣獎勵！</p>
+        
+        <div class="mode-grid">
+            <div class="game-card" onclick="startGame('sequence')">
+                <span class="game-icon">🔢</span>
+                <div class="game-title">數列推理</div>
+                <p style="font-size:13px; color:#999;">找出規律，填入下一個數字</p>
+            </div>
+            <div class="game-card" onclick="startGame('stroop')">
+                <span class="game-icon">🎨</span>
+                <div class="game-title">顏色衝突</div>
+                <p style="font-size:13px; color:#999;">快速判斷文字的真實顏色</p>
+            </div>
+            <div class="game-card" onclick="startGame('binary')">
+                <span class="game-icon">💾</span>
+                <div class="game-title">二進位挑戰</div>
+                <p style="font-size:13px; color:#999;">程式基礎！數字與二進位轉換</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="play-area">
+        <div class="stats">
+            <span>得分：<span id="score">0</span></span>
+            <span class="coin-win">獲得金幣：+<span id="earned">0</span></span>
+        </div>
+        <div id="q-container" class="question">載入題目中...</div>
+        <div id="options" class="options"></div>
+        <div class="back-btn" onclick="exitGame()">放棄並回到大廳</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentMode = '';
+    let score = 0;
+    let earned = 0;
+    let currentAns = '';
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) return location.href = 'login.html';
+        const snap = await getDoc(doc(db, "users", user.uid));
+        document.getElementById('user-coins').innerText = snap.data()?.coins || 0;
+    });
+
+    window.startGame = (mode) => {
+        currentMode = mode;
+        score = 0; earned = 0;
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('play-area').style.display = 'block';
+        nextQuestion();
+    };
+
+    window.exitGame = () => {
+        if(earned > 0) updateCoins(earned);
+        document.getElementById('lobby').style.display = 'block';
+        document.getElementById('play-area').style.display = 'none';
+    };
+
+    async function updateCoins(amt) {
+        const ref = doc(db, "users", auth.currentUser.uid);
+        await updateDoc(ref, { coins: increment(amt) });
+        const snap = await getDoc(ref);
+        document.getElementById('user-coins').innerText = snap.data().coins;
+    }
+
+    function nextQuestion() {
+        const qContainer = document.getElementById('q-container');
+        const optContainer = document.getElementById('options');
+        optContainer.innerHTML = '';
+        
+        let q = '';
+        let opts = [];
+
+        if(currentMode === 'sequence') {
+            const start = Math.floor(Math.random() * 10);
+            const step = Math.floor(Math.random() * 5) + 2;
+            const type = Math.floor(Math.random() * 2); // 0: + , 1: *
+            if(type === 0) {
+                q = `${start}, ${start+step}, ${start+step*2}, ?`;
+                currentAns = String(start+step*3);
+            } else {
+                const s2 = Math.floor(Math.random() * 3) + 2;
+                q = `1, ${s2}, ${s2*s2}, ?`;
+                currentAns = String(s2*s2*s2);
+            }
+            opts = [currentAns, String(parseInt(currentAns)+2), String(parseInt(currentAns)-2), String(parseInt(currentAns)*2)];
+        } else if(currentMode === 'stroop') {
+            const colors = ['Red', 'Blue', 'Green', 'Yellow'];
+            const hex = ['#FF4D4D', '#4C97FF', '#4CB050', '#FFAB19'];
+            const wIdx = Math.floor(Math.random() * 4);
+            const cIdx = Math.floor(Math.random() * 4);
+            qContainer.style.color = hex[cIdx];
+            q = colors[wIdx];
+            currentAns = colors[cIdx];
+            opts = colors;
+        } else if(currentMode === 'binary') {
+            const num = Math.floor(Math.random() * 15) + 1;
+            q = `數字 ${num} 的二進位是？`;
+            currentAns = num.toString(2).padStart(4, '0');
+            opts = [currentAns, (num+1).toString(2).padStart(4, '0'), (num-1).toString(2).padStart(4, '0'), '1111'];
+        }
+
+        qContainer.innerText = q;
+        shuffle(opts).forEach(o => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = o;
+            btn.onclick = () => checkAns(o);
+            optContainer.appendChild(btn);
+        });
+    }
+
+    function checkAns(o) {
+        if(o === currentAns) {
+            score++;
+            earned += 10;
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = earned;
+            nextQuestion();
+        } else {
+            alert(`答錯了！正確答案是 ${currentAns}\n總共賺得 💰 ${earned} 金幣！`);
+            exitGame();
+        }
+    }
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+</script>
+</body>
+</html>

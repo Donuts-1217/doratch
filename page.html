@@ -110,6 +110,8 @@
     </div>
 
     <div class="nav-actions">
+        <a href="game.html" class="btn-nav" style="text-decoration:none; background:#E8F5E9; color:#2E7D32; border-color:#A5D6A7;">🎮 邏輯遊戲</a>
+        <a href="shop.html" class="btn-nav" style="text-decoration:none; background:#FFF8E1; color:#F57C00; border-color:#FFE082;">🛒 創意商城</a>
         <div style="display:flex; align-items:center; gap:5px; margin-right:10px;">
             <input type="checkbox" id="is-public-check"><label for="is-public-check" style="font-size:13px;">發布</label>
         </div>
@@ -180,8 +182,11 @@
             <div style="font-weight:900; font-size:14px; margin:20px 0 10px;">🧩 攻略提示：</div>
             <div class="mission-hint-box" id="mission-hints"></div>
         </div>
-        
-        <button class="btn btn-save" style="width:100%; margin-top:25px; padding:12px; justify-content:center;" onclick="submitFromEditor()">完成任務並繳交</button>
+                <div id="mission-verify-area" style="margin-top:20px; padding-top:20px; border-top:1px dashed #ddd; display:none;">
+                    <button id="btn-verify" class="btn-full" style="background:var(--scratch-green); color:white; border:none; padding:15px; border-radius:12px; font-weight:900; cursor:pointer;" onclick="verifySolution()">🔍 自動驗證解法</button>
+                    <div id="verify-result" style="margin-top:10px; font-size:13px; font-weight:bold; text-align:center;"></div>
+                </div>
+                <button class="btn-full" id="btn-submit-task" style="margin-top:15px; background:var(--scratch-blue); color:white; border:none; padding:15px; border-radius:12px; font-weight:900; cursor:pointer; display:none;" onclick="submitFromEditor()">✅ 正式繳交並領取獎勵</button>
     </div>
 </div>
 
@@ -486,6 +491,9 @@
                 document.getElementById('mission-title').innerText = data.title;
                 document.getElementById('mission-lv').innerText = currentMissionLv;
                 document.getElementById('mission-hints').innerText = data.hints || '無提示。';
+                if(data.title.includes("【APCS】") && !isTeacher) {
+                    document.getElementById('mission-verify-area').style.display = 'block';
+                }
                 
                 const list = document.getElementById('mission-goals-list');
                 list.innerHTML = '';
@@ -504,6 +512,48 @@
     window.toggleMissionPanel = () => {
         const panel = document.getElementById('mission-panel');
         panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    };
+
+    window.verifySolution = async () => {
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        const resultDiv = document.getElementById('verify-result');
+        resultDiv.innerHTML = "正在跑測試案例...";
+        resultDiv.style.color = "var(--scratch-orange)";
+
+        let passed = false;
+        let logs = [];
+        const mockPrompt = (msg) => {
+            if(currentMissionLv.includes("成績")) return "85";
+            if(currentMissionLv.includes("三角形")) return "3"; // 會被叫三次
+            if(currentMissionLv.includes("質數")) return "7";
+            return "5";
+        };
+        const mockLog = (m) => logs.push(String(m));
+
+        try {
+            // 建立沙盒執行環境
+            const fn = new Function('prompt', 'alert', 'console', code);
+            fn(mockPrompt, mockLog, {log: mockLog});
+
+            // 驗證邏輯
+            const output = logs.join(" ");
+            if(currentMissionLv.includes("成績") && (output.includes("B") || output.includes("b"))) passed = true;
+            if(currentMissionLv.includes("三角形") && output.includes("合法")) passed = true;
+            if(currentMissionLv.includes("質數") && output.includes("是質數")) passed = true;
+            if(currentMissionLv.includes("費氏") && logs.length >= 5) passed = true;
+
+            if(passed) {
+                resultDiv.innerHTML = "🎉 驗證通過！你可以繳交了。";
+                resultDiv.style.color = "var(--scratch-green)";
+                document.getElementById('btn-submit-task').style.display = 'block';
+            } else {
+                resultDiv.innerHTML = "❌ 輸出結果不完全正確，再試試看！";
+                resultDiv.style.color = "red";
+            }
+        } catch(e) {
+            resultDiv.innerHTML = "⚠️ 程式執行出錯：" + e.message;
+            resultDiv.style.color = "red";
+        }
     };
 
     window.submitFromEditor = async () => {
