@@ -154,7 +154,7 @@
             <span id="stage-status" style="color:var(--scratch-orange);">等待執行</span>
         </div>
         <div id="stage-container" style="flex: 1; background: white; position: relative; overflow: hidden; border-bottom: 2px solid #111;">
-            <iframe id="execution-iframe" sandbox="allow-scripts allow-same-origin" style="width:100%; height:100%; border:none;"></iframe>
+            <iframe id="execution-iframe" sandbox="allow-scripts allow-same-origin allow-modals" style="width:100%; height:100%; border:none;"></iframe>
         </div>
         
         <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
@@ -258,6 +258,81 @@
         <block type="lists_setIndex"></block>
     </category>
     <sep></sep>
+    <category name="角色 (Sprites)" colour="#9966FF">
+        <block type="sprite_create">
+            <value name="NAME">
+                <shadow type="text">
+                    <field name="TEXT">主角</field>
+                </shadow>
+            </value>
+            <value name="COSTUME">
+                <shadow type="text">
+                    <field name="TEXT">🐱</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_use">
+            <value name="NAME">
+                <shadow type="text">
+                    <field name="TEXT">主角</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_move">
+            <value name="STEPS">
+                <shadow type="math_number">
+                    <field name="NUM">10</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_turn_right">
+            <value name="DEG">
+                <shadow type="math_number">
+                    <field name="NUM">15</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_turn_left">
+            <value name="DEG">
+                <shadow type="math_number">
+                    <field name="NUM">15</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_goto_xy">
+            <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        </block>
+        <block type="sprite_set_x">
+            <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        </block>
+        <block type="sprite_set_y">
+            <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        </block>
+        <block type="sprite_change_x">
+            <value name="DX"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+        </block>
+        <block type="sprite_change_y">
+            <value name="DY"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+        </block>
+        <block type="sprite_show"></block>
+        <block type="sprite_hide"></block>
+        <block type="sprite_say">
+            <value name="TEXT">
+                <shadow type="text">
+                    <field name="TEXT">哈囉！</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="sprite_set_costume">
+            <value name="COSTUME">
+                <shadow type="text">
+                    <field name="TEXT">🚀</field>
+                </shadow>
+            </value>
+        </block>
+    </category>
+    <sep></sep>
     <category name="畫布 (Canvas)" colour="#E65C5C">
         <block type="canvas_init"></block>
         <block type="canvas_set_color">
@@ -326,7 +401,7 @@
     };
     Blockly.JavaScript['scratch_ask'] = function(block) {
         var question = Blockly.JavaScript.valueToCode(block, 'QUESTION', Blockly.JavaScript.ORDER_ATOMIC) || "''";
-        return `window._scratchAnswer = window.prompt(${question}) || '';\n`;
+        return `window._scratchAnswer = (typeof prompt === 'function' ? prompt(${question}) : window.prompt(${question})) || '';\n`;
     };
 
     Blockly.Blocks['scratch_answer'] = {
@@ -431,6 +506,200 @@
     };
     Blockly.JavaScript['canvas_clear'] = function(block) {
         return `if(window.ctx && window.canvas) { window.ctx.clearRect(0, 0, canvas.width, canvas.height); }\n`;
+    };
+
+    // --- 定義角色 (Sprite) 積木 ---
+    Blockly.Blocks['sprite_create'] = {
+        init: function() {
+            this.appendValueInput("NAME").setCheck("String").appendField("建立角色 名稱");
+            this.appendValueInput("COSTUME").setCheck("String").appendField("外觀");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+            this.setTooltip("建立一個角色，外觀可用 emoji 或文字");
+        }
+    };
+    Blockly.JavaScript['sprite_create'] = function(block) {
+        var name = Blockly.JavaScript.valueToCode(block, 'NAME', Blockly.JavaScript.ORDER_ATOMIC) || "'主角'";
+        var costume = Blockly.JavaScript.valueToCode(block, 'COSTUME', Blockly.JavaScript.ORDER_ATOMIC) || "'🐱'";
+        return `window.__scratchRuntime.createSprite(${name}, ${costume});\n`;
+    };
+
+    Blockly.Blocks['sprite_use'] = {
+        init: function() {
+            this.appendValueInput("NAME").setCheck("String").appendField("切換目前角色為");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_use'] = function(block) {
+        var name = Blockly.JavaScript.valueToCode(block, 'NAME', Blockly.JavaScript.ORDER_ATOMIC) || "'主角'";
+        return `window.__scratchRuntime.useSprite(${name});\n`;
+    };
+
+    Blockly.Blocks['sprite_move'] = {
+        init: function() {
+            this.appendValueInput("STEPS").setCheck("Number").appendField("角色前進");
+            this.appendDummyInput().appendField("步");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_move'] = function(block) {
+        var steps = Blockly.JavaScript.valueToCode(block, 'STEPS', Blockly.JavaScript.ORDER_ATOMIC) || 10;
+        return `window.__scratchRuntime.move(${steps});\n`;
+    };
+
+    Blockly.Blocks['sprite_turn_right'] = {
+        init: function() {
+            this.appendValueInput("DEG").setCheck("Number").appendField("右轉");
+            this.appendDummyInput().appendField("度");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_turn_right'] = function(block) {
+        var deg = Blockly.JavaScript.valueToCode(block, 'DEG', Blockly.JavaScript.ORDER_ATOMIC) || 15;
+        return `window.__scratchRuntime.turnRight(${deg});\n`;
+    };
+
+    Blockly.Blocks['sprite_turn_left'] = {
+        init: function() {
+            this.appendValueInput("DEG").setCheck("Number").appendField("左轉");
+            this.appendDummyInput().appendField("度");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_turn_left'] = function(block) {
+        var deg = Blockly.JavaScript.valueToCode(block, 'DEG', Blockly.JavaScript.ORDER_ATOMIC) || 15;
+        return `window.__scratchRuntime.turnLeft(${deg});\n`;
+    };
+
+    Blockly.Blocks['sprite_goto_xy'] = {
+        init: function() {
+            this.appendValueInput("X").setCheck("Number").appendField("移到 x");
+            this.appendValueInput("Y").setCheck("Number").appendField("y");
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_goto_xy'] = function(block) {
+        var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        return `window.__scratchRuntime.goto(${x}, ${y});\n`;
+    };
+
+    Blockly.Blocks['sprite_set_x'] = {
+        init: function() {
+            this.appendValueInput("X").setCheck("Number").appendField("設 x 為");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_set_x'] = function(block) {
+        var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        return `window.__scratchRuntime.setX(${x});\n`;
+    };
+
+    Blockly.Blocks['sprite_set_y'] = {
+        init: function() {
+            this.appendValueInput("Y").setCheck("Number").appendField("設 y 為");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_set_y'] = function(block) {
+        var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || 0;
+        return `window.__scratchRuntime.setY(${y});\n`;
+    };
+
+    Blockly.Blocks['sprite_change_x'] = {
+        init: function() {
+            this.appendValueInput("DX").setCheck("Number").appendField("x 改變");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_change_x'] = function(block) {
+        var dx = Blockly.JavaScript.valueToCode(block, 'DX', Blockly.JavaScript.ORDER_ATOMIC) || 10;
+        return `window.__scratchRuntime.changeX(${dx});\n`;
+    };
+
+    Blockly.Blocks['sprite_change_y'] = {
+        init: function() {
+            this.appendValueInput("DY").setCheck("Number").appendField("y 改變");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_change_y'] = function(block) {
+        var dy = Blockly.JavaScript.valueToCode(block, 'DY', Blockly.JavaScript.ORDER_ATOMIC) || 10;
+        return `window.__scratchRuntime.changeY(${dy});\n`;
+    };
+
+    Blockly.Blocks['sprite_show'] = {
+        init: function() {
+            this.appendDummyInput().appendField("顯示角色");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_show'] = function(block) {
+        return `window.__scratchRuntime.show();\n`;
+    };
+
+    Blockly.Blocks['sprite_hide'] = {
+        init: function() {
+            this.appendDummyInput().appendField("隱藏角色");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_hide'] = function(block) {
+        return `window.__scratchRuntime.hide();\n`;
+    };
+
+    Blockly.Blocks['sprite_say'] = {
+        init: function() {
+            this.appendValueInput("TEXT").setCheck("String").appendField("角色說");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_say'] = function(block) {
+        var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC) || "''";
+        return `window.__scratchRuntime.say(${text});\n`;
+    };
+
+    Blockly.Blocks['sprite_set_costume'] = {
+        init: function() {
+            this.appendValueInput("COSTUME").setCheck("String").appendField("換外觀為");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#9966FF');
+        }
+    };
+    Blockly.JavaScript['sprite_set_costume'] = function(block) {
+        var costume = Blockly.JavaScript.valueToCode(block, 'COSTUME', Blockly.JavaScript.ORDER_ATOMIC) || "'🐱'";
+        return `window.__scratchRuntime.setCostume(${costume});\n`;
     };
 
 
@@ -658,7 +927,10 @@
         <html>
         <head>
             <style>
-                body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; }
+                body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; display:flex; justify-content:center; align-items:center; height:100vh; }
+                #scratch-stage { width: 480px; height: 360px; background: linear-gradient(180deg, #dcecff, #f3f8ff); border: 2px solid #9bbcff; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7); }
+                .sprite { position: absolute; transform: translate(-50%, -50%); font-size: 46px; user-select: none; transition: left 0.12s linear, top 0.12s linear, transform 0.12s linear; }
+                .sprite-bubble { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 14px; background: #fff; color: #333; border: 1px solid #cfd8ea; border-radius: 18px; padding: 5px 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
                 canvas { display: block; }
             </style>
             <script>
@@ -677,6 +949,176 @@
                     console.error("行 " + line + ": " + msg);
                     return true; 
                 };
+
+                // 簡化版 Scratch 角色執行器
+                window.__scratchRuntime = (() => {
+                    const STAGE_W = 480;
+                    const STAGE_H = 360;
+                    const sprites = new Map();
+                    let currentName = "主角";
+
+                    function ensureStage() {
+                        let stage = document.getElementById('scratch-stage');
+                        if (!stage) {
+                            document.body.innerHTML = '';
+                            stage = document.createElement('div');
+                            stage.id = 'scratch-stage';
+                            document.body.appendChild(stage);
+                        }
+                        return stage;
+                    }
+
+                    function clamp(v, min, max) {
+                        return Math.max(min, Math.min(max, v));
+                    }
+
+                    function toStageX(x) {
+                        return STAGE_W / 2 + x;
+                    }
+
+                    function toStageY(y) {
+                        return STAGE_H / 2 - y;
+                    }
+
+                    function applyPose(sp) {
+                        sp.x = clamp(sp.x, -STAGE_W / 2, STAGE_W / 2);
+                        sp.y = clamp(sp.y, -STAGE_H / 2, STAGE_H / 2);
+                        sp.el.style.left = toStageX(sp.x) + 'px';
+                        sp.el.style.top = toStageY(sp.y) + 'px';
+                        sp.el.style.transform = 'translate(-50%, -50%) rotate(' + (sp.direction - 90) + 'deg)';
+                        sp.el.style.display = sp.visible ? 'block' : 'none';
+                    }
+
+                    function getCurrent() {
+                        if (!sprites.has(currentName)) {
+                            createSprite(currentName, "🐱");
+                        }
+                        return sprites.get(currentName);
+                    }
+
+                    function createSprite(name, costume) {
+                        const stage = ensureStage();
+                        const spriteName = String(name || "主角");
+                        if (sprites.has(spriteName)) {
+                            const existing = sprites.get(spriteName);
+                            existing.costume = String(costume || existing.costume || "🐱");
+                            existing.el.firstChild.textContent = existing.costume;
+                            currentName = spriteName;
+                            applyPose(existing);
+                            return;
+                        }
+
+                        const el = document.createElement('div');
+                        el.className = 'sprite';
+                        const costumeNode = document.createElement('div');
+                        costumeNode.textContent = String(costume || "🐱");
+                        el.appendChild(costumeNode);
+                        stage.appendChild(el);
+
+                        const sp = {
+                            name: spriteName,
+                            costume: String(costume || "🐱"),
+                            x: 0,
+                            y: 0,
+                            direction: 90,
+                            visible: true,
+                            el: el,
+                            bubble: null
+                        };
+                        sprites.set(spriteName, sp);
+                        currentName = spriteName;
+                        applyPose(sp);
+                    }
+
+                    function useSprite(name) {
+                        currentName = String(name || "主角");
+                        getCurrent();
+                    }
+
+                    function move(steps) {
+                        const sp = getCurrent();
+                        const n = Number(steps) || 0;
+                        const rad = (90 - sp.direction) * Math.PI / 180;
+                        sp.x += Math.cos(rad) * n;
+                        sp.y += Math.sin(rad) * n;
+                        applyPose(sp);
+                    }
+
+                    function turnRight(deg) {
+                        const sp = getCurrent();
+                        sp.direction += Number(deg) || 0;
+                        applyPose(sp);
+                    }
+
+                    function turnLeft(deg) {
+                        const sp = getCurrent();
+                        sp.direction -= Number(deg) || 0;
+                        applyPose(sp);
+                    }
+
+                    function goto(x, y) {
+                        const sp = getCurrent();
+                        sp.x = Number(x) || 0;
+                        sp.y = Number(y) || 0;
+                        applyPose(sp);
+                    }
+
+                    function setX(x) {
+                        const sp = getCurrent();
+                        sp.x = Number(x) || 0;
+                        applyPose(sp);
+                    }
+
+                    function setY(y) {
+                        const sp = getCurrent();
+                        sp.y = Number(y) || 0;
+                        applyPose(sp);
+                    }
+
+                    function changeX(dx) {
+                        const sp = getCurrent();
+                        sp.x += Number(dx) || 0;
+                        applyPose(sp);
+                    }
+
+                    function changeY(dy) {
+                        const sp = getCurrent();
+                        sp.y += Number(dy) || 0;
+                        applyPose(sp);
+                    }
+
+                    function show() {
+                        const sp = getCurrent();
+                        sp.visible = true;
+                        applyPose(sp);
+                    }
+
+                    function hide() {
+                        const sp = getCurrent();
+                        sp.visible = false;
+                        applyPose(sp);
+                    }
+
+                    function setCostume(costume) {
+                        const sp = getCurrent();
+                        sp.costume = String(costume || "🐱");
+                        sp.el.firstChild.textContent = sp.costume;
+                    }
+
+                    function say(text) {
+                        const sp = getCurrent();
+                        if (!sp.bubble) {
+                            const b = document.createElement('div');
+                            b.className = 'sprite-bubble';
+                            sp.el.appendChild(b);
+                            sp.bubble = b;
+                        }
+                        sp.bubble.textContent = String(text || "");
+                        sp.bubble.style.display = 'block';
+                    }
+
+                    return { createSprite, useSprite, move, turnRight, turnLeft, goto, setX, setY, changeX, changeY, show, hide, say, setCostume };
+                })();
             <\/script>
         </head>
         <body>
