@@ -420,7 +420,7 @@
     let currentMissionLv = "LV1"; // 存儲難度
     let isOwner = true;
     let originalProjectData = null;
-    const STAGE_SCRIPT_KEY = "__stage__";
+    const STAGE_SCRIPT_KEY = "stage";
     let currentScriptTarget = STAGE_SCRIPT_KEY;
     let spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
     let isSwitchingScript = false;
@@ -930,6 +930,18 @@
     window.addSpriteScriptTarget = () => {
         const name = (prompt("請輸入角色名稱（例如：貓咪1）") || "").trim();
         if (!name) return;
+        if (name.startsWith('__') && name.endsWith('__')) {
+            alert("角色腳本名稱不能使用 __開頭且__結尾（Firestore 不支援）。");
+            return;
+        }
+        if (/[./#[\]]/.test(name)) {
+            alert("角色腳本名稱不能包含 . / # [ ] 這些字元。");
+            return;
+        }
+        if (name.length > 60) {
+            alert("角色腳本名稱太長，請控制在 60 字內。");
+            return;
+        }
         if (!spriteScripts[name]) {
             spriteScripts[name] = "";
         }
@@ -969,7 +981,13 @@
                     document.getElementById('main-action-btn').innerText = "⭐ 改編 (Remix)";
                 }
                 if (d.spriteScripts && typeof d.spriteScripts === 'object') {
-                    spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...d.spriteScripts };
+                    const migratedScripts = { ...d.spriteScripts };
+                    // 相容舊版 key: "__stage__" -> "stage"
+                    if (typeof migratedScripts.__stage__ === 'string' && !migratedScripts[STAGE_SCRIPT_KEY]) {
+                        migratedScripts[STAGE_SCRIPT_KEY] = migratedScripts.__stage__;
+                    }
+                    delete migratedScripts.__stage__;
+                    spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...migratedScripts };
                 } else if (d.data) {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: d.data };
                 } else {
@@ -1541,7 +1559,12 @@
     window.handleSave = async (silent = false) => {
         const user = auth.currentUser;
         saveCurrentScriptFromWorkspace();
-        const allScripts = { ...spriteScripts };
+        const allScripts = Object.fromEntries(
+            Object.entries(spriteScripts)
+                // Firestore 欄位限制：避免 "__...__" 這種保留格式
+                .map(([k, v]) => [k === "__stage__" ? STAGE_SCRIPT_KEY : k, typeof v === 'string' ? v : ''])
+                .filter(([k]) => !(k.startsWith('__') && k.endsWith('__')))
+        );
         const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         const title = document.getElementById('project-title-input').value;
         const isPublic = document.getElementById('is-public-check').checked;
@@ -1568,6 +1591,10 @@
                 
                 const newDoc = await addDoc(collection(db, "users", user.uid, "projects"), savePayload);
                 currentPid = newDoc.id; // 更新目前的 Pid
+                // 建立完成後切換為「自己的專案」，後續儲存改為 update 而非一直 addDoc
+                isOwner = true;
+                authorUid = user.uid;
+                document.getElementById('main-action-btn').innerText = "💾 儲存";
                 if(!silent) alert("已建立新專案並儲存！");
                 
                 // 如果是任務模式，自動幫學生關聯附件
@@ -1582,7 +1609,10 @@
                     }
                 }
                 
-                // location.href = `page.html?load=${newDoc.id}${aid?`&aid=${aid}&cid=${cid}`:''}`;
+                const qs = new URLSearchParams(window.location.search);
+                qs.set('load', newDoc.id);
+                qs.delete('from');
+                window.history.replaceState({}, '', `${location.pathname}?${qs.toString()}`);
             }
         } catch (e) { if(!silent) alert("儲存失敗: " + e.message); }
     };
