@@ -25,9 +25,10 @@
             display: flex; align-items: center; height: 65px; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.3); z-index: 1000; gap: 15px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            overflow: visible;
         }
         .nav-logo { font-weight: 900; font-size: 1.1rem; cursor: pointer; white-space: nowrap; margin-right: 15px; color: var(--scratch-blue); }
-        .project-title-container { flex: 1; display: flex; align-items: center; gap: 10px; }
+        .project-title-container { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
         #project-title-input {
             background: rgba(255,255,255,0.2); border: none; color: white;
             padding: 6px 12px; border-radius: 4px; font-size: 15px; width: 200px;
@@ -35,7 +36,7 @@
         }
         #project-title-input:focus { background: rgba(255,255,255,0.3); }
 
-        .nav-actions { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+        .nav-actions { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; flex-wrap: nowrap; overflow: visible; }
         .btn {
             border: none; padding: 7px 14px; border-radius: 4px;
             font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
@@ -47,7 +48,7 @@
         .btn-outline:hover { background: rgba(255,255,255,0.1); }
 
         /* --- 下拉選單 Wrapper --- */
-        .user-profile-wrapper { position: relative; padding: 10px 0; }
+        .user-profile-wrapper { position: relative; padding: 10px 0; flex-shrink: 0; }
         .user-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .dropdown-menu {
             position: absolute; top: 55px; right: 0; width: 180px; background: #1E293B; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -68,18 +69,19 @@
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 10px; padding: 8px 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            min-width: 280px;
+            min-width: 140px;
+            max-width: 180px;
         }
         #sprite-script-select {
             background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px; padding: 5px 8px; font-size: 12px; min-width: 130px;
+            border-radius: 6px; padding: 4px 6px; font-size: 11px; min-width: 60px; flex: 1;
         }
         #sprite-script-bar .mini-btn {
-            border: none; border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 12px; font-weight: bold;
+            border: none; border-radius: 6px; padding: 4px 6px; cursor: pointer; font-size: 11px; font-weight: bold;
             background: var(--scratch-blue); color: white;
         }
         #sprite-script-bar .mini-btn:hover { filter: brightness(1.1); }
-        #sprite-script-bar { flex-shrink: 0; }
+        #sprite-script-bar { flex-shrink: 1; min-width: 0; }
         
         /* 側邊代碼/控制台面板 */
         #side-panel { flex: 0.4; min-width: 350px; background: #1e1e1e; display: flex; flex-direction: column; }
@@ -134,7 +136,7 @@
         <div id="sprite-script-bar">
             <span style="font-size:12px; color:#94A3B8;">腳本目標：</span>
             <select id="sprite-script-select" onchange="switchSpriteScript(this.value)"></select>
-            <button class="mini-btn" onclick="addSpriteScriptTarget()">+ 新角色腳本</button>
+            <button class="mini-btn" onclick="addSpriteScriptTarget()">+ 角色</button>
         </div>
         <div style="display:flex; align-items:center; gap:8px; margin-right:15px; color:#94A3B8; font-size:13px;">
             <input type="checkbox" id="is-public-check" style="width:auto; margin:0;"><label for="is-public-check">公開發布</label>
@@ -1558,6 +1560,7 @@
     // 雲端儲存
     window.handleSave = async (silent = false) => {
         const user = auth.currentUser;
+        if (authorUid && authorUid === user?.uid) isOwner = true;
         saveCurrentScriptFromWorkspace();
         const allScripts = Object.fromEntries(
             Object.entries(spriteScripts)
@@ -1612,7 +1615,11 @@
                 const qs = new URLSearchParams(window.location.search);
                 qs.set('load', newDoc.id);
                 qs.delete('from');
-                window.history.replaceState({}, '', `${location.pathname}?${qs.toString()}`);
+                if (silent) {
+                    window.history.replaceState({}, '', `${location.pathname}?${qs.toString()}`);
+                } else {
+                    location.href = `${location.pathname}?${qs.toString()}`;
+                }
             }
         } catch (e) { if(!silent) alert("儲存失敗: " + e.message); }
     };
