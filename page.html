@@ -822,19 +822,31 @@
     }
 
     function compileWorkspaceToCode(targetWorkspace) {
+        const generator = Blockly.JavaScript;
         const topBlocks = targetWorkspace.getTopBlocks(true);
         const errors = [];
         let code = '';
 
-        topBlocks.forEach((block) => {
-            try {
-                const fragment = Blockly.JavaScript.blockToCode(block);
-                code += normalizeGeneratedFragment(fragment);
-            } catch (e) {
-                const label = block.type || 'unknown_block';
-                errors.push(`${label}: ${e.message || e}`);
+        try {
+            // 讓內建積木可使用 nameDB_ 等生成狀態（for/repeat/text_append 等會依賴）
+            generator.init(targetWorkspace);
+            topBlocks.forEach((block) => {
+                try {
+                    const fragment = generator.blockToCode(block);
+                    code += normalizeGeneratedFragment(fragment);
+                } catch (e) {
+                    const label = block.type || 'unknown_block';
+                    errors.push(`${label}: ${e.message || e}`);
+                }
+            });
+            code = generator.finish(code);
+        } catch (e) {
+            errors.push(`generator_init: ${e.message || e}`);
+        } finally {
+            if (generator.nameDB_ && typeof generator.nameDB_.reset === 'function') {
+                generator.nameDB_.reset();
             }
-        });
+        }
         return { code, errors };
     }
 
