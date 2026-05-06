@@ -61,6 +61,22 @@
         #main-container { display: flex; flex: 1; overflow: hidden; }
         #blockly-area { flex: 0.6; position: relative; border-right: 2px solid #333; }
         #blockly-div { position: absolute; top:0; left:0; right:0; bottom:0; }
+        #sprite-script-bar {
+            position: absolute; top: 10px; left: 10px; z-index: 20;
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(11, 14, 20, 0.9); color: #dbe7ff;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 8px 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        #sprite-script-select {
+            background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px; padding: 5px 8px; font-size: 12px; min-width: 160px;
+        }
+        #sprite-script-bar .mini-btn {
+            border: none; border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 12px; font-weight: bold;
+            background: var(--scratch-blue); color: white;
+        }
         
         /* 側邊代碼/控制台面板 */
         #side-panel { flex: 0.4; min-width: 350px; background: #1e1e1e; display: flex; flex-direction: column; }
@@ -117,6 +133,7 @@
         </div>
         
         <button class="btn btn-run" onclick="executeCode()">▶️ 執行程式</button>
+        <button class="btn btn-outline" onclick="runBlockValidation()" style="border:none;">🧪 檢查積木</button>
         <button id="main-action-btn" class="btn btn-save" onclick="handleSave()">💾 儲存</button>
         
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
@@ -145,6 +162,11 @@
 
 <div id="main-container">
     <div id="blockly-area">
+        <div id="sprite-script-bar">
+            <span style="font-size:12px; color:#94A3B8;">腳本目標：</span>
+            <select id="sprite-script-select" onchange="switchSpriteScript(this.value)"></select>
+            <button class="mini-btn" onclick="addSpriteScriptTarget()">+ 新角色腳本</button>
+        </div>
         <div id="blockly-div"></div>
     </div>
     
@@ -237,6 +259,10 @@
         <block type="text_append"></block>
         <block type="text_length"></block>
         <block type="text_print"></block>
+    </category>
+    <category name="事件 (Events)" colour="#FFD500">
+        <block type="event_when_green_flag"></block>
+        <block type="event_when_key_pressed"></block>
     </category>
     <category name="偵測 (Sensing)" colour="#5CB1D6">
         <block type="scratch_ask">
@@ -386,6 +412,10 @@
     let currentMissionLv = "LV1"; // 存儲難度
     let isOwner = true;
     let originalProjectData = null;
+    const STAGE_SCRIPT_KEY = "__stage__";
+    let currentScriptTarget = STAGE_SCRIPT_KEY;
+    let spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
+    let isSwitchingScript = false;
 
     // --- 定義自訂偵測 (Sensing) 積木 ---
     Blockly.Blocks['scratch_ask'] = {
@@ -506,6 +536,44 @@
     };
     Blockly.JavaScript['canvas_clear'] = function(block) {
         return `if(window.ctx && window.canvas) { window.ctx.clearRect(0, 0, canvas.width, canvas.height); }\n`;
+    };
+
+    // --- 定義事件 (Events) 積木 ---
+    Blockly.Blocks['event_when_green_flag'] = {
+        init: function() {
+            this.appendDummyInput().appendField("當 綠旗 被點擊");
+            this.appendStatementInput("DO").setCheck(null);
+            this.setColour('#FFD500');
+            this.setTooltip("按下執行時觸發");
+        }
+    };
+    Blockly.JavaScript['event_when_green_flag'] = function(block) {
+        const statements = Blockly.JavaScript.statementToCode(block, 'DO');
+        return `window.__scratchRuntime.onGreenFlag(function(){\n${statements}});\n`;
+    };
+
+    Blockly.Blocks['event_when_key_pressed'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("當按下")
+                .appendField(new Blockly.FieldDropdown([
+                    ["空白鍵", " "],
+                    ["上方向鍵", "ArrowUp"],
+                    ["下方向鍵", "ArrowDown"],
+                    ["左方向鍵", "ArrowLeft"],
+                    ["右方向鍵", "ArrowRight"],
+                    ["A", "a"], ["S", "s"], ["D", "d"], ["W", "w"]
+                ]), "KEY")
+                .appendField("鍵");
+            this.appendStatementInput("DO").setCheck(null);
+            this.setColour('#FFD500');
+            this.setTooltip("對應按鍵按下時觸發");
+        }
+    };
+    Blockly.JavaScript['event_when_key_pressed'] = function(block) {
+        const key = block.getFieldValue('KEY') || ' ';
+        const statements = Blockly.JavaScript.statementToCode(block, 'DO');
+        return `window.__scratchRuntime.onKeyPress(${JSON.stringify(key)}, function(){\n${statements}});\n`;
     };
 
     // --- 定義角色 (Sprite) 積木 ---
@@ -715,9 +783,68 @@
 
     // 即時代碼監控
     workspace.addChangeListener(() => {
+        if (isSwitchingScript) return;
+        saveCurrentScriptFromWorkspace();
         const code = Blockly.JavaScript.workspaceToCode(workspace);
         document.getElementById('code-preview').innerText = code || "// 尚未放置積木";
     });
+
+    function saveCurrentScriptFromWorkspace() {
+        const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        spriteScripts[currentScriptTarget] = xml;
+    }
+
+    function updateEditorBadge() {
+        const targetLabel = currentScriptTarget === STAGE_SCRIPT_KEY ? "舞台" : `角色：${currentScriptTarget}`;
+        document.getElementById('stage-status').innerText = `⚪️ 編輯中 (${targetLabel})`;
+    }
+
+    function refreshScriptSelector() {
+        const sel = document.getElementById('sprite-script-select');
+        const keys = Object.keys(spriteScripts);
+        sel.innerHTML = '';
+        keys.forEach((k) => {
+            const opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k === STAGE_SCRIPT_KEY ? "🎬 舞台腳本" : `🎭 ${k} 腳本`;
+            sel.appendChild(opt);
+        });
+        if (!spriteScripts[currentScriptTarget]) currentScriptTarget = STAGE_SCRIPT_KEY;
+        sel.value = currentScriptTarget;
+        updateEditorBadge();
+    }
+
+    window.switchSpriteScript = (target) => {
+        saveCurrentScriptFromWorkspace();
+        currentScriptTarget = target || STAGE_SCRIPT_KEY;
+        isSwitchingScript = true;
+        workspace.clear();
+        const xmlText = spriteScripts[currentScriptTarget];
+        if (xmlText) {
+            try {
+                Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), workspace);
+            } catch (e) {
+                console.warn("腳本載入失敗，已清空。", e);
+            }
+        }
+        isSwitchingScript = false;
+        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        document.getElementById('code-preview').innerText = code || "// 尚未放置積木";
+        refreshScriptSelector();
+    };
+
+    window.addSpriteScriptTarget = () => {
+        const name = (prompt("請輸入角色名稱（例如：貓咪1）") || "").trim();
+        if (!name) return;
+        if (!spriteScripts[name]) {
+            spriteScripts[name] = "";
+        }
+        refreshScriptSelector();
+        switchSpriteScript(name);
+    };
+
+    refreshScriptSelector();
+    switchSpriteScript(STAGE_SCRIPT_KEY);
 
     // 權限與資料載入
     onAuthStateChanged(auth, async (user) => {
@@ -747,7 +874,16 @@
                     isOwner = false; 
                     document.getElementById('main-action-btn').innerText = "⭐ 改編 (Remix)";
                 }
-                if (d.data) { Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(d.data), workspace); }
+                if (d.spriteScripts && typeof d.spriteScripts === 'object') {
+                    spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...d.spriteScripts };
+                } else if (d.data) {
+                    spriteScripts = { [STAGE_SCRIPT_KEY]: d.data };
+                } else {
+                    spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
+                }
+                currentScriptTarget = STAGE_SCRIPT_KEY;
+                refreshScriptSelector();
+                switchSpriteScript(STAGE_SCRIPT_KEY);
             }
         }
 
@@ -910,9 +1046,107 @@
         }
     });
 
+    function appendConsoleLine(msg, level = 'log') {
+        const consoleOut = document.getElementById('console-out');
+        const color = level === 'error' ? '#f66' : (level === 'warn' ? '#fd0' : '#4af626');
+        consoleOut.innerHTML += `<span style="color:${color}">> ${msg}</span><br>`;
+        consoleOut.scrollTop = consoleOut.scrollHeight;
+    }
+
+    function getToolboxBlockTypes() {
+        const xml = document.getElementById('toolbox');
+        const nodes = Array.from(xml.querySelectorAll('block[type]'));
+        const types = [...new Set(nodes.map(n => n.getAttribute('type')).filter(Boolean))];
+        return types;
+    }
+
+    function validateToolboxBlocks() {
+        const types = getToolboxBlockTypes();
+        const failed = [];
+        const passed = [];
+
+        types.forEach((type) => {
+            const tempWs = new Blockly.Workspace();
+            try {
+                const block = tempWs.newBlock(type);
+                if (!block) throw new Error("無法建立 block instance");
+                block.initSvg?.();
+                block.render?.();
+                const code = Blockly.JavaScript.blockToCode(block);
+                // 僅檢查是否可被 generator 處理，code 可為空陣列或字串
+                if (typeof code === 'undefined') {
+                    throw new Error("缺少 JS 產生器 (blockToCode 回傳 undefined)");
+                }
+                passed.push(type);
+            } catch (e) {
+                failed.push({ type, error: e.message || String(e) });
+            } finally {
+                tempWs.dispose();
+            }
+        });
+
+        return { total: types.length, passed, failed };
+    }
+
+    window.runBlockValidation = () => {
+        switchTab('console');
+        const statusText = document.getElementById('stage-status');
+        statusText.innerText = "🧪 檢查中";
+        statusText.style.color = "var(--scratch-orange)";
+        document.getElementById('console-out').innerHTML = "<span style='color:#0bf'>> 開始檢查 toolbox 積木...</span><br>";
+
+        const report = validateToolboxBlocks();
+        appendConsoleLine(`已檢查 ${report.total} 個積木。`, 'log');
+        appendConsoleLine(`可轉換: ${report.passed.length}，失敗: ${report.failed.length}`, report.failed.length ? 'warn' : 'log');
+        report.failed.forEach((f) => appendConsoleLine(`❌ ${f.type}: ${f.error}`, 'error'));
+
+        if (report.failed.length === 0) {
+            appendConsoleLine("✅ 所有 toolbox 積木都可建立且可轉成 JS。", 'log');
+            statusText.innerText = "✅ 檢查通過";
+            statusText.style.color = "var(--scratch-green)";
+        } else {
+            statusText.innerText = "⚠️ 部分積木失敗";
+            statusText.style.color = "#f66";
+        }
+    };
+
     // 執行程式碼 (沙盒 iframe 執行)
     window.executeCode = () => {
-        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        saveCurrentScriptFromWorkspace();
+        const validation = validateToolboxBlocks();
+        if (validation.failed.length > 0) {
+            switchTab('console');
+            document.getElementById('console-out').innerHTML = "<span style='color:#f66'>> 偵測到不可用積木，先修正後再執行。</span><br>";
+            validation.failed.forEach((f) => appendConsoleLine(`❌ ${f.type}: ${f.error}`, 'error'));
+            const statusTextBlock = document.getElementById('stage-status');
+            statusTextBlock.innerText = "⚠️ 積木檢查失敗";
+            statusTextBlock.style.color = "#f66";
+            return;
+        }
+
+        const scriptEntries = Object.entries(spriteScripts);
+        let code = '';
+        const previewChunks = [];
+        scriptEntries.forEach(([target, xmlText]) => {
+            if (!xmlText) return;
+            try {
+                const tempWs = new Blockly.Workspace();
+                Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), tempWs);
+                const scriptCode = Blockly.JavaScript.workspaceToCode(tempWs);
+                tempWs.dispose();
+                if (!scriptCode.trim()) return;
+                if (target === STAGE_SCRIPT_KEY) {
+                    code += `\n// --- 舞台腳本 ---\n${scriptCode}\n`;
+                    previewChunks.push(`// --- 舞台腳本 ---\n${scriptCode}`);
+                } else {
+                    code += `\n// --- 角色腳本: ${target} ---\nwindow.__scratchRuntime.withSprite(${JSON.stringify(target)}, function(){\n${scriptCode}\n});\n`;
+                    previewChunks.push(`// --- 角色腳本: ${target} ---\n${scriptCode}`);
+                }
+            } catch (e) {
+                console.error(`轉換腳本失敗 (${target}):`, e.message);
+            }
+        });
+        document.getElementById('code-preview').innerText = previewChunks.join('\n\n') || "// 尚未放置積木";
         const iframe = document.getElementById('execution-iframe');
         const consoleOut = document.getElementById('console-out');
         const statusText = document.getElementById('stage-status');
@@ -956,6 +1190,8 @@
                     const STAGE_H = 360;
                     const sprites = new Map();
                     let currentName = "主角";
+                    const greenFlagHandlers = [];
+                    const keyHandlers = new Map();
 
                     function ensureStage() {
                         let stage = document.getElementById('scratch-stage');
@@ -1117,7 +1353,56 @@
                         sp.bubble.style.display = 'block';
                     }
 
-                    return { createSprite, useSprite, move, turnRight, turnLeft, goto, setX, setY, changeX, changeY, show, hide, say, setCostume };
+                    function onGreenFlag(fn) {
+                        if (typeof fn !== 'function') return;
+                        const boundSprite = currentName;
+                        greenFlagHandlers.push(() => withSprite(boundSprite, fn));
+                    }
+
+                    function onKeyPress(key, fn) {
+                        const k = String(key || '').toLowerCase();
+                        if (!k || typeof fn !== 'function') return;
+                        const boundSprite = currentName;
+                        if (!keyHandlers.has(k)) keyHandlers.set(k, []);
+                        keyHandlers.get(k).push(() => withSprite(boundSprite, fn));
+                    }
+
+                    function triggerGreenFlag() {
+                        greenFlagHandlers.forEach((fn) => {
+                            try { fn(); } catch (e) { console.error("綠旗事件錯誤:", e.message); }
+                        });
+                    }
+
+                    function normalizeKey(key) {
+                        if (key === ' ') return ' ';
+                        return String(key || '').toLowerCase();
+                    }
+
+                    window.addEventListener('keydown', (ev) => {
+                        const k = normalizeKey(ev.key);
+                        const list = keyHandlers.get(k) || [];
+                        list.forEach((fn) => {
+                            try { fn(); } catch (e) { console.error("按鍵事件錯誤:", e.message); }
+                        });
+                    });
+
+                    function start() {
+                        ensureStage();
+                        triggerGreenFlag();
+                    }
+
+                    function withSprite(name, fn) {
+                        const prev = currentName;
+                        currentName = String(name || prev || "主角");
+                        try {
+                            getCurrent();
+                            if (typeof fn === 'function') fn();
+                        } finally {
+                            currentName = prev;
+                        }
+                    }
+
+                    return { createSprite, useSprite, move, turnRight, turnLeft, goto, setX, setY, changeX, changeY, show, hide, say, setCostume, onGreenFlag, onKeyPress, start, triggerGreenFlag, withSprite };
                 })();
             <\/script>
         </head>
@@ -1125,6 +1410,9 @@
             <script>
                 try {
                     ${code}
+                    if (window.__scratchRuntime && typeof window.__scratchRuntime.start === 'function') {
+                        window.__scratchRuntime.start();
+                    }
                     console.log("✅ 執行完畢");
                 } catch(e) {
                     console.error("執行錯誤: " + e.message);
@@ -1140,6 +1428,8 @@
     // 雲端儲存
     window.handleSave = async (silent = false) => {
         const user = auth.currentUser;
+        saveCurrentScriptFromWorkspace();
+        const allScripts = { ...spriteScripts };
         const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
         const title = document.getElementById('project-title-input').value;
         const isPublic = document.getElementById('is-public-check').checked;
@@ -1147,13 +1437,13 @@
         try {
             if (isOwner && currentPid) {
                 await updateDoc(doc(db, "users", user.uid, "projects", currentPid), {
-                    name: title, data: xmlText, isPublic: isPublic, updatedAt: serverTimestamp()
+                    name: title, data: allScripts[STAGE_SCRIPT_KEY] || xmlText, spriteScripts: allScripts, isPublic: isPublic, updatedAt: serverTimestamp()
                 });
                 if(!silent) alert("儲存成功！");
             } else {
                 const savePayload = {
                     name: title,
-                    data: xmlText, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
+                    data: allScripts[STAGE_SCRIPT_KEY] || xmlText, spriteScripts: allScripts, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
                     createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 };
                 
