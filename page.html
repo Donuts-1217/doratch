@@ -1569,19 +1569,24 @@
                 .filter(([k]) => !(k.startsWith('__') && k.endsWith('__')))
         );
         const xmlText = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+        // 舊版相容：data 一定存成單一 XML 字串，其他頁面才讀得到
+        const stageXml = allScripts[STAGE_SCRIPT_KEY] || "";
+        const currentXml = allScripts[currentScriptTarget] || "";
+        const firstNonEmptyXml = Object.values(allScripts).find(v => typeof v === 'string' && v.trim()) || "";
+        const legacyDataXml = (stageXml.trim() ? stageXml : (currentXml.trim() ? currentXml : (firstNonEmptyXml || xmlText)));
         const title = document.getElementById('project-title-input').value;
         const isPublic = document.getElementById('is-public-check').checked;
 
         try {
             if (isOwner && currentPid) {
                 await updateDoc(doc(db, "users", user.uid, "projects", currentPid), {
-                    name: title, data: allScripts[STAGE_SCRIPT_KEY] || xmlText, spriteScripts: allScripts, isPublic: isPublic, updatedAt: serverTimestamp()
+                    name: title, data: legacyDataXml, spriteScripts: allScripts, isPublic: isPublic, updatedAt: serverTimestamp()
                 });
                 if(!silent) alert("儲存成功！");
             } else {
                 const savePayload = {
                     name: title,
-                    data: allScripts[STAGE_SCRIPT_KEY] || xmlText, spriteScripts: allScripts, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
+                    data: legacyDataXml, spriteScripts: allScripts, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
                     createdAt: serverTimestamp(), updatedAt: serverTimestamp()
                 };
                 
