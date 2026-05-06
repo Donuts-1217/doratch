@@ -989,6 +989,10 @@
                         migratedScripts[STAGE_SCRIPT_KEY] = migratedScripts.__stage__;
                     }
                     delete migratedScripts.__stage__;
+                    // 若新格式有寫入但缺舞台腳本，回退到舊版 data，避免「讀不到」
+                    if ((!migratedScripts[STAGE_SCRIPT_KEY] || !String(migratedScripts[STAGE_SCRIPT_KEY]).trim()) && typeof d.data === 'string') {
+                        migratedScripts[STAGE_SCRIPT_KEY] = d.data;
+                    }
                     spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...migratedScripts };
                 } else if (d.data) {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: d.data };
