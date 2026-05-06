@@ -910,9 +910,22 @@
         updateEditorBadge();
     }
 
+    function getFirstNonEmptyScriptKey(scriptsObj) {
+        const keys = Object.keys(scriptsObj || {});
+        for (const k of keys) {
+            const v = scriptsObj[k];
+            if (typeof v === 'string' && v.trim()) return k;
+        }
+        return STAGE_SCRIPT_KEY;
+    }
+
     window.switchSpriteScript = (target) => {
         saveCurrentScriptFromWorkspace();
         currentScriptTarget = target || STAGE_SCRIPT_KEY;
+        if (!spriteScripts[currentScriptTarget] || !String(spriteScripts[currentScriptTarget]).trim()) {
+            const fallbackKey = getFirstNonEmptyScriptKey(spriteScripts);
+            currentScriptTarget = fallbackKey || STAGE_SCRIPT_KEY;
+        }
         isSwitchingScript = true;
         workspace.clear();
         const xmlText = spriteScripts[currentScriptTarget];
@@ -993,15 +1006,20 @@
                     if ((!migratedScripts[STAGE_SCRIPT_KEY] || !String(migratedScripts[STAGE_SCRIPT_KEY]).trim()) && typeof d.data === 'string') {
                         migratedScripts[STAGE_SCRIPT_KEY] = d.data;
                     }
+                    // 若仍全空，至少確保有一份可讀資料
+                    const hasAnyScript = Object.values(migratedScripts).some(v => typeof v === 'string' && v.trim());
+                    if (!hasAnyScript && typeof d.data === 'string' && d.data.trim()) {
+                        migratedScripts[STAGE_SCRIPT_KEY] = d.data;
+                    }
                     spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...migratedScripts };
                 } else if (d.data) {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: d.data };
                 } else {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
                 }
-                currentScriptTarget = STAGE_SCRIPT_KEY;
+                currentScriptTarget = getFirstNonEmptyScriptKey(spriteScripts);
                 refreshScriptSelector();
-                switchSpriteScript(STAGE_SCRIPT_KEY);
+                switchSpriteScript(currentScriptTarget);
             }
         }
 
