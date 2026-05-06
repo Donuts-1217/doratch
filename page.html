@@ -919,6 +919,44 @@
         return STAGE_SCRIPT_KEY;
     }
 
+    function normalizeXmlText(raw) {
+        if (typeof raw !== 'string') return '';
+        let text = raw.trim();
+        if (!text) return '';
+
+        // Firestore/JSON 有時會存成「字串中的字串」
+        const looksQuoted = (text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'"));
+        if (looksQuoted) {
+            try {
+                text = JSON.parse(text);
+            } catch (e) {
+                text = text.slice(1, -1);
+            }
+        }
+        if (text.includes('\\"')) text = text.replace(/\\"/g, '"');
+        return text.trim();
+    }
+
+    function loadXmlIntoWorkspace(xmlLikeText, targetWorkspace) {
+        const xmlText = normalizeXmlText(xmlLikeText);
+        if (!xmlText) return false;
+        try {
+            Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), targetWorkspace);
+            return true;
+        } catch (e1) {
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                if (xmlDoc.getElementsByTagName('parsererror').length) throw new Error('XML parsererror');
+                Blockly.Xml.domToWorkspace(xmlDoc.documentElement, targetWorkspace);
+                return true;
+            } catch (e2) {
+                console.warn('XML 載入失敗', e2);
+                return false;
+            }
+        }
+    }
+
     window.switchSpriteScript = (target) => {
         saveCurrentScriptFromWorkspace();
         currentScriptTarget = target || STAGE_SCRIPT_KEY;
@@ -930,10 +968,9 @@
         workspace.clear();
         const xmlText = spriteScripts[currentScriptTarget];
         if (xmlText) {
-            try {
-                Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), workspace);
-            } catch (e) {
-                console.warn("腳本載入失敗，已清空。", e);
+            const ok = loadXmlIntoWorkspace(xmlText, workspace);
+            if (!ok) {
+                console.warn("腳本載入失敗，已清空。");
             }
         }
         isSwitchingScript = false;
@@ -1666,7 +1703,7 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             workspace.clear();
-            Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(e.target.result), workspace);
+            loadXmlIntoWorkspace(e.target.result, workspace);
         };
         reader.readAsText(input.files[0]);
     };
