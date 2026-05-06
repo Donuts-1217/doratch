@@ -1094,13 +1094,22 @@
     // 接收 iframe 回傳的 console 訊息
     window.addEventListener('message', (event) => {
         const consoleOut = document.getElementById('console-out');
+        const stageStatus = document.getElementById('stage-status');
         if (event.data && event.data.type === 'console') {
             const color = event.data.level === 'error' ? '#f66' : (event.data.level === 'warn' ? '#fd0' : '#4af626');
             consoleOut.innerHTML += `<span style="color:${color}">> ${event.data.msg}</span><br>`;
             consoleOut.scrollTop = consoleOut.scrollHeight;
+            if (event.data.level === 'log' && String(event.data.msg || '').includes('✅ 執行完畢')) {
+                stageStatus.innerText = "✅ 舞台已更新";
+                stageStatus.style.color = "var(--scratch-green)";
+            }
         } else if (event.data && event.data.type === 'system') {
             consoleOut.innerHTML += `<span style="color:#0bf">> [系統]: ${event.data.msg}</span><br>`;
             consoleOut.scrollTop = consoleOut.scrollHeight;
+            if (String(event.data.msg || '').includes('舞台已初始化')) {
+                stageStatus.innerText = "🟡 舞台載入中";
+                stageStatus.style.color = "var(--scratch-orange)";
+            }
         }
     });
 
@@ -1447,6 +1456,9 @@
 
                     function start() {
                         ensureStage();
+                        try {
+                            window.parent.postMessage({ type: 'system', msg: '舞台已初始化' }, '*');
+                        } catch (e) {}
                         triggerGreenFlag();
                     }
 
@@ -1481,6 +1493,11 @@
         </html>
         `;
         
+        iframe.onload = () => {
+            statusText.innerText = "🟡 舞台載入中";
+            statusText.style.color = "var(--scratch-orange)";
+            try { iframe.contentWindow?.focus(); } catch (e) {}
+        };
         iframe.srcdoc = htmlTemplate;
     };
 
