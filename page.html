@@ -773,6 +773,32 @@
         return `window.__scratchRuntime.setCostume(${costume});\n`;
     };
 
+    // Blockly 新舊版 generator 相容：確保自訂積木都註冊到 forBlock
+    function registerCustomGeneratorsCompat() {
+        const gen = Blockly.JavaScript;
+        if (!gen) return;
+        if (!gen.forBlock) gen.forBlock = {};
+
+        const customTypes = [
+            'scratch_ask', 'scratch_answer',
+            'canvas_init', 'canvas_set_color', 'canvas_draw_circle', 'canvas_draw_rect', 'canvas_clear',
+            'event_when_green_flag', 'event_when_key_pressed',
+            'sprite_create', 'sprite_use', 'sprite_move', 'sprite_turn_right', 'sprite_turn_left',
+            'sprite_goto_xy', 'sprite_set_x', 'sprite_set_y', 'sprite_change_x', 'sprite_change_y',
+            'sprite_show', 'sprite_hide', 'sprite_say', 'sprite_set_costume'
+        ];
+
+        customTypes.forEach((type) => {
+            const legacyFn = gen[type];
+            if (typeof legacyFn === 'function' && typeof gen.forBlock[type] !== 'function') {
+                gen.forBlock[type] = function(block, generator) {
+                    return legacyFn.call(this, block, generator || gen);
+                };
+            }
+        });
+    }
+    registerCustomGeneratorsCompat();
+
 
     // --- 3. Blockly 究極配置 ---
     workspace = Blockly.inject('blockly-div', {
@@ -784,12 +810,41 @@
         move: { scrollbars: true, drag: true, wheel: true }
     });
 
+    function normalizeGeneratedFragment(fragment) {
+        if (Array.isArray(fragment)) {
+            // 值積木通常回傳 [code, order]
+            const expr = String(fragment[0] ?? '').trim();
+            return expr ? `${expr};\n` : '';
+        }
+        if (typeof fragment === 'string') return fragment;
+        if (fragment == null) return '';
+        return String(fragment);
+    }
+
+    function compileWorkspaceToCode(targetWorkspace) {
+        const topBlocks = targetWorkspace.getTopBlocks(true);
+        const errors = [];
+        let code = '';
+
+        topBlocks.forEach((block) => {
+            try {
+                const fragment = Blockly.JavaScript.blockToCode(block);
+                code += normalizeGeneratedFragment(fragment);
+            } catch (e) {
+                const label = block.type || 'unknown_block';
+                errors.push(`${label}: ${e.message || e}`);
+            }
+        });
+        return { code, errors };
+    }
+
     // 即時代碼監控
     workspace.addChangeListener(() => {
         if (isSwitchingScript) return;
         saveCurrentScriptFromWorkspace();
-        const code = Blockly.JavaScript.workspaceToCode(workspace);
-        document.getElementById('code-preview').innerText = code || "// 尚未放置積木";
+        const compiled = compileWorkspaceToCode(workspace);
+        const suffix = compiled.errors.length ? `\n\n// 轉換警告:\n// ${compiled.errors.join('\n// ')}` : "";
+        document.getElementById('code-preview').innerText = (compiled.code || "// 尚未放置積木") + suffix;
     });
 
     function saveCurrentScriptFromWorkspace() {
@@ -831,7 +886,7 @@
             }
         }
         isSwitchingScript = false;
-        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        const code = compileWorkspaceToCode(workspace).code;
         document.getElementById('code-preview').innerText = code || "// 尚未放置積木";
         refreshScriptSelector();
     };
@@ -930,7 +985,7 @@
     };
 
     window.verifySolution = async () => {
-        const code = Blockly.JavaScript.workspaceToCode(workspace);
+        const code = compileWorkspaceToCode(workspace).code;
         const resultDiv = document.getElementById('verify-result');
         resultDiv.innerHTML = "正在跑測試案例...";
         resultDiv.style.color = "var(--scratch-orange)";
@@ -1056,30 +1111,27 @@
         consoleOut.scrollTop = consoleOut.scrollHeight;
     }
 
-    function getToolboxBlockTypes() {
+    function getToolboxBlocksFromXml() {
         const xml = document.getElementById('toolbox');
         const nodes = Array.from(xml.querySelectorAll('block[type]'));
-        const types = [...new Set(nodes.map(n => n.getAttribute('type')).filter(Boolean))];
-        return types;
+        return nodes;
     }
 
     function validateToolboxBlocks() {
-        const types = getToolboxBlockTypes();
         const failed = [];
         const passed = [];
+        const blockNodes = getToolboxBlocksFromXml();
+        const parser = new DOMParser();
 
-        types.forEach((type) => {
+        blockNodes.forEach((node) => {
+            const type = node.getAttribute('type') || 'unknown_block';
             const tempWs = new Blockly.Workspace();
             try {
-                const block = tempWs.newBlock(type);
-                if (!block) throw new Error("無法建立 block instance");
-                block.initSvg?.();
-                block.render?.();
-                const code = Blockly.JavaScript.blockToCode(block);
-                // 僅檢查是否可被 generator 處理，code 可為空陣列或字串
-                if (typeof code === 'undefined') {
-                    throw new Error("缺少 JS 產生器 (blockToCode 回傳 undefined)");
-                }
+                const xmlText = `<xml xmlns="https://developers.google.com/blockly/xml">${node.outerHTML}</xml>`;
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                Blockly.Xml.domToWorkspace(xmlDoc.documentElement, tempWs);
+                const compiled = compileWorkspaceToCode(tempWs);
+                if (compiled.errors.length) throw new Error(compiled.errors.join(" | "));
                 passed.push(type);
             } catch (e) {
                 failed.push({ type, error: e.message || String(e) });
@@ -1088,7 +1140,7 @@
             }
         });
 
-        return { total: types.length, passed, failed };
+        return { total: blockNodes.length, passed, failed };
     }
 
     window.runBlockValidation = () => {
@@ -1135,8 +1187,12 @@
             try {
                 const tempWs = new Blockly.Workspace();
                 Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), tempWs);
-                const scriptCode = Blockly.JavaScript.workspaceToCode(tempWs);
+                const compiled = compileWorkspaceToCode(tempWs);
                 tempWs.dispose();
+                const scriptCode = compiled.code;
+                if (compiled.errors.length) {
+                    throw new Error(compiled.errors.join(" | "));
+                }
                 if (!scriptCode.trim()) return;
                 if (target === STAGE_SCRIPT_KEY) {
                     code += `\n// --- 舞台腳本 ---\n${scriptCode}\n`;
