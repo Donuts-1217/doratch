@@ -35,7 +35,7 @@
         }
         #project-title-input:focus { background: rgba(255,255,255,0.3); }
 
-        .nav-actions { display: flex; align-items: center; gap: 8px; }
+        .nav-actions { display: flex; align-items: center; gap: 8px; overflow-x: auto; }
         .btn {
             border: none; padding: 7px 14px; border-radius: 4px;
             font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s;
@@ -62,21 +62,24 @@
         #blockly-area { flex: 0.6; position: relative; border-right: 2px solid #333; }
         #blockly-div { position: absolute; top:0; left:0; right:0; bottom:0; }
         #sprite-script-bar {
-            position: absolute; top: 10px; left: 10px; z-index: 20;
+            position: relative;
             display: flex; align-items: center; gap: 8px;
             background: rgba(11, 14, 20, 0.9); color: #dbe7ff;
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 10px; padding: 8px 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            min-width: 280px;
         }
         #sprite-script-select {
             background: rgba(255,255,255,0.08); color: white; border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px; padding: 5px 8px; font-size: 12px; min-width: 160px;
+            border-radius: 6px; padding: 5px 8px; font-size: 12px; min-width: 130px;
         }
         #sprite-script-bar .mini-btn {
             border: none; border-radius: 6px; padding: 5px 8px; cursor: pointer; font-size: 12px; font-weight: bold;
             background: var(--scratch-blue); color: white;
         }
+        #sprite-script-bar .mini-btn:hover { filter: brightness(1.1); }
+        #sprite-script-bar { flex-shrink: 0; }
         
         /* 側邊代碼/控制台面板 */
         #side-panel { flex: 0.4; min-width: 350px; background: #1e1e1e; display: flex; flex-direction: column; }
@@ -124,10 +127,15 @@
     <div class="project-title-container">
         <input type="text" id="project-title-input" value="未命名專案">
         <span id="remix-badge" style="display:none; font-size:11px; background:rgba(255,255,255,0.1); padding:4px 10px; border-radius:20px; color:#94A3B8;"></span>
-        <span id="stage-status" style="font-size:12px; font-weight:bold; color:#64748B;">⚪️ 編輯中</span>
+        <span id="editor-status" style="font-size:12px; font-weight:bold; color:#64748B;">⚪️ 編輯中</span>
     </div>
 
     <div class="nav-actions">
+        <div id="sprite-script-bar">
+            <span style="font-size:12px; color:#94A3B8;">腳本目標：</span>
+            <select id="sprite-script-select" onchange="switchSpriteScript(this.value)"></select>
+            <button class="mini-btn" onclick="addSpriteScriptTarget()">+ 新角色腳本</button>
+        </div>
         <div style="display:flex; align-items:center; gap:8px; margin-right:15px; color:#94A3B8; font-size:13px;">
             <input type="checkbox" id="is-public-check" style="width:auto; margin:0;"><label for="is-public-check">公開發布</label>
         </div>
@@ -162,11 +170,6 @@
 
 <div id="main-container">
     <div id="blockly-area">
-        <div id="sprite-script-bar">
-            <span style="font-size:12px; color:#94A3B8;">腳本目標：</span>
-            <select id="sprite-script-select" onchange="switchSpriteScript(this.value)"></select>
-            <button class="mini-btn" onclick="addSpriteScriptTarget()">+ 新角色腳本</button>
-        </div>
         <div id="blockly-div"></div>
     </div>
     
@@ -796,7 +799,7 @@
 
     function updateEditorBadge() {
         const targetLabel = currentScriptTarget === STAGE_SCRIPT_KEY ? "舞台" : `角色：${currentScriptTarget}`;
-        document.getElementById('stage-status').innerText = `⚪️ 編輯中 (${targetLabel})`;
+        document.getElementById('editor-status').innerText = `⚪️ 編輯中 (${targetLabel})`;
     }
 
     function refreshScriptSelector() {
