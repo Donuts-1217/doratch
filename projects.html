@@ -2,125 +2,196 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的作品集 - Creative Blocks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --scratch-blue: #4C97FF; 
-            --scratch-orange: #FFAB19;
-            --scratch-green: #4CB050;
-            --bg-light: #F0F2F5;
-            --danger: #FF4D4D;
+            --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
+            --bg: #0F172A; --card-bg: #1E293B; --text: #F8FAFC;
+            --scratch-blue: #4C97FF; --scratch-green: #4CB050; --danger: #FF4D4D;
         }
-        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); margin: 0; padding: 0; }
-        
-        /* 導覽列 */
-        nav { background: var(--scratch-blue); color: white; padding: 0 5%; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; }
-        .nav-btn { background: white; color: var(--scratch-blue); border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; text-decoration: none; }
+        body { font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
 
-        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        /* 全域導覽列樣式 */
+        .app-container { display: flex; min-height: 100vh; }
+        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
+        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--primary); cursor: pointer; }
+        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
+        .nav-item.active { color: var(--primary); border-left: 4px solid var(--primary); }
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
+        .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        h1 { color: #333; margin: 0; }
+        h1 { color: white; margin: 0; font-size: 2rem; font-weight: 900; }
 
         /* 作品網格 */
-        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
         
         .project-card { 
-            background: white; border-radius: 15px; overflow: hidden; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.3s; 
+            background: var(--card-bg); border-radius: 20px; overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.05); transition: 0.4s;
             display: flex; flex-direction: column; position: relative;
+            cursor: pointer;
         }
-        .project-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .project-card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
 
-        .thumbnail { height: 140px; background: #E1F5FE; display: flex; align-items: center; justify-content: center; font-size: 50px; color: var(--scratch-blue); }
+        .thumbnail { height: 160px; background: linear-gradient(135deg, #0F172A, #1E293B); display: flex; align-items: center; justify-content: center; font-size: 60px; }
         
         .card-body { padding: 20px; flex: 1; }
-        .card-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #333; }
-        .card-meta { font-size: 12px; color: #999; margin-bottom: 15px; }
+        .card-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 8px; color: white; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-meta { font-size: 12px; color: #64748B; }
 
         /* 標籤 */
         .status-tag { 
-            position: absolute; top: 10px; left: 10px; padding: 4px 10px; 
-            border-radius: 12px; font-size: 11px; font-weight: bold; color: white;
+            position: absolute; top: 12px; left: 12px; padding: 4px 10px; 
+            border-radius: 20px; font-size: 11px; font-weight: 900; color: white;
         }
         .tag-public { background: var(--scratch-green); }
-        .tag-private { background: #999; }
+        .tag-private { background: #475569; }
 
         /* 按鈕組 */
-        .actions { display: flex; gap: 10px; padding: 15px 20px; border-top: 1px solid #F0F0F0; background: #FAFAFA; }
-        .btn-act { flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; text-align: center; text-decoration: none; }
-        .btn-edit { background: var(--scratch-blue); color: white; }
-        .btn-delete { background: white; color: var(--danger); border: 1px solid var(--danger); }
-        .btn-delete:hover { background: var(--danger); color: white; }
+        .actions { display: flex; gap: 10px; padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .btn-act { flex: 1; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; text-align: center; text-decoration: none; }
+        .btn-edit { background: var(--primary); color: white; }
+        .btn-edit:hover { background: #357ABD; }
+        .btn-delete { background: transparent; color: #EF4444; border: 1px solid #EF4444; }
+        .btn-delete:hover { background: #EF4444; color: white; }
 
-        .empty-msg { text-align: center; padding: 100px 0; color: #999; grid-column: 1/-1; }
+        .empty-msg { text-align: center; padding: 100px 0; color: #64748B; grid-column: 1/-1; }
+        .empty-msg a { color: var(--primary); }
+
+        .new-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 900; cursor: pointer; font-size: 14px; text-decoration: none; transition: 0.2s; }
+        .new-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(76,151,255,0.3); }
+    
+        /* 響應式縮放與排版 */
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar-main { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .sidebar-logo { width: 100%; text-align: center; padding: 15px; }
+            .sidebar-main > div[style*="uppercase"] { display: none; }
+            .nav-item { padding: 10px 15px; font-size: 13px; justify-content: center; flex: 1 1 auto; white-space: nowrap; border-left: none !important; border-bottom: 2px solid transparent; }
+            .nav-item.active { border-bottom: 2px solid var(--primary); }
+            .sidebar-footer { width: 100%; display: flex; justify-content: center; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .main-content { margin-left: 0; padding: 20px; width: 100%; box-sizing: border-box; }
+            
+            /* 針對固定寬度元素的縮放處理 */
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.8; 
+                -moz-transform: scale(0.8); 
+                -moz-transform-origin: top center; 
+            }
+            .project-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .nav-item { font-size: 12px; padding: 8px 10px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.55; 
+                -moz-transform: scale(0.55); 
+                -moz-transform-origin: top center; 
+            }
+        }
+        @media (max-width: 480px) {
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.45; 
+                -moz-transform: scale(0.45); 
+                -moz-transform-origin: top center; 
+            }
+            h1 { font-size: 1.5rem; }
+        }
+
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo" onclick="location.href='main.html'">🧩 Creative Blocks</div>
-    <div style="display:flex; gap:10px;">
-        <a href="chat.html" class="nav-btn" style="color:var(--scratch-orange);">💬 聊天室</a>
-        <a href="page.html" class="nav-btn">+ 創作新作品</a>
-    </div>
-</nav>
+<div class="app-container">
+    <aside class="sidebar-main">
+        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
+        <a href="index.html" class="nav-item">🏠 平台首頁</a>
+        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
+        
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
+        <a href="page.html" class="nav-item">🚀 創作空間</a>
+        <a href="main.html?view=mine" class="nav-item active">📂 我的作品</a>
+        <a href="main.html" class="nav-item">🌍 探索中心</a>
 
-<div class="container">
-    <div class="header">
-        <h1>我的作品集</h1>
-        <div id="user-display" style="color: #666;">載入中...</div>
-    </div>
+        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
+        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
+        <a href="game.html" class="nav-item">🎮 指令塔防</a>
+        <a href="shop.html" class="nav-item">🛒 創意商城</a>
+        <a href="chat.html" class="nav-item">💬 交流大廳</a>
+        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
+        
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
+                <div style="flex:1; overflow:hidden;">
+                    <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+                <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
+            </div>
+        </div>
+    </aside>
 
-    <div id="project-list" class="project-grid">
-        <div class="empty-msg">正在尋找你的驚人創作...</div>
-    </div>
+    <main class="main-content">
+        <div class="header">
+            <h1>📂 我的作品集</h1>
+            <a href="page.html" class="new-btn">+ 創作新作品</a>
+        </div>
+        <div id="project-list" class="project-grid">
+            <div class="empty-msg">正在尋找你的驚人創作...</div>
+        </div>
+    </main>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, query, orderBy, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, query, orderBy, getDocs, doc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
-        authDomain: "chat-52c0d.firebaseapp.com",
-        projectId: "chat-52c0d",
-        storageBucket: "chat-52c0d.firebasestorage.app",
-        messagingSenderId: "449329325475",
-        appId: "1:449329325475:web:75f255c4055360dc9e6616"
-    };
-
+    const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    window.handleLogout = () => signOut(auth).then(() => location.href = 'index.html');
+
+    async function fetchSidebarData(user) {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById('side-coins').innerText = data.coins || 0;
+            document.getElementById('side-username').innerText = user.email.split('@')[0];
+            document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            let role = data.role || 'student';
+            if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
+            if (role === 'admin' || role === 'teacher') {
+                const adminLink = document.getElementById('admin-link-main');
+                if (adminLink) { adminLink.style.display = 'flex'; adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理'; }
+            }
+        }
+    }
+
     async function loadUserProjects(user) {
         const listDiv = document.getElementById('project-list');
-        document.getElementById('user-display').innerText = `👤 ${user.email}`;
-
         try {
-            // 從使用者的子集合中抓取作品，按更新時間排序
             const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc"));
             const snapshot = await getDocs(q);
-            
             listDiv.innerHTML = "";
-
             if (snapshot.empty) {
-                listDiv.innerHTML = `
-                    <div class="empty-msg">
-                        <p>你目前還沒有任何作品喔！</p>
-                        <a href="page.html" style="color:var(--scratch-blue);">立刻去動手做一個吧！</a>
-                    </div>`;
+                listDiv.innerHTML = `<div class="empty-msg"><p>你目前還沒有任何作品喔！</p><a href="page.html">立刻去動手做一個吧！</a></div>`;
                 return;
             }
-
             snapshot.forEach((projectDoc) => {
                 const project = projectDoc.data();
                 const pid = projectDoc.id;
                 const date = project.updatedAt?.toDate().toLocaleDateString() || "未知時間";
-                const remixBadge = project.originalPid ? `<span style="background:#855CD6; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; flex-shrink:0;">♻️ Remix</span>` : "";
-
+                const remixBadge = project.originalPid ? `<span style="background:var(--accent); color:white; font-size:10px; padding:2px 6px; border-radius:10px;">♻️ Remix</span>` : "";
                 const card = document.createElement('div');
                 card.className = 'project-card';
                 card.innerHTML = `
@@ -129,8 +200,8 @@
                     </span>
                     <div class="thumbnail">🧩</div>
                     <div class="card-body">
-                        <div class="card-title" style="display:flex; align-items:center;">
-                            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${project.name || "未命名作品"}</span>
+                        <div class="card-title">
+                            <span style="overflow:hidden; text-overflow:ellipsis;">${project.name || "未命名作品"}</span>
                             ${remixBadge}
                         </div>
                         <div class="card-meta">最後更新：${date}</div>
@@ -144,26 +215,22 @@
             });
         } catch (e) {
             console.error(e);
-            listDiv.innerHTML = `<div class="empty-msg" style="color:red;">讀取失敗：${e.message}</div>`;
+            listDiv.innerHTML = `<div class="empty-msg" style="color:#EF4444;">讀取失敗：${e.message}</div>`;
         }
     }
 
-    // 刪除處理
     window.handleDelete = async (pid) => {
         if (!confirm("確定要刪除這個作品嗎？此動作無法復原！")) return;
-        
         try {
-            const user = auth.currentUser;
-            await deleteDoc(doc(db, "users", user.uid, "projects", pid));
+            await deleteDoc(doc(db, "users", auth.currentUser.uid, "projects", pid));
             alert("作品已刪除");
             location.reload();
-        } catch (e) {
-            alert("刪除失敗：" + e.message);
-        }
+        } catch (e) { alert("刪除失敗：" + e.message); }
     };
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            fetchSidebarData(user);
             loadUserProjects(user);
         } else {
             location.href = "login.html";

@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>班級詳情 - Creative Blocks Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -124,6 +125,45 @@
         .comment-item.me .comment-bubble { background: var(--scratch-blue); color: white; border-bottom-right-radius: 4px; }
         .comment-item.other .comment-bubble { background: #f1f3f4; color: #333; border-bottom-left-radius: 4px; }
         .comment-name { font-size: 11px; color: #999; margin-bottom: 4px; font-weight: bold; }
+    
+        /* 響應式縮放與排版 */
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar-main { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .sidebar-logo { width: 100%; text-align: center; padding: 15px; }
+            .sidebar-main > div[style*="uppercase"] { display: none; }
+            .nav-item { padding: 10px 15px; font-size: 13px; justify-content: center; flex: 1 1 auto; white-space: nowrap; border-left: none !important; border-bottom: 2px solid transparent; }
+            .nav-item.active { border-bottom: 2px solid var(--primary); }
+            .sidebar-footer { width: 100%; display: flex; justify-content: center; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .main-content { margin-left: 0; padding: 20px; width: 100%; box-sizing: border-box; }
+            
+            /* 針對固定寬度元素的縮放處理 */
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.8; 
+                -moz-transform: scale(0.8); 
+                -moz-transform-origin: top center; 
+            }
+            .project-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .nav-item { font-size: 12px; padding: 8px 10px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.55; 
+                -moz-transform: scale(0.55); 
+                -moz-transform-origin: top center; 
+            }
+        }
+        @media (max-width: 480px) {
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.45; 
+                -moz-transform: scale(0.45); 
+                -moz-transform-origin: top center; 
+            }
+            h1 { font-size: 1.5rem; }
+        }
+
     </style>
 </head>
 <body>
@@ -173,10 +213,10 @@
         </div>
 
         <div class="tabs-container">
-            <div class="tab active" onclick="switchTab('stream')">🏠 首頁動態</div>
-            <div class="tab" onclick="switchTab('classwork')">📋 課堂任務</div>
-            <div class="tab" onclick="switchTab('projects')">🌟 榮譽牆</div>
-            <div class="tab" onclick="switchTab('people')">👥 同學們</div>
+            <div class="tab active" onclick="switchTab('stream', this)">🏠 首頁動態</div>
+            <div class="tab" onclick="switchTab('classwork', this)">📋 課堂任務</div>
+            <div class="tab" onclick="switchTab('projects', this)">🌟 榮譽牆</div>
+            <div class="tab" onclick="switchTab('people', this)">👥 同學們</div>
         </div>
 
         <div id="section-stream" class="content-section active">
@@ -259,7 +299,7 @@
                     <h4>您的挑戰狀態 <span class="work-status" id="work-status">已指派</span></h4>
                     <div id="att-list"></div>
                     <div id="student-work-actions">
-                        <button class="btn-full btn-solid" style="background:var(--scratch-purple);" onclick="location.href=`page.html?aid=${currentAssignId}&cid=${classId}`">🚀 開始挑戰任務</button>
+                        <button class="btn-full btn-solid" style="background:var(--scratch-purple);" onclick="startMission()">🚀 開始挑戰任務</button>
                         <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 手動添加附件</button>
                         <button class="btn-full btn-solid" id="btn-handin" onclick="handleSubmit()">正式繳交任務</button>
                     </div>
@@ -287,6 +327,44 @@
             <h2 style="margin:0; color:var(--scratch-blue);">📝 設定新挑戰任務</h2>
             <button class="btn-solid" style="width:auto; padding:5px 12px; font-size:12px; background:var(--scratch-orange);" onclick="openModal('modal-question-bank')">📚 從題庫載入</button>
         </div>
+        <div class="form-group">
+            <label>任務類型</label>
+            <select id="m-type" onchange="toggleMapSettings()">
+                <option value="regular">一般任務 / APCS 邏輯題</option>
+                <option value="map">地圖邏輯挑戰 (類似 NTNU Demo)</option>
+            </select>
+        </div>
+
+        <div id="map-settings" style="display:none; background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #eef2f7;">
+            <h4 style="margin-top:0; color:var(--scratch-blue);">🗺️ 地圖設定</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>地圖寬度 (格)</label>
+                    <input type="number" id="map-width" value="5" min="3" max="10">
+                </div>
+                <div class="form-group">
+                    <label>地圖高度 (格)</label>
+                    <input type="number" id="map-height" value="5" min="3" max="10">
+                </div>
+                <div class="form-group">
+                    <label>起點 (X,Y)</label>
+                    <input type="text" id="map-start" value="0,0" placeholder="0,0">
+                </div>
+                <div class="form-group">
+                    <label>終點 (X,Y)</label>
+                    <input type="text" id="map-end" value="4,4" placeholder="4,4">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>💰 金幣位置 (例如 1,1; 2,2; 3,3)</label>
+                <input type="text" id="map-coins" placeholder="1,1; 2,3; 4,1">
+            </div>
+            <div class="form-group">
+                <label>🚶 最大移動次數</label>
+                <input type="number" id="map-max-moves" value="15">
+            </div>
+        </div>
+
         <div class="form-group">
             <label>任務標題</label>
             <input type="text" id="m-title" placeholder="例如：迴圈畫圓挑戰">
@@ -365,7 +443,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
@@ -405,23 +483,43 @@
 
     window.openModal = (id) => {
         document.getElementById(id).style.display = 'flex';
-        if(id === 'modal-create-assign') renderAssignList();
+        if(id === 'modal-create-assign') {
+            renderAssignList();
+            document.getElementById('m-type').value = 'regular';
+            toggleMapSettings();
+        }
         if(id === 'modal-question-bank') renderBank();
     };
 
-    window.switchTab = (name) => {
+    window.toggleMapSettings = () => {
+        const isMap = document.getElementById('m-type').value === 'map';
+        document.getElementById('map-settings').style.display = isMap ? 'block' : 'none';
+        if (isMap) {
+            document.getElementById('m-title').placeholder = "例如：觀光商圈金幣挑戰";
+            document.getElementById('m-goals').value = "1. 移動至服務台 (終點)\n2. 收集盡可能多的金幣\n3. 在步數限制內完成";
+        } else {
+            document.getElementById('m-title').placeholder = "例如：迴圈畫圓挑戰";
+        }
+    };
+
+    window.switchTab = (name, el) => {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
         
-        // 找到觸發事件的元素並設為 active
-        if (event) {
-            event.currentTarget.classList.add('active');
+        // 設定點擊的 tab 為 active
+        if (el) {
+            el.classList.add('active');
         }
         
         document.getElementById(`section-${name}`).classList.add('active');
         if(name === 'classwork') loadList();
         if(name === 'projects') loadGallery();
         if(name === 'people') loadPeople();
+    };
+
+    window.startMission = () => {
+        if (!currentAssignId || !classId) return alert("任務資料載入中，請稍後再試。");
+        location.href = `page.html?aid=${currentAssignId}&cid=${classId}`;
     };
 
     function renderBank() {
@@ -469,6 +567,7 @@
 
     window.createAssignment = async () => {
         const title = document.getElementById('m-title').value.trim();
+        const type = document.getElementById('m-type').value;
         const lv = document.getElementById('m-lv').value;
         const goals = document.getElementById('m-goals').value.split('\n').filter(l=>l.trim());
         const hints = document.getElementById('m-hints').value.trim();
@@ -481,8 +580,21 @@
         }
 
         if(!title) return;
+
+        let mapConfig = null;
+        if (type === 'map') {
+            mapConfig = {
+                width: parseInt(document.getElementById('map-width').value),
+                height: parseInt(document.getElementById('map-height').value),
+                start: document.getElementById('map-start').value,
+                end: document.getElementById('map-end').value,
+                coins: document.getElementById('map-coins').value,
+                maxMoves: parseInt(document.getElementById('map-max-moves').value)
+            };
+        }
+
         await addDoc(collection(db, "classes", classId, "assignments"), {
-            title, lv, goals, hints, assignedTo, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
+            title, type, lv, goals, hints, assignedTo, mapConfig, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
         });
         closeModal('modal-create-assign');
         loadList();
@@ -735,7 +847,7 @@
                 const card = document.createElement('div');
                 card.className = 'project-card';
                 card.onclick = () => location.href = `page.html?load=${data.atts[0].id}&from=${data.studentId}`;
-                card.innerHTML = `<div class="project-thumb">🧩</div><div class="project-info"><div class="project-name">${data.publishedName}</div><div class="project-author">by ${data.studentId.substring(0,5)}</div></div>`;
+                card.innerHTML = `<div class="project-thumb">🧩</div><div class="project-info"><div class="project-name">${data.publishedName}</div><div class="project-author">by ${data.publishedAuthor || data.studentId.substring(0,5)}</div></div>`;
                 grid.appendChild(card);
             });
         }

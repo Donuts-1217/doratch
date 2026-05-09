@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>開發者中心 - Creative Blocks Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -42,6 +43,45 @@
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; color: #94A3B8; }
         input, select { width: 100%; padding: 12px; border-radius: 12px; background: #0B0E14; border: 1px solid rgba(255,255,255,0.1); color: white; box-sizing: border-box; }
+    
+        /* 響應式縮放與排版 */
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar-main { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .sidebar-logo { width: 100%; text-align: center; padding: 15px; }
+            .sidebar-main > div[style*="uppercase"] { display: none; }
+            .nav-item { padding: 10px 15px; font-size: 13px; justify-content: center; flex: 1 1 auto; white-space: nowrap; border-left: none !important; border-bottom: 2px solid transparent; }
+            .nav-item.active { border-bottom: 2px solid var(--primary); }
+            .sidebar-footer { width: 100%; display: flex; justify-content: center; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .main-content { margin-left: 0; padding: 20px; width: 100%; box-sizing: border-box; }
+            
+            /* 針對固定寬度元素的縮放處理 */
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.8; 
+                -moz-transform: scale(0.8); 
+                -moz-transform-origin: top center; 
+            }
+            .project-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .nav-item { font-size: 12px; padding: 8px 10px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.55; 
+                -moz-transform: scale(0.55); 
+                -moz-transform-origin: top center; 
+            }
+        }
+        @media (max-width: 480px) {
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.45; 
+                -moz-transform: scale(0.45); 
+                -moz-transform-origin: top center; 
+            }
+            h1 { font-size: 1.5rem; }
+        }
+
     </style>
 </head>
 <body>

@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creative Blocks Pro - 終極工作台</title>
     
     <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
@@ -60,7 +61,7 @@
 
         /* --- 主內容區佈局 --- */
         #main-container { display: flex; flex: 1; overflow: hidden; }
-        #blockly-area { flex: 0.6; position: relative; border-right: 2px solid #333; }
+        #blockly-area { flex: 1; position: relative; border-right: 2px solid #333; }
         #blockly-div { position: absolute; top:0; left:0; right:0; bottom:0; }
         #sprite-script-bar {
             position: relative;
@@ -84,7 +85,17 @@
         #sprite-script-bar { flex-shrink: 1; min-width: 0; }
         
         /* 側邊代碼/控制台面板 */
-        #side-panel { flex: 0.4; min-width: 350px; background: #1e1e1e; display: flex; flex-direction: column; }
+        #side-panel { width: 420px; background: #1e1e1e; display: flex; flex-direction: column; flex-shrink: 0; }
+        
+        @media (max-width: 1200px) {
+            #side-panel { width: 380px; }
+        }
+        @media (max-width: 900px) {
+            #main-container { flex-direction: column; }
+            #blockly-area { flex: 1; min-height: 400px; border-right: none; border-bottom: 2px solid #333; }
+            #side-panel { width: 100%; flex: 1; min-height: 300px; }
+        }
+        
         .panel-header { background: #2d2d2d; color: #aaa; padding: 8px 12px; font-size: 12px; font-weight: bold; border-bottom: 1px solid #111; }
         
         /* 頁籤按鈕樣式 */
@@ -119,6 +130,45 @@
         .mission-goal-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; background: #f8f9fa; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
         .mission-goal-item input { transform: scale(1.2); }
         .mission-hint-box { background: #fff8e1; border: 1px solid #ffe082; padding: 15px; border-radius: 12px; margin-top: 15px; font-size: 13px; color: #795548; line-height: 1.6; }
+    
+        /* 響應式縮放與排版 */
+        @media (max-width: 1024px) {
+            .app-container { flex-direction: column; }
+            .sidebar-main { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .sidebar-logo { width: 100%; text-align: center; padding: 15px; }
+            .sidebar-main > div[style*="uppercase"] { display: none; }
+            .nav-item { padding: 10px 15px; font-size: 13px; justify-content: center; flex: 1 1 auto; white-space: nowrap; border-left: none !important; border-bottom: 2px solid transparent; }
+            .nav-item.active { border-bottom: 2px solid var(--primary); }
+            .sidebar-footer { width: 100%; display: flex; justify-content: center; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
+            .main-content { margin-left: 0; padding: 20px; width: 100%; box-sizing: border-box; }
+            
+            /* 針對固定寬度元素的縮放處理 */
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.8; 
+                -moz-transform: scale(0.8); 
+                -moz-transform-origin: top center; 
+            }
+            .project-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .nav-item { font-size: 12px; padding: 8px 10px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.55; 
+                -moz-transform: scale(0.55); 
+                -moz-transform-origin: top center; 
+            }
+        }
+        @media (max-width: 480px) {
+            .boss-raid-container, .game-frame, [style*="width:700px"] { 
+                zoom: 0.45; 
+                -moz-transform: scale(0.45); 
+                -moz-transform-origin: top center; 
+            }
+            h1 { font-size: 1.5rem; }
+        }
+
     </style>
 </head>
 <body>
@@ -420,7 +470,10 @@
     let aid = urlParams.get('aid'); // 任務 ID
     let cid = urlParams.get('cid'); // 班級 ID
     let currentMissionLv = "LV1"; // 存儲難度
+    let currentMissionType = "regular"; 
+    let currentMapConfig = null;
     let isOwner = true;
+    let isTeacher = false;
     let originalProjectData = null;
     const STAGE_SCRIPT_KEY = "stage";
     let currentScriptTarget = STAGE_SCRIPT_KEY;
@@ -780,6 +833,58 @@
         return `window.__scratchRuntime.setCostume(${costume});\n`;
     };
 
+    // --- 定義地圖挑戰 (Map Challenge) 專用積木 ---
+    Blockly.Blocks['map_move_right'] = {
+        init: function() {
+            this.appendDummyInput().appendField("🏃 往 右 移動");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#FFAB19');
+            this.setTooltip("在地圖上往右移動一格");
+        }
+    };
+    Blockly.JavaScript['map_move_right'] = function(block) {
+        return `await window.__mapRuntime.move('right');\n`;
+    };
+
+    Blockly.Blocks['map_move_up'] = {
+        init: function() {
+            this.appendDummyInput().appendField("🏃 往 上 移動");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour('#FFAB19');
+            this.setTooltip("在地圖上往上移動一格");
+        }
+    };
+    Blockly.JavaScript['map_move_up'] = function(block) {
+        return `await window.__mapRuntime.move('up');\n`;
+    };
+
+    Blockly.Blocks['map_get_coins'] = {
+        init: function() {
+            this.appendDummyInput().appendField("💰 我的金幣數");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+        }
+    };
+    Blockly.JavaScript['map_get_coins'] = function(block) {
+        return [`window.__mapRuntime.getCoins()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    // --- 地圖挑戰啟動事件 ---
+    Blockly.Blocks['event_map_start'] = {
+        init: function() {
+            this.appendDummyInput().appendField("🚀 當 挑戰開始");
+            this.appendStatementInput("DO").setCheck(null);
+            this.setColour('#FFAB19');
+            this.setTooltip("地圖挑戰開始時執行的動作");
+        }
+    };
+    Blockly.JavaScript['event_map_start'] = function(block) {
+        const statements = Blockly.JavaScript.statementToCode(block, 'DO');
+        return `window.__mapRuntime.onStart(async function(){\n${statements}});\n`;
+    };
+
     // --- 數學補充積木：取餘數 (%) ---
     Blockly.Blocks['math_mod'] = {
         init: function() {
@@ -811,7 +916,8 @@
             'event_when_green_flag', 'event_when_key_pressed',
             'sprite_create', 'sprite_use', 'sprite_move', 'sprite_turn_right', 'sprite_turn_left',
             'sprite_goto_xy', 'sprite_set_x', 'sprite_set_y', 'sprite_change_x', 'sprite_change_y',
-            'sprite_show', 'sprite_hide', 'sprite_say', 'sprite_set_costume'
+            'sprite_show', 'sprite_hide', 'sprite_say', 'sprite_set_costume',
+            'map_move_right', 'map_move_up', 'map_get_coins', 'event_map_start'
         ];
 
         customTypes.forEach((type) => {
@@ -1068,15 +1174,24 @@
 
     async function loadMissionInfo() {
         try {
+            const classSnap = await getDoc(doc(db, "classes", cid));
+            if (classSnap.exists()) {
+                isTeacher = auth.currentUser.uid === classSnap.data().teacherId;
+            }
+
             const snap = await getDoc(doc(db, "classes", cid, "assignments", aid));
             if (snap.exists()) {
                 const data = snap.data();
                 currentMissionLv = data.lv || "LV1";
+                currentMissionType = data.type || "regular";
+                currentMapConfig = data.mapConfig || null;
+
                 document.getElementById('mission-trigger').classList.add('has-mission');
                 document.getElementById('mission-title').innerText = data.title;
                 document.getElementById('mission-lv').innerText = currentMissionLv;
                 document.getElementById('mission-hints').innerText = data.hints || '無提示。';
-                if(data.title.includes("【APCS】") && !isTeacher) {
+                
+                if((data.title.includes("【APCS】") || currentMissionType === 'map') && !isTeacher) {
                     document.getElementById('mission-verify-area').style.display = 'block';
                 }
                 
@@ -1090,8 +1205,50 @@
                 if (!currentPid) {
                     document.getElementById('project-title-input').value = `[任務] ${data.title}`;
                 }
+
+                if (currentMissionType === 'map') {
+                    setupMapChallenge();
+                }
             }
         } catch (e) { console.error("任務載入失敗", e); }
+    }
+
+    function setupMapChallenge() {
+        // 修改 Toolbox 為地圖挑戰專用
+        const mapToolbox = `
+            <xml>
+                <category name="地圖控制" colour="#FFAB19">
+                    <block type="event_map_start"></block>
+                    <block type="map_move_right"></block>
+                    <block type="map_move_up"></block>
+                    <block type="map_get_coins"></block>
+                </category>
+                <category name="迴圈" colour="#5CA65C">
+                    <block type="controls_repeat_ext">
+                        <value name="TIMES"><block type="math_number"><field name="NUM">5</field></block></value>
+                    </block>
+                    <block type="controls_whileUntil"></block>
+                </category>
+                <category name="邏輯" colour="#5C81A6">
+                    <block type="controls_if"></block>
+                    <block type="logic_compare"></block>
+                    <block type="logic_operation"></block>
+                </category>
+                <category name="數學" colour="#5CA68C">
+                    <block type="math_number"></block>
+                    <block type="math_arithmetic"></block>
+                </category>
+                <category name="變數" colour="#A65C81" custom="VARIABLE"></category>
+            </xml>
+        `;
+        workspace.updateToolbox(mapToolbox);
+        
+        // 切換到控制台頁籤以便查看執行結果
+        switchTab('console');
+        appendConsoleLine("🗺️ 地圖挑戰模式已啟動。使用專用積木來解題！", "system");
+        
+        // 立即顯示地圖網格
+        updateIframeSandbox("");
     }
 
     window.toggleMissionPanel = () => {
@@ -1100,11 +1257,51 @@
     };
 
     window.verifySolution = async () => {
-        const code = compileWorkspaceToCode(workspace).code;
         const resultDiv = document.getElementById('verify-result');
         resultDiv.innerHTML = "正在跑測試案例...";
         resultDiv.style.color = "var(--scratch-orange)";
 
+        if (currentMissionType === 'map') {
+            const iframe = document.getElementById('execution-iframe');
+            try {
+                const state = await new Promise((resolve, reject) => {
+                    let isDone = false;
+                    const timeout = setTimeout(() => {
+                        if (isDone) return;
+                        isDone = true;
+                        reject(new Error("驗證逾時，請確保程式已執行完畢"));
+                    }, 5000);
+                    
+                    const checkState = () => {
+                        if (isDone) return;
+                        const s = iframe.contentWindow?.__mapRuntime?.getFinalState();
+                        if(s) {
+                            isDone = true;
+                            clearTimeout(timeout);
+                            resolve(s);
+                        } else {
+                            setTimeout(checkState, 500);
+                        }
+                    };
+                    checkState();
+                });
+
+                if(state.isSuccess) {
+                    resultDiv.innerHTML = `🎉 挑戰成功！到達終點。<br>💰 收集金幣：${state.collectedCoins} 枚<br>🚶 總步數：${state.moves}`;
+                    resultDiv.style.color = "var(--scratch-green)";
+                    if(!isTeacher) document.getElementById('btn-submit-task').style.display = 'block';
+                } else {
+                    resultDiv.innerHTML = "❌ 尚未到達終點或步數超限，再試試看！";
+                    resultDiv.style.color = "red";
+                }
+            } catch(e) {
+                resultDiv.innerHTML = "⚠️ " + e.message;
+                resultDiv.style.color = "red";
+            }
+            return;
+        }
+
+        const code = compileWorkspaceToCode(workspace).code;
         let passed = false;
         let logs = [];
         const mockPrompt = (msg) => {
@@ -1319,10 +1516,12 @@
                 }
                 if (!scriptCode.trim()) return;
                 if (target === STAGE_SCRIPT_KEY) {
-                    code += `\n// --- 舞台腳本 ---\n${scriptCode}\n`;
+                    const safeScriptCode = scriptCode.replace(/\$\{/g, '\\${');
+                    code += `\n// --- 舞台腳本 ---\nawait (async () => {\n${safeScriptCode}\n})();\n`;
                     previewChunks.push(`// --- 舞台腳本 ---\n${scriptCode}`);
                 } else {
-                    code += `\n// --- 角色腳本: ${target} ---\nwindow.__scratchRuntime.withSprite(${JSON.stringify(target)}, function(){\n${scriptCode}\n});\n`;
+                    const safeScriptCode = scriptCode.replace(/\$\{/g, '\\${');
+                    code += `\n// --- 角色腳本: ${target} ---\nawait window.__scratchRuntime.withSprite(${JSON.stringify(target)}, async function(){\n${safeScriptCode}\n});\n`;
                     previewChunks.push(`// --- 角色腳本: ${target} ---\n${scriptCode}`);
                 }
             } catch (e) {
@@ -1330,201 +1529,230 @@
             }
         });
         document.getElementById('code-preview').innerText = previewChunks.join('\n\n') || "// 尚未放置積木";
+        updateIframeSandbox(code);
+    };
+
+    window.updateIframeSandbox = (userCode = "") => {
         const iframe = document.getElementById('execution-iframe');
         const consoleOut = document.getElementById('console-out');
         const statusText = document.getElementById('stage-status');
         
-        switchTab('console');
-        consoleOut.innerHTML = "<span style='color:#0bf'>> 準備執行沙盒環境...</span><br>";
-        statusText.innerText = "🟢 執行中";
-        statusText.style.color = "var(--scratch-green)";
+        if (userCode) {
+            switchTab('console');
+            consoleOut.innerHTML = "<span style='color:#0bf'>> 準備執行沙盒環境...</span><br>";
+            statusText.innerText = "🟢 執行中";
+            statusText.style.color = "var(--scratch-green)";
+        }
         
+        const isMap = currentMissionType === 'map';
+        const mapConfigJson = JSON.stringify(currentMapConfig).replace(/<\/script>/g, '<\\/script>').replace(/\$\{/g, '\\${');
+        const userCodeJson = JSON.stringify(userCode).replace(/<\/script>/g, '<\\/script>').replace(/\$\{/g, '\\${');
+
         const htmlTemplate = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; display:flex; justify-content:center; align-items:center; height:100vh; }
-                #scratch-stage { width: 480px; height: 360px; background: linear-gradient(180deg, #dcecff, #f3f8ff); border: 2px solid #9bbcff; border-radius: 12px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7); }
-                .sprite { position: absolute; transform: translate(-50%, -50%); font-size: 46px; user-select: none; transition: left 0.12s linear, top 0.12s linear, transform 0.12s linear; }
-                .sprite-bubble { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 14px; background: #fff; color: #333; border: 1px solid #cfd8ea; border-radius: 18px; padding: 5px 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-                canvas { display: block; }
-            </style>
-            <script>
-                // 攔截 console.log 傳回主視窗
-                ['log', 'warn', 'error'].forEach(method => {
-                    const original = console[method];
-                    console[method] = (...args) => {
-                        window.parent.postMessage({ type: 'console', level: method, msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') }, '*');
-                        original.apply(console, args);
-                    };
-                });
-                // 攔截 alert
-                window.alert = (msg) => { window.parent.postMessage({ type: 'system', msg: 'Alert: ' + msg }, '*'); };
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; display:flex; justify-content:center; align-items:center; height:100vh; width:100vw; }
+        #scratch-stage { 
+            width: 480px; height: 360px; background: linear-gradient(180deg, #dcecff, #f3f8ff); 
+            border: 2px solid #9bbcff; border-radius: 12px; position: relative; overflow: hidden; 
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7); 
+            transform-origin: center center;
+            flex-shrink: 0;
+        }
+        .sprite { position: absolute; transform: translate(-50%, -50%); font-size: 46px; user-select: none; transition: left 0.12s linear, top 0.12s linear, transform 0.12s linear; }
+        .sprite-bubble { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 14px; background: #fff; color: #333; border: 1px solid #cfd8ea; border-radius: 18px; padding: 5px 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        canvas { display: block; }
+        .grid-cell { position: absolute; border: 1px solid rgba(0,0,0,0.05); box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .grid-coin { color: #FFD700; filter: drop-shadow(0 0 2px rgba(0,0,0,0.2)); }
+        .grid-start { background: rgba(76, 176, 80, 0.1); border: 2px solid #4CAF50; }
+        .grid-end { background: rgba(255, 77, 77, 0.1); border: 2px solid #FF4D4D; }
+        #map-player { position: absolute; font-size: 30px; transition: 0.3s; z-index: 10; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    <div id="scratch-stage"></div>
+    <script>
+        function autoScale() {
+            const stage = document.getElementById('scratch-stage');
+            if (!stage) return;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const scale = Math.min(vw / 480, vh / 360) * 0.98;
+            stage.style.transform = "scale(" + scale + ")";
+        }
+        window.addEventListener('resize', autoScale);
+        autoScale();
+
+        ['log', 'warn', 'error'].forEach(method => {
+            const original = console[method];
+            console[method] = (...args) => {
+                window.parent.postMessage({ type: 'console', level: method, msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ') }, '*');
+                original.apply(console, args);
+            };
+        });
+        window.alert = (msg) => { window.parent.postMessage({ type: 'system', msg: 'Alert: ' + msg }, '*'); };
+        window.onerror = (msg, url, line) => { console.error("行 " + line + ": " + msg); return true; };
+
+        if (${isMap}) {
+            window.__mapRuntime = (() => {
+                const config = ${mapConfigJson} || {};
+                const stage = document.getElementById('scratch-stage');
+                if (!stage) {
+                    const newStage = document.createElement('div');
+                    newStage.id = 'scratch-stage';
+                    document.body.appendChild(newStage);
+                }
+                const activeStage = document.getElementById('scratch-stage');
+
+                const W = 480, H = 360;
+                const cols = config.width || 5, rows = config.height || 5;
+                const cellW = W / cols, cellH = H / rows;
+                const startPos = (config.start || "0,0").split(',').map(Number);
+                const endPos = (config.end || "4,4").split(',').map(Number);
+                const coins = (config.coins || "").split(';').filter(s=>s.trim()).map(s => s.split(',').map(Number));
                 
-                window.onerror = function(msg, url, line) {
-                    console.error("行 " + line + ": " + msg);
-                    return true; 
+                let playerPos = [...startPos];
+                let collectedCoins = 0;
+                let moves = 0;
+                let coinElements = [];
+                let startHandler = null;
+
+                for(let r=0; r<rows; r++) {
+                    for(let c=0; c<cols; c++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.style.width = cellW + 'px';
+                        cell.style.height = cellH + 'px';
+                        cell.style.left = (c * cellW) + 'px';
+                        cell.style.top = ((rows - 1 - r) * cellH) + 'px';
+                        if(c === startPos[0] && r === startPos[1]) cell.classList.add('grid-start');
+                        if(c === endPos[0] && r === endPos[1]) { cell.classList.add('grid-end'); cell.innerHTML = "🏁"; }
+                        const isCoin = coins.find(cp => cp[0] === c && cp[1] === r);
+                        if(isCoin) {
+                            const coinEl = document.createElement('div');
+                            coinEl.className = 'grid-coin'; coinEl.innerHTML = "💰";
+                            coinEl.dataset.x = c; coinEl.dataset.y = r;
+                            cell.appendChild(coinEl);
+                            coinElements.push(coinEl);
+                        }
+                        activeStage.appendChild(cell);
+                    }
+                }
+
+                const player = document.createElement('div');
+                player.id = 'map-player'; player.innerHTML = "🐱";
+                player.style.width = cellW + 'px'; player.style.height = cellH + 'px';
+                activeStage.appendChild(player);
+
+                function updatePlayer() {
+                    player.style.left = (playerPos[0] * cellW) + 'px';
+                    player.style.top = ((rows - 1 - playerPos[1]) * cellH) + 'px';
+                    coinElements.forEach((el) => {
+                        if(el.style.display !== 'none' && parseInt(el.dataset.x) === playerPos[0] && parseInt(el.dataset.y) === playerPos[1]) {
+                            el.style.display = 'none'; collectedCoins++;
+                            console.log("💰 收集到金幣！目前共有 " + collectedCoins + " 枚。");
+                        }
+                    });
+                }
+                updatePlayer();
+
+                return {
+                    move: async (dir) => {
+                        moves++;
+                        if(moves > (config.maxMoves || 15)) { console.error("❌ 步數超過限制！"); return; }
+                        if(dir === 'right') playerPos[0]++;
+                        if(dir === 'up') playerPos[1]++;
+                        if(playerPos[0] >= cols || playerPos[1] >= rows || playerPos[0] < 0 || playerPos[1] < 0) {
+                            console.warn("⚠️ 撞牆了！");
+                            if(dir === 'right') playerPos[0]--; if(dir === 'up') playerPos[1]--;
+                        }
+                        updatePlayer();
+                        await new Promise(r => setTimeout(r, 400));
+                    },
+                    getCoins: () => collectedCoins,
+                    getFinalState: () => ({ playerPos, collectedCoins, moves, isSuccess: playerPos[0] === endPos[0] && playerPos[1] === endPos[1] }),
+                    onStart: (fn) => { startHandler = fn; },
+                    start: async () => { if(startHandler) await startHandler(); }
                 };
+            })();
+        } else {
+            window.__scratchRuntime = (() => {
+                const STAGE_W = 480, STAGE_H = 360;
+                const sprites = new Map();
+                let currentName = "主角";
+                const greenFlagHandlers = [];
+                const keyHandlers = new Map();
 
-                // 簡化版 Scratch 角色執行器
-                window.__scratchRuntime = (() => {
-                    const STAGE_W = 480;
-                    const STAGE_H = 360;
-                    const sprites = new Map();
-                    let currentName = "主角";
-                    const greenFlagHandlers = [];
-                    const keyHandlers = new Map();
-
-                    function ensureStage() {
-                        let stage = document.getElementById('scratch-stage');
-                        if (!stage) {
-                            document.body.innerHTML = '';
-                            stage = document.createElement('div');
-                            stage.id = 'scratch-stage';
-                            document.body.appendChild(stage);
-                        }
-                        return stage;
+                function ensureStage() {
+                    let stage = document.getElementById('scratch-stage');
+                    if (!stage) {
+                        document.body.innerHTML = '';
+                        stage = document.createElement('div');
+                        stage.id = 'scratch-stage';
+                        document.body.appendChild(stage);
                     }
+                    return stage;
+                }
 
-                    function clamp(v, min, max) {
-                        return Math.max(min, Math.min(max, v));
-                    }
+                function applyPose(sp) {
+                    sp.x = Math.max(-240, Math.min(240, sp.x));
+                    sp.y = Math.max(-180, Math.min(180, sp.y));
+                    sp.el.style.left = (240 + sp.x) + 'px';
+                    sp.el.style.top = (180 - sp.y) + 'px';
+                    sp.el.style.transform = 'translate(-50%, -50%) rotate(' + (sp.direction - 90) + 'deg)';
+                    sp.el.style.display = sp.visible ? 'block' : 'none';
+                }
 
-                    function toStageX(x) {
-                        return STAGE_W / 2 + x;
-                    }
+                function getCurrent() {
+                    if (!sprites.has(currentName)) createSprite(currentName, "🐱");
+                    return sprites.get(currentName);
+                }
 
-                    function toStageY(y) {
-                        return STAGE_H / 2 - y;
-                    }
-
-                    function applyPose(sp) {
-                        sp.x = clamp(sp.x, -STAGE_W / 2, STAGE_W / 2);
-                        sp.y = clamp(sp.y, -STAGE_H / 2, STAGE_H / 2);
-                        sp.el.style.left = toStageX(sp.x) + 'px';
-                        sp.el.style.top = toStageY(sp.y) + 'px';
-                        sp.el.style.transform = 'translate(-50%, -50%) rotate(' + (sp.direction - 90) + 'deg)';
-                        sp.el.style.display = sp.visible ? 'block' : 'none';
-                    }
-
-                    function getCurrent() {
-                        if (!sprites.has(currentName)) {
-                            createSprite(currentName, "🐱");
-                        }
-                        return sprites.get(currentName);
-                    }
-
-                    function createSprite(name, costume) {
-                        const stage = ensureStage();
-                        const spriteName = String(name || "主角");
-                        if (sprites.has(spriteName)) {
-                            const existing = sprites.get(spriteName);
-                            existing.costume = String(costume || existing.costume || "🐱");
-                            existing.el.firstChild.textContent = existing.costume;
-                            currentName = spriteName;
-                            applyPose(existing);
-                            return;
-                        }
-
-                        const el = document.createElement('div');
-                        el.className = 'sprite';
-                        const costumeNode = document.createElement('div');
-                        costumeNode.textContent = String(costume || "🐱");
-                        el.appendChild(costumeNode);
-                        stage.appendChild(el);
-
-                        const sp = {
-                            name: spriteName,
-                            costume: String(costume || "🐱"),
-                            x: 0,
-                            y: 0,
-                            direction: 90,
-                            visible: true,
-                            el: el,
-                            bubble: null
-                        };
-                        sprites.set(spriteName, sp);
+                function createSprite(name, costume) {
+                    const stage = ensureStage();
+                    const spriteName = String(name || "主角");
+                    if (sprites.has(spriteName)) {
+                        const existing = sprites.get(spriteName);
+                        existing.costume = String(costume || existing.costume || "🐱");
+                        existing.el.firstChild.textContent = existing.costume;
                         currentName = spriteName;
-                        applyPose(sp);
+                        applyPose(existing);
+                        return;
                     }
+                    const el = document.createElement('div');
+                    el.className = 'sprite';
+                    const costumeNode = document.createElement('div');
+                    costumeNode.textContent = String(costume || "🐱");
+                    el.appendChild(costumeNode);
+                    stage.appendChild(el);
+                    const sp = { name: spriteName, costume: String(costume || "🐱"), x: 0, y: 0, direction: 90, visible: true, el: el, bubble: null };
+                    sprites.set(spriteName, sp);
+                    currentName = spriteName;
+                    applyPose(sp);
+                }
 
-                    function useSprite(name) {
-                        currentName = String(name || "主角");
-                        getCurrent();
-                    }
-
-                    function move(steps) {
+                return {
+                    createSprite,
+                    useSprite: (name) => { currentName = String(name || "主角"); getCurrent(); },
+                    move: (steps) => {
                         const sp = getCurrent();
-                        const n = Number(steps) || 0;
                         const rad = (90 - sp.direction) * Math.PI / 180;
-                        sp.x += Math.cos(rad) * n;
-                        sp.y += Math.sin(rad) * n;
+                        sp.x += Math.cos(rad) * steps;
+                        sp.y += Math.sin(rad) * steps;
                         applyPose(sp);
-                    }
-
-                    function turnRight(deg) {
-                        const sp = getCurrent();
-                        sp.direction += Number(deg) || 0;
-                        applyPose(sp);
-                    }
-
-                    function turnLeft(deg) {
-                        const sp = getCurrent();
-                        sp.direction -= Number(deg) || 0;
-                        applyPose(sp);
-                    }
-
-                    function goto(x, y) {
-                        const sp = getCurrent();
-                        sp.x = Number(x) || 0;
-                        sp.y = Number(y) || 0;
-                        applyPose(sp);
-                    }
-
-                    function setX(x) {
-                        const sp = getCurrent();
-                        sp.x = Number(x) || 0;
-                        applyPose(sp);
-                    }
-
-                    function setY(y) {
-                        const sp = getCurrent();
-                        sp.y = Number(y) || 0;
-                        applyPose(sp);
-                    }
-
-                    function changeX(dx) {
-                        const sp = getCurrent();
-                        sp.x += Number(dx) || 0;
-                        applyPose(sp);
-                    }
-
-                    function changeY(dy) {
-                        const sp = getCurrent();
-                        sp.y += Number(dy) || 0;
-                        applyPose(sp);
-                    }
-
-                    function show() {
-                        const sp = getCurrent();
-                        sp.visible = true;
-                        applyPose(sp);
-                    }
-
-                    function hide() {
-                        const sp = getCurrent();
-                        sp.visible = false;
-                        applyPose(sp);
-                    }
-
-                    function setCostume(costume) {
-                        const sp = getCurrent();
-                        sp.costume = String(costume || "🐱");
-                        sp.el.firstChild.textContent = sp.costume;
-                    }
-
-                    function say(text) {
+                    },
+                    turnRight: (deg) => { const sp = getCurrent(); sp.direction += deg; applyPose(sp); },
+                    turnLeft: (deg) => { const sp = getCurrent(); sp.direction -= deg; applyPose(sp); },
+                    goto: (x, y) => { const sp = getCurrent(); sp.x = x; sp.y = y; applyPose(sp); },
+                    setX: (x) => { const sp = getCurrent(); sp.x = x; applyPose(sp); },
+                    setY: (y) => { const sp = getCurrent(); sp.y = y; applyPose(sp); },
+                    changeX: (dx) => { const sp = getCurrent(); sp.x += dx; applyPose(sp); },
+                    changeY: (dy) => { const sp = getCurrent(); sp.y += dy; applyPose(sp); },
+                    show: () => { const sp = getCurrent(); sp.visible = true; applyPose(sp); },
+                    hide: () => { const sp = getCurrent(); sp.visible = false; applyPose(sp); },
+                    say: (text) => {
                         const sp = getCurrent();
                         if (!sp.bubble) {
                             const b = document.createElement('div');
@@ -1534,83 +1762,67 @@
                         }
                         sp.bubble.textContent = String(text || "");
                         sp.bubble.style.display = 'block';
-                    }
-
-                    function onGreenFlag(fn) {
-                        if (typeof fn !== 'function') return;
+                    },
+                    setCostume: (costume) => {
+                        const sp = getCurrent();
+                        sp.costume = String(costume || "🐱");
+                        sp.el.firstChild.textContent = sp.costume;
+                    },
+                    onGreenFlag: (fn) => {
                         const boundSprite = currentName;
                         greenFlagHandlers.push(() => withSprite(boundSprite, fn));
-                    }
-
-                    function onKeyPress(key, fn) {
+                    },
+                    onKeyPress: (key, fn) => {
                         const k = String(key || '').toLowerCase();
-                        if (!k || typeof fn !== 'function') return;
                         const boundSprite = currentName;
                         if (!keyHandlers.has(k)) keyHandlers.set(k, []);
                         keyHandlers.get(k).push(() => withSprite(boundSprite, fn));
-                    }
-
-                    function triggerGreenFlag() {
-                        greenFlagHandlers.forEach((fn) => {
-                            try { fn(); } catch (e) { console.error("綠旗事件錯誤:", e.message); }
-                        });
-                    }
-
-                    function normalizeKey(key) {
-                        if (key === ' ') return ' ';
-                        return String(key || '').toLowerCase();
-                    }
-
-                    window.addEventListener('keydown', (ev) => {
-                        const k = normalizeKey(ev.key);
-                        const list = keyHandlers.get(k) || [];
-                        list.forEach((fn) => {
-                            try { fn(); } catch (e) { console.error("按鍵事件錯誤:", e.message); }
-                        });
-                    });
-
-                    function start() {
+                    },
+                    start: () => {
                         ensureStage();
-                        try {
-                            window.parent.postMessage({ type: 'system', msg: '舞台已初始化' }, '*');
-                        } catch (e) {}
-                        triggerGreenFlag();
-                    }
-
-                    function withSprite(name, fn) {
-                        const prev = currentName;
-                        currentName = String(name || prev || "主角");
-                        try {
-                            getCurrent();
-                            if (typeof fn === 'function') fn();
-                        } finally {
-                            currentName = prev;
-                        }
-                    }
-
-                    return { createSprite, useSprite, move, turnRight, turnLeft, goto, setX, setY, changeX, changeY, show, hide, say, setCostume, onGreenFlag, onKeyPress, start, triggerGreenFlag, withSprite };
-                })();
-            <\/script>
-        </head>
-        <body>
-            <script>
-                try {
-                    ${code}
-                    if (window.__scratchRuntime && typeof window.__scratchRuntime.start === 'function') {
-                        window.__scratchRuntime.start();
-                    }
-                    console.log("✅ 執行完畢");
-                } catch(e) {
-                    console.error("執行錯誤: " + e.message);
+                        window.parent.postMessage({ type: 'system', msg: '舞台已初始化' }, '*');
+                        greenFlagHandlers.forEach(fn => { try { fn(); } catch(e) {} });
+                    },
+                    withSprite
+                };
+                async function withSprite(name, fn) {
+                    const prev = currentName;
+                    currentName = String(name || prev || "主角");
+                    try { getCurrent(); if (typeof fn === 'function') await fn(); } finally { currentName = prev; }
                 }
-            <\/script>
-        </body>
-        </html>
-        `;
+            })();
+            window.parent.postMessage({ type: 'system', msg: '舞台已初始化' }, '*');
+        }
+
+        window.runUserCode = async (userCode) => {
+            try {
+                if (!userCode || userCode.trim() === "") {
+                    console.log("ℹ️ 舞台已就緒，等待執行...");
+                    return;
+                }
+                const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+                const userFn = new AsyncFunction(userCode);
+                await userFn();
+                if (window.__scratchRuntime) window.__scratchRuntime.start();
+                if (window.__mapRuntime) await window.__mapRuntime.start();
+                console.log("✅ 執行完畢");
+            } catch(e) {
+                console.error("執行時錯誤: " + e.message);
+            }
+        };
+
+        setTimeout(() => {
+            runUserCode(${userCodeJson});
+        }, 100);
+    <\/script>
+</body>
+</html>`;
         
         iframe.onload = () => {
-            statusText.innerText = "🟡 舞台載入中";
-            statusText.style.color = "var(--scratch-orange)";
+            if (userCode) {
+                statusText.innerText = "🟡 舞台載入中";
+                statusText.style.color = "var(--scratch-orange)";
+            }
             try { iframe.contentWindow?.focus(); } catch (e) {}
         };
         iframe.srcdoc = htmlTemplate;
