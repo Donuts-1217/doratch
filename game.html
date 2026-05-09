@@ -84,42 +84,50 @@
         .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
         .main-content { flex: 1; margin-left: 260px; padding: 40px; }
     
+        
         /* 響應式縮放與排版 */
+        html, body { max-width: 100vw; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 100vw; overflow: hidden; }
+        .main-content { overflow-x: auto; box-sizing: border-box; }
+        
         @media (max-width: 1024px) {
             .app-container { flex-direction: column; }
-            .sidebar-main { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-            .sidebar-logo { width: 100%; text-align: center; padding: 15px; }
+            
+            /* 導覽列改為橫向可滑動 */
+            .sidebar-main { width: 100vw; height: auto; position: static; flex-direction: row; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+            .sidebar-logo { display: none; }
             .sidebar-main > div[style*="uppercase"] { display: none; }
-            .nav-item { padding: 10px 15px; font-size: 13px; justify-content: center; flex: 1 1 auto; white-space: nowrap; border-left: none !important; border-bottom: 2px solid transparent; }
+            .nav-item { padding: 12px 20px; font-size: 14px; flex-shrink: 0; border-left: none !important; border-bottom: 2px solid transparent; }
             .nav-item.active { border-bottom: 2px solid var(--primary); }
-            .sidebar-footer { width: 100%; display: flex; justify-content: center; padding: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
-            .main-content { margin-left: 0; padding: 20px; width: 100%; box-sizing: border-box; }
+            .sidebar-footer { width: auto; border: none; padding: 5px 15px; display: flex; align-items: center; margin-top: 0; flex-shrink: 0; }
             
-            /* 針對固定寬度元素的縮放處理 */
-            .boss-raid-container, .game-frame, [style*="width:700px"] { 
-                zoom: 0.8; 
-                -moz-transform: scale(0.8); 
-                -moz-transform-origin: top center; 
-            }
-            .project-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-        }
-        @media (max-width: 768px) {
-            .nav-item { font-size: 12px; padding: 8px 10px; }
-            .header { flex-direction: column; gap: 15px; text-align: center; }
+            .main-content { margin-left: 0; padding: 15px; width: 100vw; }
             
-            .boss-raid-container, .game-frame, [style*="width:700px"] { 
-                zoom: 0.55; 
-                -moz-transform: scale(0.55); 
-                -moz-transform-origin: top center; 
+            /* 卡片與通用排版 */
+            #user-stats-card { flex-wrap: wrap; justify-content: center; text-align: center; }
+            #user-stats-card > div { width: 100%; }
+            .header, .header-title { flex-direction: column; gap: 15px; text-align: center; }
+            .project-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+            .game-grid { grid-template-columns: 1fr; }
+            
+            /* 遊戲區域適應 */
+            .boss-raid-container, .game-frame { width: 100%; box-sizing: border-box; padding: 20px 10px; min-height: auto; }
+            .duel-arena { grid-template-columns: 1fr; }
+            .boss-image-container { width: 200px; height: 200px; margin: 0 auto 15px; }
+        }
+        
+        @media (max-width: 740px) {
+            /* 精準縮放 700px 的遊戲畫布 (塔防與PvP) */
+            [style*="width:700px"] { 
+                transform-origin: top left;
+                transform: scale(calc((100vw - 30px) / 700));
+                margin-bottom: calc(-300px * (1 - ((100vw - 30px) / 700))); 
             }
         }
+        
         @media (max-width: 480px) {
-            .boss-raid-container, .game-frame, [style*="width:700px"] { 
-                zoom: 0.45; 
-                -moz-transform: scale(0.45); 
-                -moz-transform-origin: top center; 
-            }
-            h1 { font-size: 1.5rem; }
+            .nav-item { font-size: 13px; padding: 10px 15px; }
+            .hero h1 { font-size: 2.5rem; }
         }
 
     </style>
