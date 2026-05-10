@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
     <title>班級詳情 - Creative Blocks Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -93,6 +94,17 @@
         .btn-solid:hover { background: #1967d2; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(76, 151, 255, 0.3); }
         .btn-outline { border: 2px solid #e8f0fe; background: white; color: var(--scratch-blue); }
         .btn-outline:hover { background: #f0f7ff; }
+
+        /* 已繳交時「取消繳交」按鈕（類 Classroom 收回） */
+        #btn-handin.btn-unsubmit {
+            background: transparent !important;
+            color: #ea580c !important;
+            border: 2px solid #ea580c !important;
+            box-shadow: none !important;
+        }
+        #btn-handin.btn-unsubmit:hover {
+            background: #fff7ed !important;
+        }
 
         /* 榮譽牆網格 */
         .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
@@ -274,7 +286,7 @@
 
     <!-- 任務詳情 -->
     <div id="detail-view" style="display:none;">
-        <div style="margin-bottom:20px;"><span class="btn-back" style="color:var(--scratch-blue); font-weight:900;" onclick="backToHome()">⬅ 返回教室列表</span></div>
+        <div style="margin-bottom:20px;"><span class="btn-back" style="color:var(--scratch-blue); font-weight:900;" onclick="backToHome()">⬅ 返回班級任務列表</span></div>
         <div class="detail-grid">
             <div class="mission-info">
                 <span class="mission-badge" id="det-lv">LV1 初級</span>
@@ -310,16 +322,22 @@
                         <button class="btn-full btn-solid" style="background:var(--scratch-purple);" onclick="startMission()">🚀 開始挑戰任務</button>
                         <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 手動添加附件</button>
                         <button class="btn-full btn-solid" id="btn-handin" onclick="handleSubmit()">正式繳交任務</button>
+                        <p id="student-submit-hint" style="display:none; font-size:12px; color:#64748b; margin:12px 0 0; line-height:1.55;"></p>
                     </div>
                 </div>
                 <!-- 老師側邊 -->
                 <div class="work-card" id="teacher-panel" style="display:none;">
+                    <div id="teacher-mission-preview-entry" style="margin-bottom:18px; padding:14px; background:linear-gradient(135deg,#fff7ed,#ffedd5); border-radius:14px; border:1px solid #fdba74;">
+                        <p style="margin:0 0 12px; font-size:13px; color:#9a3412; line-height:1.55; font-weight:700;">不需等待學生繳交，即可開啟與學生<strong>完全相同</strong>的編輯與地圖作答畫面（頂部會顯示「教師預覽」標示）。</p>
+                        <button type="button" class="btn-full btn-solid" style="background:#ea580c; margin:0; box-shadow:0 4px 14px rgba(234,88,12,0.35);" onclick="openTeacherMissionPreview()">👁️ 教師預覽題目</button>
+                    </div>
                     <h4>學生成績概況 <span id="grading-count" style="font-size:11px; color:#666;"></span></h4>
                     <div id="grading-list" style="max-height:400px; overflow-y:auto;"></div>
                 </div>
                 <!-- 老師查看特定學生 -->
                 <div class="work-card" id="teacher-review" style="display:none;">
                     <h4>正在查看：<span id="review-name" style="color:var(--scratch-blue);">學生</span></h4>
+                    <div id="review-map-score" style="display:none; margin-bottom:14px; padding:14px; background:#ecfdf5; border-radius:12px; border:1px solid #a7f3d0; font-size:14px;"></div>
                     <div id="review-atts" style="margin-bottom:20px;"></div>
                     <button class="btn-full btn-outline" onclick="closeReview()">返回名單</button>
                 </div>
@@ -379,6 +397,30 @@
             <div class="form-group">
                 <label>🚶 最大移動次數</label>
                 <input type="number" id="map-max-moves" value="15">
+            </div>
+            <div class="form-group" style="padding:12px; background:#fff; border-radius:10px; border:1px dashed #cbd5e1;">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <input type="checkbox" id="use-map-pack-20" style="width:auto;" onchange="toggleMapPackOptions()">
+                    <span>使用 <strong>地圖包（多關）</strong>：自動產生多關地圖，總分為各關最佳金幣加總</span>
+                </label>
+                <p style="font-size:12px; color:#64748b; margin:8px 0 0 28px;">勾選後略過「單一關」手動金幣字串，改為依下列選項產生；第一關仍會寫入 <code>mapConfig</code> 以相容舊版。</p>
+                <div id="map-pack-options" style="display:none; margin-top:12px; padding:12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div class="form-group" style="margin:0;">
+                            <label>關卡數量（1–20）</label>
+                            <input type="number" id="map-pack-level-count" min="1" max="20" value="20" oninput="syncMapPackPreviewMax()">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label>前幾關可預覽（金幣／終點圖示）</label>
+                            <input type="number" id="map-pack-preview-count" min="0" max="20" placeholder="留空則 min(10,關卡數)">
+                        </div>
+                    </div>
+                    <label style="display:flex; align-items:flex-start; gap:10px; margin-top:12px; cursor:pointer;">
+                        <input type="checkbox" id="map-pack-full-random" style="width:auto; margin-top:4px;">
+                        <span style="font-size:13px;"><strong>全部隨機</strong>：每一關的寬高、步數上限與金幣位置皆隨機。<br><span style="color:#64748b;">不勾選時：每一關沿用上方「寬度、高度、起點、終點、最大移動次數」，僅金幣堆疊與位置隨機。</span></span>
+                    </label>
+                    <p style="font-size:12px; color:#64748b; margin:10px 0 0;">同一格子可擁有 <strong>1–3 枚</strong>金幣（隨機）；地圖上以堆疊數字顯示。</p>
+                </div>
             </div>
         </div>
 
@@ -503,7 +545,16 @@
         if(id === 'modal-create-assign') {
             renderAssignList();
             document.getElementById('m-type').value = 'regular';
+            const packCk = document.getElementById('use-map-pack-20');
+            if (packCk) packCk.checked = false;
+            const plc = document.getElementById('map-pack-level-count');
+            if (plc) plc.value = '20';
+            const ppc = document.getElementById('map-pack-preview-count');
+            if (ppc) ppc.value = '';
+            const fr = document.getElementById('map-pack-full-random');
+            if (fr) fr.checked = false;
             toggleMapSettings();
+            toggleMapPackOptions();
         }
         if(id === 'modal-question-bank') renderBank();
     };
@@ -517,7 +568,109 @@
         } else {
             document.getElementById('m-title').placeholder = "例如：迴圈畫圓挑戰";
         }
+        toggleMapPackOptions();
     };
+
+    window.toggleMapPackOptions = () => {
+        const isMap = document.getElementById('m-type').value === 'map';
+        const on = document.getElementById('use-map-pack-20')?.checked;
+        const el = document.getElementById('map-pack-options');
+        if (el) el.style.display = isMap && on ? 'block' : 'none';
+        if (isMap && on) syncMapPackPreviewMax();
+    };
+
+    window.syncMapPackPreviewMax = () => {
+        const lc = Math.min(20, Math.max(1, parseInt(document.getElementById('map-pack-level-count')?.value, 10) || 20));
+        const pf = document.getElementById('map-pack-preview-count');
+        if (pf) pf.max = lc;
+    };
+
+    /** 同一座標重複 N 次 = N 枚金幣（執行時會加總該格） */
+    function coinsFromCellStacks(picks, rnd) {
+        const parts = [];
+        for (const p of picks) {
+            const stack = 1 + (rnd() % 3);
+            const coord = p.join(",");
+            for (let s = 0; s < stack; s++) parts.push(coord);
+        }
+        return parts.join("; ");
+    }
+
+    function generateMapPackDemo() {
+        const levelCount = Math.min(20, Math.max(1, parseInt(document.getElementById("map-pack-level-count").value, 10) || 20));
+        const pfRaw = (document.getElementById("map-pack-preview-count").value || "").trim();
+        let previewFirst = pfRaw === "" ? Math.min(10, levelCount) : parseInt(pfRaw, 10);
+        if (Number.isNaN(previewFirst)) previewFirst = Math.min(10, levelCount);
+        previewFirst = Math.min(levelCount, Math.max(0, previewFirst));
+        const fullRandom = document.getElementById("map-pack-full-random")?.checked;
+
+        const maps = [];
+        for (let i = 0; i < levelCount; i++) {
+            const preview = i < previewFirst;
+            let seed = (i + 1) * 9973 + 1337;
+            const rnd = () => { seed = (seed * 48271 + 11) % 2147483647; return seed; };
+
+            let w, h, start, end, ex, ey;
+
+            if (fullRandom) {
+                w = 4 + (rnd() % 4);
+                h = 4 + (rnd() % 4);
+                start = "0,0";
+                ex = w - 1;
+                ey = h - 1;
+                end = ex + "," + ey;
+            } else {
+                w = Math.max(3, Math.min(10, parseInt(document.getElementById("map-width").value, 10) || 5));
+                h = Math.max(3, Math.min(10, parseInt(document.getElementById("map-height").value, 10) || 5));
+                start = (document.getElementById("map-start").value || "0,0").trim();
+                end = (document.getElementById("map-end").value || "").trim();
+                if (!end) end = (w - 1) + "," + (h - 1);
+                const ep = end.split(",").map((x) => parseInt(x, 10));
+                ex = Number.isFinite(ep[0]) ? ep[0] : w - 1;
+                ey = Number.isFinite(ep[1]) ? ep[1] : h - 1;
+            }
+
+            const sp = start.split(",").map((x) => parseInt(x, 10));
+            const sx = Number.isFinite(sp[0]) ? sp[0] : 0;
+            const sy = Number.isFinite(sp[1]) ? sp[1] : 0;
+
+            const slots = [];
+            for (let yy = 0; yy < h; yy++) {
+                for (let xx = 0; xx < w; xx++) {
+                    if ((xx === sx && yy === sy) || (xx === ex && yy === ey)) continue;
+                    slots.push([xx, yy]);
+                }
+            }
+
+            const maxSlots = slots.length;
+            const cap = Math.min(8, Math.max(2, maxSlots));
+            const numCells = Math.min(maxSlots, 2 + (rnd() % Math.min(6, cap)));
+            const picks = [];
+            const pool = slots.slice();
+            for (let k = 0; k < numCells && pool.length; k++) {
+                const j = rnd() % pool.length;
+                picks.push(pool.splice(j, 1)[0]);
+            }
+
+            const coins = coinsFromCellStacks(picks, rnd);
+
+            let maxMoves = parseInt(document.getElementById("map-max-moves").value, 10);
+            if (fullRandom || !Number.isFinite(maxMoves) || maxMoves <= 0) {
+                maxMoves = (w - 1) + (h - 1) + 3 + (rnd() % 5);
+            }
+
+            maps.push({
+                width: w,
+                height: h,
+                start: sx + "," + sy,
+                end: ex + "," + ey,
+                coins,
+                maxMoves,
+                preview
+            });
+        }
+        return { maps };
+    }
 
     window.generateRandomCoins = () => {
         const w = parseInt(document.getElementById('map-width').value) || 5;
@@ -557,7 +710,12 @@
 
     window.startMission = () => {
         if (!currentAssignId || !classId) return alert("任務資料載入中，請稍後再試。");
-        location.href = `page.html?aid=${currentAssignId}&cid=${classId}`;
+        location.href = `page.html?aid=${currentAssignId}&cid=${classId}&ml=0`;
+    };
+
+    window.openTeacherMissionPreview = () => {
+        if (!currentAssignId || !classId) return alert("任務資料載入中，請稍後再試。");
+        location.href = `page.html?aid=${encodeURIComponent(currentAssignId)}&cid=${encodeURIComponent(classId)}&ml=0`;
     };
 
     function renderBank() {
@@ -620,20 +778,29 @@
         if(!title) return;
 
         let mapConfig = null;
+        let mapPack = null;
         if (type === 'map') {
-            mapConfig = {
-                width: parseInt(document.getElementById('map-width').value),
-                height: parseInt(document.getElementById('map-height').value),
-                start: document.getElementById('map-start').value,
-                end: document.getElementById('map-end').value,
-                coins: document.getElementById('map-coins').value,
-                maxMoves: parseInt(document.getElementById('map-max-moves').value)
-            };
+            const usePack = document.getElementById('use-map-pack-20')?.checked;
+            if (usePack) {
+                mapPack = generateMapPackDemo();
+                mapConfig = mapPack.maps[0];
+            } else {
+                mapConfig = {
+                    width: parseInt(document.getElementById('map-width').value),
+                    height: parseInt(document.getElementById('map-height').value),
+                    start: document.getElementById('map-start').value,
+                    end: document.getElementById('map-end').value,
+                    coins: document.getElementById('map-coins').value,
+                    maxMoves: parseInt(document.getElementById('map-max-moves').value)
+                };
+            }
         }
 
-        await addDoc(collection(db, "classes", classId, "assignments"), {
+        const payload = {
             title, type, lv, goals, hints, assignedTo, mapConfig, createdAt: serverTimestamp(), teacherName: currentUser.email.split('@')[0]
-        });
+        };
+        if (mapPack) payload.mapPack = mapPack;
+        await addDoc(collection(db, "classes", classId, "assignments"), payload);
         closeModal('modal-create-assign');
         loadList();
     };
@@ -720,23 +887,42 @@
     async function loadMySub() {
         const snap = await getDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid));
         const list = document.getElementById('att-list'), st = document.getElementById('work-status'), btn = document.getElementById('btn-handin');
+        const hint = document.getElementById('student-submit-hint');
+        const actions = document.getElementById('student-work-actions');
         list.innerHTML = '';
+        actions.style.display = 'block';
         if(snap.exists()) {
             const d = snap.data();
-            st.innerText = d.status==='turned-in'?'已繳交':'未完成';
-            st.className = `work-status ${d.status==='turned-in'?'done':''}`;
-            btn.innerText = d.status==='turned-in'?'取消繳交並修改':'正式繳交任務';
-            document.getElementById('student-work-actions').style.display = d.status==='turned-in'?'none':'block';
+            const turnedIn = d.status === 'turned-in';
+            st.innerText = turnedIn ? '已繳交' : '未完成';
+            st.className = `work-status ${turnedIn ? 'done' : ''}`;
+            btn.innerText = turnedIn ? '取消繳交並修改' : '正式繳交任務';
+            btn.classList.toggle('btn-unsubmit', turnedIn);
+            if (hint) {
+                hint.style.display = turnedIn ? 'block' : 'none';
+                hint.textContent = turnedIn ? '若要修改附件或繼續編輯，請先取消繳交（類似 Classroom「收回作業」）。取消後狀態會變為未完成，可再次繳交。' : '';
+            }
+            if (d.mapTotalScore != null && d.mapTotalScore !== '') {
+                list.innerHTML += `<div style="padding:12px; background:#ecfdf5; border-radius:12px; border:1px solid #a7f3d0; margin-bottom:12px; font-size:14px;">🗺️ 地圖累積分數（各關最佳金幣加總）：<strong>${d.mapTotalScore}</strong></div>`;
+            }
             (d.atts||[]).forEach((a,i)=> {
                 list.innerHTML += `<div class="attachment-item" style="padding:15px; background:#fff; border-radius:12px; border:1px solid #eee; margin-bottom:10px;">🧩 ${a.name}</div>`;
             });
+        } else {
+            st.innerText = '未完成';
+            st.className = 'work-status';
+            btn.innerText = '正式繳交任務';
+            btn.classList.remove('btn-unsubmit');
+            if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
         }
     }
 
     window.handleSubmit = async () => {
         const ref = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
         const snap = await getDoc(ref);
-        const next = snap.exists() && snap.data().status === 'turned-in' ? 'assigned' : 'turned-in';
+        const turnedIn = snap.exists() && snap.data().status === 'turned-in';
+        if (turnedIn && !confirm('確定要取消繳交嗎？收回後可繼續修改作品並再次繳交。')) return;
+        const next = turnedIn ? 'assigned' : 'turned-in';
         if(!snap.exists()) {
             await setDoc(ref, { studentId: currentUser.uid, status: next, atts: [], submittedAt: serverTimestamp() });
         } else {
@@ -822,11 +1008,13 @@
             div.className = 'grading-row';
             div.style.background = 'white'; div.style.marginBottom = '10px'; div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
             div.onclick = () => { targetSid = uid; showReview(u, sub); listenC(); };
+            const mapPts = sub.mapTotalScore != null && sub.mapTotalScore !== '' ? `<div style="font-size:11px; color:#059669; font-weight:800;">🗺️ ${sub.mapTotalScore} 分</div>` : '';
             div.innerHTML = `
                 <img src="https://ui-avatars.com/api/?name=${u.email}&background=random" style="width:35px; height:35px; border-radius:50%; margin-right:12px;">
                 <div style="flex:1;">
                     <div style="font-weight:900;">${u.email.split('@')[0]}</div>
                     <div style="font-size:11px; color:var(--scratch-purple);">LV.${u.lv || 1} • ${u.xp || 0} XP</div>
+                    ${mapPts}
                 </div>
                 <div class="work-status ${sub.status==='turned-in'?'done':''}">${sub.status==='turned-in'?'已繳交':'未完成'}</div>
             `;
@@ -835,20 +1023,43 @@
         document.getElementById('grading-count').innerText = `${count} / ${(currentClass.students||[]).length} 已完成`;
     }
 
-    function showReview(u, s) {
+    async function showReview(u, s) {
+        const sid = targetSid;
         document.getElementById('teacher-panel').style.display='none';
         document.getElementById('teacher-review').style.display='block';
         document.getElementById('comment-box').style.display='block';
         const name = u.email.split('@')[0];
         document.getElementById('review-name').innerText = name;
         document.getElementById('chat-with').innerText = `與 ${name} 對話中`;
+
+        const scoreEl = document.getElementById('review-map-score');
+        const subSnap = await getDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", sid));
+        const fresh = subSnap.exists() ? subSnap.data() : {};
+        if (scoreEl) {
+            if (fresh.mapTotalScore != null && fresh.mapTotalScore !== '') {
+                scoreEl.style.display = 'block';
+                let detail = '';
+                if (fresh.mapScores && typeof fresh.mapScores === 'object') {
+                    const keys = Object.keys(fresh.mapScores).map(Number).sort((a, b) => a - b);
+                    detail = '<div style="font-size:12px; color:#047857; margin-top:8px; line-height:1.5;">' +
+                        keys.map((k) => `第 ${k + 1} 關：${fresh.mapScores[k]} 枚`).join(' · ') +
+                        '</div>';
+                }
+                scoreEl.innerHTML = '<div><strong>🗺️ 地圖總分（各關最佳金幣加總）</strong>：<span style="font-size:1.25rem; font-weight:900;">' + fresh.mapTotalScore + '</span></div>' + detail;
+            } else {
+                scoreEl.style.display = 'none';
+                scoreEl.innerHTML = '';
+            }
+        }
         
         const list = document.getElementById('review-atts'); list.innerHTML = '';
-        if((s.atts||[]).length === 0) list.innerHTML = '<p style="color:#999; font-size:13px;">該學生尚未添加任何附件作品。</p>';
-        (s.atts||[]).forEach(a => {
+        const atts = fresh.atts || s.atts || [];
+        if(atts.length === 0) list.innerHTML = '<p style="color:#999; font-size:13px;">該學生尚未添加任何附件作品。</p>';
+        atts.forEach(a => {
+            const missionOpen = `page.html?aid=${encodeURIComponent(currentAssignId)}&cid=${encodeURIComponent(classId)}&load=${encodeURIComponent(a.id)}&from=${encodeURIComponent(sid)}`;
             list.innerHTML += `<div class="attachment-item" style="padding:15px; border:1px solid #eee; border-radius:12px; display:flex; justify-content:space-between; align-items:center; background:#fff; margin-bottom:10px;">
-                <a href="page.html?load=${a.id}&from=${u.uid}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold;">🧩 ${a.name}</a>
-                <button class="btn-solid" style="width:auto; padding:5px 12px; font-size:11px;" onclick="publishToWall('${a.id}','${u.uid}','${a.name}')">推薦上牆</button>
+                <a href="${missionOpen}" target="_blank" style="text-decoration:none; color:inherit; font-weight:bold;">🧩 ${a.name} <span style="font-size:11px; color:#64748b; font-weight:700;">（任務介面）</span></a>
+                <button class="btn-solid" style="width:auto; padding:5px 12px; font-size:11px;" onclick="publishToWall('${a.id}','${sid}', ${JSON.stringify(a.name)})">推薦上牆</button>
             </div>`;
         });
     }
@@ -864,6 +1075,8 @@
         document.getElementById('teacher-panel').style.display='block'; 
         document.getElementById('teacher-review').style.display='none'; 
         document.getElementById('comment-box').style.display='none';
+        const scoreEl = document.getElementById('review-map-score');
+        if (scoreEl) { scoreEl.style.display = 'none'; scoreEl.innerHTML = ''; }
         targetSid = null;
         if(unsub) { unsub(); unsub = null; }
     };
@@ -880,12 +1093,15 @@
         for(const d of snap.docs) {
             const subs = await getDocs(query(collection(db, "classes", classId, "assignments", d.id, "submissions"), where("isPublished","==",true)));
             subs.forEach(s => {
-                found = true;
                 const data = s.data();
+                const att = (data.atts && data.atts[0]) ? data.atts[0] : null;
+                if (!att) return;
+                found = true;
                 const card = document.createElement('div');
                 card.className = 'project-card';
-                card.onclick = () => location.href = `page.html?load=${data.atts[0].id}&from=${data.studentId}`;
-                card.innerHTML = `<div class="project-thumb">🧩</div><div class="project-info"><div class="project-name">${data.publishedName}</div><div class="project-author">by ${data.publishedAuthor || data.studentId.substring(0,5)}</div></div>`;
+                const href = `page.html?aid=${encodeURIComponent(d.id)}&cid=${encodeURIComponent(classId)}&load=${encodeURIComponent(att.id)}&from=${encodeURIComponent(data.studentId)}`;
+                card.onclick = () => { location.href = href; };
+                card.innerHTML = `<div class="project-thumb">🧩</div><div class="project-info"><div class="project-name">${data.publishedName || '作品'}</div><div class="project-author">by ${data.publishedAuthor || data.studentId.substring(0,5)}</div></div>`;
                 grid.appendChild(card);
             });
         }

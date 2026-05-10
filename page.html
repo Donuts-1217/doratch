@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
     <title>Creative Blocks Pro - 終極工作台</title>
     
     <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
@@ -18,7 +19,7 @@
             --scratch-green: #4CB050; --bg-light: #F0F2F5; 
             --danger: #FF4D4D; --scratch-purple: #855CD6;
         }
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); overflow: hidden; }
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; font-family: "Noto Sans TC", sans-serif; background: var(--bg-light); overflow: hidden; }
         
         /* --- 頂部導覽列 --- */
         nav { 
@@ -60,8 +61,8 @@
         .dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
 
         /* --- 主內容區佈局 --- */
-        #main-container { display: flex; flex: 1; overflow: hidden; }
-        #blockly-area { flex: 1; position: relative; border-right: 2px solid #333; }
+        #main-container { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+        #blockly-area { flex: 1; min-width: 0; min-height: 0; position: relative; border-right: 2px solid #333; }
         #blockly-div { position: absolute; top:0; left:0; right:0; bottom:0; }
         #sprite-script-bar {
             position: relative;
@@ -84,16 +85,124 @@
         #sprite-script-bar .mini-btn:hover { filter: brightness(1.1); }
         #sprite-script-bar { flex-shrink: 1; min-width: 0; }
         
-        /* 側邊代碼/控制台面板 */
-        #side-panel { width: 420px; background: #1e1e1e; display: flex; flex-direction: column; flex-shrink: 0; }
-        
+        /* 側邊代碼/控制台面板：舞台與控制台垂直分配 */
+        #side-panel {
+            width: 420px;
+            background: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            min-height: 0;
+        }
+        #stage-container {
+            flex: 1.85 1 58%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            --stage-scale: 1;
+        }
+        .stage-zoom-bar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 6px 10px;
+            background: #252526;
+            border-bottom: 1px solid #111;
+            font-size: 11px;
+            color: #bbb;
+        }
+        .stage-zoom-bar .stage-zoom-label-wrap { margin-right: auto; color: #e2e8f0; }
+        .stage-zoom-bar button {
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #334155;
+            color: #f1f5f9;
+            line-height: 1.2;
+        }
+        .stage-zoom-bar button:hover { background: #475569; }
+        .stage-zoom-bar button:active { transform: translateY(1px); }
+        .stage-zoom-viewport {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 10px;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+        }
+        .stage-zoom-inner {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 4 / 3;
+            transform: scale(var(--stage-scale, 1));
+            transform-origin: top center;
+            transition: transform 0.15s ease;
+            flex-shrink: 0;
+        }
+        .stage-zoom-inner #execution-iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+        .stage-zoom-inner.map-batch-silent {
+            opacity: 0;
+            pointer-events: none;
+            transition: none;
+        }
+        #console-wrapper {
+            flex: 1 1 30%;
+            min-height: 88px;
+            max-height: 34vh;
+        }
+
+        body.map-mission-mode #side-panel {
+            width: min(480px, 44vw);
+            min-width: 340px;
+        }
+        body.map-mission-mode #stage-container {
+            flex: 2.4 1 62%;
+            min-height: min(52vh, 520px);
+        }
+        body.map-mission-mode .stage-zoom-viewport {
+            align-items: stretch;
+        }
+        body.map-mission-mode .stage-zoom-inner {
+            aspect-ratio: unset;
+            width: 100%;
+            max-width: 100%;
+            align-self: stretch;
+            min-height: min(52vh, 520px);
+            height: 100%;
+            flex: 1 1 auto;
+        }
+        body.map-mission-mode #console-wrapper {
+            flex: 0.85 1 24%;
+            max-height: 28vh;
+        }
+
         @media (max-width: 1200px) {
             #side-panel { width: 380px; }
+            body.map-mission-mode #side-panel { width: min(440px, 42vw); min-width: 300px; }
         }
         @media (max-width: 900px) {
             #main-container { flex-direction: column; }
-            #blockly-area { flex: 1; min-height: 400px; border-right: none; border-bottom: 2px solid #333; }
-            #side-panel { width: 100%; flex: 1; min-height: 300px; }
+            #blockly-area { flex: 1; min-height: 280px; border-right: none; border-bottom: 2px solid #333; }
+            #side-panel { width: 100%; flex: 1; min-height: min(480px, 55vh); }
+            body.map-mission-mode #side-panel { width: 100%; min-width: 0; }
+            body.map-mission-mode #stage-container { min-height: min(42vh, 400px); }
         }
         
         .panel-header { background: #2d2d2d; color: #aaa; padding: 8px 12px; font-size: 12px; font-weight: bold; border-bottom: 1px solid #111; }
@@ -177,6 +286,280 @@
             .hero h1 { font-size: 2.5rem; }
         }
 
+        /* 特殊題目 · 地圖挑戰：限制高度避免擠壓 Blockly／舞台，題敘區可捲動、可摺疊 */
+        #map-challenge-banner {
+            display: none;
+            flex-direction: column;
+            flex-shrink: 0;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+            border-bottom: 2px solid #c7d2fe;
+            padding: 10px 18px 12px;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+            max-height: min(44vh, 460px);
+            overflow: hidden;
+        }
+        #map-challenge-banner.map-visible { display: flex; }
+        #map-challenge-banner.collapsed {
+            max-height: none;
+            padding: 8px 16px;
+        }
+        #map-challenge-banner.collapsed .map-banner-body {
+            display: none;
+        }
+        #map-challenge-banner.collapsed .map-banner-toolbar {
+            margin-bottom: 0;
+        }
+        .map-banner-toolbar {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .map-banner-toggle-btn {
+            font-size: 12px;
+            font-weight: 800;
+            padding: 7px 14px;
+            border-radius: 10px;
+            border: 1px solid #93c5fd;
+            background: #fff;
+            color: #1e40af;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .map-banner-toggle-btn:hover {
+            background: #eff6ff;
+        }
+        .map-banner-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 4px;
+        }
+        .map-demo-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+        @media (max-width: 960px) {
+            .map-demo-inner { grid-template-columns: 1fr; }
+        }
+        .map-demo-title {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #1e3a8a;
+            margin: 0 0 8px;
+            letter-spacing: 0.02em;
+        }
+        .map-demo-story {
+            font-size: 0.95rem;
+            line-height: 1.75;
+            color: #334155;
+            margin: 0;
+            max-height: min(22vh, 120px);
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        .map-demo-rules {
+            margin: 12px 0 0;
+            padding: 12px 14px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            color: #475569;
+            line-height: 1.65;
+        }
+        .map-demo-rules ol { margin: 8px 0 0 18px; padding: 0; }
+        .map-demo-rules li { margin-bottom: 6px; }
+        .map-coord-system-hint {
+            margin: 10px 0 0;
+            padding: 10px 14px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #1e3a5f;
+            line-height: 1.55;
+        }
+        .map-coord-system-hint strong { color: #1d4ed8; }
+        .map-demo-side {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+        }
+        .map-score-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .map-score-row .label { font-size: 0.8rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+        .map-score-row .value { font-size: 1.75rem; font-weight: 900; color: #2563eb; }
+        .map-score-row .high .value { color: #059669; }
+        .map-demo-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .map-demo-actions button {
+            flex: 1;
+            min-width: 88px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 900;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .map-demo-actions button:hover { transform: translateY(-1px); }
+        .map-btn-run { background: #2563eb; color: #fff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); }
+        .map-btn-stop { background: #475569; color: #fff; box-shadow: 0 4px 14px rgba(71, 85, 105, 0.35); }
+        .map-btn-batch { background: #7c3aed; color: #fff; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3); }
+        .map-btn-submit { background: #0d9488; color: #fff; box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35); }
+        .map-batch-log {
+            margin-top: 12px;
+            font-size: 0.82rem;
+            color: #64748b;
+            min-height: 1.2em;
+        }
+        body.map-mission-mode #sprite-script-bar { display: none !important; }
+
+        .map-level-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 14px;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .map-level-btn {
+            min-width: 36px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            color: #334155;
+        }
+        .map-level-btn:hover { border-color: #2563eb; color: #2563eb; }
+        .map-level-btn.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+        .map-level-btn.locked { opacity: 0.65; border-style: dashed; }
+        .map-total-line {
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+        .map-total-line span#map-total-all { color: #059669; font-size: 1.2rem; }
+
+        nav {
+            max-width: 100vw;
+            padding-left: max(8px, env(safe-area-inset-left, 0px));
+            padding-right: max(8px, env(safe-area-inset-right, 0px));
+            box-sizing: border-box;
+        }
+        #project-title-input {
+            width: min(200px, 36vw);
+            max-width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            #project-title-input { width: min(200px, 42vw); }
+        }
+
+        @media (max-width: 900px) {
+            nav {
+                flex-wrap: wrap;
+                height: auto;
+                min-height: 56px;
+                row-gap: 10px;
+                align-items: center;
+            }
+            .nav-logo { flex-shrink: 0; }
+            .project-title-container {
+                order: 2;
+                flex: 1 1 100%;
+                min-width: 0;
+            }
+            #project-title-input {
+                width: 100%;
+                flex: 1;
+                min-width: 0;
+            }
+            .nav-actions {
+                order: 3;
+                flex: 1 1 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            #mission-panel {
+                width: min(340px, calc(100vw - 16px));
+                left: max(8px, env(safe-area-inset-left, 0px));
+                max-height: min(80vh, calc(100dvh - 72px));
+            }
+            #mission-trigger {
+                left: max(12px, env(safe-area-inset-left, 0px));
+                bottom: max(16px, env(safe-area-inset-bottom, 0px));
+            }
+            #map-challenge-banner { padding: 12px clamp(10px, 4vw, 24px) 16px; }
+        }
+
+        @media (max-width: 480px) {
+            .btn { font-size: 11px; padding: 6px 10px; }
+            #sprite-script-bar { max-width: 100%; }
+            #sprite-script-bar .mini-btn { font-size: 10px; padding: 3px 6px; }
+            .map-demo-title { font-size: clamp(0.95rem, 4vw, 1.05rem); }
+        }
+
+        /* 教師預覽任務：與學生同款介面，僅標示且不寫入繳交／分數 */
+        .teacher-mission-preview-strip {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            padding: 10px 18px;
+            background: linear-gradient(90deg, #fff7ed, #ffedd5);
+            color: #9a3412;
+            font-size: 13px;
+            font-weight: 700;
+            border-bottom: 2px solid #fb923c;
+            text-align: center;
+            line-height: 1.45;
+        }
+        .teacher-mission-preview-strip .tmp-badge {
+            flex-shrink: 0;
+            background: #c2410c;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+        .teacher-mission-preview-strip .tmp-link {
+            flex-shrink: 0;
+            color: #1d4ed8;
+            font-weight: 900;
+            text-decoration: underline;
+        }
+        .teacher-mission-preview-strip .tmp-link:hover { color: #1e40af; }
+
     </style>
 </head>
 <body>
@@ -201,8 +584,10 @@
         </div>
         
         <button class="btn btn-run" onclick="executeCode()">▶️ 執行程式</button>
+        <button type="button" class="btn btn-outline" onclick="stopExecution()" style="border:none;color:#fca5a5;">⏹️ 停止</button>
         <button class="btn btn-outline" onclick="runBlockValidation()" style="border:none;">🧪 檢查積木</button>
         <button id="main-action-btn" class="btn btn-save" onclick="handleSave()">💾 儲存</button>
+        <button type="button" id="nav-mission-submit-btn" class="btn" style="display:none;background:var(--scratch-green);color:#fff;font-weight:800;" onclick="submitFromEditor()">✅ 繳交作業</button>
         
         <div style="width:1px; height:20px; background:rgba(255,255,255,0.1); margin:0 5px;"></div>
 
@@ -229,6 +614,54 @@
     </div>
 </nav>
 
+<div id="teacher-mission-preview-strip" class="teacher-mission-preview-strip" style="display:none;" aria-live="polite">
+    <span class="tmp-badge">教師預覽</span>
+    <span>此畫面與學生作答時相同；地圖分數與繳交功能<strong>不會</strong>寫入任何學生繳交紀錄。</span>
+    <a href="#" id="teacher-preview-back-class" class="tmp-link">返回班級</a>
+</div>
+
+<!-- 特殊題目 · 地圖挑戰（參考 NTNU demo 題敘 / 分數 / 執行） -->
+<div id="map-challenge-banner">
+    <div class="map-banner-toolbar">
+        <button type="button" id="map-banner-toggle" class="map-banner-toggle-btn" onclick="toggleMapBannerCollapse()">▼ 摺疊題敘（放大編輯區與舞台）</button>
+    </div>
+    <div class="map-banner-body">
+    <div class="map-demo-inner">
+        <div>
+            <p class="map-demo-title" id="map-demo-heading">科技教育創意實作競賽 [資訊科技組] · 程式實作範例</p>
+            <p class="map-demo-story" id="map-demo-story">載入題目中…</p>
+            <div class="map-demo-rules" id="map-demo-rules-wrap">
+                <strong>移動規則：</strong>
+                <ol id="map-demo-rules-list"></ol>
+            </div>
+            <p class="map-coord-system-hint" id="map-coord-system-hint"><strong>座標怎麼看？</strong> X＝橫向，畫面<strong>最左欄為 0</strong>，往右每格 +1（地圖下方藍色數字）。 Y＝縱向，畫面<strong>最底列為 0</strong>，往上每列 +1（地圖左側橘色數字）。執行時舞台右上角也會即時顯示角色 X、Y，與「目前 X／Y 座標」積木相同。<strong>一套程式跑全關：</strong>請用「服務台 X／Y」「地圖橫向／縱向格數」「最多可移動次數」搭配迴圈／條件撰寫通用解法。<strong>統測計分</strong>會用同一程式依序跑完每一關（舞台暫時隱藏、加速執行），並更新各關最佳分與總分。</p>
+            <p style="font-size:0.85rem;color:#64748b;margin:10px 0 4px;" id="map-level-hint-line">關卡選擇：</p>
+            <div id="map-level-grid" class="map-level-grid"></div>
+            <p class="map-total-line" id="map-total-line"><span id="map-total-label">我的得分總分（各關最佳金幣合計）：</span><span id="map-total-all">0</span></p>
+        </div>
+        <div class="map-demo-side">
+            <div class="map-score-row">
+                <div>
+                    <div class="label">累積分數</div>
+                    <div class="value" id="map-score-current">0</div>
+                </div>
+                <div class="high">
+                    <div class="label">最高分數</div>
+                    <div class="value" id="map-score-high">0</div>
+                </div>
+            </div>
+            <div class="map-demo-actions">
+                <button type="button" class="map-btn-run" onclick="executeCode()">執行</button>
+                <button type="button" class="map-btn-stop" onclick="stopExecution()">停止</button>
+                <button type="button" class="map-btn-batch" onclick="runMapBatchTests()" title="依序跑完所有關卡（隱藏預覽、加速），更新分數與總分">統測計分</button>
+                <button type="button" class="map-btn-submit" onclick="mapDemoSubmit()">提交</button>
+            </div>
+            <p class="map-batch-log" id="map-batch-log"></p>
+        </div>
+    </div>
+    </div>
+</div>
+
 <div id="main-container">
     <div id="blockly-area">
         <div id="blockly-div"></div>
@@ -239,8 +672,18 @@
             <span>📺 執行舞台 (STAGE)</span>
             <span id="stage-status" style="color:var(--scratch-orange);">等待執行</span>
         </div>
-        <div id="stage-container" style="flex: 1; background: white; position: relative; overflow: hidden; border-bottom: 2px solid #111;">
-            <iframe id="execution-iframe" sandbox="allow-scripts allow-same-origin allow-modals" style="width:100%; height:100%; border:none;"></iframe>
+        <div id="stage-container" style="border-bottom: 2px solid #111;">
+            <div class="stage-zoom-bar" title="縮放僅影響右側預覽。在下方灰底區按住 Ctrl（Mac：⌘）滾輪亦可調整">
+                <span class="stage-zoom-label-wrap">舞台 <strong id="stage-zoom-label">100%</strong> <span style="opacity:0.75;font-weight:400;">（Ctrl+滾輪）</span></span>
+                <button type="button" onclick="bumpStageZoom(-0.1)" aria-label="縮小舞台">−</button>
+                <button type="button" onclick="resetStageZoom()" title="還原為 100%">100%</button>
+                <button type="button" onclick="bumpStageZoom(0.1)" aria-label="放大舞台">＋</button>
+            </div>
+            <div class="stage-zoom-viewport" id="stage-zoom-viewport">
+                <div class="stage-zoom-inner" id="stage-zoom-inner">
+                    <iframe id="execution-iframe" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+                </div>
+            </div>
         </div>
         
         <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
@@ -279,7 +722,7 @@
                     <button id="btn-verify" class="btn-full" style="background:var(--scratch-green); color:white; border:none; padding:15px; border-radius:12px; font-weight:900; cursor:pointer;" onclick="verifySolution()">🔍 自動驗證解法</button>
                     <div id="verify-result" style="margin-top:10px; font-size:13px; font-weight:bold; text-align:center;"></div>
                 </div>
-                <button class="btn-full" id="btn-submit-task" style="margin-top:15px; background:var(--scratch-blue); color:white; border:none; padding:15px; border-radius:12px; font-weight:900; cursor:pointer; display:none;" onclick="submitFromEditor()">✅ 正式繳交並領取獎勵</button>
+                <button class="btn-full" id="btn-submit-task" style="margin-top:15px; background:var(--scratch-blue); color:white; border:none; padding:15px; border-radius:12px; font-weight:900; cursor:pointer; display:none;" onclick="submitFromEditor()">✅ 正式繳交（程式與分數）</button>
     </div>
 </div>
 
@@ -480,13 +923,497 @@
     let currentMissionLv = "LV1"; // 存儲難度
     let currentMissionType = "regular"; 
     let currentMapConfig = null;
+    /** 地圖包：[{ ...normalizeMapConfig, preview?: boolean }, ...] */
+    let mapPackMaps = [];
+    let currentMapIndex = 0;
+    /** 各關最佳金幣 { "0": 12, "1": 5, ... } */
+    let sessionMapScores = {};
+    /** 統測依序跑關時，map-run-done 應寫入的關卡 index；null 則用 currentMapIndex */
+    let mapRunDoneLevelKey = null;
+    /** 沙盒已載入並執行使用者程式時為 true；清空沙盒或執行結束後為 false */
+    window.__editorSandboxExecuting = false;
+    /** 是否顯示金幣／終點圖示（後 10 關為 false） */
+    let currentMapPreviewVisual = true;
+    let currentMissionStory = ""; // 題目長述（mapStory / description）
     let isOwner = true;
     let isTeacher = false;
+    /** 班級教師以 aid+cid 開啟任務時：介面與學生一致，但不寫入繳交／地圖分數 */
+    let teacherMissionPreview = false;
     let originalProjectData = null;
     const STAGE_SCRIPT_KEY = "stage";
     let currentScriptTarget = STAGE_SCRIPT_KEY;
     let spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
     let isSwitchingScript = false;
+
+    function normalizeMapConfig(raw) {
+        const c = raw && typeof raw === "object" ? { ...raw } : {};
+        const w = Math.max(2, parseInt(c.width, 10) || 5);
+        const h = Math.max(2, parseInt(c.height, 10) || 5);
+        c.width = w;
+        c.height = h;
+        const defaultMax = (w - 1) + (h - 1) + 3;
+        if (c.maxMoves == null || c.maxMoves === "") c.maxMoves = defaultMax;
+        if (!c.start) c.start = "0,0";
+        if (!c.end) c.end = (w - 1) + "," + (h - 1);
+        if (!c.coins) c.coins = "";
+        return c;
+    }
+
+    function buildMapPackFromAssignment(data) {
+        if (data.mapPack && Array.isArray(data.mapPack.maps) && data.mapPack.maps.length > 0) {
+            return data.mapPack.maps.map((m) => ({ ...normalizeMapConfig(m), preview: m.preview }));
+        }
+        if (data.type === "map" && data.mapConfig) {
+            return [{ ...normalizeMapConfig(data.mapConfig), preview: true }];
+        }
+        return [];
+    }
+
+    /** 將遠端 mapScores 正規成 { "0": n, ... }（略過非數字鍵） */
+    function normalizeRemoteMapScores(ms) {
+        const out = {};
+        if (!ms || typeof ms !== "object") return out;
+        Object.keys(ms).forEach((k) => {
+            const idx = parseInt(k, 10);
+            if (!Number.isFinite(idx) || idx < 0) return;
+            const val = Number(ms[k]);
+            if (Number.isFinite(val)) out[String(idx)] = val;
+        });
+        return out;
+    }
+
+    /** 與雲端繳交紀錄合併各關分數（每關取較高者），避免分頁不同步或鍵格式不一導致統測不准 */
+    async function mergeMapScoresFromSubmission() {
+        if (teacherMissionPreview) return;
+        const user = auth.currentUser;
+        if (!user || !cid || !aid) return;
+        try {
+            const subSnap = await getDoc(doc(db, "classes", cid, "assignments", aid, "submissions", user.uid));
+            if (!subSnap.exists()) return;
+            const raw = subSnap.data().mapScores;
+            const remote = normalizeRemoteMapScores(raw);
+            const n = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+            for (let i = 0; i < n; i++) {
+                const k = String(i);
+                const a = Number(sessionMapScores[k]) || 0;
+                const b = Number(remote[k]) || 0;
+                sessionMapScores[k] = Math.max(a, b);
+            }
+        } catch (e) {
+            console.warn("mergeMapScoresFromSubmission", e);
+        }
+    }
+
+    /** 本題各關最佳分數加總（僅計目前地圖包關卡 0～n-1） */
+    function computeMapTotalAll() {
+        const n = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+        let t = 0;
+        for (let i = 0; i < n; i++) {
+            t += Number(sessionMapScores[String(i)]) || 0;
+        }
+        return t;
+    }
+
+    function applyActiveMapFromIndex(skipHistory) {
+        const maps = mapPackMaps;
+        if (!maps.length) {
+            currentMapConfig = normalizeMapConfig({});
+            currentMapPreviewVisual = true;
+            return;
+        }
+        currentMapIndex = Math.min(maps.length - 1, Math.max(0, currentMapIndex));
+        const raw = maps[currentMapIndex];
+        currentMapConfig = normalizeMapConfig(raw);
+        currentMapPreviewVisual = raw.preview !== false;
+        if (!skipHistory && maps.length > 1) {
+            const qs = new URLSearchParams(window.location.search);
+            qs.set("ml", String(currentMapIndex));
+            window.history.replaceState({}, "", `${location.pathname}?${qs.toString()}`);
+        }
+    }
+
+    async function persistMapScoresToSubmission() {
+        if (teacherMissionPreview) return;
+        const user = auth.currentUser;
+        if (!user || !cid || !aid) return;
+        const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
+        const n = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+        let remote = {};
+        try {
+            const snap = await getDoc(subRef);
+            if (snap.exists()) {
+                remote = normalizeRemoteMapScores(snap.data().mapScores);
+            }
+        } catch (e) {
+            console.warn("persistMapScoresToSubmission getDoc", e);
+        }
+        const merged = {};
+        for (let i = 0; i < n; i++) {
+            const k = String(i);
+            merged[k] = Math.max(Number(sessionMapScores[k]) || 0, Number(remote[k]) || 0);
+        }
+        for (let i = 0; i < n; i++) {
+            sessionMapScores[String(i)] = merged[String(i)];
+        }
+        const total = computeMapTotalAll();
+        await setDoc(
+            subRef,
+            {
+                studentId: user.uid,
+                mapScores: merged,
+                mapTotalScore: total,
+                mapLevels: n
+            },
+            { merge: true }
+        );
+    }
+
+    window.selectMapLevel = (idx) => {
+        if (currentMissionType !== "map") return;
+        currentMapIndex = idx;
+        applyActiveMapFromIndex(false);
+        populateMapChallengeBanner();
+        updateIframeSandbox("");
+    };
+
+    function renderMapLevelButtons() {
+        const grid = document.getElementById("map-level-grid");
+        if (!grid) return;
+        const n = mapPackMaps.length || 1;
+        grid.innerHTML = "";
+        for (let i = 0; i < n; i++) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "map-level-btn" + (i === currentMapIndex ? " active" : "");
+            const raw = mapPackMaps[i];
+            if (raw && raw.preview === false) btn.classList.add("locked");
+            const label = i + 1;
+            const best = sessionMapScores[String(i)];
+            btn.textContent = best != null ? label + ":" + best : String(label);
+            btn.title = raw && raw.preview === false ? "隱藏關（不預覽配置）" : ("第 " + label + " 關");
+            btn.onclick = () => selectMapLevel(i);
+            grid.appendChild(btn);
+        }
+    }
+
+    function mapHighScoreKey() {
+        const u = auth.currentUser;
+        if (!u || !aid || !cid) return null;
+        return "mapHigh_" + cid + "_" + aid + "_" + u.uid;
+    }
+
+    function readMapHighScore() {
+        const k = mapHighScoreKey();
+        if (!k) return 0;
+        const n = parseInt(localStorage.getItem(k), 10);
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    function writeMapHighScore(v) {
+        const k = mapHighScoreKey();
+        if (!k) return;
+        localStorage.setItem(k, String(v));
+    }
+
+    function updateMapChallengeScoreUi() {
+        const totalEl = document.getElementById("map-total-all");
+        if (totalEl) totalEl.textContent = String(computeMapTotalAll());
+        const hiEl = document.getElementById("map-score-high");
+        const key = String(currentMapIndex);
+        const best = sessionMapScores[key];
+        if (hiEl) hiEl.textContent = best != null ? String(best) : "0";
+    }
+
+    /** 對齊 https://demo.csie.ntnu.edu.tw/ 「觀光商圈」題敘（官方公開文字） */
+    const NTNU_CSIE_DEMO_MAP_STORY =
+        "觀光商店區內部分商店參加觀光金幣活動，入內參觀即可獲得 1 至 3 枚金幣，累積的金幣可在服務台兌換贈品。商店之間的通道僅能往右或往上走，因此，請使用「往右移動」「往上移動」積木，來決定移動方向。請撰寫程式，配合「本題專用」積木安排參觀路線，讓收集的金幣越多越好。";
+
+    function buildNtnuStyleRuleLines(maxM, w, h) {
+        const maxX = Math.max(0, (parseInt(w, 10) || 5) - 1);
+        const maxY = Math.max(0, (parseInt(h, 10) || 5) - 1);
+        const cap = maxX + maxY + 3;
+        return [
+            "每次只能往「上」或往「右」移動。",
+            "若移動會超過地圖範圍，則會停留在原地。",
+            "最多只能移動 " +
+                maxM +
+                " 次（對應「最大 X 座標＋最大 Y 座標＋3」：" +
+                maxX +
+                "＋" +
+                maxY +
+                "＋3＝" +
+                cap +
+                "）。必須移動至服務台才算挑戰成功，超過該次數即挑戰失敗。"
+        ];
+    }
+
+    function populateMapChallengeBanner() {
+        const banner = document.getElementById("map-challenge-banner");
+        const cfg = currentMapConfig || normalizeMapConfig({});
+        const w = cfg.width, h = cfg.height;
+        const maxM = cfg.maxMoves;
+        const titleEl = document.getElementById("mission-title");
+        const heading = document.getElementById("map-demo-heading");
+        if (heading && titleEl) {
+            const t = titleEl.innerText.trim();
+            heading.textContent = t ? t + " · 程式實作範例" : "科技教育創意實作競賽 [資訊科技組] - 程式實作範例";
+        }
+
+        const storyEl = document.getElementById("map-demo-story");
+        const hintTxt = document.getElementById("mission-hints")?.innerText?.trim() || "";
+        const storyRaw = (currentMissionStory || hintTxt || "").trim();
+        const story = storyRaw || NTNU_CSIE_DEMO_MAP_STORY;
+        if (storyEl) storyEl.textContent = story;
+
+        const rulesOl = document.getElementById("map-demo-rules-list");
+        if (rulesOl) {
+            rulesOl.innerHTML = "";
+            const rules = buildNtnuStyleRuleLines(maxM, w, h);
+            rules.push("金幣進入格子時會自動取得；同一格可能有多枚金幣時將一次計入累積分數。");
+            rules.forEach((t) => {
+                const li = document.createElement("li");
+                li.textContent = t;
+                rulesOl.appendChild(li);
+            });
+        }
+
+        document.getElementById("map-score-current").textContent = "0";
+        document.getElementById("map-batch-log").textContent = "";
+
+        updateMapChallengeScoreUi();
+        renderMapLevelButtons();
+
+        const hintEl = document.getElementById("map-level-hint-line");
+        const n = mapPackMaps.length;
+        let prevN = 0;
+        for (let i = 0; i < mapPackMaps.length; i++) {
+            if (mapPackMaps[i].preview !== false) prevN++;
+            else break;
+        }
+        if (hintEl) {
+            if (n <= 1) {
+                hintEl.textContent = "單關挑戰：";
+            } else if (prevN >= n) {
+                hintEl.textContent = `關卡選擇（共 ${n} 關，皆可預覽地圖）：`;
+            } else if (prevN <= 0) {
+                hintEl.textContent = `關卡選擇（共 ${n} 關皆為隱藏關，畫面上不顯示金幣與終點圖示）：`;
+            } else {
+                hintEl.textContent = `關卡選擇（共 ${n} 關；前 ${prevN} 關可預覽；第 ${prevN + 1}–${n} 關為隱藏關）：`;
+            }
+        }
+        const totalLbl = document.getElementById("map-total-label");
+        if (totalLbl) {
+            totalLbl.textContent =
+                n > 1
+                    ? `我的得分總分（${n} 關各關最佳金幣合計）：`
+                    : "我的得分總分（金幣合計）：";
+        }
+
+        banner.classList.add("map-visible");
+        document.body.classList.add("map-mission-mode");
+    }
+
+    function syncMapBannerToggleLabel() {
+        const b = document.getElementById("map-challenge-banner");
+        const btn = document.getElementById("map-banner-toggle");
+        if (!b || !btn) return;
+        const collapsed = b.classList.contains("collapsed");
+        btn.textContent = collapsed
+            ? "▶ 展開題敘、規則與關卡"
+            : "▼ 摺疊題敘（放大編輯區與舞台）";
+    }
+
+    function initMapBannerCollapse() {
+        const b = document.getElementById("map-challenge-banner");
+        if (!b || !b.classList.contains("map-visible")) return;
+        let collapsed;
+        try {
+            const stored = localStorage.getItem("mapBannerCollapsed");
+            if (stored === null) {
+                collapsed = window.innerWidth < 1100;
+            } else {
+                collapsed = stored === "1";
+            }
+        } catch (e) {
+            collapsed = window.innerWidth < 1100;
+        }
+        b.classList.toggle("collapsed", collapsed);
+        syncMapBannerToggleLabel();
+    }
+
+    window.toggleMapBannerCollapse = function () {
+        const b = document.getElementById("map-challenge-banner");
+        if (!b) return;
+        b.classList.toggle("collapsed");
+        try {
+            localStorage.setItem("mapBannerCollapsed", b.classList.contains("collapsed") ? "1" : "0");
+        } catch (e) {}
+        syncMapBannerToggleLabel();
+        setTimeout(() => {
+            if (typeof workspace !== "undefined" && workspace) Blockly.svgResize(workspace);
+            window.dispatchEvent(new Event("resize"));
+        }, 100);
+    };
+
+    function hideMapChallengeBanner() {
+        const banner = document.getElementById("map-challenge-banner");
+        if (banner) banner.classList.remove("map-visible");
+        document.body.classList.remove("map-mission-mode");
+    }
+
+    window.mapDemoSubmit = () => {
+        const panel = document.getElementById("mission-panel");
+        if (panel) panel.style.display = "flex";
+        setTimeout(() => {
+            document.getElementById("mission-verify-area")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }, 80);
+        verifySolution();
+    };
+
+    /** 從班級「開始任務」進入編輯器時顯示頂部繳交鈕（學生專用） */
+    function syncNavMissionSubmitBtn(missionReady) {
+        const btn = document.getElementById("nav-mission-submit-btn");
+        if (!btn) return;
+        const show = !!missionReady && !!aid && !!cid && !isTeacher;
+        btn.style.display = show ? "inline-flex" : "none";
+    }
+
+    function syncSubmitTaskPanelBtn(show) {
+        const st = document.getElementById("btn-submit-task");
+        if (!st) return;
+        st.style.display = show && !isTeacher ? "block" : "none";
+    }
+
+    function refreshTeacherMissionPreviewUi() {
+        const el = document.getElementById("teacher-mission-preview-strip");
+        if (!el) return;
+        if (teacherMissionPreview) {
+            el.style.display = "flex";
+            document.body.classList.add("teacher-mission-preview-mode");
+            const back = document.getElementById("teacher-preview-back-class");
+            if (back && cid) {
+                back.href = `class_view.html?id=${encodeURIComponent(cid)}`;
+            }
+        } else {
+            el.style.display = "none";
+            document.body.classList.remove("teacher-mission-preview-mode");
+        }
+    }
+
+    function waitForMapRunDone(timeoutMs = 120000) {
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => {
+                window.removeEventListener("message", onMsg);
+                resolve(null);
+            }, timeoutMs);
+            function onMsg(ev) {
+                if (ev.data && ev.data.type === "map-run-done") {
+                    clearTimeout(timer);
+                    window.removeEventListener("message", onMsg);
+                    resolve(ev.data);
+                }
+            }
+            window.addEventListener("message", onMsg);
+        });
+    }
+
+    /** 統測：依序跑完所有關（隱藏預覽、移動步間零延遲），以實際結果更新各關最佳分並給總分 */
+    window.runMapBatchTests = async () => {
+        const logEl = document.getElementById("map-batch-log");
+        if (currentMissionType !== "map") return;
+        if (window.__mapBatchRunning) return;
+        window.__mapBatchRunning = true;
+        window.__mapBatchAbort = false;
+        logEl.textContent = "統測準備中…";
+
+        const zoomInner = document.getElementById("stage-zoom-inner");
+        const startIdx = currentMapIndex;
+        const levelCount = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+
+        try {
+            saveCurrentScriptFromWorkspace();
+            const scriptEntries = Object.entries(spriteScripts);
+            let code = "";
+            for (let i = 0; i < scriptEntries.length; i++) {
+                const target = scriptEntries[i][0];
+                const xmlText = scriptEntries[i][1];
+                if (!xmlText || !String(xmlText).trim()) continue;
+                const tempWs = new Blockly.Workspace();
+                try {
+                    Blockly.Xml.domToWorkspace(Blockly.utils.xml.textToDom(xmlText), tempWs);
+                    const compiled = compileWorkspaceToCode(tempWs);
+                    if (compiled.errors.length) {
+                        throw new Error((target === STAGE_SCRIPT_KEY ? "舞台" : "角色「" + target + "」") + "：" + compiled.errors.join(" | "));
+                    }
+                    const scriptCode = compiled.code;
+                    if (!scriptCode.trim()) continue;
+                    const safeScriptCode = scriptCode.replace(/\$\{/g, "\\${");
+                    if (target === STAGE_SCRIPT_KEY) {
+                        code += `\nawait (async () => {\n${safeScriptCode}\n})();\n`;
+                    } else {
+                        code += `\nawait window.__scratchRuntime.withSprite(${JSON.stringify(target)}, async function(){\n${safeScriptCode}\n});\n`;
+                    }
+                } finally {
+                    tempWs.dispose();
+                }
+            }
+            if (!code.trim()) {
+                throw new Error("沒有可執行的積木程式");
+            }
+
+            await mergeMapScoresFromSubmission();
+            if (zoomInner) zoomInner.classList.add("map-batch-silent");
+
+            for (let i = 0; i < levelCount; i++) {
+                if (window.__mapBatchAbort) break;
+                if (mapPackMaps.length > 0) {
+                    currentMapIndex = i;
+                    applyActiveMapFromIndex(true);
+                }
+                const cfg = currentMapConfig || normalizeMapConfig({});
+                const maxM = Number(cfg.maxMoves) || 15;
+                const timeoutMs = Math.min(300000, Math.max(8000, 4000 + maxM * 80));
+                logEl.textContent = "統測跑關中 " + (i + 1) + " / " + levelCount;
+                mapRunDoneLevelKey = i;
+                updateIframeSandbox(code, { mapBatchFast: true });
+                const done = await waitForMapRunDone(timeoutMs);
+                if (window.__mapBatchAbort) break;
+                if (!done) {
+                    appendConsoleLine("統測：第 " + (i + 1) + " 關逾時或未完成，已略過（可試「停止」後重試）", "warn");
+                }
+            }
+
+            currentMapIndex = startIdx;
+            if (mapPackMaps.length > 0) {
+                applyActiveMapFromIndex(false);
+            }
+            populateMapChallengeBanner();
+            renderMapLevelButtons();
+            updateMapChallengeScoreUi();
+            updateIframeSandbox("");
+            if (zoomInner) zoomInner.classList.remove("map-batch-silent");
+
+            const total = computeMapTotalAll();
+            await persistMapScoresToSubmission().catch((e) => console.warn("統測同步分數", e));
+            logEl.textContent = String(total);
+            appendConsoleLine("統測完成，累積分數（" + levelCount + " 關加總）：" + total, "log");
+        } catch (e) {
+            const hint = e && e.message ? e.message : String(e);
+            logEl.textContent = "統測失敗";
+            appendConsoleLine("統測失敗：" + hint, "error");
+            currentMapIndex = startIdx;
+            if (mapPackMaps.length > 0) applyActiveMapFromIndex(false);
+            populateMapChallengeBanner();
+            renderMapLevelButtons();
+            updateMapChallengeScoreUi();
+            updateIframeSandbox("");
+            if (zoomInner) zoomInner.classList.remove("map-batch-silent");
+        } finally {
+            mapRunDoneLevelKey = null;
+            window.__mapBatchRunning = false;
+            window.__mapBatchAbort = false;
+        }
+    };
 
     // --- 定義自訂偵測 (Sensing) 積木 ---
     Blockly.Blocks['scratch_ask'] = {
@@ -841,14 +1768,14 @@
         return `window.__scratchRuntime.setCostume(${costume});\n`;
     };
 
-    // --- 定義地圖挑戰 (Map Challenge) 專用積木 ---
+    // --- 定義地圖挑戰積木（用語對齊台師大資訊組示範 https://demo.csie.ntnu.edu.tw/） ---
     Blockly.Blocks['map_move_right'] = {
         init: function() {
-            this.appendDummyInput().appendField("🏃 往 右 移動");
+            this.appendDummyInput().appendField("往右移動");
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
             this.setColour('#FFAB19');
-            this.setTooltip("在地圖上往右移動一格");
+            this.setTooltip("在地圖上往右移動一格（官方示範：往右移動）");
         }
     };
     Blockly.JavaScript['map_move_right'] = function(block) {
@@ -857,11 +1784,11 @@
 
     Blockly.Blocks['map_move_up'] = {
         init: function() {
-            this.appendDummyInput().appendField("🏃 往 上 移動");
+            this.appendDummyInput().appendField("往上移動");
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
             this.setColour('#FFAB19');
-            this.setTooltip("在地圖上往上移動一格");
+            this.setTooltip("在地圖上往上移動一格（官方示範：往上移動）");
         }
     };
     Blockly.JavaScript['map_move_up'] = function(block) {
@@ -870,22 +1797,119 @@
 
     Blockly.Blocks['map_get_coins'] = {
         init: function() {
-            this.appendDummyInput().appendField("💰 我的金幣數");
+            this.appendDummyInput().appendField("累積金幣數");
             this.setOutput(true, "Number");
             this.setColour('#FFAB19');
+            this.setTooltip("目前已收集的金幣總數（對應畫面上「累積分數」）");
         }
     };
     Blockly.JavaScript['map_get_coins'] = function(block) {
         return [`window.__mapRuntime.getCoins()`, Blockly.JavaScript.ORDER_ATOMIC];
     };
 
-    // --- 地圖挑戰啟動事件 ---
+    Blockly.Blocks['map_player_x'] = {
+        init: function() {
+            this.appendDummyInput().appendField("目前 X 座標");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("橫向座標：畫面最左欄為 0，每往右一格 X 加 1（與地圖底部藍色數字一致）");
+        }
+    };
+    Blockly.JavaScript['map_player_x'] = function(block) {
+        return [`window.__mapRuntime.getPlayerX()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_player_y'] = {
+        init: function() {
+            this.appendDummyInput().appendField("目前 Y 座標");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("縱向座標：畫面最底列為 0，每往上移動一格 Y 加 1（與地圖左側橘色數字一致）");
+        }
+    };
+    Blockly.JavaScript['map_player_y'] = function(block) {
+        return [`window.__mapRuntime.getPlayerY()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_is_at_service'] = {
+        init: function() {
+            this.appendDummyInput().appendField("還沒抵達終點");
+            this.setOutput(true, "Boolean");
+            this.setColour('#FFAB19');
+            this.setTooltip("尚未走到服務台（終點）時為「真」，已抵達時為「假」。適合搭配「重複直到」或條件判斷。");
+        }
+    };
+    Blockly.JavaScript['map_is_at_service'] = function(block) {
+        return ['!window.__mapRuntime.isAtService()', Blockly.JavaScript.ORDER_LOGICAL_NOT];
+    };
+
+    Blockly.Blocks['map_grid_width'] = {
+        init: function() {
+            this.appendDummyInput().appendField("地圖橫向格數");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("本關地圖橫向有幾格（寬）。寫通用解法時用來和「目前 X 座標」比較，勿寫死數字。");
+        }
+    };
+    Blockly.JavaScript['map_grid_width'] = function(block) {
+        return [`window.__mapRuntime.getGridWidth()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_grid_height'] = {
+        init: function() {
+            this.appendDummyInput().appendField("地圖縱向格數");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("本關地圖縱向有幾格（高）。與「目前 Y 座標」搭配使用。");
+        }
+    };
+    Blockly.JavaScript['map_grid_height'] = function(block) {
+        return [`window.__mapRuntime.getGridHeight()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_service_x'] = {
+        init: function() {
+            this.appendDummyInput().appendField("服務台 X");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("服務台（終點）的 X 座標。未到達前可比對「目前 X 座標」決定要不要往右。");
+        }
+    };
+    Blockly.JavaScript['map_service_x'] = function(block) {
+        return [`window.__mapRuntime.getServiceX()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_service_y'] = {
+        init: function() {
+            this.appendDummyInput().appendField("服務台 Y");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("服務台（終點）的 Y 座標。可比對「目前 Y 座標」決定要不要往上。");
+        }
+    };
+    Blockly.JavaScript['map_service_y'] = function(block) {
+        return [`window.__mapRuntime.getServiceY()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_max_moves'] = {
+        init: function() {
+            this.appendDummyInput().appendField("最多可移動次數");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("本關步數上限（題目規則）。迴圈或重複次數不要超過這個值。");
+        }
+    };
+    Blockly.JavaScript['map_max_moves'] = function(block) {
+        return [`window.__mapRuntime.getMaxMoves()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    // --- 地圖挑戰啟動事件（對齊示範頁 Scratch 帽子積木概念） ---
     Blockly.Blocks['event_map_start'] = {
         init: function() {
-            this.appendDummyInput().appendField("🚀 當 挑戰開始");
+            this.appendDummyInput().appendField("當挑戰開始");
             this.appendStatementInput("DO").setCheck(null);
             this.setColour('#FFAB19');
-            this.setTooltip("地圖挑戰開始時執行的動作");
+            this.setTooltip("程式開始後執行（對應示範頁「本題專用」入口）");
         }
     };
     Blockly.JavaScript['event_map_start'] = function(block) {
@@ -925,7 +1949,8 @@
             'sprite_create', 'sprite_use', 'sprite_move', 'sprite_turn_right', 'sprite_turn_left',
             'sprite_goto_xy', 'sprite_set_x', 'sprite_set_y', 'sprite_change_x', 'sprite_change_y',
             'sprite_show', 'sprite_hide', 'sprite_say', 'sprite_set_costume',
-            'map_move_right', 'map_move_up', 'map_get_coins', 'event_map_start'
+            'map_move_right', 'map_move_up', 'map_get_coins', 'map_player_x', 'map_player_y', 'map_is_at_service',
+            'map_grid_width', 'map_grid_height', 'map_service_x', 'map_service_y', 'map_max_moves', 'event_map_start'
         ];
 
         customTypes.forEach((type) => {
@@ -1004,6 +2029,36 @@
         spriteScripts[currentScriptTarget] = xml;
     }
 
+    function computeEditorSnapshot() {
+        saveCurrentScriptFromWorkspace();
+        const title = (document.getElementById('project-title-input')?.value || '').trim();
+        const isPublic = !!document.getElementById('is-public-check')?.checked;
+        const scripts = Object.fromEntries(
+            Object.entries(spriteScripts)
+                .filter(([k]) => !(k.startsWith('__') && k.endsWith('__')))
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([k, v]) => [k, typeof v === 'string' ? v : ''])
+        );
+        return JSON.stringify({ title, isPublic, scripts });
+    }
+    let lastSavedEditorSnapshot = '';
+
+    function markEditorSavedBaseline() {
+        try {
+            lastSavedEditorSnapshot = computeEditorSnapshot();
+        } catch (e) {
+            lastSavedEditorSnapshot = '';
+        }
+    }
+
+    function isEditorDirty() {
+        try {
+            return computeEditorSnapshot() !== lastSavedEditorSnapshot;
+        } catch (e) {
+            return true;
+        }
+    }
+
     function updateEditorBadge() {
         const targetLabel = currentScriptTarget === STAGE_SCRIPT_KEY ? "舞台" : `角色：${currentScriptTarget}`;
         document.getElementById('editor-status').innerText = `⚪️ 編輯中 (${targetLabel})`;
@@ -1031,6 +2086,16 @@
             if (typeof v === 'string' && v.trim()) return k;
         }
         return STAGE_SCRIPT_KEY;
+    }
+
+    /** Firestore map 裡只保留字串（XML），其餘型別忽略 */
+    function onlyStringScriptMap(obj) {
+        const out = {};
+        if (!obj || typeof obj !== 'object') return out;
+        for (const [k, v] of Object.entries(obj)) {
+            if (typeof v === 'string') out[k] = v;
+        }
+        return out;
     }
 
     function normalizeXmlText(raw) {
@@ -1071,8 +2136,9 @@
         }
     }
 
-    window.switchSpriteScript = (target) => {
-        saveCurrentScriptFromWorkspace();
+    window.switchSpriteScript = (target, opts) => {
+        const skipSave = opts && opts.skipSave;
+        if (!skipSave) saveCurrentScriptFromWorkspace();
         currentScriptTarget = target || STAGE_SCRIPT_KEY;
         if (!spriteScripts[currentScriptTarget] || !String(spriteScripts[currentScriptTarget]).trim()) {
             const fallbackKey = getFirstNonEmptyScriptKey(spriteScripts);
@@ -1116,7 +2182,7 @@
     };
 
     refreshScriptSelector();
-    switchSpriteScript(STAGE_SCRIPT_KEY);
+    switchSpriteScript(STAGE_SCRIPT_KEY, { skipSave: true });
 
     // 權限與資料載入
     onAuthStateChanged(auth, async (user) => {
@@ -1147,7 +2213,7 @@
                     document.getElementById('main-action-btn').innerText = "⭐ 改編 (Remix)";
                 }
                 if (d.spriteScripts && typeof d.spriteScripts === 'object') {
-                    const migratedScripts = { ...d.spriteScripts };
+                    const migratedScripts = onlyStringScriptMap(d.spriteScripts);
                     // 相容舊版 key: "__stage__" -> "stage"
                     if (typeof migratedScripts.__stage__ === 'string' && !migratedScripts[STAGE_SCRIPT_KEY]) {
                         migratedScripts[STAGE_SCRIPT_KEY] = migratedScripts.__stage__;
@@ -1163,24 +2229,29 @@
                         migratedScripts[STAGE_SCRIPT_KEY] = d.data;
                     }
                     spriteScripts = { [STAGE_SCRIPT_KEY]: "", ...migratedScripts };
-                } else if (d.data) {
+                } else if (d.data != null && typeof d.data === 'string') {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: d.data };
                 } else {
                     spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
                 }
                 currentScriptTarget = getFirstNonEmptyScriptKey(spriteScripts);
                 refreshScriptSelector();
-                switchSpriteScript(currentScriptTarget);
+                switchSpriteScript(currentScriptTarget, { skipSave: true });
             }
         }
 
-        // 如果是任務模式，載入任務資料
+        // 如果是任務模式，載入任務資料（await 避免教師預覽標記尚未就緒就儲存並誤寫繳交）
         if (aid && cid) {
-            loadMissionInfo();
+            await loadMissionInfo();
+        } else {
+            syncNavMissionSubmitBtn(false);
+            syncSubmitTaskPanelBtn(false);
         }
+        markEditorSavedBaseline();
     });
 
     async function loadMissionInfo() {
+        teacherMissionPreview = false;
         try {
             const classSnap = await getDoc(doc(db, "classes", cid));
             if (classSnap.exists()) {
@@ -1189,18 +2260,43 @@
 
             const snap = await getDoc(doc(db, "classes", cid, "assignments", aid));
             if (snap.exists()) {
+                teacherMissionPreview = !!(isTeacher && aid && cid);
                 const data = snap.data();
                 currentMissionLv = data.lv || "LV1";
                 currentMissionType = data.type || "regular";
-                currentMapConfig = data.mapConfig || null;
+                currentMissionStory = data.mapStory || data.description || "";
+                mapPackMaps = [];
+                sessionMapScores = {};
+                currentMapIndex = 0;
+
+                if (currentMissionType === "map") {
+                    mapPackMaps = buildMapPackFromAssignment(data);
+                    if (mapPackMaps.length === 0) {
+                        mapPackMaps = [{ ...normalizeMapConfig(data.mapConfig || {}), preview: true }];
+                    }
+                    const user = auth.currentUser;
+                    if (user && !isTeacher) {
+                        const subSnap = await getDoc(doc(db, "classes", cid, "assignments", aid, "submissions", user.uid));
+                        if (subSnap.exists()) {
+                            const ms = subSnap.data().mapScores;
+                            sessionMapScores = normalizeRemoteMapScores(ms && typeof ms === "object" ? ms : {});
+                        }
+                    }
+                    const mlRaw = new URLSearchParams(window.location.search).get("ml");
+                    const ml = parseInt(mlRaw != null ? mlRaw : "0", 10);
+                    currentMapIndex = Math.max(0, Math.min(mapPackMaps.length - 1, isNaN(ml) ? 0 : ml));
+                    applyActiveMapFromIndex(true);
+                } else {
+                    currentMapConfig = data.mapConfig || null;
+                }
 
                 document.getElementById('mission-trigger').classList.add('has-mission');
                 document.getElementById('mission-title').innerText = data.title;
                 document.getElementById('mission-lv').innerText = currentMissionLv;
                 document.getElementById('mission-hints').innerText = data.hints || '無提示。';
                 
-                if((data.title.includes("【APCS】") || currentMissionType === 'map') && !isTeacher) {
-                    document.getElementById('mission-verify-area').style.display = 'block';
+                if (data.title.includes("【APCS】") || currentMissionType === "map") {
+                    document.getElementById("mission-verify-area").style.display = "block";
                 }
                 
                 const list = document.getElementById('mission-goals-list');
@@ -1216,20 +2312,44 @@
 
                 if (currentMissionType === 'map') {
                     setupMapChallenge();
+                } else {
+                    hideMapChallengeBanner();
                 }
+                syncNavMissionSubmitBtn(true);
+                syncSubmitTaskPanelBtn(true);
+            } else {
+                teacherMissionPreview = false;
+                syncNavMissionSubmitBtn(false);
+                syncSubmitTaskPanelBtn(false);
             }
-        } catch (e) { console.error("任務載入失敗", e); }
+        } catch (e) {
+            console.error("任務載入失敗", e);
+            teacherMissionPreview = false;
+            syncNavMissionSubmitBtn(false);
+            syncSubmitTaskPanelBtn(false);
+        } finally {
+            refreshTeacherMissionPreviewUi();
+        }
     }
 
     function setupMapChallenge() {
+        populateMapChallengeBanner();
         // 修改 Toolbox 為地圖挑戰專用
         const mapToolbox = `
-            <xml>
-                <category name="地圖控制" colour="#FFAB19">
+            <xml xmlns="https://developers.google.com/blockly/xml">
+                <category name="本題專用" colour="#FFAB19">
                     <block type="event_map_start"></block>
                     <block type="map_move_right"></block>
                     <block type="map_move_up"></block>
                     <block type="map_get_coins"></block>
+                    <block type="map_player_x"></block>
+                    <block type="map_player_y"></block>
+                    <block type="map_is_at_service"></block>
+                    <block type="map_grid_width"></block>
+                    <block type="map_grid_height"></block>
+                    <block type="map_service_x"></block>
+                    <block type="map_service_y"></block>
+                    <block type="map_max_moves"></block>
                 </category>
                 <category name="迴圈" colour="#5CA65C">
                     <block type="controls_repeat_ext">
@@ -1253,10 +2373,15 @@
         
         // 切換到控制台頁籤以便查看執行結果
         switchTab('console');
-        appendConsoleLine("🗺️ 地圖挑戰模式已啟動。使用專用積木來解題！", "system");
+        appendConsoleLine("🗺️ 地圖模式：請把解法都放在「當挑戰開始」底下。「統測計分」會依序跑完每一關（舞台暫時隱藏、加速），並更新最佳分與總分。", "system");
         
         // 立即顯示地圖網格
         updateIframeSandbox("");
+        initMapBannerCollapse();
+        setTimeout(() => {
+            if (typeof workspace !== "undefined" && workspace) Blockly.svgResize(workspace);
+            window.dispatchEvent(new Event("resize"));
+        }, 150);
     }
 
     window.toggleMissionPanel = () => {
@@ -1297,7 +2422,6 @@
                 if(state.isSuccess) {
                     resultDiv.innerHTML = `🎉 挑戰成功！到達終點。<br>💰 收集金幣：${state.collectedCoins} 枚<br>🚶 總步數：${state.moves}`;
                     resultDiv.style.color = "var(--scratch-green)";
-                    if(!isTeacher) document.getElementById('btn-submit-task').style.display = 'block';
                 } else {
                     resultDiv.innerHTML = "❌ 尚未到達終點或步數超限，再試試看！";
                     resultDiv.style.color = "red";
@@ -1335,7 +2459,6 @@
             if(passed) {
                 resultDiv.innerHTML = "🎉 驗證通過！你可以繳交了。";
                 resultDiv.style.color = "var(--scratch-green)";
-                if(!isTeacher) document.getElementById('btn-submit-task').style.display = 'block';
             } else {
                 resultDiv.innerHTML = "❌ 輸出結果不完全正確，再試試看！";
                 resultDiv.style.color = "red";
@@ -1347,61 +2470,100 @@
     };
 
     window.submitFromEditor = async () => {
-        if (!confirm("確定要現在儲存並繳交作業嗎？完成將獲得 XP 獎勵！")) return;
-        
-        const user = auth.currentUser;
-        await handleSave(true); // 先儲存專案
-        
-        try {
-            // 1. 給予 XP 獎勵
-            const uRef = doc(db, "users", user.uid);
-            const uSnap = await getDoc(uRef);
-            let { xp = 0, lv = 1 } = uSnap.data() || {};
-            
-            let xpReward = 100;
-            let coinReward = 50;
-            if (currentMissionLv.includes("LV2")) { xpReward = 250; coinReward = 150; }
-            if (currentMissionLv.includes("LV3")) { xpReward = 500; coinReward = 400; }
-            
-            let newXp = xp + xpReward;
-            let newCoins = (uSnap.data().coins || 0) + coinReward;
-            let newLv = lv;
-            let levelUp = false;
-            
-            // APCS 能力累積
-            let apcs_stats = uSnap.data().apcs_stats || { lv1: 0, lv2: 0, lv3: 0 };
-            if(document.getElementById('mission-title').innerText.includes("【APCS】")) {
-                if(currentMissionLv.includes("LV1")) apcs_stats.lv1 = (apcs_stats.lv1 || 0) + 1;
-                else if(currentMissionLv.includes("LV2")) apcs_stats.lv2 = (apcs_stats.lv2 || 0) + 1;
-                else if(currentMissionLv.includes("LV3")) apcs_stats.lv3 = (apcs_stats.lv3 || 0) + 1;
-            }
-            
-            // 檢查升級 (每 500*lv 一級)
-            while (newXp >= newLv * 500) {
-                newXp -= (newLv * 500);
-                newLv++;
-                levelUp = true;
-            }
-            
-            await updateDoc(uRef, { xp: newXp, lv: newLv, coins: newCoins, apcs_stats });
-            
-            // 2. 標記任務繳交
-            const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
-            await updateDoc(subRef, { status: 'turned-in', submittedAt: serverTimestamp() });
+        if (teacherMissionPreview) {
+            alert("教師預覽模式僅供試做題目，無法代學生繳交。");
+            return;
+        }
+        if (window.__mapBatchRunning || window.__editorSandboxExecuting) {
+            alert("程式或統測仍在執行中，請先停止或等待跑完再繳交。");
+            return;
+        }
 
-            // 3. 成功特效與提示
-            const msg = levelUp ? `🎊 恭喜升級到 LV.${newLv}！\n獲得了 ${xpReward} XP 與 💰 ${coinReward} 金幣！` : `✅ 任務完成！獲得了 ${xpReward} XP 與 💰 ${coinReward} 金幣！`;
-            alert(msg);
-            
+        const user = auth.currentUser;
+        if (!user || !aid || !cid) {
+            alert("無法繳交：缺少登入或任務資訊。");
+            return;
+        }
+
+        try {
+            saveCurrentScriptFromWorkspace();
+            await handleSave(true);
+            if (currentMissionType === "map") {
+                await mergeMapScoresFromSubmission();
+            }
+            await persistMapScoresToSubmission();
+            const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
+            const total = currentMissionType === "map" ? computeMapTotalAll() : 0;
+            await setDoc(
+                subRef,
+                {
+                    studentId: user.uid,
+                    status: "turned-in",
+                    submittedAt: serverTimestamp(),
+                    ...(currentMissionType === "map"
+                        ? { mapScores: sessionMapScores, mapTotalScore: total, mapLevels: mapPackMaps.length || 0 }
+                        : {})
+                },
+                { merge: true }
+            );
+
+            alert("繳交成功（已儲存程式與分數）。");
             location.href = `class_view.html?id=${cid}`;
-        } catch (e) { 
+        } catch (e) {
             console.error(e);
-            alert("繳交成功，但經驗值結算時發生一點問題：" + e.message);
-            location.href = `class_view.html?id=${cid}`;
+            alert("繳交失敗：" + (e.message || e));
         }
     };
 
     // --- 4. 功能實現 ---
+
+    const STAGE_ZOOM_STORAGE = "editorStagePreviewScale";
+    const STAGE_ZOOM_MIN = 0.5;
+    const STAGE_ZOOM_MAX = 2;
+    const STAGE_ZOOM_STEP = 0.1;
+    let stagePreviewZoom = 1;
+
+    function clampStageZoom(z) {
+        return Math.min(STAGE_ZOOM_MAX, Math.max(STAGE_ZOOM_MIN, Math.round(z * 100) / 100));
+    }
+
+    function applyStagePreviewZoom() {
+        const el = document.getElementById("stage-container");
+        const lab = document.getElementById("stage-zoom-label");
+        if (el) el.style.setProperty("--stage-scale", String(stagePreviewZoom));
+        if (lab) lab.textContent = Math.round(stagePreviewZoom * 100) + "%";
+        try { localStorage.setItem(STAGE_ZOOM_STORAGE, String(stagePreviewZoom)); } catch (e) {}
+    }
+
+    window.bumpStageZoom = (delta) => {
+        stagePreviewZoom = clampStageZoom(stagePreviewZoom + delta);
+        applyStagePreviewZoom();
+    };
+
+    window.resetStageZoom = () => {
+        stagePreviewZoom = 1;
+        applyStagePreviewZoom();
+    };
+
+    function initStagePreviewZoom() {
+        try {
+            const s = parseFloat(localStorage.getItem(STAGE_ZOOM_STORAGE));
+            if (Number.isFinite(s)) stagePreviewZoom = clampStageZoom(s);
+        } catch (e) {}
+        applyStagePreviewZoom();
+        const vp = document.getElementById("stage-zoom-viewport");
+        if (vp) {
+            vp.addEventListener(
+                "wheel",
+                (ev) => {
+                    if (!(ev.ctrlKey || ev.metaKey)) return;
+                    ev.preventDefault();
+                    bumpStageZoom(ev.deltaY < 0 ? STAGE_ZOOM_STEP : -STAGE_ZOOM_STEP);
+                },
+                { passive: false }
+            );
+        }
+    }
 
     // 切換頁籤
     window.switchTab = (tab) => {
@@ -1422,6 +2584,7 @@
             if (event.data.level === 'log' && String(event.data.msg || '').includes('✅ 執行完畢')) {
                 stageStatus.innerText = "✅ 舞台已更新";
                 stageStatus.style.color = "var(--scratch-green)";
+                window.__editorSandboxExecuting = false;
             }
         } else if (event.data && event.data.type === 'system') {
             consoleOut.innerHTML += `<span style="color:#0bf">> [系統]: ${event.data.msg}</span><br>`;
@@ -1430,6 +2593,26 @@
                 stageStatus.innerText = "🟡 舞台載入中";
                 stageStatus.style.color = "var(--scratch-orange)";
             }
+        } else if (event.data && event.data.type === 'map-score') {
+            const curEl = document.getElementById("map-score-current");
+            if (curEl) curEl.textContent = String(event.data.coins ?? 0);
+        } else if (event.data && event.data.type === 'map-run-done') {
+            const curEl = document.getElementById("map-score-current");
+            const coins = Number(event.data.collectedCoins) || 0;
+            const ok = !!event.data.isSuccess;
+            if (curEl) curEl.textContent = String(coins);
+            if (currentMissionType === "map" && ok) {
+                const levelIdx = mapRunDoneLevelKey != null ? mapRunDoneLevelKey : currentMapIndex;
+                const key = String(levelIdx);
+                const prev = Number(sessionMapScores[key]) || 0;
+                if (coins > prev) {
+                    sessionMapScores[key] = coins;
+                    persistMapScoresToSubmission().catch((e) => console.warn("map score sync", e));
+                }
+                updateMapChallengeScoreUi();
+                renderMapLevelButtons();
+            }
+            window.__editorSandboxExecuting = false;
         }
     });
 
@@ -1494,10 +2677,33 @@
         }
     };
 
+    /** 中斷沙盒內正在執行的腳本，並還原空白舞台預覽 */
+    window.stopExecution = () => {
+        const iframe = document.getElementById('execution-iframe');
+        if (iframe) {
+            try {
+                iframe.src = 'about:blank';
+            } catch (e) {}
+        }
+        const statusText = document.getElementById('stage-status');
+        if (statusText) {
+            statusText.innerText = '⏹ 已停止';
+            statusText.style.color = '#94a3b8';
+        }
+        appendConsoleLine('⏹ 已停止執行。', 'warn');
+        window.__mapBatchAbort = true;
+        mapRunDoneLevelKey = null;
+        window.__editorSandboxExecuting = false;
+        updateIframeSandbox('');
+    };
+
     // 執行程式碼 (沙盒 iframe 執行)
     window.executeCode = () => {
         saveCurrentScriptFromWorkspace();
-        const validation = validateToolboxBlocks();
+        let validation = { failed: [] };
+        if (currentMissionType !== "map") {
+            validation = validateToolboxBlocks();
+        }
         if (validation.failed.length > 0) {
             switchTab('console');
             document.getElementById('console-out').innerHTML = "<span style='color:#f66'>> 偵測到不可用積木，先修正後再執行。</span><br>";
@@ -1537,31 +2743,65 @@
             }
         });
         document.getElementById('code-preview').innerText = previewChunks.join('\n\n') || "// 尚未放置積木";
+        mapRunDoneLevelKey = null;
         updateIframeSandbox(code);
     };
 
-    window.updateIframeSandbox = (userCode = "") => {
+    window.updateIframeSandbox = (userCode = "", opts = {}) => {
         const iframe = document.getElementById('execution-iframe');
         const consoleOut = document.getElementById('console-out');
         const statusText = document.getElementById('stage-status');
-        
+        const mapBatchFast = !!(opts && opts.mapBatchFast);
+
+        window.__editorSandboxExecuting = !!userCode;
+
         if (userCode) {
-            switchTab('console');
-            consoleOut.innerHTML = "<span style='color:#0bf'>> 準備執行沙盒環境...</span><br>";
-            statusText.innerText = "🟢 執行中";
-            statusText.style.color = "var(--scratch-green)";
+            if (mapBatchFast) {
+                statusText.innerText = "統測跑關中（無預覽）";
+                statusText.style.color = "var(--scratch-orange)";
+            } else {
+                switchTab('console');
+                consoleOut.innerHTML = "<span style='color:#0bf'>> 準備執行沙盒環境...</span><br>";
+                statusText.innerText = "🟢 執行中";
+                statusText.style.color = "var(--scratch-green)";
+            }
         }
         
         const isMap = currentMissionType === 'map';
-        const mapConfigJson = JSON.stringify(currentMapConfig).replace(/<\/script>/g, '<\\/script>').replace(/\$\{/g, '\\${');
+        const cfgForIframe = isMap && currentMapConfig
+            ? Object.assign({}, normalizeMapConfig(currentMapConfig), { previewVisual: currentMapPreviewVisual, mapBatchFast })
+            : (currentMapConfig || {});
+        const mapConfigJson = JSON.stringify(cfgForIframe).replace(/<\/script>/g, '<\\/script>').replace(/\$\{/g, '\\${');
         const userCodeJson = JSON.stringify(userCode).replace(/<\/script>/g, '<\\/script>').replace(/\$\{/g, '\\${');
+        const iframeRunDelayMs = isMap && mapBatchFast ? 0 : 100;
 
         const htmlTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; font-family: sans-serif; background: #eef4ff; display:flex; justify-content:center; align-items:center; height:100vh; width:100vw; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #eef4ff; }
+        body.stage-embed-full {
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            width: 100vw;
+        }
+        body.map-embed {
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            -webkit-overflow-scrolling: touch;
+        }
+        #map-fit-root {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            box-sizing: border-box;
+            padding: 6px 8px 16px;
+        }
         #scratch-stage { 
             width: 480px; height: 360px; background: linear-gradient(180deg, #dcecff, #f3f8ff); 
             border: 2px solid #9bbcff; border-radius: 12px; position: relative; overflow: hidden; 
@@ -1577,21 +2817,46 @@
         .grid-start { background: rgba(76, 176, 80, 0.1); border: 2px solid #4CAF50; }
         .grid-end { background: rgba(255, 77, 77, 0.1); border: 2px solid #FF4D4D; }
         #map-player { position: absolute; font-size: 30px; transition: 0.3s; z-index: 10; display: flex; align-items: center; justify-content: center; }
+        .map-shell { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; padding: 4px 4px 0; box-sizing: border-box; width: max-content; max-width: 100%; margin: 0 auto; transform-origin: top center; }
+        .map-coord-legend { margin: 0; padding: 0 10px; font-size: 12px; line-height: 1.4; color: #334155; text-align: center; max-width: 520px; font-weight: 500; }
+        .map-axis-x { position: absolute; bottom: 1px; transform: translateX(-50%); font-size: 11px; font-weight: 700; color: #1d4ed8; pointer-events: none; z-index: 6; text-shadow: 0 0 6px #fff, 0 0 6px #fff, 0 1px 0 #fff; font-family: ui-monospace, monospace; }
+        .map-axis-y { position: absolute; left: 3px; transform: translateY(-50%); font-size: 11px; font-weight: 700; color: #c2410c; pointer-events: none; z-index: 6; text-shadow: 0 0 6px #fff, 0 0 6px #fff, 0 1px 0 #fff; font-family: ui-monospace, monospace; }
+        .map-xy-hud { position: absolute; right: 5px; top: 4px; font-size: 12px; line-height: 1.3; font-family: ui-monospace, Consolas, monospace; background: rgba(255,255,255,0.95); border: 1px solid #64748b; border-radius: 8px; padding: 5px 9px; z-index: 22; color: #0f172a; box-shadow: 0 2px 8px rgba(15,23,42,0.12); white-space: nowrap; }
     </style>
 </head>
-<body>
-    <div id="scratch-stage"></div>
+<body class="${isMap ? 'map-embed' : 'stage-embed-full'}">
+    ${isMap ? '<div id="map-fit-root"><div class="map-shell"><p class="map-coord-legend"></p><div id="scratch-stage"></div></div></div>' : '<div id="scratch-stage"></div>'}
     <script>
         function autoScale() {
             const stage = document.getElementById('scratch-stage');
             if (!stage) return;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
-            const scale = Math.min(vw / 480, vh / 360) * 0.98;
-            stage.style.transform = "scale(" + scale + ")";
+            const pad = 12;
+            if (${isMap}) {
+                stage.style.transform = '';
+                stage.style.transformOrigin = '';
+                const shell = document.querySelector('.map-shell');
+                const root = document.getElementById('map-fit-root');
+                if (!shell) return;
+                shell.style.transform = '';
+                shell.style.transformOrigin = 'top center';
+                void shell.offsetHeight;
+                const rect = shell.getBoundingClientRect();
+                const nw = Math.max(rect.width, 48);
+                const nh = Math.max(rect.height, 48);
+                let s = Math.min((vw - pad * 2) / nw, (vh - pad * 2) / nh);
+                s = Math.max(0.1, Math.min(s, 4)) * 0.99;
+                shell.style.transform = 'scale(' + s + ')';
+                if (root) {
+                    root.style.minHeight = Math.ceil(nh * s + pad * 2) + 'px';
+                }
+            } else {
+                const scale = Math.max(0.1, Math.min((vw - pad * 2) / 480, (vh - pad * 2) / 360)) * 0.99;
+                stage.style.transformOrigin = 'center center';
+                stage.style.transform = 'scale(' + scale + ')';
+            }
         }
-        window.addEventListener('resize', autoScale);
-        autoScale();
 
         ['log', 'warn', 'error'].forEach(method => {
             const original = console[method];
@@ -1606,6 +2871,7 @@
         if (${isMap}) {
             window.__mapRuntime = (() => {
                 const config = ${mapConfigJson} || {};
+                const previewVisual = config.previewVisual !== false;
                 const stage = document.getElementById('scratch-stage');
                 if (!stage) {
                     const newStage = document.createElement('div');
@@ -1627,6 +2893,11 @@
                 let coinElements = [];
                 let startHandler = null;
 
+                const leg = document.querySelector(".map-coord-legend");
+                if (leg) {
+                    leg.textContent = "座標說明：X＝橫向（畫面最左欄為 0，往右每格 +1）；Y＝縱向（畫面最底列為 0，往上每列 +1）。與積木「目前 X／Y 座標」相同。";
+                }
+
                 for(let r=0; r<rows; r++) {
                     for(let c=0; c<cols; c++) {
                         const cell = document.createElement('div');
@@ -1636,7 +2907,10 @@
                         cell.style.left = (c * cellW) + 'px';
                         cell.style.top = ((rows - 1 - r) * cellH) + 'px';
                         if(c === startPos[0] && r === startPos[1]) cell.classList.add('grid-start');
-                        if(c === endPos[0] && r === endPos[1]) { cell.classList.add('grid-end'); cell.innerHTML = "🏁"; }
+                        if(c === endPos[0] && r === endPos[1]) {
+                            cell.classList.add('grid-end');
+                            cell.innerHTML = previewVisual ? "🏁" : "?";
+                        }
                         const coinsInCell = coins.filter(cp => cp[0] === c && cp[1] === r);
                         if(coinsInCell.length > 0) {
                             const coinEl = document.createElement('div');
@@ -1645,6 +2919,10 @@
                             coinEl.dataset.x = c;
                             coinEl.dataset.y = r;
                             coinEl.dataset.amount = coinsInCell.length;
+                            if (!previewVisual) {
+                                coinEl.style.opacity = '0';
+                                coinEl.style.pointerEvents = 'none';
+                            }
                             cell.appendChild(coinEl);
                             coinElements.push(coinEl);
                         }
@@ -1652,12 +2930,36 @@
                     }
                 }
 
+                for (let c = 0; c < cols; c++) {
+                    const lx = document.createElement("div");
+                    lx.className = "map-axis-x";
+                    lx.textContent = String(c);
+                    lx.style.left = (c * cellW + cellW / 2) + "px";
+                    lx.title = "X=" + c;
+                    activeStage.appendChild(lx);
+                }
+                for (let y = 0; y < rows; y++) {
+                    const ly = document.createElement("div");
+                    ly.className = "map-axis-y";
+                    ly.textContent = String(y);
+                    ly.style.top = ((rows - 1 - y) * cellH + cellH / 2) + "px";
+                    ly.title = "Y=" + y;
+                    activeStage.appendChild(ly);
+                }
+
+                const xyHud = document.createElement("div");
+                xyHud.className = "map-xy-hud";
+                xyHud.id = "map-xy-hud";
+                activeStage.appendChild(xyHud);
+
                 const player = document.createElement('div');
                 player.id = 'map-player'; player.innerHTML = "🐱";
                 player.style.width = cellW + 'px'; player.style.height = cellH + 'px';
                 activeStage.appendChild(player);
 
                 function updatePlayer() {
+                    const hud = document.getElementById("map-xy-hud");
+                    if (hud) hud.innerHTML = "<strong>角色座標</strong><br>X = " + playerPos[0] + "<br>Y = " + playerPos[1];
                     player.style.left = (playerPos[0] * cellW) + 'px';
                     player.style.top = ((rows - 1 - playerPos[1]) * cellH) + 'px';
                     coinElements.forEach((el) => {
@@ -1665,6 +2967,9 @@
                             el.style.display = 'none'; 
                             collectedCoins += parseInt(el.dataset.amount || 1);
                             console.log("💰 收集到金幣！目前共有 " + collectedCoins + " 枚。");
+                            if (config.mapBatchFast !== true) {
+                                try { window.parent.postMessage({ type: 'map-score', coins: collectedCoins }, '*'); } catch(e) {}
+                            }
                         }
                     });
                 }
@@ -1681,9 +2986,18 @@
                             if(dir === 'right') playerPos[0]--; if(dir === 'up') playerPos[1]--;
                         }
                         updatePlayer();
-                        await new Promise(r => setTimeout(r, 400));
+                        const __stepMs = (config.mapBatchFast === true) ? 0 : 400;
+                        await new Promise(r => setTimeout(r, __stepMs));
                     },
                     getCoins: () => collectedCoins,
+                    getPlayerX: () => playerPos[0],
+                    getPlayerY: () => playerPos[1],
+                    isAtService: () => playerPos[0] === endPos[0] && playerPos[1] === endPos[1],
+                    getGridWidth: () => cols,
+                    getGridHeight: () => rows,
+                    getServiceX: () => endPos[0],
+                    getServiceY: () => endPos[1],
+                    getMaxMoves: () => Number(config.maxMoves) || 15,
                     getFinalState: () => ({ playerPos, collectedCoins, moves, isSuccess: playerPos[0] === endPos[0] && playerPos[1] === endPos[1] }),
                     onStart: (fn) => { startHandler = fn; },
                     start: async () => { if(startHandler) await startHandler(); }
@@ -1806,6 +3120,22 @@
             window.parent.postMessage({ type: 'system', msg: '舞台已初始化' }, '*');
         }
 
+        window.addEventListener('resize', autoScale);
+        window.addEventListener('load', function () {
+            if (${isMap}) requestAnimationFrame(autoScale);
+        });
+        if (${isMap}) {
+            var __mapShellEl = document.querySelector('.map-shell');
+            if (__mapShellEl && window.ResizeObserver) {
+                new ResizeObserver(function () { autoScale(); }).observe(__mapShellEl);
+            }
+            requestAnimationFrame(function () {
+                requestAnimationFrame(autoScale);
+            });
+        } else {
+            autoScale();
+        }
+
         window.runUserCode = async (userCode) => {
             try {
                 if (!userCode || userCode.trim() === "") {
@@ -1816,7 +3146,13 @@
                 const userFn = new AsyncFunction(userCode);
                 await userFn();
                 if (window.__scratchRuntime) window.__scratchRuntime.start();
-                if (window.__mapRuntime) await window.__mapRuntime.start();
+                if (window.__mapRuntime) {
+                    await window.__mapRuntime.start();
+                    try {
+                        const st = window.__mapRuntime.getFinalState();
+                        window.parent.postMessage(Object.assign({ type: 'map-run-done' }, st), '*');
+                    } catch(e) {}
+                }
                 console.log("✅ 執行完畢");
             } catch(e) {
                 console.error("執行時錯誤: " + e.message);
@@ -1825,7 +3161,7 @@
 
         setTimeout(() => {
             runUserCode(${userCodeJson});
-        }, 100);
+        }, ${iframeRunDelayMs});
     <\/script>
 </body>
 </html>`;
@@ -1866,6 +3202,7 @@
                     name: title, data: legacyDataXml, spriteScripts: allScripts, isPublic: isPublic, updatedAt: serverTimestamp()
                 });
                 if(!silent) alert("儲存成功！");
+                markEditorSavedBaseline();
             } else {
                 const savePayload = {
                     name: title,
@@ -1888,8 +3225,8 @@
                 document.getElementById('main-action-btn').innerText = "💾 儲存";
                 if(!silent) alert("已建立新專案並儲存！");
                 
-                // 如果是任務模式，自動幫學生關聯附件
-                if (aid && cid) {
+                // 如果是任務模式，自動幫學生關聯附件（教師預覽不寫入繳交）
+                if (aid && cid && !teacherMissionPreview) {
                     const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
                     const sSnap = await getDoc(subRef);
                     const att = { id: currentPid, name: title };
@@ -1905,7 +3242,9 @@
                 qs.delete('from');
                 if (silent) {
                     window.history.replaceState({}, '', `${location.pathname}?${qs.toString()}`);
+                    markEditorSavedBaseline();
                 } else {
+                    markEditorSavedBaseline();
                     location.href = `${location.pathname}?${qs.toString()}`;
                 }
             }
@@ -1932,8 +3271,15 @@
         reader.readAsText(input.files[0]);
     };
 
+    window.addEventListener('beforeunload', (ev) => {
+        if (!isEditorDirty()) return;
+        ev.preventDefault();
+        ev.returnValue = '您有尚未儲存的變更，確定要離開嗎？';
+    });
+
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
     window.addEventListener('resize', () => Blockly.svgResize(workspace));
+    initStagePreviewZoom();
 </script>
 
 </body>

@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
     <title>Creative Blocks Pro - 引領未來的積木程式平台</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -112,6 +113,19 @@
         @media (max-width: 480px) {
             .nav-item { font-size: 13px; padding: 10px 15px; }
             .hero h1 { font-size: 2.5rem; }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                width: calc(100vw - 24px) !important;
+                left: 12px !important;
+                transform: none !important;
+                padding-left: max(12px, env(safe-area-inset-left, 0px)) !important;
+                padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
+            }
+            .hero { padding-top: max(100px, env(safe-area-inset-top, 0px)); }
+            .features { padding: 60px 5%; }
+            .showcase { padding: 60px 5%; }
         }
 
     </style>
