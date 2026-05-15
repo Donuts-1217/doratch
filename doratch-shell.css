@@ -1,0 +1,178 @@
+/**
+ * Doratch — 全站側欄導覽（與各頁 app-container 搭配）
+ */
+.app-container .sidebar-main {
+    width: 260px;
+    background: #0b0e14;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.doratch-brand-logo,
+.app-container .sidebar-logo {
+    padding: 30px;
+    font-weight: 900;
+    font-size: 1.35rem;
+    color: #4c97ff;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    font-family: "Outfit", "Noto Sans TC", sans-serif;
+}
+
+.doratch-brand-logo span,
+.app-container .sidebar-logo span {
+    color: #94a3b8;
+    font-size: 0.65em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    display: block;
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+.app-container .nav-item {
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: inherit;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+    box-sizing: border-box;
+}
+
+.app-container .nav-item:hover,
+.app-container .nav-item.active {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.app-container .nav-item.active {
+    color: #4c97ff;
+    border-left: 4px solid #4c97ff;
+}
+
+.doratch-nav-section-label {
+    margin: 20px 30px 10px;
+    font-size: 11px;
+    color: #475569;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.app-container .sidebar-footer {
+    margin-top: auto;
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.app-container .user-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.app-container .main-content {
+    flex: 1;
+    margin-left: 260px;
+}
+
+@media (max-width: 1024px) {
+    .app-container {
+        flex-direction: column;
+    }
+    .app-container .sidebar-main {
+        width: 100vw;
+        height: auto;
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .doratch-brand-logo,
+    .app-container .sidebar-logo {
+        display: none;
+    }
+    .doratch-nav-host {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+    .doratch-nav-section-label {
+        display: none;
+    }
+    .app-container .nav-item {
+        padding: 12px 20px;
+        font-size: 14px;
+        flex-shrink: 0;
+        border-left: none !important;
+        border-bottom: 2px solid transparent;
+        width: auto;
+    }
+    .app-container .nav-item.active {
+        border-bottom: 2px solid #4c97ff;
+        border-left: none !important;
+    }
+    .app-container .sidebar-footer {
+        width: auto;
+        border: none;
+        padding: 5px 15px;
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+    .app-container .main-content {
+        margin-left: 0;
+        width: 100vw;
+    }
+}
+
+/* 頂部橫向導覽（首頁 / 登入 / 編輯器） */
+.doratch-top-brand {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #4c97ff;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: lowercase;
+    font-family: "Outfit", "Noto Sans TC", sans-serif;
+}
+
+.doratch-top-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.doratch-top-links a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.doratch-top-links a:hover {
+    color: #4c97ff;
+}

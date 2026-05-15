@@ -54,6 +54,43 @@
         .loading-pulse { width: 100%; height: 300px; background: rgba(255,255,255,0.02); border-radius: 24px; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
+        .challenge-entry-banner {
+            max-width: 900px;
+            margin: 0 auto 36px;
+            padding: 0 20px;
+        }
+        .challenge-entry-card {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 22px 26px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.25), rgba(76, 151, 255, 0.2));
+            border: 1px solid rgba(52, 211, 153, 0.45);
+            cursor: pointer;
+            transition: 0.25s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .challenge-entry-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 16px 40px rgba(76, 151, 255, 0.2);
+        }
+        .challenge-entry-card h2 { margin: 0 0 6px; font-size: 1.25rem; font-weight: 900; color: #ecfdf5; }
+        .challenge-entry-card p { margin: 0; font-size: 14px; color: #94a3b8; line-height: 1.55; max-width: 520px; }
+        .challenge-entry-cta {
+            flex-shrink: 0;
+            padding: 12px 22px;
+            border-radius: 12px;
+            background: #059669;
+            color: #fff;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
         /* 全域導覽列樣式 */
         .app-container { display: flex; min-height: 100vh; }
         .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
@@ -123,6 +160,7 @@
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
         
         <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
+        <a href="challenge_zone.html" class="nav-item">🎯 挑戰區</a>
         <a href="page.html" class="nav-item">🚀 創作空間</a>
         <a href="projects.html" class="nav-item">📂 我的作品</a>
         <a href="main.html" class="nav-item active">🌍 探索中心</a>
@@ -153,6 +191,16 @@
     <p>匯集全校最優秀的積木程式作品，激發你的邏輯靈感</p>
 </div>
 
+<div class="challenge-entry-banner">
+    <a class="challenge-entry-card" href="challenge_zone.html">
+        <div>
+            <h2>🎯 全服地圖挑戰</h2>
+            <p>固定二十關（前 10 關可預覽、後 10 關隱藏）。題組首次進入時隨機產生並永久保存，全服共用同一組關卡與排行榜。</p>
+        </div>
+        <span class="challenge-entry-cta">進入挑戰區 →</span>
+    </a>
+</div>
+
 <div class="search-area">
     <input type="text" class="search-bar" id="search-input" placeholder="🔍 搜尋專案名稱、作者或關鍵字..." oninput="handleSearch()">
 </div>
@@ -179,6 +227,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collectionGroup, collection, query, where, orderBy, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getDisplayLabel, avatarUrlFor, needsDisplayName } from "./doratch-user.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -202,9 +251,13 @@
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
             const data = snap.data();
+            if (needsDisplayName(data)) {
+                location.href = "profile.html?needDisplayName=1";
+                return;
+            }
             document.getElementById('side-coins').innerText = data.coins || 0;
-            document.getElementById('side-username').innerText = user.email.split('@')[0];
-            document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            document.getElementById('side-username').innerText = getDisplayLabel(data, user.email);
+            document.getElementById('side-avatar').src = avatarUrlFor(data, user.email, 32);
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';

@@ -53,6 +53,42 @@
         .action-card h3 { margin: 0 0 20px; font-size: 1.1rem; color: #94A3B8; }
         .action-btn { display: block; width: 100%; padding: 14px 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: white; font-weight: bold; text-decoration: none; margin-bottom: 12px; transition: 0.3s; cursor: pointer; text-align: left; font-size: 14px; }
         .action-btn:hover { background: rgba(76,151,255,0.1); border-color: var(--primary); color: var(--primary); }
+
+        .setup-banner {
+            background: linear-gradient(90deg, #FFAB19, #FF6B6B);
+            color: #1E293B;
+            padding: 16px 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            font-weight: bold;
+            display: none;
+        }
+        .setup-banner.visible { display: block; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+            display: none; align-items: center; justify-content: center;
+            z-index: 2000; padding: 20px; box-sizing: border-box;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background: var(--card-bg); border-radius: 20px; padding: 28px;
+            width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .modal-card h3 { margin: 0 0 8px; }
+        .modal-card p { margin: 0 0 16px; color: #94A3B8; font-size: 14px; }
+        .modal-card input {
+            width: 100%; padding: 12px 14px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.1);
+            background: #0F172A; color: white; font-size: 16px; box-sizing: border-box;
+        }
+        .modal-card input:focus { outline: none; border-color: var(--primary); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+        .modal-actions button {
+            flex: 1; padding: 12px; border-radius: 12px; font-weight: 900; cursor: pointer; border: none;
+        }
+        .btn-modal-save { background: var(--primary); color: white; }
+        .btn-modal-cancel { background: rgba(255,255,255,0.08); color: #94A3B8; }
+        #name-form-msg { font-size: 13px; color: #F87171; margin-top: 8px; min-height: 1.2em; }
     
         
         /* 響應式縮放與排版 */
@@ -120,6 +156,7 @@
         <a href="game.html" class="nav-item">🎮 指令塔防</a>
         <a href="shop.html" class="nav-item">🛒 創意商城</a>
         <a href="chat.html" class="nav-item">💬 交流大廳</a>
+        <a href="profile.html" class="nav-item active">👤 個人檔案</a>
         <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
         
         <div class="sidebar-footer">
@@ -135,11 +172,15 @@
     </aside>
 
     <main class="main-content">
+        <div id="setup-banner" class="setup-banner">
+            請先設定顯示名稱，讓同學與老師在排行榜、聊天室能認出你。
+        </div>
+
         <div class="profile-hero">
             <img id="profile-avatar" class="avatar-large" src="">
-            <div id="display-name" class="profile-name">載入中...</div>
+            <div id="profile-display-name" class="profile-name">載入中...</div>
             <div id="display-uid" class="profile-id">UID: ---</div>
-            <button class="btn-edit-profile" onclick="alert('個人資料修改功能開發中！')">✏️ 修改個人資料</button>
+            <button type="button" class="btn-edit-profile" id="btn-edit-display-name">✏️ 修改顯示名稱</button>
         </div>
 
         <div class="stats-grid">
@@ -171,58 +212,158 @@
     </main>
 </div>
 
+<div id="name-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-labelledby="name-modal-title">
+        <h3 id="name-modal-title">設定顯示名稱</h3>
+        <p id="name-modal-desc">此名稱會顯示在排行榜、聊天室與班級中。</p>
+        <input type="text" id="input-display-name" maxlength="20" placeholder="2～20 字" autocomplete="nickname">
+        <div id="name-form-msg"></div>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-name-cancel">取消</button>
+            <button type="button" class="btn-modal-save" id="btn-name-save">儲存</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import {
+        getDisplayLabel,
+        avatarUrlFor,
+        validateDisplayNameInput,
+        needsDisplayName,
+        normalizeDisplayName
+    } from "./doratch-user.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    window.handleLogout = () => signOut(auth).then(() => location.href = 'index.html');
+    const params = new URLSearchParams(location.search);
+    const forceSetup = params.get("needDisplayName") === "1";
+
+    const modal = document.getElementById("name-modal");
+    const inputName = document.getElementById("input-display-name");
+    const msgEl = document.getElementById("name-form-msg");
+    const setupBanner = document.getElementById("setup-banner");
+    let userRef = null;
+    let userData = {};
+    let currentUser = null;
+
+    function applyDisplayUI(user, data) {
+        const label = getDisplayLabel(data, user.email);
+        const avatar = avatarUrlFor(data, user.email, 128);
+        document.getElementById("profile-display-name").innerText = label;
+        document.getElementById("display-uid").innerText = `帳號：${user.email}`;
+        document.getElementById("profile-avatar").src = avatar;
+        document.getElementById("side-avatar").src = avatarUrlFor(data, user.email, 32);
+        document.getElementById("side-username").innerText = label;
+        const missing = needsDisplayName(data);
+        if (setupBanner) setupBanner.classList.toggle("visible", missing);
+    }
+
+    function openNameModal(required) {
+        const cur = normalizeDisplayName(userData.displayName);
+        inputName.value = cur.length >= 2 ? cur : "";
+        msgEl.textContent = "";
+        document.getElementById("name-modal-desc").innerText = required
+            ? "請輸入顯示名稱後才能繼續使用平台。"
+            : "此名稱會顯示在排行榜、聊天室與班級中。";
+        document.getElementById("btn-name-cancel").style.display = required ? "none" : "block";
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        inputName.focus();
+    }
+
+    function closeNameModal() {
+        if (forceSetup && needsDisplayName(userData)) return;
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+    }
+
+    document.getElementById("btn-edit-display-name").addEventListener("click", () => openNameModal(false));
+    document.getElementById("btn-name-cancel").addEventListener("click", closeNameModal);
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal && !forceSetup) closeNameModal();
+    });
+
+    document.getElementById("btn-name-save").addEventListener("click", async () => {
+        const check = validateDisplayNameInput(inputName.value);
+        if (!check.ok) {
+            msgEl.textContent = check.error;
+            return;
+        }
+        msgEl.textContent = "";
+        const btn = document.getElementById("btn-name-save");
+        btn.disabled = true;
+        btn.textContent = "儲存中…";
+        try {
+            if (!userRef) throw new Error("未登入");
+            await updateDoc(userRef, { displayName: check.name });
+            userData = { ...userData, displayName: check.name };
+            applyDisplayUI(currentUser, userData);
+            closeNameModal();
+            if (forceSetup && !needsDisplayName(userData)) {
+                history.replaceState({}, "", "profile.html");
+                setupBanner.classList.remove("visible");
+            }
+        } catch (e) {
+            msgEl.textContent = "儲存失敗，請稍後再試";
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "儲存";
+        }
+    });
+
+    window.handleLogout = () => signOut(auth).then(() => location.href = "index.html");
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
-
-        // 基本資訊
-        document.getElementById('display-name').innerText = user.email.split('@')[0];
-        document.getElementById('display-uid').innerText = `帳號：${user.email}`;
-        const avatarUrl = `https://ui-avatars.com/api/?name=${user.email}&size=128&background=random`;
-        document.getElementById('profile-avatar').src = avatarUrl;
-        document.getElementById('side-avatar').src = avatarUrl;
-        document.getElementById('side-username').innerText = user.email.split('@')[0];
+        currentUser = user;
+        userRef = doc(db, "users", user.uid);
 
         try {
-            // 抓 Firestore 使用者資料
-            const userSnap = await getDoc(doc(db, "users", user.uid));
-            if (userSnap.exists()) {
-                const data = userSnap.data();
-                document.getElementById('count-coins').innerText = data.coins || 0;
-                document.getElementById('count-lv').innerText = data.lv || 1;
-                document.getElementById('side-coins').innerText = data.coins || 0;
+            let userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) {
+                await setDoc(userRef, { email: user.email, uid: user.uid, xp: 0, lv: 1, coins: 0, role: "student" }, { merge: true });
+                userSnap = await getDoc(userRef);
+            }
+            userData = userSnap.exists() ? userSnap.data() : {};
+            applyDisplayUI(user, userData);
 
-                let role = data.role || 'student';
-                if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-                if (role === 'admin' || role === 'teacher') {
-                    const adminLink = document.getElementById('admin-link-main');
-                    if (adminLink) { adminLink.style.display = 'flex'; adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理'; }
+            document.getElementById("count-coins").innerText = userData.coins || 0;
+            document.getElementById("count-lv").innerText = userData.lv || 1;
+            document.getElementById("side-coins").innerText = userData.coins || 0;
+
+            let role = userData.role || "student";
+            if (user.email === "chianghansen0302@gmail.com") role = "admin";
+            if (role === "admin" || role === "teacher") {
+                const adminLink = document.getElementById("admin-link-main");
+                if (adminLink) {
+                    adminLink.style.display = "flex";
+                    adminLink.innerText = role === "admin" ? "🛠️ 管理面板" : "❓ 題庫管理";
                 }
             }
 
-            // 計算作品數量
             const projSnap = await getDocs(collection(db, "users", user.uid, "projects"));
-            document.getElementById('count-projects').innerText = projSnap.size;
+            document.getElementById("count-projects").innerText = projSnap.size;
 
-            // 計算班級數量
             const [tSnap, sSnap] = await Promise.all([
                 getDocs(query(collection(db, "classes"), where("teacherId", "==", user.uid))),
                 getDocs(query(collection(db, "classes"), where("students", "array-contains", user.uid)))
             ]);
-            document.getElementById('count-classes').innerText = tSnap.size + sSnap.size;
+            document.getElementById("count-classes").innerText = tSnap.size + sSnap.size;
 
-        } catch (e) { console.error("資料載入失敗", e); }
+            if (needsDisplayName(userData) || forceSetup) {
+                openNameModal(true);
+            }
+        } catch (e) {
+            console.error("資料載入失敗", e);
+        }
     });
 </script>
 

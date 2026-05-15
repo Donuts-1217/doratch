@@ -150,6 +150,11 @@
         <label>登入密碼</label>
         <input type="password" id="password" placeholder="請輸入至少 6 位數密碼">
     </div>
+
+    <div class="input-group" id="display-name-group" style="display:none;">
+        <label>顯示名稱</label>
+        <input type="text" id="display-name" maxlength="20" placeholder="2～20 字，其他人會看到此名稱" autocomplete="nickname">
+    </div>
     
     <button id="main-btn" class="btn btn-primary" onclick="handleAuth()">登入</button>
 
@@ -167,6 +172,8 @@
         sendEmailVerification,
         signOut 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { validateDisplayNameInput, needsDisplayName } from "./doratch-user.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -179,8 +186,19 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     let mode = 'login';
+
+    async function redirectAfterLogin(user) {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        const data = snap.exists() ? snap.data() : {};
+        if (needsDisplayName(data)) {
+            location.href = "profile.html?needDisplayName=1";
+        } else {
+            location.href = "main.html";
+        }
+    }
 
     function showMsg(text, type) {
         const box = document.getElementById('message-box');
@@ -196,14 +214,17 @@
         const mainBtn = document.getElementById('main-btn');
         const toggleArea = document.getElementById('toggle-area');
 
+        const nameGroup = document.getElementById('display-name-group');
         if (mode === 'reg') {
             title.innerText = "註冊新帳號";
             mainBtn.innerText = "註冊並發送驗證信";
             toggleArea.innerHTML = `已有帳號？ <span onclick="switchMode('login')">點此登入</span>`;
+            nameGroup.style.display = 'block';
         } else {
             title.innerText = "會員登入";
             mainBtn.innerText = "登入";
             toggleArea.innerHTML = `還沒有帳號嗎？ <span onclick="switchMode('reg')">立即註冊</span>`;
+            nameGroup.style.display = 'none';
         }
     };
 
@@ -218,7 +239,22 @@
 
         try {
             if (mode === 'reg') {
+                const nameCheck = validateDisplayNameInput(document.getElementById('display-name').value);
+                if (!nameCheck.ok) {
+                    showMsg(nameCheck.error, "error");
+                    return;
+                }
                 const res = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", res.user.uid), {
+                    email,
+                    uid: res.user.uid,
+                    displayName: nameCheck.name,
+                    xp: 0,
+                    lv: 1,
+                    coins: 0,
+                    role: "student",
+                    createdAt: serverTimestamp()
+                });
                 await sendEmailVerification(res.user);
                 await signOut(auth);
                 
@@ -234,7 +270,7 @@
 
                 if (user.emailVerified) {
                     showMsg("🎉 登入成功，正在導向...", "success");
-                    setTimeout(() => location.href = "main.html", 800);
+                    setTimeout(() => redirectAfterLogin(user), 800);
                 } else {
                     showMsg(`
                         ⚠️ Email 尚未驗證！<br>

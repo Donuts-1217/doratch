@@ -560,6 +560,138 @@
         }
         .teacher-mission-preview-strip .tmp-link:hover { color: #1e40af; }
 
+        .global-challenge-strip {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            padding: 10px 18px;
+            background: linear-gradient(90deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+            font-size: 13px;
+            font-weight: 700;
+            border-bottom: 2px solid #34d399;
+            text-align: center;
+            line-height: 1.45;
+        }
+        .global-challenge-strip .gcb-badge {
+            flex-shrink: 0;
+            background: #059669;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+        .global-challenge-strip .gcb-link {
+            flex-shrink: 0;
+            color: #1d4ed8;
+            font-weight: 900;
+            text-decoration: underline;
+        }
+        .global-challenge-strip .gcb-link:hover { color: #1e40af; }
+
+        /* 給製作者留言：只在查看他人作品時顯示 */
+        #creator-comment-panel {
+            display: none;
+            position: fixed;
+            top: 78px;
+            right: 18px;
+            width: min(340px, calc(100vw - 24px));
+            max-height: min(440px, calc(100vh - 96px));
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(76, 151, 255, 0.22);
+            border-radius: 18px;
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.2);
+            z-index: 998;
+            overflow: hidden;
+        }
+        #creator-comment-panel.open { display: flex; flex-direction: column; }
+        .creator-comment-header {
+            background: linear-gradient(135deg, var(--scratch-blue), var(--scratch-purple));
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .creator-comment-title { display: flex; flex-direction: column; gap: 2px; }
+        .creator-comment-title small { font-size: 11px; font-weight: 500; opacity: 0.86; line-height: 1.4; }
+        .creator-comment-toggle { font-size: 18px; line-height: 1; }
+        #creator-comment-panel.collapsed .creator-comment-body { display: none; }
+        .creator-comment-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        #creator-comment-list {
+            max-height: 180px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+        .creator-comment-empty {
+            color: #64748b;
+            font-size: 13px;
+            text-align: center;
+            padding: 16px 8px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .creator-comment-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 9px 11px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #334155;
+            word-break: break-word;
+        }
+        .creator-comment-item.me {
+            align-self: flex-end;
+            background: #e8f0fe;
+            border-color: rgba(76, 151, 255, 0.28);
+        }
+        .creator-comment-name {
+            display: block;
+            color: var(--scratch-blue);
+            font-size: 11px;
+            font-weight: 900;
+            margin-bottom: 3px;
+        }
+        .creator-comment-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: white;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            padding: 5px 5px 5px 12px;
+        }
+        #creator-comment-input {
+            flex: 1;
+            min-width: 0;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            background: transparent;
+        }
+        .creator-comment-send {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 14px;
+            background: var(--scratch-orange);
+            color: white;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .creator-comment-send:hover { filter: brightness(1.05); }
+
     </style>
 </head>
 <body>
@@ -618,6 +750,31 @@
     <span class="tmp-badge">教師預覽</span>
     <span>此畫面與學生作答時相同；地圖分數與繳交功能<strong>不會</strong>寫入任何學生繳交紀錄。</span>
     <a href="#" id="teacher-preview-back-class" class="tmp-link">返回班級</a>
+</div>
+
+<div id="global-challenge-strip" class="global-challenge-strip" style="display:none;" aria-live="polite">
+    <span class="gcb-badge">全服固定地圖</span>
+    <span>分數寫入全服排行榜（與班級作業無關）。統測計分後會自動同步最佳成績。</span>
+    <a href="challenge_zone.html" class="gcb-link">返回挑戰區</a>
+</div>
+
+<div id="creator-comment-panel" aria-live="polite">
+    <div class="creator-comment-header" onclick="toggleProjectCommentPanel()">
+        <div class="creator-comment-title">
+            <span>💬 給製作者留言</span>
+            <small>只有拿到作品連結的人會看到作品脈絡。</small>
+        </div>
+        <span id="creator-comment-toggle" class="creator-comment-toggle">▴</span>
+    </div>
+    <div class="creator-comment-body">
+        <div id="creator-comment-list">
+            <div class="creator-comment-empty">正在載入留言...</div>
+        </div>
+        <div class="creator-comment-input-row">
+            <input type="text" id="creator-comment-input" maxlength="500" placeholder="想對製作者說什麼？">
+            <button type="button" class="creator-comment-send" onclick="postCreatorComment()">傳送</button>
+        </div>
+    </div>
 </div>
 
 <!-- 特殊題目 · 地圖挑戰（參考 NTNU demo 題敘 / 分數 / 執行） -->
@@ -900,7 +1057,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, serverTimestamp, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, setDoc, arrayUnion, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Firebase 配置
     const firebaseConfig = {
@@ -920,6 +1077,11 @@
     let authorUid = urlParams.get('from');
     let aid = urlParams.get('aid'); // 任務 ID
     let cid = urlParams.get('cid'); // 班級 ID
+    /** 全服固定地圖挑戰 ID（與 challenge_zone.html 一致） */
+    const GLOBAL_FIXED_MAP_CHALLENGE_ID = "fixed_arcade_v1";
+    const rawGlobalChallenge = urlParams.get("globalChallenge");
+    let globalChallengeId =
+        rawGlobalChallenge === GLOBAL_FIXED_MAP_CHALLENGE_ID ? GLOBAL_FIXED_MAP_CHALLENGE_ID : null;
     let currentMissionLv = "LV1"; // 存儲難度
     let currentMissionType = "regular"; 
     let currentMapConfig = null;
@@ -940,6 +1102,7 @@
     /** 班級教師以 aid+cid 開啟任務時：介面與學生一致，但不寫入繳交／地圖分數 */
     let teacherMissionPreview = false;
     let originalProjectData = null;
+    let creatorCommentsUnsub = null;
     const STAGE_SCRIPT_KEY = "stage";
     let currentScriptTarget = STAGE_SCRIPT_KEY;
     let spriteScripts = { [STAGE_SCRIPT_KEY]: "" };
@@ -969,6 +1132,118 @@
         return [];
     }
 
+    const GLOBAL_MAP_LEVEL_COUNT = 20;
+    const GLOBAL_MAP_PREVIEW_FIRST = 10;
+
+    function coinsFromCellStacksGlobal(picks, rnd) {
+        const parts = [];
+        for (const p of picks) {
+            const stack = 1 + (rnd() % 3);
+            const coord = p.join(",");
+            for (let s = 0; s < stack; s++) parts.push(coord);
+        }
+        return parts.join("; ");
+    }
+
+    /** 首次建立全服題組：20 關隨機，前 10 關可預覽、後 10 關隱藏 */
+    function generateRandomGlobalMapPack20() {
+        const maps = [];
+        const baseSeed = Date.now() % 2147483646;
+        for (let i = 0; i < GLOBAL_MAP_LEVEL_COUNT; i++) {
+            const preview = i < GLOBAL_MAP_PREVIEW_FIRST;
+            let seed = baseSeed + (i + 1) * 9973 + Math.floor(Math.random() * 99991);
+            const rnd = () => {
+                seed = (seed * 48271 + 11) % 2147483647;
+                return seed;
+            };
+            const w = 4 + (rnd() % 4);
+            const h = 4 + (rnd() % 4);
+            const sx = 0;
+            const sy = 0;
+            const ex = w - 1;
+            const ey = h - 1;
+            const slots = [];
+            for (let yy = 0; yy < h; yy++) {
+                for (let xx = 0; xx < w; xx++) {
+                    if ((xx === sx && yy === sy) || (xx === ex && yy === ey)) continue;
+                    slots.push([xx, yy]);
+                }
+            }
+            const maxSlots = slots.length;
+            const cap = Math.min(8, Math.max(2, maxSlots));
+            const numCells = Math.min(maxSlots, 2 + (rnd() % Math.min(6, cap)));
+            const picks = [];
+            const pool = slots.slice();
+            for (let k = 0; k < numCells && pool.length; k++) {
+                const j = rnd() % pool.length;
+                picks.push(pool.splice(j, 1)[0]);
+            }
+            const coins = coinsFromCellStacksGlobal(picks, rnd);
+            const maxMoves = (w - 1) + (h - 1) + 3 + (rnd() % 5);
+            maps.push({
+                width: w,
+                height: h,
+                start: sx + "," + sy,
+                end: ex + "," + ey,
+                coins,
+                maxMoves,
+                preview
+            });
+        }
+        return { maps };
+    }
+
+    function globalChallengeConfigDocRef() {
+        return doc(db, "globalChallenges", GLOBAL_FIXED_MAP_CHALLENGE_ID);
+    }
+
+    /** 讀取或（僅首次）寫入 Firestore 的全服固定地圖包 */
+    async function ensureGlobalChallengeMapPack() {
+        const ref = globalChallengeConfigDocRef();
+        return await runTransaction(db, async (transaction) => {
+            const snap = await transaction.get(ref);
+            if (snap.exists()) {
+                const mp = snap.data().mapPack;
+                if (mp && Array.isArray(mp.maps) && mp.maps.length >= GLOBAL_MAP_LEVEL_COUNT) {
+                    return mp;
+                }
+            }
+            const mapPack = generateRandomGlobalMapPack20();
+            transaction.set(
+                ref,
+                {
+                    mapPack,
+                    levelCount: GLOBAL_MAP_LEVEL_COUNT,
+                    previewFirst: GLOBAL_MAP_PREVIEW_FIRST,
+                    seededAt: serverTimestamp()
+                },
+                { merge: true }
+            );
+            return mapPack;
+        });
+    }
+
+    async function getGlobalFixedMapAssignmentPayloadAsync() {
+        const mapPack = await ensureGlobalChallengeMapPack();
+        return {
+            title: "【全服】固定地圖二十關挑戰",
+            lv: "LV3 挑戰",
+            type: "map",
+            description:
+                "全服共用同一組二十關地圖（前 10 關可預覽地圖與金幣，後 10 關為隱藏關）；各關最佳金幣加總後排名。",
+            mapStory:
+                "只能往右或往上移動，在步數內抵達服務台並盡量多拿金幣。二十關各自記最佳分，再加總為榜單成績。",
+            goals: [
+                "前 10 關可預覽地圖配置，後 10 關為隱藏關",
+                "各關抵達服務台並盡量收集金幣，系統記錄每一關最佳分",
+                "按「統測計分」一次跑完全部關卡並同步全服排行榜"
+            ],
+            hints:
+                "無需繳交班級作業。題組僅在首次進入時隨機產生並永久保存，之後所有人挑戰同一組關卡。請至「挑戰區」查看前十名與自己的名次。",
+            mapPack
+        };
+    }
+
     /** 將遠端 mapScores 正規成 { "0": n, ... }（略過非數字鍵） */
     function normalizeRemoteMapScores(ms) {
         const out = {};
@@ -986,7 +1261,26 @@
     async function mergeMapScoresFromSubmission() {
         if (teacherMissionPreview) return;
         const user = auth.currentUser;
-        if (!user || !cid || !aid) return;
+        if (!user) return;
+        if (globalChallengeId) {
+            try {
+                const subSnap = await getDoc(globalChallengeScoreDocRef(user.uid));
+                if (!subSnap.exists()) return;
+                const raw = subSnap.data().mapScores;
+                const remote = normalizeRemoteMapScores(raw);
+                const n = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+                for (let i = 0; i < n; i++) {
+                    const k = String(i);
+                    const a = Number(sessionMapScores[k]) || 0;
+                    const b = Number(remote[k]) || 0;
+                    sessionMapScores[k] = Math.max(a, b);
+                }
+            } catch (e) {
+                console.warn("mergeMapScoresFromSubmission global", e);
+            }
+            return;
+        }
+        if (!cid || !aid) return;
         try {
             const subSnap = await getDoc(doc(db, "classes", cid, "assignments", aid, "submissions", user.uid));
             if (!subSnap.exists()) return;
@@ -1032,12 +1326,51 @@
         }
     }
 
+    function globalChallengeScoreDocRef(uid) {
+        return doc(db, "globalChallenges", GLOBAL_FIXED_MAP_CHALLENGE_ID, "scores", uid);
+    }
+
     async function persistMapScoresToSubmission() {
         if (teacherMissionPreview) return;
         const user = auth.currentUser;
-        if (!user || !cid || !aid) return;
-        const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
+        if (!user) return;
         const n = mapPackMaps.length > 0 ? mapPackMaps.length : 1;
+        if (globalChallengeId) {
+            let remote = {};
+            try {
+                const snap = await getDoc(globalChallengeScoreDocRef(user.uid));
+                if (snap.exists()) {
+                    remote = normalizeRemoteMapScores(snap.data().mapScores);
+                }
+            } catch (e) {
+                console.warn("persistMapScoresToSubmission global getDoc", e);
+            }
+            const merged = {};
+            for (let i = 0; i < n; i++) {
+                const k = String(i);
+                merged[k] = Math.max(Number(sessionMapScores[k]) || 0, Number(remote[k]) || 0);
+            }
+            for (let i = 0; i < n; i++) {
+                sessionMapScores[String(i)] = merged[String(i)];
+            }
+            const total = computeMapTotalAll();
+            const name = (user.email && user.email.split("@")[0]) || "玩家";
+            await setDoc(
+                globalChallengeScoreDocRef(user.uid),
+                {
+                    uid: user.uid,
+                    userName: name,
+                    mapScores: merged,
+                    bestTotal: total,
+                    mapLevels: n,
+                    updatedAt: serverTimestamp()
+                },
+                { merge: true }
+            );
+            return;
+        }
+        if (!cid || !aid) return;
+        const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
         let remote = {};
         try {
             const snap = await getDoc(subRef);
@@ -1098,7 +1431,9 @@
 
     function mapHighScoreKey() {
         const u = auth.currentUser;
-        if (!u || !aid || !cid) return null;
+        if (!u) return null;
+        if (globalChallengeId) return "mapHigh_global_" + globalChallengeId + "_" + u.uid;
+        if (!aid || !cid) return null;
         return "mapHigh_" + cid + "_" + aid + "_" + u.uid;
     }
 
@@ -1281,7 +1616,7 @@
     function syncSubmitTaskPanelBtn(show) {
         const st = document.getElementById("btn-submit-task");
         if (!st) return;
-        st.style.display = show && !isTeacher ? "block" : "none";
+        st.style.display = show && !isTeacher && !globalChallengeId ? "block" : "none";
     }
 
     function refreshTeacherMissionPreviewUi() {
@@ -1297,6 +1632,18 @@
         } else {
             el.style.display = "none";
             document.body.classList.remove("teacher-mission-preview-mode");
+        }
+    }
+
+    function refreshGlobalChallengeStrip() {
+        const el = document.getElementById("global-challenge-strip");
+        if (!el) return;
+        if (globalChallengeId && currentMissionType === "map") {
+            el.style.display = "flex";
+            document.body.classList.add("global-challenge-mode");
+        } else {
+            el.style.display = "none";
+            document.body.classList.remove("global-challenge-mode");
         }
     }
 
@@ -2184,6 +2531,113 @@
     refreshScriptSelector();
     switchSpriteScript(STAGE_SCRIPT_KEY, { skipSave: true });
 
+    function stopCreatorCommentThread() {
+        if (creatorCommentsUnsub) {
+            creatorCommentsUnsub();
+            creatorCommentsUnsub = null;
+        }
+    }
+
+    function renderCreatorCommentEmpty(message) {
+        const list = document.getElementById('creator-comment-list');
+        if (!list) return;
+        list.innerHTML = '';
+        const empty = document.createElement('div');
+        empty.className = 'creator-comment-empty';
+        empty.textContent = message;
+        list.appendChild(empty);
+    }
+
+    function updateCreatorCommentPanel(user = auth.currentUser) {
+        const panel = document.getElementById('creator-comment-panel');
+        if (!panel) return;
+
+        const shouldShow = !!(user && currentPid && authorUid && user.uid !== authorUid && !teacherMissionPreview);
+        stopCreatorCommentThread();
+
+        if (!shouldShow) {
+            panel.classList.remove('open');
+            renderCreatorCommentEmpty('正在載入留言...');
+            return;
+        }
+
+        panel.classList.add('open');
+        renderCreatorCommentEmpty('正在載入留言...');
+
+        const projectIdForComments = currentPid;
+        const authorUidForComments = authorUid;
+        const commentsRef = collection(db, "users", authorUidForComments, "projects", projectIdForComments, "comments");
+        const commentsQuery = query(commentsRef, orderBy("createdAt", "asc"));
+
+        creatorCommentsUnsub = onSnapshot(commentsQuery, (snap) => {
+            const list = document.getElementById('creator-comment-list');
+            if (!list) return;
+            list.innerHTML = '';
+            if (snap.empty) {
+                renderCreatorCommentEmpty('還沒有留言，成為第一個給製作者回饋的人吧。');
+                return;
+            }
+
+            snap.forEach((docSnap) => {
+                const c = docSnap.data();
+                const item = document.createElement('div');
+                item.className = `creator-comment-item ${c.uid === user.uid ? 'me' : 'other'}`;
+
+                const name = document.createElement('span');
+                name.className = 'creator-comment-name';
+                name.textContent = c.userName || '匿名';
+
+                const text = document.createElement('span');
+                text.textContent = c.text || '';
+
+                item.appendChild(name);
+                item.appendChild(text);
+                list.appendChild(item);
+            });
+            list.scrollTop = list.scrollHeight;
+        }, (error) => {
+            console.warn("製作者留言載入失敗", error);
+            renderCreatorCommentEmpty('留言暫時無法載入，請稍後再試。');
+        });
+    }
+
+    window.toggleProjectCommentPanel = () => {
+        const panel = document.getElementById('creator-comment-panel');
+        const icon = document.getElementById('creator-comment-toggle');
+        if (!panel) return;
+        panel.classList.toggle('collapsed');
+        if (icon) icon.textContent = panel.classList.contains('collapsed') ? '▾' : '▴';
+    };
+
+    window.postCreatorComment = async () => {
+        const user = auth.currentUser;
+        const input = document.getElementById('creator-comment-input');
+        const text = input?.value.trim();
+        if (!user || !text || !currentPid || !authorUid || user.uid === authorUid || teacherMissionPreview) return;
+
+        try {
+            // Firestore rules must allow authenticated users to add/read comments on other users' projects.
+            await addDoc(collection(db, "users", authorUid, "projects", currentPid, "comments"), {
+                text,
+                createdAt: serverTimestamp(),
+                uid: user.uid,
+                userName: (user.email || 'user').split('@')[0]
+            });
+            input.value = '';
+        } catch (e) {
+            alert("發送失敗：" + e.message);
+        }
+    };
+
+    document.getElementById('creator-comment-input')?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            window.postCreatorComment();
+        }
+    });
+
+    window.addEventListener('beforeunload', stopCreatorCommentThread);
+
     // 權限與資料載入
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = 'login.html'; return; }
@@ -2241,14 +2695,85 @@
         }
 
         // 如果是任務模式，載入任務資料（await 避免教師預覽標記尚未就緒就儲存並誤寫繳交）
-        if (aid && cid) {
+        if (globalChallengeId) {
+            await loadGlobalChallengeMission();
+        } else if (aid && cid) {
             await loadMissionInfo();
         } else {
             syncNavMissionSubmitBtn(false);
             syncSubmitTaskPanelBtn(false);
         }
+        updateCreatorCommentPanel(user);
         markEditorSavedBaseline();
     });
+
+    async function loadGlobalChallengeMission() {
+        teacherMissionPreview = false;
+        isTeacher = false;
+        try {
+            const data = await getGlobalFixedMapAssignmentPayloadAsync();
+            currentMissionLv = data.lv || "LV1";
+            currentMissionType = data.type || "map";
+            currentMissionStory = data.mapStory || data.description || "";
+            mapPackMaps = [];
+            sessionMapScores = {};
+            currentMapIndex = 0;
+
+            mapPackMaps = buildMapPackFromAssignment(data);
+            if (mapPackMaps.length === 0) {
+                mapPackMaps = [{ ...normalizeMapConfig(data.mapConfig || {}), preview: true }];
+            }
+
+            const user = auth.currentUser;
+            if (user) {
+                const subSnap = await getDoc(globalChallengeScoreDocRef(user.uid));
+                if (subSnap.exists()) {
+                    const ms = subSnap.data().mapScores;
+                    sessionMapScores = normalizeRemoteMapScores(ms && typeof ms === "object" ? ms : {});
+                }
+            }
+            const mlRaw = new URLSearchParams(window.location.search).get("ml");
+            const ml = parseInt(mlRaw != null ? mlRaw : "0", 10);
+            currentMapIndex = Math.max(0, Math.min(mapPackMaps.length - 1, isNaN(ml) ? 0 : ml));
+            applyActiveMapFromIndex(true);
+
+            document.getElementById("mission-trigger").classList.add("has-mission");
+            document.getElementById("mission-title").innerText = data.title;
+            document.getElementById("mission-lv").innerText = currentMissionLv;
+            document.getElementById("mission-hints").innerText = data.hints || "無提示。";
+
+            document.getElementById("mission-verify-area").style.display = "block";
+
+            const list = document.getElementById("mission-goals-list");
+            list.innerHTML = "";
+            (data.goals || []).forEach((g) => {
+                list.innerHTML += `<div class="mission-goal-item"><input type="checkbox"> <span>${g}</span></div>`;
+            });
+
+            if (!currentPid) {
+                document.getElementById("project-title-input").value = `[挑戰區] ${data.title}`;
+            }
+
+            setupMapChallenge();
+            appendConsoleLine(
+                "🌍 全服固定地圖（共 " +
+                    mapPackMaps.length +
+                    " 關，前 " +
+                    GLOBAL_MAP_PREVIEW_FIRST +
+                    " 關可預覽）：使用「統測計分」後會上傳最佳成績至排行榜。",
+                "system"
+            );
+            syncNavMissionSubmitBtn(true);
+            syncSubmitTaskPanelBtn(true);
+        } catch (e) {
+            console.error("全服挑戰載入失敗", e);
+            syncNavMissionSubmitBtn(false);
+            syncSubmitTaskPanelBtn(false);
+        } finally {
+            refreshGlobalChallengeStrip();
+            refreshTeacherMissionPreviewUi();
+        }
+    }
 
     async function loadMissionInfo() {
         teacherMissionPreview = false;
@@ -2329,6 +2854,7 @@
             syncSubmitTaskPanelBtn(false);
         } finally {
             refreshTeacherMissionPreviewUi();
+            refreshGlobalChallengeStrip();
         }
     }
 
@@ -2470,6 +2996,10 @@
     };
 
     window.submitFromEditor = async () => {
+        if (globalChallengeId) {
+            alert("全服挑戰不需繳交班級作業；成績會在統測計分或刷新最佳分時寫入排行榜。");
+            return;
+        }
         if (teacherMissionPreview) {
             alert("教師預覽模式僅供試做題目，無法代學生繳交。");
             return;
@@ -3222,11 +3752,12 @@
                 // 建立完成後切換為「自己的專案」，後續儲存改為 update 而非一直 addDoc
                 isOwner = true;
                 authorUid = user.uid;
+                updateCreatorCommentPanel(user);
                 document.getElementById('main-action-btn').innerText = "💾 儲存";
                 if(!silent) alert("已建立新專案並儲存！");
                 
                 // 如果是任務模式，自動幫學生關聯附件（教師預覽不寫入繳交）
-                if (aid && cid && !teacherMissionPreview) {
+                if (aid && cid && !teacherMissionPreview && !globalChallengeId) {
                     const subRef = doc(db, "classes", cid, "assignments", aid, "submissions", user.uid);
                     const sSnap = await getDoc(subRef);
                     const att = { id: currentPid, name: title };
