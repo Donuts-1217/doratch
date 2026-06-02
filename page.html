@@ -1052,6 +1052,87 @@
     <sep></sep>
     <category name="變數" colour="#A65C81" custom="VARIABLE"></category>
     <category name="函式" colour="#9A5CA6" custom="PROCEDURE"></category>
+    <sep></sep>
+    <category name="地圖挑戰" colour="#FFAB19">
+        <block type="event_map_start"></block>
+        <block type="map_move_right"></block>
+        <block type="map_move_up"></block>
+        <block type="map_get_coins"></block>
+        <block type="map_moves_used"></block>
+        <block type="map_player_x"></block>
+        <block type="map_player_y"></block>
+        <block type="map_is_at_service"></block>
+        <block type="map_reached_service"></block>
+        <block type="map_grid_width"></block>
+        <block type="map_grid_height"></block>
+        <block type="map_service_x"></block>
+        <block type="map_service_y"></block>
+        <block type="map_max_moves"></block>
+    </category>
+</xml>
+
+<!-- 地圖／特殊挑戰專用工具箱（邏輯、迴圈、數學等與一般創作相同，不含角色舞台積木） -->
+<xml id="toolbox-map" style="display: none">
+    <category name="🗺️ 地圖挑戰" colour="#FFAB19">
+        <block type="event_map_start"></block>
+        <block type="map_move_right"></block>
+        <block type="map_move_up"></block>
+        <block type="map_get_coins"></block>
+        <block type="map_moves_used"></block>
+        <block type="map_player_x"></block>
+        <block type="map_player_y"></block>
+        <block type="map_is_at_service"></block>
+        <block type="map_reached_service"></block>
+        <block type="map_grid_width"></block>
+        <block type="map_grid_height"></block>
+        <block type="map_service_x"></block>
+        <block type="map_service_y"></block>
+        <block type="map_max_moves"></block>
+    </category>
+    <category name="邏輯" colour="#5C81A6">
+        <block type="controls_if"></block>
+        <block type="logic_compare"></block>
+        <block type="logic_operation"></block>
+        <block type="logic_negate"></block>
+        <block type="logic_boolean"></block>
+        <block type="logic_null"></block>
+        <block type="logic_ternary"></block>
+    </category>
+    <category name="迴圈" colour="#5CA65C">
+        <block type="controls_repeat_ext">
+            <value name="TIMES"><block type="math_number"><field name="NUM">10</field></block></value>
+        </block>
+        <block type="controls_whileUntil"></block>
+        <block type="controls_for">
+            <value name="FROM"><block type="math_number"><field name="NUM">1</field></block></value>
+            <value name="TO"><block type="math_number"><field name="NUM">10</field></block></value>
+            <value name="BY"><block type="math_number"><field name="NUM">1</field></block></value>
+        </block>
+        <block type="controls_forEach"></block>
+        <block type="controls_flow_statements"></block>
+    </category>
+    <category name="數學" colour="#5CA68C">
+        <block type="math_number"></block>
+        <block type="math_arithmetic"></block>
+        <block type="math_mod">
+            <value name="A"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+            <value name="B"><shadow type="math_number"><field name="NUM">3</field></shadow></value>
+        </block>
+        <block type="math_single"></block>
+        <block type="math_constant"></block>
+        <block type="math_random_int">
+            <value name="FROM"><block type="math_number"><field name="NUM">1</field></block></value>
+            <value name="TO"><block type="math_number"><field name="NUM">100</field></block></value>
+        </block>
+    </category>
+    <category name="文本" colour="#5CA699">
+        <block type="text"></block>
+        <block type="text_join"></block>
+        <block type="text_length"></block>
+        <block type="text_print"></block>
+    </category>
+    <category name="變數" colour="#A65C81" custom="VARIABLE"></category>
+    <category name="函式" colour="#9A5CA6" custom="PROCEDURE"></category>
 </xml>
 
 <script type="module">
@@ -1590,10 +1671,18 @@
         }, 100);
     };
 
+    function restoreDefaultToolbox() {
+        const el = document.getElementById("toolbox");
+        if (el && typeof workspace !== "undefined" && workspace) {
+            workspace.updateToolbox(el);
+        }
+    }
+
     function hideMapChallengeBanner() {
         const banner = document.getElementById("map-challenge-banner");
         if (banner) banner.classList.remove("map-visible");
         document.body.classList.remove("map-mission-mode");
+        restoreDefaultToolbox();
     }
 
     window.mapDemoSubmit = () => {
@@ -2190,6 +2279,30 @@
         return ['!window.__mapRuntime.isAtService()', Blockly.JavaScript.ORDER_LOGICAL_NOT];
     };
 
+    Blockly.Blocks['map_reached_service'] = {
+        init: function() {
+            this.appendDummyInput().appendField("已抵達終點");
+            this.setOutput(true, "Boolean");
+            this.setColour('#FFAB19');
+            this.setTooltip("走到服務台（終點）時為「真」。");
+        }
+    };
+    Blockly.JavaScript['map_reached_service'] = function(block) {
+        return ['window.__mapRuntime.isAtService()', Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
+    Blockly.Blocks['map_moves_used'] = {
+        init: function() {
+            this.appendDummyInput().appendField("已移動步數");
+            this.setOutput(true, "Number");
+            this.setColour('#FFAB19');
+            this.setTooltip("目前已使用的移動次數（含撞牆仍計步）。");
+        }
+    };
+    Blockly.JavaScript['map_moves_used'] = function(block) {
+        return [`window.__mapRuntime.getMovesUsed()`, Blockly.JavaScript.ORDER_ATOMIC];
+    };
+
     Blockly.Blocks['map_grid_width'] = {
         init: function() {
             this.appendDummyInput().appendField("地圖橫向格數");
@@ -2296,7 +2409,9 @@
             'sprite_create', 'sprite_use', 'sprite_move', 'sprite_turn_right', 'sprite_turn_left',
             'sprite_goto_xy', 'sprite_set_x', 'sprite_set_y', 'sprite_change_x', 'sprite_change_y',
             'sprite_show', 'sprite_hide', 'sprite_say', 'sprite_set_costume',
-            'map_move_right', 'map_move_up', 'map_get_coins', 'map_player_x', 'map_player_y', 'map_is_at_service',
+            'map_move_right', 'map_move_up',
+            'map_get_coins', 'map_moves_used', 'map_player_x', 'map_player_y',
+            'map_is_at_service', 'map_reached_service',
             'map_grid_width', 'map_grid_height', 'map_service_x', 'map_service_y', 'map_max_moves', 'event_map_start'
         ];
 
@@ -2860,46 +2975,14 @@
 
     function setupMapChallenge() {
         populateMapChallengeBanner();
-        // 修改 Toolbox 為地圖挑戰專用
-        const mapToolbox = `
-            <xml xmlns="https://developers.google.com/blockly/xml">
-                <category name="本題專用" colour="#FFAB19">
-                    <block type="event_map_start"></block>
-                    <block type="map_move_right"></block>
-                    <block type="map_move_up"></block>
-                    <block type="map_get_coins"></block>
-                    <block type="map_player_x"></block>
-                    <block type="map_player_y"></block>
-                    <block type="map_is_at_service"></block>
-                    <block type="map_grid_width"></block>
-                    <block type="map_grid_height"></block>
-                    <block type="map_service_x"></block>
-                    <block type="map_service_y"></block>
-                    <block type="map_max_moves"></block>
-                </category>
-                <category name="迴圈" colour="#5CA65C">
-                    <block type="controls_repeat_ext">
-                        <value name="TIMES"><block type="math_number"><field name="NUM">5</field></block></value>
-                    </block>
-                    <block type="controls_whileUntil"></block>
-                </category>
-                <category name="邏輯" colour="#5C81A6">
-                    <block type="controls_if"></block>
-                    <block type="logic_compare"></block>
-                    <block type="logic_operation"></block>
-                </category>
-                <category name="數學" colour="#5CA68C">
-                    <block type="math_number"></block>
-                    <block type="math_arithmetic"></block>
-                </category>
-                <category name="變數" colour="#A65C81" custom="VARIABLE"></category>
-            </xml>
-        `;
-        workspace.updateToolbox(mapToolbox);
-        
-        // 切換到控制台頁籤以便查看執行結果
+        const mapTb = document.getElementById("toolbox-map");
+        if (mapTb && workspace) workspace.updateToolbox(mapTb);
+
         switchTab('console');
-        appendConsoleLine("🗺️ 地圖模式：請把解法都放在「當挑戰開始」底下。「統測計分」會依序跑完每一關（舞台暫時隱藏、加速），並更新最佳分與總分。", "system");
+        appendConsoleLine(
+            "🗺️ 地圖挑戰模式：只能「往右」「往上」移動。請在「當挑戰開始」底下撰寫程式；工具箱含完整邏輯／迴圈／數學／變數／函式與座標偵測積木。「統測計分」會依序跑完每一關並更新最佳分與總分。",
+            "system"
+        );
         
         // 立即顯示地圖網格
         updateIframeSandbox("");
@@ -3154,8 +3237,20 @@
     }
 
     function getToolboxBlocksFromXml() {
-        const xml = document.getElementById('toolbox');
-        const nodes = Array.from(xml.querySelectorAll('block[type]'));
+        const ids = currentMissionType === "map" ? ["toolbox-map", "toolbox"] : ["toolbox", "toolbox-map"];
+        const nodes = [];
+        const seen = new Set();
+        ids.forEach((id) => {
+            const xml = document.getElementById(id);
+            if (!xml) return;
+            xml.querySelectorAll("block[type]").forEach((node) => {
+                const type = node.getAttribute("type");
+                if (type && !seen.has(type)) {
+                    seen.add(type);
+                    nodes.push(node);
+                }
+            });
+        });
         return nodes;
     }
 
@@ -3513,13 +3608,15 @@
                         if(dir === 'up') playerPos[1]++;
                         if(playerPos[0] >= cols || playerPos[1] >= rows || playerPos[0] < 0 || playerPos[1] < 0) {
                             console.warn("⚠️ 撞牆了！");
-                            if(dir === 'right') playerPos[0]--; if(dir === 'up') playerPos[1]--;
+                            if(dir === 'right') playerPos[0]--;
+                            if(dir === 'up') playerPos[1]--;
                         }
                         updatePlayer();
                         const __stepMs = (config.mapBatchFast === true) ? 0 : 400;
                         await new Promise(r => setTimeout(r, __stepMs));
                     },
                     getCoins: () => collectedCoins,
+                    getMovesUsed: () => moves,
                     getPlayerX: () => playerPos[0],
                     getPlayerY: () => playerPos[1],
                     isAtService: () => playerPos[0] === endPos[0] && playerPos[1] === endPos[1],

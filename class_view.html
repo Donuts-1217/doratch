@@ -118,10 +118,122 @@
         /* Modal */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
         .modal-content { background: white; padding: 40px; border-radius: var(--radius-lg); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        #modal-create-assign .modal-content { max-width: 920px; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-weight: 900; margin-bottom: 8px; font-size: 14px; color: #555; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 2px solid #f1f3f4; border-radius: 12px; outline: none; font-family: inherit; box-sizing: border-box; transition: 0.3s; }
         .form-group input:focus, .form-group textarea:focus { border-color: var(--scratch-blue); }
+
+        /* --- 地圖出題：視覺化編輯器 --- */
+        .map-editor-wrap { display: grid; grid-template-columns: 220px 1fr; gap: 14px; align-items: start; }
+        @media (max-width: 860px) { .map-editor-wrap { grid-template-columns: 1fr; } }
+        .map-editor-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px;
+        }
+        .map-editor-panel h5 { margin: 0 0 10px; font-size: 13px; color: #334155; }
+        .map-editor-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .map-editor-row label { font-size: 12px; color: #475569; font-weight: 900; }
+        .map-editor-row input[type="number"] { width: 92px; padding: 10px 10px; margin: 0; }
+        .map-editor-row select { flex: 1; padding: 10px 10px; border: 2px solid #EEE; border-radius: 10px; }
+        .map-editor-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .map-tool-btn {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px 10px;
+            cursor: pointer;
+            font-weight: 900;
+            font-size: 13px;
+            color: #0f172a;
+        }
+        .map-tool-btn.active { border-color: rgba(76,151,255,0.65); background: rgba(76,151,255,0.1); color: #1d4ed8; }
+        .map-grid-shell {
+            background: #0b0e14;
+            border-radius: 16px;
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .map-grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+            font-size: 12px;
+            font-weight: 900;
+        }
+        .map-grid {
+            display: grid;
+            gap: 6px;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .map-cell {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #e2e8f0;
+            cursor: pointer;
+            position: relative;
+        }
+        .map-cell:hover { outline: 2px solid rgba(255,171,25,0.6); outline-offset: 1px; }
+        .map-cell.start { background: rgba(76,151,255,0.22); border-color: rgba(76,151,255,0.5); }
+        .map-cell.end { background: rgba(255,171,25,0.22); border-color: rgba(255,171,25,0.55); }
+        .map-cell .badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            font-size: 12px;
+        }
+        .map-cell .coin {
+            font-size: 16px;
+            line-height: 1;
+        }
+        .map-cell .coin-count {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(255,77,77,0.92);
+            color: #fff;
+            font-size: 11px;
+        }
+        .map-editor-hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.55;
+        }
+        .map-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .map-editor-actions button {
+            flex: 1 1 auto;
+            min-width: 88px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .map-editor-actions button:hover { background: #f1f5f9; }
+        .map-cell.painting { outline: 2px solid rgba(76,151,255,0.85); outline-offset: 1px; }
+        .map-grid-shell.dragging { cursor: crosshair; }
 
         .grading-row { display: flex; align-items: center; padding: 15px; border-radius: 12px; cursor: pointer; transition: 0.2s; margin-bottom: 5px; }
         .grading-row:hover { background: #f8f9fa; }
@@ -364,63 +476,88 @@
 
         <div id="map-settings" style="display:none; background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #eef2f7;">
             <h4 style="margin-top:0; color:var(--scratch-blue);">🗺️ 地圖設定</h4>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="form-group">
-                    <label>地圖寬度 (格)</label>
-                    <input type="number" id="map-width" value="5" min="3" max="10">
-                </div>
-                <div class="form-group">
-                    <label>地圖高度 (格)</label>
-                    <input type="number" id="map-height" value="5" min="3" max="10">
-                </div>
-                <div class="form-group">
-                    <label>起點 (X,Y)</label>
-                    <input type="text" id="map-start" value="0,0" placeholder="0,0">
-                </div>
-                <div class="form-group">
-                    <label>終點 (X,Y)</label>
-                    <input type="text" id="map-end" value="4,4" placeholder="4,4">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>💰 金幣位置 (例如 1,1; 2,2; 3,3)</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <input type="text" id="map-coins" placeholder="1,1; 2,3; 4,1" style="flex:1;">
-                    <button type="button" class="btn-solid" style="width:auto; padding:12px 15px; border-radius:12px; font-size:13px; margin:0;" onclick="generateRandomCoins()">🎲 隨機產生</button>
-                    <select id="map-random-count" style="width:auto; padding:12px; border-radius:12px; cursor:pointer;">
-                        <option value="1">1 枚</option>
-                        <option value="3" selected>3 枚</option>
-                        <option value="5">5 枚</option>
-                        <option value="8">8 枚</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>🚶 最大移動次數</label>
-                <input type="number" id="map-max-moves" value="15">
-            </div>
-            <div class="form-group" style="padding:12px; background:#fff; border-radius:10px; border:1px dashed #cbd5e1;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                    <input type="checkbox" id="use-map-pack-20" style="width:auto;" onchange="toggleMapPackOptions()">
-                    <span>使用 <strong>地圖包（多關）</strong>：自動產生多關地圖，總分為各關最佳金幣加總</span>
-                </label>
-                <p style="font-size:12px; color:#64748b; margin:8px 0 0 28px;">勾選後略過「單一關」手動金幣字串，改為依下列選項產生；第一關仍會寫入 <code>mapConfig</code> 以相容舊版。</p>
-                <div id="map-pack-options" style="display:none; margin-top:12px; padding:12px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="form-group" style="margin:0;">
-                            <label>關卡數量（1–20）</label>
-                            <input type="number" id="map-pack-level-count" min="1" max="20" value="20" oninput="syncMapPackPreviewMax()">
-                        </div>
-                        <div class="form-group" style="margin:0;">
-                            <label>前幾關可預覽（金幣／終點圖示）</label>
-                            <input type="number" id="map-pack-preview-count" min="0" max="20" placeholder="留空則 min(10,關卡數)">
-                        </div>
+            <div class="map-editor-wrap">
+                <div class="map-editor-panel">
+                    <h5>關卡設定</h5>
+                    <div class="map-editor-row">
+                        <label>關卡</label>
+                        <select id="map-pack-select" onchange="mapEditorSelectMap(this.value)"></select>
                     </div>
-                    <label style="display:flex; align-items:flex-start; gap:10px; margin-top:12px; cursor:pointer;">
-                        <input type="checkbox" id="map-pack-full-random" style="width:auto; margin-top:4px;">
-                        <span style="font-size:13px;"><strong>全部隨機</strong>：每一關的寬高、步數上限與金幣位置皆隨機。<br><span style="color:#64748b;">不勾選時：每一關沿用上方「寬度、高度、起點、終點、最大移動次數」，僅金幣堆疊與位置隨機。</span></span>
+                    <div class="map-editor-row">
+                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:10px 12px; border-radius:12px;" onclick="mapEditorAddMap()">+ 新增</button>
+                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:10px 12px; border-radius:12px; background:#ef4444;" onclick="mapEditorRemoveMap()">刪除</button>
+                    </div>
+                    <div class="map-editor-actions">
+                        <button type="button" onclick="mapEditorCopyMap()">📋 複製關卡</button>
+                        <button type="button" onclick="mapEditorPasteMap()">📌 貼上新關</button>
+                        <button type="button" onclick="mapEditorDuplicateMap()">⧉ 複製為新關</button>
+                    </div>
+                    <div class="map-editor-row" style="margin-top:10px;">
+                        <label>前</label>
+                        <input type="number" id="map-preview-first-n" value="10" min="0" max="20" style="width:72px;">
+                        <label>關可預覽</label>
+                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:8px 12px; border-radius:10px; font-size:12px;" onclick="mapEditorApplyPreviewFirstN()">一鍵套用</button>
+                    </div>
+
+                    <h5 style="margin-top:14px;">快速產生 / 範本</h5>
+                    <div class="map-editor-row">
+                        <label>關卡數</label>
+                        <input type="number" id="map-random-level-count" value="5" min="1" max="20" style="width:72px;">
+                        <label>前 N 預覽</label>
+                        <input type="number" id="map-random-preview-n" value="3" min="0" max="20" style="width:72px;">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:6px 0 8px; font-size:12px;">
+                        <input type="checkbox" id="map-random-full-size" style="width:auto;">
+                        <span>每關隨機寬高（不勾則沿用下方寬／高）</span>
                     </label>
-                    <p style="font-size:12px; color:#64748b; margin:10px 0 0;">同一格子可擁有 <strong>1–3 枚</strong>金幣（隨機）；地圖上以堆疊數字顯示。</p>
+                    <button type="button" class="btn-solid" style="width:100%; margin:0 0 10px; padding:10px; border-radius:12px; background:var(--scratch-purple);" onclick="mapEditorRandomPack()">🎲 隨機產生整包</button>
+                    <div class="map-editor-row">
+                        <select id="map-template-select" style="flex:1;">
+                            <option value="">— 選擇範本 —</option>
+                            <option value="tutorial">教學單關 5×5</option>
+                            <option value="practice">練習單關 6×6</option>
+                            <option value="pack5">五關漸進（皆可預覽）</option>
+                            <option value="pack10_hidden">10+10 競技（前10預覽）</option>
+                            <option value="pack20_arcade">20 關競技包（前10預覽）</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-solid" style="width:100%; margin:0; padding:10px; border-radius:12px; background:#0ea5e9;" onclick="mapEditorLoadTemplate()">📦 載入範本</button>
+
+                    <h5 style="margin-top:14px;">尺寸與規則</h5>
+                    <div class="map-editor-row">
+                        <label>寬</label>
+                        <input type="number" id="map-width" value="5" min="3" max="10" oninput="mapEditorResize()">
+                        <label>高</label>
+                        <input type="number" id="map-height" value="5" min="3" max="10" oninput="mapEditorResize()">
+                    </div>
+                    <div class="map-editor-row">
+                        <label>步數上限</label>
+                        <input type="number" id="map-max-moves" value="15" min="1" oninput="mapEditorSyncMaxMoves()">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:10px 0 0;">
+                        <input type="checkbox" id="map-preview-visible" style="width:auto;" onchange="mapEditorSyncPreview()">
+                        <span style="font-size:13px;"><strong>允許預覽</strong>（學生看得到金幣與終點圖示）</span>
+                    </label>
+
+                    <h5 style="margin-top:14px;">工具</h5>
+                    <div class="map-editor-btns">
+                        <button type="button" class="map-tool-btn active" id="tool-coin" onclick="mapEditorSetTool('coin')">💰 金幣(0→1→2→3)</button>
+                        <button type="button" class="map-tool-btn" id="tool-start" onclick="mapEditorSetTool('start')">🚩 設定起點</button>
+                        <button type="button" class="map-tool-btn" id="tool-end" onclick="mapEditorSetTool('end')">🏁 設定終點</button>
+                        <button type="button" class="map-tool-btn" id="tool-clear" onclick="mapEditorSetTool('clear')">🧹 清除格子</button>
+                    </div>
+                    <div class="map-editor-hint">
+                        左鍵點擊：金幣 0→1→2→3→0；可<strong>按住拖曳</strong>連續加金幣。<br>
+                        右鍵點擊：金幣 −1。起點／終點／清除工具亦可拖曳塗抹。
+                    </div>
+                </div>
+
+                <div class="map-grid-shell">
+                    <div class="map-grid-header">
+                        <div>🗺️ 點格子編輯地圖</div>
+                        <div id="map-grid-meta"></div>
+                    </div>
+                    <div id="map-grid" class="map-grid"></div>
                 </div>
             </div>
         </div>
@@ -546,16 +683,8 @@
         if(id === 'modal-create-assign') {
             renderAssignList();
             document.getElementById('m-type').value = 'regular';
-            const packCk = document.getElementById('use-map-pack-20');
-            if (packCk) packCk.checked = false;
-            const plc = document.getElementById('map-pack-level-count');
-            if (plc) plc.value = '20';
-            const ppc = document.getElementById('map-pack-preview-count');
-            if (ppc) ppc.value = '';
-            const fr = document.getElementById('map-pack-full-random');
-            if (fr) fr.checked = false;
             toggleMapSettings();
-            toggleMapPackOptions();
+            mapEditorReset();
         }
         if(id === 'modal-question-bank') renderBank();
     };
@@ -566,24 +695,560 @@
         if (isMap) {
             document.getElementById('m-title').placeholder = "例如：觀光商圈金幣挑戰";
             document.getElementById('m-goals').value = "1. 移動至服務台 (終點)\n2. 收集盡可能多的金幣\n3. 在步數限制內完成";
+            mapEditorEnsure();
         } else {
             document.getElementById('m-title').placeholder = "例如：迴圈畫圓挑戰";
         }
-        toggleMapPackOptions();
+        toggleMapPackOptions(); // 舊版相容（現為 no-op）
     };
 
     window.toggleMapPackOptions = () => {
-        const isMap = document.getElementById('m-type').value === 'map';
-        const on = document.getElementById('use-map-pack-20')?.checked;
-        const el = document.getElementById('map-pack-options');
-        if (el) el.style.display = isMap && on ? 'block' : 'none';
-        if (isMap && on) syncMapPackPreviewMax();
+        // legacy no-op（已改為視覺化地圖包編輯器）
     };
 
     window.syncMapPackPreviewMax = () => {
-        const lc = Math.min(20, Math.max(1, parseInt(document.getElementById('map-pack-level-count')?.value, 10) || 20));
-        const pf = document.getElementById('map-pack-preview-count');
-        if (pf) pf.max = lc;
+        // legacy no-op（已改為視覺化地圖包編輯器）
+    };
+
+    // ---------------------------
+    // 地圖出題：視覺化地圖包編輯器
+    // ---------------------------
+    let __mapEditor = {
+        tool: "coin",
+        idx: 0,
+        maps: [],
+        clipboard: null,
+        painting: false,
+        strokeCells: null
+    };
+
+    function mapEditorDefaultMap() {
+        return {
+            width: 5,
+            height: 5,
+            start: [0, 0],
+            end: [4, 4],
+            maxMoves: 15,
+            preview: true,
+            coins: {} // key "x,y" -> 0..3
+        };
+    }
+
+    window.mapEditorReset = () => {
+        __mapEditor = {
+            tool: "coin",
+            idx: 0,
+            maps: [mapEditorDefaultMap()],
+            clipboard: __mapEditor?.clipboard || null,
+            painting: false,
+            strokeCells: null
+        };
+        mapEditorRenderAll();
+    };
+
+    function mapEditorCloneMap(m) {
+        return JSON.parse(JSON.stringify(m));
+    }
+
+    function mapEditorBeginStroke() {
+        __mapEditor.painting = true;
+        __mapEditor.strokeCells = new Set();
+        const shell = document.querySelector(".map-grid-shell");
+        if (shell) shell.classList.add("dragging");
+    }
+
+    function mapEditorEndStroke() {
+        __mapEditor.painting = false;
+        __mapEditor.strokeCells = null;
+        const shell = document.querySelector(".map-grid-shell");
+        if (shell) shell.classList.remove("dragging");
+    }
+
+    if (!window.__mapEditorStrokeBound) {
+        window.__mapEditorStrokeBound = true;
+        window.addEventListener("pointerup", mapEditorEndStroke);
+        window.addEventListener("pointercancel", mapEditorEndStroke);
+    }
+
+    window.mapEditorEnsure = () => {
+        if (!__mapEditor.maps || __mapEditor.maps.length === 0) mapEditorReset();
+        mapEditorRenderAll();
+    };
+
+    function mapEditorCurrent() {
+        return __mapEditor.maps[__mapEditor.idx] || __mapEditor.maps[0];
+    }
+
+    function clampInt(v, lo, hi, fallback) {
+        const n = parseInt(v, 10);
+        if (Number.isNaN(n)) return fallback;
+        return Math.max(lo, Math.min(hi, n));
+    }
+
+    function cellKey(x, y) { return `${x},${y}`; }
+
+    function mapEditorSyncInputsFromMap() {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        const wEl = document.getElementById("map-width");
+        const hEl = document.getElementById("map-height");
+        const mmEl = document.getElementById("map-max-moves");
+        const pvEl = document.getElementById("map-preview-visible");
+        if (wEl) wEl.value = String(m.width);
+        if (hEl) hEl.value = String(m.height);
+        if (mmEl) mmEl.value = String(m.maxMoves);
+        if (pvEl) pvEl.checked = !!m.preview;
+    }
+
+    function mapEditorRenderSelect() {
+        const sel = document.getElementById("map-pack-select");
+        if (!sel) return;
+        sel.innerHTML = "";
+        __mapEditor.maps.forEach((m, i) => {
+            const opt = document.createElement("option");
+            opt.value = String(i);
+            opt.textContent = `第 ${i + 1} 關${m.preview ? "" : "（隱藏）"}`;
+            if (i === __mapEditor.idx) opt.selected = true;
+            sel.appendChild(opt);
+        });
+    }
+
+    function mapEditorRenderGrid() {
+        const grid = document.getElementById("map-grid");
+        if (!grid) return;
+        const m = mapEditorCurrent();
+        if (!m) return;
+        grid.style.gridTemplateColumns = `repeat(${m.width}, 42px)`;
+        grid.innerHTML = "";
+
+        const meta = document.getElementById("map-grid-meta");
+        if (meta) meta.textContent = `${m.width}×${m.height}｜起點 ${m.start[0]},${m.start[1]}｜終點 ${m.end[0]},${m.end[1]}`;
+
+        for (let y = m.height - 1; y >= 0; y--) {
+            for (let x = 0; x < m.width; x++) {
+                const div = document.createElement("div");
+                div.className = "map-cell";
+                div.dataset.x = String(x);
+                div.dataset.y = String(y);
+
+                const isStart = (x === m.start[0] && y === m.start[1]);
+                const isEnd = (x === m.end[0] && y === m.end[1]);
+                if (isStart) div.classList.add("start");
+                if (isEnd) div.classList.add("end");
+
+                if (isStart) {
+                    const b = document.createElement("div");
+                    b.className = "badge";
+                    b.textContent = "🚩";
+                    div.appendChild(b);
+                } else if (isEnd) {
+                    const b = document.createElement("div");
+                    b.className = "badge";
+                    b.textContent = "🏁";
+                    div.appendChild(b);
+                }
+
+                const key = cellKey(x, y);
+                const c = clampInt(m.coins[key] || 0, 0, 3, 0);
+                if (c > 0) {
+                    const coin = document.createElement("div");
+                    coin.className = "coin";
+                    coin.textContent = "💰";
+                    div.appendChild(coin);
+                    if (c > 1) {
+                        const cc = document.createElement("div");
+                        cc.className = "coin-count";
+                        cc.textContent = String(c);
+                        div.appendChild(cc);
+                    }
+                }
+
+                div.addEventListener("pointerdown", (e) => {
+                    e.preventDefault();
+                    if (e.button === 2) {
+                        mapEditorApplyCell(x, y, { rightClick: true });
+                        return;
+                    }
+                    mapEditorBeginStroke();
+                    mapEditorApplyCell(x, y, { click: true });
+                });
+                div.addEventListener("pointerenter", (e) => {
+                    if (!__mapEditor.painting || e.buttons !== 1) return;
+                    mapEditorApplyCell(x, y, { drag: true });
+                });
+                div.addEventListener("contextmenu", (e) => e.preventDefault());
+                grid.appendChild(div);
+            }
+        }
+    }
+
+    function mapEditorRenderTools() {
+        ["coin", "start", "end", "clear"].forEach((t) => {
+            const el = document.getElementById(`tool-${t}`);
+            if (!el) return;
+            el.classList.toggle("active", __mapEditor.tool === t);
+        });
+    }
+
+    function mapEditorRenderAll() {
+        mapEditorRenderSelect();
+        mapEditorSyncInputsFromMap();
+        mapEditorRenderTools();
+        mapEditorRenderGrid();
+        const pfn = document.getElementById("map-preview-first-n");
+        if (pfn) pfn.max = String(Math.max(0, __mapEditor.maps.length));
+    }
+
+    window.mapEditorSetTool = (tool) => {
+        __mapEditor.tool = tool;
+        mapEditorRenderTools();
+    };
+
+    function sanitizeStartEndWithin(m) {
+        m.start[0] = clampInt(m.start[0], 0, m.width - 1, 0);
+        m.start[1] = clampInt(m.start[1], 0, m.height - 1, 0);
+        m.end[0] = clampInt(m.end[0], 0, m.width - 1, m.width - 1);
+        m.end[1] = clampInt(m.end[1], 0, m.height - 1, m.height - 1);
+        if (m.start[0] === m.end[0] && m.start[1] === m.end[1]) {
+            m.end = [m.width - 1, m.height - 1];
+        }
+    }
+
+    function mapEditorPruneCoinsOutside(m) {
+        const next = {};
+        Object.keys(m.coins || {}).forEach((k) => {
+            const [xs, ys] = k.split(",");
+            const x = parseInt(xs, 10);
+            const y = parseInt(ys, 10);
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+            if (x < 0 || y < 0 || x >= m.width || y >= m.height) return;
+            const v = clampInt(m.coins[k], 0, 3, 0);
+            if (v > 0) next[cellKey(x, y)] = v;
+        });
+        m.coins = next;
+    }
+
+    function mapEditorApplyCell(x, y, opts = {}) {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        const key = cellKey(x, y);
+        const { click = false, drag = false, rightClick = false } = opts;
+        const strokeKey = `${__mapEditor.idx}:${key}`;
+
+        if (drag && __mapEditor.strokeCells?.has(strokeKey)) return;
+        if (drag) __mapEditor.strokeCells?.add(strokeKey);
+
+        if (__mapEditor.tool === "start") {
+            m.start = [x, y];
+            delete m.coins[key];
+            if (m.end[0] === x && m.end[1] === y) m.end = [m.width - 1, m.height - 1];
+        } else if (__mapEditor.tool === "end") {
+            m.end = [x, y];
+            delete m.coins[key];
+            if (m.start[0] === x && m.start[1] === y) m.start = [0, 0];
+        } else if (__mapEditor.tool === "clear") {
+            delete m.coins[key];
+        } else {
+            if ((m.start[0] === x && m.start[1] === y) || (m.end[0] === x && m.end[1] === y)) return;
+            const cur = clampInt(m.coins[key] || 0, 0, 3, 0);
+            if (rightClick) {
+                if (cur <= 1) delete m.coins[key];
+                else m.coins[key] = cur - 1;
+            } else if (drag) {
+                if (cur === 0) m.coins[key] = 1;
+                else if (cur < 3) m.coins[key] = cur + 1;
+            } else if (click) {
+                const next = (cur + 1) % 4;
+                if (next === 0) delete m.coins[key];
+                else m.coins[key] = next;
+            }
+        }
+
+        sanitizeStartEndWithin(m);
+        mapEditorRenderGrid();
+        mapEditorRenderSelect();
+    }
+
+    window.mapEditorCopyMap = () => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        __mapEditor.clipboard = mapEditorCloneMap(m);
+        alert("已複製目前關卡，可貼上為新關。");
+    };
+
+    window.mapEditorPasteMap = () => {
+        if (!__mapEditor.clipboard) return alert("請先複製一個關卡。");
+        const m = mapEditorCloneMap(__mapEditor.clipboard);
+        __mapEditor.maps.push(m);
+        __mapEditor.idx = __mapEditor.maps.length - 1;
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorDuplicateMap = () => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        const copy = mapEditorCloneMap(m);
+        __mapEditor.maps.splice(__mapEditor.idx + 1, 0, copy);
+        __mapEditor.idx += 1;
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorApplyPreviewFirstN = () => {
+        const n = clampInt(document.getElementById("map-preview-first-n")?.value, 0, 20, 0);
+        __mapEditor.maps.forEach((m, i) => { m.preview = i < n; });
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorSelectMap = (value) => {
+        const idx = clampInt(value, 0, __mapEditor.maps.length - 1, 0);
+        __mapEditor.idx = idx;
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorAddMap = () => {
+        const last = __mapEditor.maps[__mapEditor.maps.length - 1] || mapEditorDefaultMap();
+        const m = mapEditorDefaultMap();
+        m.width = last.width;
+        m.height = last.height;
+        m.start = [...last.start];
+        m.end = [...last.end];
+        m.maxMoves = last.maxMoves;
+        m.preview = last.preview;
+        __mapEditor.maps.push(m);
+        __mapEditor.idx = __mapEditor.maps.length - 1;
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorRemoveMap = () => {
+        if (__mapEditor.maps.length <= 1) return;
+        __mapEditor.maps.splice(__mapEditor.idx, 1);
+        __mapEditor.idx = Math.max(0, Math.min(__mapEditor.idx, __mapEditor.maps.length - 1));
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorResize = () => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        const w = clampInt(document.getElementById("map-width")?.value, 3, 10, m.width);
+        const h = clampInt(document.getElementById("map-height")?.value, 3, 10, m.height);
+        m.width = w;
+        m.height = h;
+        sanitizeStartEndWithin(m);
+        mapEditorPruneCoinsOutside(m);
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorSyncMaxMoves = () => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        m.maxMoves = clampInt(document.getElementById("map-max-moves")?.value, 1, 999, m.maxMoves);
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorSyncPreview = () => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        m.preview = !!document.getElementById("map-preview-visible")?.checked;
+        mapEditorRenderSelect();
+    };
+
+    function mapEditorExportMap(m) {
+        const coinsParts = [];
+        Object.keys(m.coins || {}).forEach((k) => {
+            const n = clampInt(m.coins[k], 0, 3, 0);
+            for (let i = 0; i < n; i++) coinsParts.push(k);
+        });
+        const coins = coinsParts.join("; ");
+        return {
+            width: m.width,
+            height: m.height,
+            start: `${m.start[0]},${m.start[1]}`,
+            end: `${m.end[0]},${m.end[1]}`,
+            coins,
+            maxMoves: m.maxMoves,
+            preview: !!m.preview
+        };
+    }
+
+    function mapEditorExportPack() {
+        return { maps: (__mapEditor.maps || []).map(mapEditorExportMap) };
+    }
+
+    function mapEditorParseCoinsString(coinsStr) {
+        const coins = {};
+        if (!coinsStr || typeof coinsStr !== "string") return coins;
+        coinsStr.split(";").forEach((part) => {
+            const key = part.trim();
+            if (!key) return;
+            coins[key] = clampInt((coins[key] || 0) + 1, 0, 3, 0);
+            if (coins[key] === 0) coins[key] = 1;
+        });
+        return coins;
+    }
+
+    function mapEditorImportExportMap(exported) {
+        const sp = String(exported.start || "0,0").split(",").map((n) => parseInt(n, 10));
+        const ep = String(exported.end || "4,4").split(",").map((n) => parseInt(n, 10));
+        const w = clampInt(exported.width, 3, 10, 5);
+        const h = clampInt(exported.height, 3, 10, 5);
+        const m = {
+            width: w,
+            height: h,
+            start: [Number.isFinite(sp[0]) ? sp[0] : 0, Number.isFinite(sp[1]) ? sp[1] : 0],
+            end: [Number.isFinite(ep[0]) ? ep[0] : w - 1, Number.isFinite(ep[1]) ? ep[1] : h - 1],
+            maxMoves: clampInt(exported.maxMoves, 1, 999, (w - 1) + (h - 1) + 3),
+            preview: exported.preview !== false,
+            coins: mapEditorParseCoinsString(exported.coins)
+        };
+        sanitizeStartEndWithin(m);
+        mapEditorPruneCoinsOutside(m);
+        return m;
+    }
+
+    function mapEditorRandomPackInternal(levelCount, previewFirst, fullRandomSize) {
+        const maps = [];
+        const baseW = clampInt(document.getElementById("map-width")?.value, 3, 10, 5);
+        const baseH = clampInt(document.getElementById("map-height")?.value, 3, 10, 5);
+        const baseMaxMoves = clampInt(document.getElementById("map-max-moves")?.value, 1, 999, 15);
+        previewFirst = Math.min(levelCount, Math.max(0, previewFirst));
+
+        for (let i = 0; i < levelCount; i++) {
+            const preview = i < previewFirst;
+            let seed = (Date.now() % 2147483646) + (i + 1) * 9973 + Math.floor(Math.random() * 99991);
+            const rnd = () => {
+                seed = (seed * 48271 + 11) % 2147483647;
+                return seed;
+            };
+
+            let w, h;
+            const sx = 0;
+            const sy = 0;
+            if (fullRandomSize) {
+                w = 4 + (rnd() % 4);
+                h = 4 + (rnd() % 4);
+            } else {
+                w = baseW;
+                h = baseH;
+            }
+            const ex = w - 1;
+            const ey = h - 1;
+
+            const slots = [];
+            for (let yy = 0; yy < h; yy++) {
+                for (let xx = 0; xx < w; xx++) {
+                    if ((xx === sx && yy === sy) || (xx === ex && yy === ey)) continue;
+                    slots.push([xx, yy]);
+                }
+            }
+
+            const coins = {};
+            const maxSlots = slots.length;
+            const cap = Math.min(8, Math.max(2, maxSlots));
+            const numCells = Math.min(maxSlots, 2 + (rnd() % Math.min(6, cap)));
+            const pool = slots.slice();
+            for (let k = 0; k < numCells && pool.length; k++) {
+                const j = rnd() % pool.length;
+                const [cx, cy] = pool.splice(j, 1)[0];
+                coins[cellKey(cx, cy)] = 1 + (rnd() % 3);
+            }
+
+            const maxMoves = fullRandomSize
+                ? (w - 1) + (h - 1) + 3 + (rnd() % 5)
+                : baseMaxMoves;
+
+            maps.push({
+                width: w,
+                height: h,
+                start: [sx, sy],
+                end: [ex, ey],
+                maxMoves,
+                preview,
+                coins
+            });
+        }
+        return maps;
+    }
+
+    const MAP_EDITOR_TEMPLATES = {
+        tutorial: {
+            maps: [{
+                width: 5, height: 5, start: "0,0", end: "4,4",
+                coins: "1,1; 2,2; 3,1",
+                maxMoves: 12, preview: true
+            }]
+        },
+        practice: {
+            maps: [{
+                width: 6, height: 6, start: "0,0", end: "5,5",
+                coins: "1,2; 2,3; 3,2; 4,4; 2,4; 1,4",
+                maxMoves: 16, preview: true
+            }]
+        },
+        pack5: {
+            maps: [
+                { width: 4, height: 4, start: "0,0", end: "3,3", coins: "1,1; 2,1", maxMoves: 10, preview: true },
+                { width: 5, height: 5, start: "0,0", end: "4,4", coins: "1,2; 2,2; 3,1", maxMoves: 12, preview: true },
+                { width: 5, height: 5, start: "0,0", end: "4,4", coins: "1,1; 1,3; 3,2; 2,3", maxMoves: 13, preview: true },
+                { width: 6, height: 5, start: "0,0", end: "5,4", coins: "2,1; 3,2; 4,3; 1,2", maxMoves: 14, preview: true },
+                { width: 6, height: 6, start: "0,0", end: "5,5", coins: "1,2; 2,4; 4,2; 3,3; 4,4", maxMoves: 16, preview: true }
+            ]
+        },
+        pack10_hidden: {
+            maps: (() => {
+                const out = [];
+                for (let i = 0; i < 20; i++) {
+                    const preview = i < 10;
+                    const w = 5 + (i % 3);
+                    const h = 5 + ((i + 1) % 3);
+                    const coins = {};
+                    if (i % 2 === 0) coins["2,1"] = 2;
+                    if (i % 3 === 0) coins["1,2"] = 1;
+                    if (i % 5 === 0) coins["3,2"] = 3;
+                    out.push({
+                        width: w, height: h, start: "0,0", end: `${w - 1},${h - 1}`,
+                        coins: Object.keys(coins).flatMap((k) => Array(coins[k]).fill(k)).join("; "),
+                        maxMoves: (w - 1) + (h - 1) + 4,
+                        preview
+                    });
+                }
+                return out;
+            })()
+        }
+    };
+
+    window.mapEditorRandomPack = () => {
+        if (!confirm("將覆蓋目前所有關卡，確定要隨機產生整包嗎？")) return;
+        const levelCount = clampInt(document.getElementById("map-random-level-count")?.value, 1, 20, 5);
+        let previewFirst = clampInt(document.getElementById("map-random-preview-n")?.value, 0, 20, 3);
+        previewFirst = Math.min(levelCount, previewFirst);
+        const fullRandomSize = !!document.getElementById("map-random-full-size")?.checked;
+        __mapEditor.maps = mapEditorRandomPackInternal(levelCount, previewFirst, fullRandomSize);
+        __mapEditor.idx = 0;
+        const pfn = document.getElementById("map-preview-first-n");
+        if (pfn) pfn.value = String(previewFirst);
+        mapEditorRenderAll();
+    };
+
+    window.mapEditorLoadTemplate = () => {
+        const key = document.getElementById("map-template-select")?.value;
+        if (!key) return alert("請先選擇範本。");
+        if (!confirm("將覆蓋目前所有關卡，確定載入範本嗎？")) return;
+
+        let maps = [];
+        if (key === "pack20_arcade") {
+            maps = mapEditorRandomPackInternal(20, 10, true);
+        } else if (MAP_EDITOR_TEMPLATES[key]) {
+            maps = MAP_EDITOR_TEMPLATES[key].maps.map(mapEditorImportExportMap);
+        } else {
+            return alert("找不到範本。");
+        }
+
+        __mapEditor.maps = maps;
+        __mapEditor.idx = 0;
+        const previewCount = maps.filter((m) => m.preview).length;
+        const pfn = document.getElementById("map-preview-first-n");
+        if (pfn) pfn.value = String(previewCount);
+        mapEditorRenderAll();
     };
 
     /** 同一座標重複 N 次 = N 枚金幣（執行時會加總該格） */
@@ -781,20 +1446,9 @@
         let mapConfig = null;
         let mapPack = null;
         if (type === 'map') {
-            const usePack = document.getElementById('use-map-pack-20')?.checked;
-            if (usePack) {
-                mapPack = generateMapPackDemo();
-                mapConfig = mapPack.maps[0];
-            } else {
-                mapConfig = {
-                    width: parseInt(document.getElementById('map-width').value),
-                    height: parseInt(document.getElementById('map-height').value),
-                    start: document.getElementById('map-start').value,
-                    end: document.getElementById('map-end').value,
-                    coins: document.getElementById('map-coins').value,
-                    maxMoves: parseInt(document.getElementById('map-max-moves').value)
-                };
-            }
+            mapEditorEnsure();
+            mapPack = mapEditorExportPack();
+            mapConfig = mapPack.maps[0];
         }
 
         const payload = {

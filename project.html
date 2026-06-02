@@ -376,9 +376,11 @@
         gen['map_move_right'] = () => `await window.__mapRuntime.move('right');\n`;
         gen['map_move_up'] = () => `await window.__mapRuntime.move('up');\n`;
         gen['map_get_coins'] = () => [`window.__mapRuntime.getCoins()`, gen.ORDER_ATOMIC];
+        gen['map_moves_used'] = () => [`window.__mapRuntime.getMovesUsed()`, gen.ORDER_ATOMIC];
         gen['map_player_x'] = () => [`window.__mapRuntime.getPlayerX()`, gen.ORDER_ATOMIC];
         gen['map_player_y'] = () => [`window.__mapRuntime.getPlayerY()`, gen.ORDER_ATOMIC];
         gen['map_is_at_service'] = () => ['!window.__mapRuntime.isAtService()', gen.ORDER_LOGICAL_NOT];
+        gen['map_reached_service'] = () => ['window.__mapRuntime.isAtService()', gen.ORDER_ATOMIC];
         gen['map_grid_width'] = () => [`window.__mapRuntime.getGridWidth()`, gen.ORDER_ATOMIC];
         gen['map_grid_height'] = () => [`window.__mapRuntime.getGridHeight()`, gen.ORDER_ATOMIC];
         gen['map_service_x'] = () => [`window.__mapRuntime.getServiceX()`, gen.ORDER_ATOMIC];
@@ -480,7 +482,7 @@
             window.addEventListener('keydown',ev=>{const kk=ev.key===' '?' ':String(ev.key||'').toLowerCase(); (k.get(kk)||[]).forEach(fn=>{try{fn();}catch(e){console.error(e.message);}});});
             const start=()=>{st();g.forEach(fn=>{try{fn();}catch(e){console.error(e.message);}});};
             return {createSprite:cr,useSprite:use,move:mv,turnRight:rt,turnLeft:lt,goto:go,setX:sx2,setY:sy2,changeX:cx,changeY:cy,show:sh,hide:hi,say,setCostume:sc,onGreenFlag:onG,onKeyPress:onK,withSprite:withS,start};})();
-            window.__mapRuntime=(()=>{let h=null;return{move:async()=>{},getCoins:()=>0,getPlayerX:()=>0,getPlayerY:()=>0,isAtService:()=>false,getGridWidth:()=>1,getGridHeight:()=>1,getServiceX:()=>0,getServiceY:()=>0,getMaxMoves:()=>99,onStart:fn=>{h=fn;},start:async()=>{if(h)await h();}}})();
+            window.__mapRuntime=(()=>{let h=null;return{move:async()=>{},getCoins:()=>0,getMovesUsed:()=>0,getPlayerX:()=>0,getPlayerY:()=>0,isAtService:()=>false,getGridWidth:()=>1,getGridHeight:()=>1,getServiceX:()=>0,getServiceY:()=>0,getMaxMoves:()=>99,onStart:fn=>{h=fn;},start:async()=>{if(h)await h();}}})();
         <\/script></head><body><script>try{${code};(async function(){try{if(window.__scratchRuntime&&window.__scratchRuntime.start)window.__scratchRuntime.start();if(window.__mapRuntime&&window.__mapRuntime.start)await window.__mapRuntime.start();}catch(e2){console.error(e2.message);}})();}catch(e){console.error(e.message);}<\/script></body></html>`;
     }
 </script>
