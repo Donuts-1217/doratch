@@ -232,6 +232,40 @@
             cursor: pointer;
         }
         .map-editor-actions button:hover { background: #f1f5f9; }
+        .map-simple-guide {
+            margin: 0 0 12px; padding: 12px 14px; background: #eff6ff; border-radius: 12px;
+            border: 1px solid #bfdbfe; font-size: 13px; color: #1e40af; line-height: 1.6;
+        }
+        .map-quick-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .map-quick-bar button {
+            flex: 1 1 120px; border: none; border-radius: 12px; padding: 12px 14px;
+            font-weight: 900; font-size: 13px; cursor: pointer; color: #fff;
+        }
+        .map-quick-bar .q-single { background: var(--scratch-blue); }
+        .map-quick-bar .q-pack5 { background: var(--scratch-green); }
+        .map-quick-bar .q-pack10 { background: var(--scratch-purple); }
+        .map-level-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+        .map-level-tab {
+            border: 2px solid #e2e8f0; background: #fff; border-radius: 999px;
+            padding: 6px 14px; font-size: 12px; font-weight: 900; cursor: pointer; color: #475569;
+        }
+        .map-level-tab.active { border-color: var(--scratch-blue); background: rgba(76,151,255,0.12); color: #1d4ed8; }
+        .map-level-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+        .map-level-actions button {
+            flex: 1; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px;
+            padding: 8px; font-weight: 900; font-size: 12px; cursor: pointer;
+        }
+        .map-size-presets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+        .map-size-presets span { font-size: 12px; font-weight: 900; color: #475569; width: 100%; }
+        .map-size-btn {
+            border: 2px solid #e2e8f0; background: #f8fafc; border-radius: 10px;
+            padding: 8px 12px; font-weight: 900; font-size: 12px; cursor: pointer;
+        }
+        .map-size-btn.active { border-color: var(--scratch-blue); color: #1d4ed8; background: rgba(76,151,255,0.1); }
+        .map-advanced { margin-top: 12px; font-size: 13px; color: #64748b; }
+        .map-advanced summary { cursor: pointer; font-weight: 900; color: #475569; }
+        .map-advanced-inner { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0; }
+        .map-tools-simple { display: grid; grid-template-columns: 1fr; gap: 8px; }
         .map-cell.painting { outline: 2px solid rgba(76,151,255,0.85); outline-offset: 1px; }
         .map-grid-shell.dragging { cursor: crosshair; }
 
@@ -465,108 +499,116 @@
 <div id="modal-create-assign" class="modal" onclick="if(event.target==this)closeModal('modal-create-assign')">
     <div class="modal-content">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0; color:var(--scratch-blue);">📝 設定新挑戰任務</h2>
-            <button class="btn-solid" style="width:auto; padding:5px 12px; font-size:12px; background:var(--scratch-orange);" onclick="openModal('modal-question-bank')">📚 從題庫載入</button>
+            <h2 style="margin:0; color:var(--scratch-blue);">📝 發布班級任務</h2>
+            <button type="button" class="btn-solid" style="width:auto; padding:5px 12px; font-size:12px; background:var(--scratch-orange);" onclick="openModal('modal-question-bank')">📚 APCS 題庫</button>
+        </div>
+
+        <div class="form-group">
+            <label>任務標題 <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="m-title" placeholder="例如：第 3 週地圖金幣挑戰">
         </div>
         <div class="form-group">
             <label>任務類型</label>
             <select id="m-type" onchange="toggleMapSettings()">
-                <option value="regular">一般任務 / APCS 邏輯題</option>
-                <option value="map">地圖邏輯挑戰 (類似 NTNU Demo)</option>
+                <option value="map">🗺️ 地圖邏輯挑戰（推薦）</option>
+                <option value="regular">📄 一般任務 / APCS 邏輯題</option>
             </select>
         </div>
 
-        <div id="map-settings" style="display:none; background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #eef2f7;">
-            <h4 style="margin-top:0; color:var(--scratch-blue);">🗺️ 地圖設定</h4>
+        <div id="map-settings" style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:20px; border:1px solid #eef2f7;">
+            <p class="map-simple-guide">
+                <strong>三步驟：</strong>① 選下方快速範本（或自己畫）→ ② 左鍵加金幣、選起點／終點工具點格子 → ③ 填標題後發布
+            </p>
+            <div class="map-quick-bar">
+                <button type="button" class="q-single" onclick="mapQuickLoad('tutorial')">📍 單關 5×5</button>
+                <button type="button" class="q-pack5" onclick="mapQuickLoad('pack5')">📦 五關漸進</button>
+                <button type="button" class="q-pack10" onclick="mapQuickLoad('pack10_hidden')">🏆 競技 20 關</button>
+            </div>
+            <div id="map-level-tabs" class="map-level-tabs"></div>
+            <select id="map-pack-select" style="display:none;" onchange="mapEditorSelectMap(this.value)"></select>
+            <div class="map-level-actions">
+                <button type="button" onclick="mapEditorAddMap()">+ 加一關</button>
+                <button type="button" onclick="mapEditorRemoveMap()">刪除這關</button>
+            </div>
+
             <div class="map-editor-wrap">
                 <div class="map-editor-panel">
-                    <h5>關卡設定</h5>
-                    <div class="map-editor-row">
-                        <label>關卡</label>
-                        <select id="map-pack-select" onchange="mapEditorSelectMap(this.value)"></select>
-                    </div>
-                    <div class="map-editor-row">
-                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:10px 12px; border-radius:12px;" onclick="mapEditorAddMap()">+ 新增</button>
-                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:10px 12px; border-radius:12px; background:#ef4444;" onclick="mapEditorRemoveMap()">刪除</button>
-                    </div>
-                    <div class="map-editor-actions">
-                        <button type="button" onclick="mapEditorCopyMap()">📋 複製關卡</button>
-                        <button type="button" onclick="mapEditorPasteMap()">📌 貼上新關</button>
-                        <button type="button" onclick="mapEditorDuplicateMap()">⧉ 複製為新關</button>
-                    </div>
-                    <div class="map-editor-row" style="margin-top:10px;">
-                        <label>前</label>
-                        <input type="number" id="map-preview-first-n" value="10" min="0" max="20" style="width:72px;">
-                        <label>關可預覽</label>
-                        <button type="button" class="btn-solid" style="width:auto; margin:0; padding:8px 12px; border-radius:10px; font-size:12px;" onclick="mapEditorApplyPreviewFirstN()">一鍵套用</button>
-                    </div>
-
-                    <h5 style="margin-top:14px;">快速產生 / 範本</h5>
-                    <div class="map-editor-row">
-                        <label>關卡數</label>
-                        <input type="number" id="map-random-level-count" value="5" min="1" max="20" style="width:72px;">
-                        <label>前 N 預覽</label>
-                        <input type="number" id="map-random-preview-n" value="3" min="0" max="20" style="width:72px;">
-                    </div>
-                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:6px 0 8px; font-size:12px;">
-                        <input type="checkbox" id="map-random-full-size" style="width:auto;">
-                        <span>每關隨機寬高（不勾則沿用下方寬／高）</span>
-                    </label>
-                    <button type="button" class="btn-solid" style="width:100%; margin:0 0 10px; padding:10px; border-radius:12px; background:var(--scratch-purple);" onclick="mapEditorRandomPack()">🎲 隨機產生整包</button>
-                    <div class="map-editor-row">
-                        <select id="map-template-select" style="flex:1;">
-                            <option value="">— 選擇範本 —</option>
-                            <option value="tutorial">教學單關 5×5</option>
-                            <option value="practice">練習單關 6×6</option>
-                            <option value="pack5">五關漸進（皆可預覽）</option>
-                            <option value="pack10_hidden">10+10 競技（前10預覽）</option>
-                            <option value="pack20_arcade">20 關競技包（前10預覽）</option>
-                        </select>
-                    </div>
-                    <button type="button" class="btn-solid" style="width:100%; margin:0; padding:10px; border-radius:12px; background:#0ea5e9;" onclick="mapEditorLoadTemplate()">📦 載入範本</button>
-
-                    <h5 style="margin-top:14px;">尺寸與規則</h5>
-                    <div class="map-editor-row">
-                        <label>寬</label>
-                        <input type="number" id="map-width" value="5" min="3" max="10" oninput="mapEditorResize()">
-                        <label>高</label>
-                        <input type="number" id="map-height" value="5" min="3" max="10" oninput="mapEditorResize()">
+                    <div class="map-size-presets">
+                        <span>地圖大小</span>
+                        <button type="button" class="map-size-btn" data-w="5" data-h="5" onclick="mapEditorSetSize(5,5)">5×5</button>
+                        <button type="button" class="map-size-btn" data-w="6" data-h="6" onclick="mapEditorSetSize(6,6)">6×6</button>
+                        <button type="button" class="map-size-btn" data-w="8" data-h="8" onclick="mapEditorSetSize(8,8)">8×8</button>
                     </div>
                     <div class="map-editor-row">
                         <label>步數上限</label>
-                        <input type="number" id="map-max-moves" value="15" min="1" oninput="mapEditorSyncMaxMoves()">
+                        <input type="number" id="map-max-moves" value="15" min="1" max="99" onchange="mapEditorSyncMaxMoves()">
                     </div>
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:10px 0 0;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:8px 0 12px;">
                         <input type="checkbox" id="map-preview-visible" style="width:auto;" onchange="mapEditorSyncPreview()">
-                        <span style="font-size:13px;"><strong>允許預覽</strong>（學生看得到金幣與終點圖示）</span>
+                        <span style="font-size:13px;">學生作答前可預覽（看得到金幣與終點）</span>
                     </label>
 
-                    <h5 style="margin-top:14px;">工具</h5>
-                    <div class="map-editor-btns">
-                        <button type="button" class="map-tool-btn active" id="tool-coin" onclick="mapEditorSetTool('coin')">💰 金幣(0→1→2→3)</button>
-                        <button type="button" class="map-tool-btn" id="tool-start" onclick="mapEditorSetTool('start')">🚩 設定起點</button>
-                        <button type="button" class="map-tool-btn" id="tool-end" onclick="mapEditorSetTool('end')">🏁 設定終點</button>
-                        <button type="button" class="map-tool-btn" id="tool-clear" onclick="mapEditorSetTool('clear')">🧹 清除格子</button>
+                    <div class="map-tools-simple">
+                        <button type="button" class="map-tool-btn active" id="tool-coin" onclick="mapEditorSetTool('coin')">💰 放金幣（左鍵 +1，右鍵 −1）</button>
+                        <button type="button" class="map-tool-btn" id="tool-start" onclick="mapEditorSetTool('start')">🚩 設起點（點一格）</button>
+                        <button type="button" class="map-tool-btn" id="tool-end" onclick="mapEditorSetTool('end')">🏁 設終點（點一格）</button>
                     </div>
-                    <div class="map-editor-hint">
-                        左鍵點擊：金幣 0→1→2→3→0；可<strong>按住拖曳</strong>連續加金幣。<br>
-                        右鍵點擊：金幣 −1。起點／終點／清除工具亦可拖曳塗抹。
-                    </div>
+                    <div class="map-editor-hint">可按住左鍵拖曳，連續放置金幣。</div>
+
+                    <details class="map-advanced">
+                        <summary>進階選項（複製關卡、隨機產生…）</summary>
+                        <div class="map-advanced-inner">
+                            <div class="map-editor-actions">
+                                <button type="button" onclick="mapEditorCopyMap()">📋 複製</button>
+                                <button type="button" onclick="mapEditorPasteMap()">📌 貼上</button>
+                                <button type="button" onclick="mapEditorDuplicateMap()">⧉ 複製為新關</button>
+                            </div>
+                            <div class="map-editor-row">
+                                <label>寬</label>
+                                <input type="number" id="map-width" value="5" min="3" max="10" onchange="mapEditorResize()">
+                                <label>高</label>
+                                <input type="number" id="map-height" value="5" min="3" max="10" onchange="mapEditorResize()">
+                            </div>
+                            <div class="map-editor-row">
+                                <label>前</label>
+                                <input type="number" id="map-preview-first-n" value="10" min="0" max="20" style="width:72px;">
+                                <label>關可預覽</label>
+                                <button type="button" class="btn-solid" style="width:auto; margin:0; padding:8px 12px; border-radius:10px; font-size:12px;" onclick="mapEditorApplyPreviewFirstN()">套用</button>
+                            </div>
+                            <div class="map-editor-row">
+                                <label>關卡數</label>
+                                <input type="number" id="map-random-level-count" value="5" min="1" max="20" style="width:72px;">
+                                <label>前 N 預覽</label>
+                                <input type="number" id="map-random-preview-n" value="3" min="0" max="20" style="width:72px;">
+                            </div>
+                            <label style="display:flex; align-items:center; gap:8px; font-size:12px; margin:6px 0;">
+                                <input type="checkbox" id="map-random-full-size" style="width:auto;">
+                                <span>每關隨機寬高</span>
+                            </label>
+                            <button type="button" class="btn-solid" style="width:100%; margin:0 0 8px; padding:10px; border-radius:12px; background:var(--scratch-purple);" onclick="mapEditorRandomPack()">🎲 隨機產生整包</button>
+                            <div class="map-editor-row">
+                                <select id="map-template-select" style="flex:1;">
+                                    <option value="tutorial">教學單關</option>
+                                    <option value="practice">練習 6×6</option>
+                                    <option value="pack5">五關漸進</option>
+                                    <option value="pack10_hidden">20 關競技</option>
+                                    <option value="pack20_arcade">20 關隨機競技</option>
+                                </select>
+                                <button type="button" class="btn-solid" style="width:auto; margin:0; padding:10px 14px; border-radius:12px; background:#0ea5e9;" onclick="mapEditorLoadTemplate()">載入</button>
+                            </div>
+                            <button type="button" class="map-tool-btn" id="tool-clear" style="width:100%; margin-top:8px;" onclick="mapEditorSetTool('clear')">🧹 清除工具（點格子移除金幣）</button>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="map-grid-shell">
                     <div class="map-grid-header">
-                        <div>🗺️ 點格子編輯地圖</div>
+                        <div>🗺️ 點格子編輯</div>
                         <div id="map-grid-meta"></div>
                     </div>
                     <div id="map-grid" class="map-grid"></div>
                 </div>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label>任務標題</label>
-            <input type="text" id="m-title" placeholder="例如：迴圈畫圓挑戰">
         </div>
         <div class="form-group">
             <label>難易度等級</label>
@@ -593,7 +635,7 @@
                 <!-- 學生清單動態載入 -->
             </div>
         </div>
-        <button class="btn-full btn-solid" onclick="createAssignment()">發布任務並通知</button>
+        <button type="button" id="btn-publish-assign" class="btn-full btn-solid" onclick="createAssignment()">發布任務並通知</button>
     </div>
 </div>
 
@@ -684,9 +726,13 @@
         document.getElementById(id).style.display = 'flex';
         if(id === 'modal-create-assign') {
             renderAssignList();
-            document.getElementById('m-type').value = 'regular';
+            document.getElementById('m-type').value = 'map';
+            document.getElementById('m-title').value = '';
+            document.getElementById('assign-all-check').checked = true;
+            toggleAssignList();
             toggleMapSettings();
             mapEditorReset();
+            mapQuickLoad('tutorial');
         }
         if(id === 'modal-question-bank') renderBank();
     };
@@ -695,13 +741,15 @@
         const isMap = document.getElementById('m-type').value === 'map';
         document.getElementById('map-settings').style.display = isMap ? 'block' : 'none';
         if (isMap) {
-            document.getElementById('m-title').placeholder = "例如：觀光商圈金幣挑戰";
-            document.getElementById('m-goals').value = "1. 移動至服務台 (終點)\n2. 收集盡可能多的金幣\n3. 在步數限制內完成";
+            document.getElementById('m-title').placeholder = "例如：第 3 週地圖金幣挑戰";
+            const goalsEl = document.getElementById('m-goals');
+            if (goalsEl && !goalsEl.value.trim()) {
+                goalsEl.value = "1. 抵達終點（服務台）\n2. 收集盡可能多的金幣\n3. 在步數限制內完成";
+            }
             mapEditorEnsure();
         } else {
             document.getElementById('m-title').placeholder = "例如：迴圈畫圓挑戰";
         }
-        toggleMapPackOptions(); // 舊版相容（現為 no-op）
     };
 
     window.toggleMapPackOptions = () => {
@@ -804,16 +852,97 @@
 
     function mapEditorRenderSelect() {
         const sel = document.getElementById("map-pack-select");
-        if (!sel) return;
-        sel.innerHTML = "";
+        if (sel) {
+            sel.innerHTML = "";
+            __mapEditor.maps.forEach((m, i) => {
+                const opt = document.createElement("option");
+                opt.value = String(i);
+                opt.textContent = `第 ${i + 1} 關${m.preview ? "" : "（隱藏）"}`;
+                if (i === __mapEditor.idx) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+        const tabs = document.getElementById("map-level-tabs");
+        if (!tabs) return;
+        tabs.innerHTML = "";
         __mapEditor.maps.forEach((m, i) => {
-            const opt = document.createElement("option");
-            opt.value = String(i);
-            opt.textContent = `第 ${i + 1} 關${m.preview ? "" : "（隱藏）"}`;
-            if (i === __mapEditor.idx) opt.selected = true;
-            sel.appendChild(opt);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "map-level-tab" + (i === __mapEditor.idx ? " active" : "");
+            btn.textContent = `第 ${i + 1} 關${m.preview === false ? " 🔒" : ""}`;
+            btn.onclick = () => {
+                __mapEditor.idx = i;
+                mapEditorRenderAll();
+            };
+            tabs.appendChild(btn);
         });
     }
+
+    function mapEditorUpdateSizePresetButtons() {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        document.querySelectorAll(".map-size-btn").forEach((btn) => {
+            const w = parseInt(btn.getAttribute("data-w"), 10);
+            const h = parseInt(btn.getAttribute("data-h"), 10);
+            btn.classList.toggle("active", w === m.width && h === m.height);
+        });
+    }
+
+    window.mapEditorSetSize = (w, h) => {
+        const m = mapEditorCurrent();
+        if (!m) return;
+        m.width = clampInt(w, 3, 10, 5);
+        m.height = clampInt(h, 3, 10, 5);
+        sanitizeStartEndWithin(m);
+        mapEditorPruneCoinsOutside(m);
+        const suggested = (m.width - 1) + (m.height - 1) + 3;
+        if (!m.maxMoves || m.maxMoves < suggested) m.maxMoves = suggested;
+        mapEditorRenderAll();
+    };
+
+    function mapEditorValidatePack() {
+        const maps = __mapEditor.maps || [];
+        if (!maps.length) return "請至少設計一關地圖。";
+        for (let i = 0; i < maps.length; i++) {
+            const m = maps[i];
+            if (m.start[0] === m.end[0] && m.start[1] === m.end[1]) {
+                return `第 ${i + 1} 關：起點與終點不能在同一格，請重新設定。`;
+            }
+        }
+        return null;
+    }
+
+    function mapEditorLoadTemplateByKey(key, skipConfirm) {
+        if (!key) return;
+        if (!skipConfirm && !confirm("將覆蓋目前所有關卡，確定載入嗎？")) return;
+        let maps = [];
+        if (key === "pack20_arcade") {
+            maps = mapEditorRandomPackInternal(20, 10, true);
+        } else if (MAP_EDITOR_TEMPLATES[key]) {
+            maps = MAP_EDITOR_TEMPLATES[key].maps.map(mapEditorImportExportMap);
+        } else {
+            return alert("找不到範本。");
+        }
+        __mapEditor.maps = maps;
+        __mapEditor.idx = 0;
+        const previewCount = maps.filter((m) => m.preview).length;
+        const pfn = document.getElementById("map-preview-first-n");
+        if (pfn) pfn.value = String(previewCount);
+        mapEditorRenderAll();
+    }
+
+    window.mapQuickLoad = (key) => {
+        mapEditorLoadTemplateByKey(key, true);
+        const titleEl = document.getElementById("m-title");
+        if (!titleEl || titleEl.value.trim()) return;
+        const names = {
+            tutorial: "地圖練習（單關）",
+            pack5: "地圖挑戰（五關）",
+            pack10_hidden: "地圖競技（20 關）",
+            practice: "地圖練習（6×6）"
+        };
+        if (names[key]) titleEl.value = names[key];
+    };
 
     function mapEditorRenderGrid() {
         const grid = document.getElementById("map-grid");
@@ -895,6 +1024,7 @@
     function mapEditorRenderAll() {
         mapEditorRenderSelect();
         mapEditorSyncInputsFromMap();
+        mapEditorUpdateSizePresetButtons();
         mapEditorRenderTools();
         mapEditorRenderGrid();
         const pfn = document.getElementById("map-preview-first-n");
@@ -960,9 +1090,9 @@
                 if (cur === 0) m.coins[key] = 1;
                 else if (cur < 3) m.coins[key] = cur + 1;
             } else if (click) {
-                const next = (cur + 1) % 4;
-                if (next === 0) delete m.coins[key];
-                else m.coins[key] = next;
+                if (cur === 0) m.coins[key] = 1;
+                else if (cur < 3) m.coins[key] = cur + 1;
+                else delete m.coins[key];
             }
         }
 
@@ -1022,7 +1152,8 @@
     };
 
     window.mapEditorRemoveMap = () => {
-        if (__mapEditor.maps.length <= 1) return;
+        if (__mapEditor.maps.length <= 1) return alert("至少需保留一關。");
+        if (!confirm("確定刪除這一關？")) return;
         __mapEditor.maps.splice(__mapEditor.idx, 1);
         __mapEditor.idx = Math.max(0, Math.min(__mapEditor.idx, __mapEditor.maps.length - 1));
         mapEditorRenderAll();
@@ -1232,24 +1363,7 @@
 
     window.mapEditorLoadTemplate = () => {
         const key = document.getElementById("map-template-select")?.value;
-        if (!key) return alert("請先選擇範本。");
-        if (!confirm("將覆蓋目前所有關卡，確定載入範本嗎？")) return;
-
-        let maps = [];
-        if (key === "pack20_arcade") {
-            maps = mapEditorRandomPackInternal(20, 10, true);
-        } else if (MAP_EDITOR_TEMPLATES[key]) {
-            maps = MAP_EDITOR_TEMPLATES[key].maps.map(mapEditorImportExportMap);
-        } else {
-            return alert("找不到範本。");
-        }
-
-        __mapEditor.maps = maps;
-        __mapEditor.idx = 0;
-        const previewCount = maps.filter((m) => m.preview).length;
-        const pfn = document.getElementById("map-preview-first-n");
-        if (pfn) pfn.value = String(previewCount);
-        mapEditorRenderAll();
+        mapEditorLoadTemplateByKey(key, false);
     };
 
     window.switchTab = (name, el) => {
@@ -1297,21 +1411,30 @@
     window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
     async function renderAssignList() {
-        const list = document.getElementById('assign-student-list');
-        list.innerHTML = '載入名單中...';
+        const list = document.getElementById("assign-student-list");
+        if (!list) return;
+        if (!currentClass) {
+            list.innerHTML = '<div style="color:#999;font-size:13px;">班級資料載入中…</div>';
+            return;
+        }
+        list.innerHTML = "載入名單中…";
         const students = currentClass.students || [];
-        list.innerHTML = '';
-        for(const uid of students) {
+        if (students.length === 0) {
+            list.innerHTML = '<div style="color:#999;font-size:13px;">尚無學生加入班級，可先指派全班。</div>';
+            return;
+        }
+        list.innerHTML = "";
+        for (const uid of students) {
             const uSnap = await getDoc(doc(db, "users", uid));
-            if(uSnap.exists()) {
-                const name = uSnap.data().email.split('@')[0];
-                list.innerHTML += `
-                    <div style="margin-bottom:5px;">
-                        <input type="checkbox" class="target-student-check" value="${uid}" id="check-${uid}" style="width:auto;">
-                        <label for="check-${uid}" style="display:inline; font-weight:normal;">${name}</label>
-                    </div>
-                `;
-            }
+            if (!uSnap.exists()) continue;
+            const ud = uSnap.data();
+            const name = (ud.displayName && String(ud.displayName).trim()) || (ud.email || "").split("@")[0] || "學生";
+            list.innerHTML += `
+                <div style="margin-bottom:5px;">
+                    <input type="checkbox" class="target-student-check" value="${uid}" id="check-${uid}" style="width:auto;">
+                    <label for="check-${uid}" style="display:inline; font-weight:normal;">${name}</label>
+                </div>
+            `;
         }
     }
 
@@ -1321,45 +1444,65 @@
     };
 
     window.createAssignment = async () => {
-        const title = document.getElementById('m-title').value.trim();
-        const type = document.getElementById('m-type').value;
-        const lv = document.getElementById('m-lv').value;
-        const goals = document.getElementById('m-goals').value.split('\n').filter(l=>l.trim());
-        const hints = document.getElementById('m-hints').value.trim();
-        
-        const isAll = document.getElementById('assign-all-check').checked;
-        let assignedTo = 'all';
-        if(!isAll) {
-            assignedTo = Array.from(document.querySelectorAll('.target-student-check:checked')).map(cb => cb.value);
-            if(assignedTo.length === 0) return alert("請至少選擇一位學生或勾選全班。");
-        }
+        if (!currentUser || !classId) return alert("班級尚未載入完成，請稍後再試。");
 
-        if(!title) return;
+        const title = document.getElementById("m-title").value.trim();
+        const type = document.getElementById("m-type").value;
+        const lv = document.getElementById("m-lv").value;
+        const goals = document.getElementById("m-goals").value.split("\n").filter((l) => l.trim());
+        const hints = document.getElementById("m-hints").value.trim();
+
+        if (!title) return alert("請填寫任務標題。");
+
+        const isAll = document.getElementById("assign-all-check").checked;
+        let assignedTo = "all";
+        if (!isAll) {
+            assignedTo = Array.from(document.querySelectorAll(".target-student-check:checked")).map((cb) => cb.value);
+            if (assignedTo.length === 0) return alert("請至少選擇一位學生，或勾選「全班學生」。");
+        }
 
         let mapConfig = null;
         let mapPack = null;
         try {
-            if (type === 'map') {
+            if (type === "map") {
                 mapEditorEnsure();
+                const err = mapEditorValidatePack();
+                if (err) return alert(err);
                 mapPack = mapEditorExportPack();
-                if (!mapPack.maps || mapPack.maps.length === 0) {
-                    return alert("請至少設計一關地圖。");
-                }
                 mapConfig = mapPack.maps[0];
             }
 
             const payload = {
-                title, type, lv, goals, hints, assignedTo, mapConfig,
+                title,
+                type,
+                lv,
+                goals,
+                hints,
+                assignedTo,
+                mapConfig,
                 createdAt: serverTimestamp(),
-                teacherName: (currentUser.email || "").split('@')[0]
+                teacherName: (currentUser.email || "").split("@")[0]
             };
             if (mapPack) payload.mapPack = mapPack;
+
+            const btn = document.getElementById("btn-publish-assign");
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = "發布中…";
+            }
             await addDoc(collection(db, "classes", classId, "assignments"), payload);
-            closeModal('modal-create-assign');
+            closeModal("modal-create-assign");
+            alert("任務已發布！");
             loadList();
         } catch (e) {
             console.error(e);
             alert("發布失敗：" + (e.message || "請稍後再試"));
+        } finally {
+            const btn = document.getElementById("btn-publish-assign");
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "發布任務並通知";
+            }
         }
     };
 
