@@ -10,6 +10,7 @@
         :root { 
             --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
             --scratch-orange: #FFAB19; --scratch-green: #4CB050; --danger: #FF4D4D;
+            --radius-lg: 24px;
         }
         body { font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; margin: 0; padding: 0; }
         
@@ -47,6 +48,18 @@
         .announcement-bar { background: white; border-left: 5px solid var(--scratch-orange); padding: 15px 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .ann-title { font-weight: 900; color: var(--scratch-orange); display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
         .ann-content { font-size: 14px; color: #555; line-height: 1.6; }
+
+        .empty-state { text-align: center; padding: 48px 20px; color: #64748b; font-weight: bold; }
+        .btn-submit {
+            display: block; width: 100%; padding: 12px; margin-top: 8px;
+            border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 14px;
+        }
+        #display-name-banner {
+            display: none; margin-bottom: 20px; padding: 14px 18px;
+            background: #fff7ed; border: 1px solid #fdba74; border-radius: 14px;
+            color: #9a3412; font-size: 14px; line-height: 1.55;
+        }
+        #display-name-banner a { color: #ea580c; font-weight: 900; }
 
         /* 全域導覽列樣式 */
         .app-container { display: flex; min-height: 100vh; }
@@ -166,6 +179,10 @@
 
     <div id="announcement-section" style="display:none;"></div>
 
+    <div id="display-name-banner">
+        請先設定 <a href="profile.html?needDisplayName=1">顯示名稱</a>，排行榜與班級互動才會顯示正確暱稱。（仍可正常使用班級功能）
+    </div>
+
         <div class="header-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 style="margin:0;">我的班級面板</h2>
             <div style="display:flex; gap:10px;">
@@ -210,7 +227,20 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, arrayUnion, serverTimestamp, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { getDisplayLabel, avatarUrlFor, needsDisplayName } from "./doratch-user.js";
+
+    function getDisplayLabel(userData, email) {
+        const dn = String(userData?.displayName || "").trim();
+        if (dn.length >= 2) return dn.slice(0, 20);
+        const em = String(email || "").trim();
+        return em.includes("@") ? em.split("@")[0] : (em || "使用者");
+    }
+    function avatarUrlFor(userData, email, size) {
+        const name = encodeURIComponent(getDisplayLabel(userData, email));
+        return `https://ui-avatars.com/api/?name=${name}&size=${size || 128}&background=random`;
+    }
+    function needsDisplayName(userData) {
+        return String(userData?.displayName || "").trim().length < 2;
+    }
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -224,6 +254,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    window.handleLogout = () => signOut(auth).then(() => (location.href = "index.html"));
 
     window.openModal = (id) => {
         document.getElementById(id).style.display = 'flex';
@@ -240,10 +272,8 @@
             snap = await getDoc(ref);
         }
         const data = snap.data();
-        if (needsDisplayName(data)) {
-            location.href = "profile.html?needDisplayName=1";
-            return;
-        }
+        const nameBanner = document.getElementById("display-name-banner");
+        if (nameBanner) nameBanner.style.display = needsDisplayName(data) ? "block" : "none";
         let role = data.role || 'student';
         
         // --- 寫死超級管理員邏輯 ---
@@ -252,109 +282,145 @@
             role = 'admin';
         }
         
-        window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
-
         // 權限控制
         if(role === 'admin' || role === 'teacher') {
             const adminLink = document.getElementById('admin-link-main');
-            adminLink.style.display = 'flex';
-            adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
-            document.getElementById('btn-create-class').style.display = 'inline-block';
+            if (adminLink) {
+                adminLink.style.display = 'flex';
+                adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
+            }
+            const btnCreate = document.getElementById('btn-create-class');
+            if (btnCreate) btnCreate.style.display = 'inline-block';
         }
 
         const label = getDisplayLabel(data, user.email);
         const avatar = avatarUrlFor(data, user.email, 128);
-        document.getElementById('user-name').innerText = label;
-        document.getElementById('side-username').innerText = label;
-        document.getElementById('user-avatar').src = avatar;
-        document.getElementById('side-avatar').src = avatarUrlFor(data, user.email, 32);
-        document.getElementById('user-level').innerText = data.lv || 1;
-        document.getElementById('user-xp').innerText = data.xp || 0;
-        document.getElementById('user-coins-dash').innerText = data.coins || 0;
-        document.getElementById('side-coins').innerText = data.coins || 0;
-        
-        // APCS 統計
+        const setText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+        const setSrc = (id, src) => { const el = document.getElementById(id); if (el) el.src = src; };
+        setText("user-name", label);
+        setText("side-username", label);
+        setSrc("user-avatar", avatar);
+        setSrc("side-avatar", avatarUrlFor(data, user.email, 32));
+        setText("user-level", String(data.lv || 1));
+        setText("user-xp", String(data.xp || 0));
+        setText("user-coins-dash", String(data.coins || 0));
+        setText("side-coins", String(data.coins || 0));
+
         const apcs = data.apcs_stats || { lv1: 0, lv2: 0, lv3: 0 };
         const total = (apcs.lv1 || 0) + (apcs.lv2 || 0) + (apcs.lv3 || 0);
-        document.getElementById('apcs-total').innerText = total;
-        
-        const badges = document.getElementById('apcs-badges');
-        badges.innerHTML = '';
-        if(apcs.lv1 > 0) badges.innerHTML += `<span title="APCS Lv1" style="background:#E3F2FD; color:#1976D2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">💠 基礎邏輯 x${apcs.lv1}</span>`;
-        if(apcs.lv2 > 0) badges.innerHTML += `<span title="APCS Lv2" style="background:#F3E5F5; color:#7B1FA2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🌀 複合控制 x${apcs.lv2}</span>`;
-        if(apcs.lv3 > 0) badges.innerHTML += `<span title="APCS Lv3" style="background:#FFF3E0; color:#E65100; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🔥 演算法實踐 x${apcs.lv3}</span>`;
-        
+        setText("apcs-total", String(total));
+
+        const badges = document.getElementById("apcs-badges");
+        if (badges) {
+            badges.innerHTML = "";
+            if (apcs.lv1 > 0) badges.innerHTML += `<span title="APCS Lv1" style="background:#E3F2FD; color:#1976D2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">💠 基礎邏輯 x${apcs.lv1}</span>`;
+            if (apcs.lv2 > 0) badges.innerHTML += `<span title="APCS Lv2" style="background:#F3E5F5; color:#7B1FA2; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🌀 複合控制 x${apcs.lv2}</span>`;
+            if (apcs.lv3 > 0) badges.innerHTML += `<span title="APCS Lv3" style="background:#FFF3E0; color:#E65100; padding:3px 8px; border-radius:5px; font-size:10px; font-weight:bold;">🔥 演算法實踐 x${apcs.lv3}</span>`;
+        }
+
         const nextXp = (data.lv || 1) * 500;
-        document.getElementById('next-lv-xp').innerText = nextXp;
-        const progress = Math.min(((data.xp || 0) / nextXp) * 100, 100);
-        document.getElementById('xp-bar').style.width = progress + "%";
+        setText("next-lv-xp", String(nextXp));
+        const bar = document.getElementById("xp-bar");
+        if (bar) bar.style.width = Math.min(((data.xp || 0) / nextXp) * 100, 100) + "%";
     }
 
     // 獲取排行榜
     async function fetchLeaderboard() {
-        const listDiv = document.getElementById('rank-list');
+        const listDiv = document.getElementById("rank-list");
+        if (!listDiv) return;
         listDiv.innerHTML = "載入中...";
-        const q = query(collection(db, "users"), orderBy("xp", "desc"), limit(10));
-        const snap = await getDocs(q);
-        listDiv.innerHTML = "";
-        let i = 1;
-        snap.forEach(d => {
-            const data = d.data();
-            const div = document.createElement('div');
-            div.style = "display:flex; align-items:center; gap:15px; padding:12px; border-bottom:1px solid #eee;";
-            div.innerHTML = `
-                <div style="font-weight:900; width:30px; color:${i<=3?'var(--scratch-orange)':'#999'}">#${i++}</div>
-                <img src="https://ui-avatars.com/api/?name=${data.email}&background=random" style="width:30px; height:30px; border-radius:50%;">
-                <div style="flex:1; font-weight:bold;">${getDisplayLabel(data, data.email || "")}</div>
-                <div style="color:var(--scratch-purple); font-weight:900;">LV.${data.lv || 1}</div>
-            `;
-            listDiv.appendChild(div);
-        });
+        try {
+            const q = query(collection(db, "users"), orderBy("xp", "desc"), limit(10));
+            const snap = await getDocs(q);
+            listDiv.innerHTML = "";
+            if (snap.empty) {
+                listDiv.innerHTML = '<div class="empty-state">尚無排行資料</div>';
+                return;
+            }
+            let i = 1;
+            snap.forEach((d) => {
+                const data = d.data();
+                const div = document.createElement("div");
+                div.style.cssText = "display:flex; align-items:center; gap:15px; padding:12px; border-bottom:1px solid #eee;";
+                const rank = i++;
+                div.innerHTML = `
+                    <div style="font-weight:900; width:30px; color:${rank <= 3 ? "var(--scratch-orange)" : "#999"}">#${rank}</div>
+                    <img src="${avatarUrlFor(data, data.email || "?", 30)}" style="width:30px; height:30px; border-radius:50%;">
+                    <div style="flex:1; font-weight:bold;">${getDisplayLabel(data, data.email || "")}</div>
+                    <div style="color:var(--scratch-purple); font-weight:900;">LV.${data.lv || 1}</div>
+                `;
+                listDiv.appendChild(div);
+            });
+        } catch (e) {
+            console.error(e);
+            listDiv.innerHTML = '<div class="empty-state">排行榜載入失敗</div>';
+        }
     }
 
     // 渲染班級
     async function fetchClasses(user) {
-        const listDiv = document.getElementById('class-list');
+        const listDiv = document.getElementById("class-list");
+        if (!listDiv) return;
         listDiv.innerHTML = "讀取中...";
-        
-        const qT = query(collection(db, "classes"), where("teacherId", "==", user.uid));
-        const qS = query(collection(db, "classes"), where("students", "array-contains", user.uid));
-        
-        const [tSnap, sSnap] = await Promise.all([getDocs(qT), getDocs(qS)]);
-        listDiv.innerHTML = "";
-        
-        const allDocs = [...tSnap.docs, ...sSnap.docs].filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
 
-        allDocs.forEach(d => {
-            const data = d.data();
-            const isTeacher = data.teacherId === user.uid;
-            const cid = d.id;
+        try {
+            const qT = query(collection(db, "classes"), where("teacherId", "==", user.uid));
+            const qS = query(collection(db, "classes"), where("students", "array-contains", user.uid));
+            const [tSnap, sSnap] = await Promise.all([getDocs(qT), getDocs(qS)]);
 
-            const card = document.createElement('div');
-            card.className = 'class-card';
-            card.onclick = () => location.href = `class_view.html?id=${cid}`;
+            const allDocs = [...tSnap.docs, ...sSnap.docs].filter(
+                (v, i, a) => a.findIndex((t) => t.id === v.id) === i
+            );
 
-            card.innerHTML = `
-                <div class="class-banner">
-                    ${isTeacher ? `<button class="btn-delete" data-id="${cid}">刪除</button>` : ''}
-                    <div style="font-size:12px;">代碼: ${cid}</div>
-                    <h3>${data.className}</h3>
-                </div>
-                <div class="class-info">
-                    <span class="role-tag ${isTeacher ? 'role-teacher' : 'role-student'}">${isTeacher?'老師':'學生'}</span>
-                    <span>老師: ${data.teacherEmail.split('@')[0]}</span>
-                </div>
-            `;
-
-            // 處理刪除按鈕
-            if (isTeacher) {
-                card.querySelector('.btn-delete').onclick = (e) => {
-                    e.stopPropagation(); // 防止觸發卡片跳轉
-                    handleDelete(cid);
-                };
+            listDiv.innerHTML = "";
+            if (allDocs.length === 0) {
+                listDiv.innerHTML =
+                    '<div class="empty-state">尚無班級。<br>學生請按「加入班級」，老師請按「建立新班級」。</div>';
+                return;
             }
-            listDiv.appendChild(card);
-        });
+
+            allDocs.forEach((d) => {
+                const data = d.data() || {};
+                const isTeacher = data.teacherId === user.uid;
+                const cid = d.id;
+                const teacherLabel = (data.teacherEmail || "老師").split("@")[0];
+
+                const card = document.createElement("div");
+                card.className = "class-card";
+                card.onclick = () => {
+                    location.href = `class_view.html?id=${encodeURIComponent(cid)}`;
+                };
+
+                card.innerHTML = `
+                    <div class="class-banner">
+                        ${isTeacher ? `<button type="button" class="btn-delete" data-id="${cid}">刪除</button>` : ""}
+                        <div style="font-size:12px;">代碼: ${cid}</div>
+                        <h3>${data.className || "未命名班級"}</h3>
+                    </div>
+                    <div class="class-info">
+                        <span class="role-tag ${isTeacher ? "role-teacher" : "role-student"}">${isTeacher ? "老師" : "學生"}</span>
+                        <span>老師: ${teacherLabel}</span>
+                    </div>
+                `;
+
+                if (isTeacher) {
+                    const delBtn = card.querySelector(".btn-delete");
+                    if (delBtn) {
+                        delBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            handleDelete(cid);
+                        };
+                    }
+                }
+                listDiv.appendChild(card);
+            });
+        } catch (e) {
+            console.error(e);
+            listDiv.innerHTML =
+                '<div class="empty-state">班級列表載入失敗，請確認已登入並重新整理。<br><small>' +
+                (e.message || e.code || "") +
+                "</small></div>";
+        }
     }
 
     // 刪除邏輯
@@ -394,8 +460,11 @@
 
             const code = "C" + Math.random().toString(36).substr(2, 5).toUpperCase();
             await setDoc(doc(db, "classes", code), {
-                className: name, teacherId: auth.currentUser.uid,
-                teacherEmail: auth.currentUser.email, students: [], createdAt: new Date()
+                className: name,
+                teacherId: auth.currentUser.uid,
+                teacherEmail: auth.currentUser.email,
+                students: [],
+                createdAt: serverTimestamp()
             });
             await setDoc(doc(db, "chats", code), {
                 type: 'group',
@@ -421,40 +490,72 @@
                     return;
                 }
 
+                const classData = snap.data();
                 await updateDoc(ref, { students: arrayUnion(auth.currentUser.uid) });
-                await updateDoc(doc(db, "chats", code), { 
-                    participants: arrayUnion(auth.currentUser.uid) 
-                });
-                alert("成功加入班級與專屬群組！");
-                location.reload();
-            } catch(e) { alert("加入失敗：" + e.message); }
-        } else { alert("查無此代碼"); }
+                await setDoc(
+                    doc(db, "chats", code),
+                    {
+                        type: "group",
+                        name: classData.className || code,
+                        teacherId: classData.teacherId || "",
+                        participants: arrayUnion(auth.currentUser.uid),
+                        lastMessage: "成員已加入班級",
+                        updatedAt: serverTimestamp()
+                    },
+                    { merge: true }
+                );
+                alert("成功加入班級！");
+                closeModal("joinModal");
+                await fetchClasses(auth.currentUser);
+            } catch (e) {
+                console.error(e);
+                alert("加入失敗：" + (e.message || "請稍後再試"));
+            }
+        } else {
+            alert("查無此班級代碼，請向老師確認邀請碼。");
+        }
     };
 
-    async function loadAnnouncements() {
-        const q = query(collection(db, "announcements"), orderBy("date", "desc"), limit(1));
-        onSnapshot(q, (snap) => {
-            if(!snap.empty) {
-                const a = snap.docs[0].data();
-                const section = document.getElementById('announcement-section');
-                section.innerHTML = `
-                    <div class="announcement-bar">
-                        <div class="ann-title">📢 全站公告：${a.title}</div>
-                        <div class="ann-content">${a.content}</div>
-                    </div>
-                `;
-                section.style.display = 'block';
-            }
-        });
+    function loadAnnouncements() {
+        try {
+            const q = query(collection(db, "announcements"), orderBy("date", "desc"), limit(1));
+            onSnapshot(
+                q,
+                (snap) => {
+                    const section = document.getElementById("announcement-section");
+                    if (!section) return;
+                    if (!snap.empty) {
+                        const a = snap.docs[0].data();
+                        section.innerHTML = `
+                            <div class="announcement-bar">
+                                <div class="ann-title">📢 全站公告：${a.title || ""}</div>
+                                <div class="ann-content">${a.content || ""}</div>
+                            </div>
+                        `;
+                        section.style.display = "block";
+                    } else {
+                        section.style.display = "none";
+                    }
+                },
+                (err) => console.warn("公告載入失敗", err)
+            );
+        } catch (e) {
+            console.warn("公告查詢略過", e);
+        }
     }
 
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            fetchUserData(user);
-            fetchClasses(user);
-            loadAnnouncements();
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            location.href = "login.html";
+            return;
         }
-        else location.href = 'login.html';
+        await fetchUserData(user).catch((e) => {
+            console.error("使用者資料", e);
+        });
+        await fetchClasses(user).catch((e) => {
+            console.error("班級列表", e);
+        });
+        loadAnnouncements();
     });
 </script>
 </body>
