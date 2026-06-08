@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
+    <title>Doratch：異界生存</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4C97FF; --bg: #0B0E14; --card: #1e293b; --text: #f8fafc; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .top-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; background: rgba(15,23,42,0.95); border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky; top: 0; z-index: 50;
+        }
+        .top-bar a { color: #94a3b8; text-decoration: none; font-weight: 900; font-size: 14px; }
+        .top-bar h1 { margin: 0; font-size: 1.1rem; background: linear-gradient(90deg, #4C97FF, #855CD6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .layout { display: grid; grid-template-columns: 1fr 280px; gap: 0; max-width: 1400px; margin: 0 auto; min-height: calc(100vh - 52px); }
+        @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side-panel { order: 2; } }
+        .game-wrap { position: relative; background: #000; min-height: 480px; }
+        #game-canvas { display: block; width: 100%; height: min(72vh, 640px); }
+        .overlay {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.75); z-index: 20; padding: 20px;
+        }
+        .overlay.hidden { display: none; }
+        .panel {
+            background: var(--card); border-radius: 20px; padding: 28px; max-width: 420px; width: 100%;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center;
+        }
+        .panel h2 { margin: 0 0 12px; color: var(--primary); }
+        .panel p { font-size: 14px; color: #94a3b8; line-height: 1.6; margin: 0 0 16px; }
+        .btn {
+            display: block; width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 12px;
+            font-weight: 900; font-size: 15px; cursor: pointer; font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, #4C97FF, #855CD6); color: #fff; }
+        .btn-ghost { background: transparent; color: #94a3b8; border: 2px solid #334155; }
+        .pick-grid { display: grid; gap: 10px; margin-top: 12px; }
+        .pick-btn {
+            text-align: left; padding: 14px; border-radius: 12px; border: 2px solid #334155;
+            background: #0f172a; color: #fff; cursor: pointer; font-weight: 900; font-family: inherit;
+        }
+        .pick-btn:hover { border-color: var(--primary); }
+        .side-panel { padding: 20px; background: #111827; border-left: 1px solid rgba(255,255,255,0.06); }
+        .side-panel h3 { margin: 0 0 12px; font-size: 14px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+        .hint { font-size: 13px; color: #94a3b8; line-height: 1.65; margin-bottom: 16px; }
+        .skill-list { font-size: 13px; line-height: 1.8; }
+        .equip-row { font-size: 12px; padding: 8px 0; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
+        .lb { margin-top: 20px; }
+        .lb-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; border-bottom: 1px solid #1e293b; }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <a href="game.html">← 遊戲中心</a>
+        <h1>Doratch：異界生存</h1>
+        <span id="user-coins" style="font-weight:900; color:#FFAB19;">💰 0</span>
+    </header>
+
+    <div class="layout">
+        <div class="game-wrap">
+            <canvas id="game-canvas"></canvas>
+            <div id="overlay-menu" class="overlay">
+                <div class="panel">
+                    <h2>🌌 異界生存</h2>
+                    <p>WASD 移動 · 自動攻擊 · 升級選技能<br>存活 <strong>10 分鐘</strong> 並擊敗 Boss 獲勝</p>
+                    <p id="boss-status" style="font-size:13px;color:#fbbf24;font-weight:900;margin:12px 0;">✅ 可挑戰 Boss（每小時 1 次）</p>
+                    <p style="font-size:12px;">Boss 挑戰：<strong>每小時 1 次</strong>。冷卻中仍可練習，但不會出現 Boss、無法通關。</p>
+                    <button type="button" class="btn btn-primary" id="btn-start">開始冒險</button>
+                </div>
+            </div>
+            <div id="overlay-levelup" class="overlay hidden">
+                <div class="panel">
+                    <h2>⬆️ 升級！選一項技能</h2>
+                    <div id="pick-grid" class="pick-grid"></div>
+                </div>
+            </div>
+            <div id="overlay-pause" class="overlay hidden">
+                <div class="panel">
+                    <h2>⏸ 暫停</h2>
+                    <button type="button" class="btn btn-primary" id="btn-resume">繼續</button>
+                    <button type="button" class="btn btn-ghost" onclick="location.href='game.html'">離開</button>
+                </div>
+            </div>
+            <div id="overlay-over" class="overlay hidden">
+                <div class="panel">
+                    <h2 id="over-title">結束</h2>
+                    <p id="over-stats"></p>
+                    <button type="button" class="btn btn-primary" id="btn-retry">再玩一次</button>
+                    <button type="button" class="btn btn-ghost" onclick="location.href='game.html'">回遊戲中心</button>
+                </div>
+            </div>
+        </div>
+
+        <aside class="side-panel">
+            <h3>操作</h3>
+            <p class="hint"><kbd>W A S D</kbd> 移動角色<br>技能自動施放<br><kbd>Esc</kbd> 暫停</p>
+            <h3>目前技能</h3>
+            <div id="skill-list" class="skill-list">—</div>
+            <h3>裝備</h3>
+            <div id="equip-list"></div>
+            <div class="lb">
+                <h3>個人最佳</h3>
+                <div id="personal-best" style="font-size:13px; color:#94a3b8;">—</div>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, where, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { createSurvivalGame } from "./js/game-survival.js";
+
+        const BOSS_COOLDOWN_MS = 3600000;
+
+        const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const canvas = document.getElementById("game-canvas");
+        let engine = null;
+        let uid = null;
+        let displayName = "玩家";
+        let lastBossAt = 0;
+        let bossUiInterval = null;
+
+        function bossReady() {
+            return !lastBossAt || Date.now() - lastBossAt >= BOSS_COOLDOWN_MS;
+        }
+
+        function bossCooldownLabel() {
+            if (bossReady()) return "✅ 可挑戰 Boss（每小時 1 次）";
+            const left = BOSS_COOLDOWN_MS - (Date.now() - lastBossAt);
+            const m = Math.ceil(left / 60000);
+            return `⏳ Boss 冷卻中，約 ${m} 分鐘後可再挑戰`;
+        }
+
+        function updateBossUi() {
+            const el = document.getElementById("boss-status");
+            if (el) el.textContent = bossCooldownLabel();
+            const btn = document.getElementById("btn-start");
+            if (btn) btn.textContent = bossReady() ? "開始冒險（含 Boss）" : "開始練習（Boss 冷卻中）";
+        }
+
+        function showOverlay(id, show) {
+            document.getElementById(id).classList.toggle("hidden", !show);
+        }
+
+        function refreshSideHud() {
+            if (!engine) return;
+            const g = engine.getGame();
+            const p = g.player;
+            const sk = document.getElementById("skill-list");
+            sk.innerHTML = Object.entries(p.skills).map(([id, lv]) =>
+                `<div>${engine.SKILL_DEFS[id]?.icon || "•"} ${engine.SKILL_DEFS[id]?.name || id} Lv.${lv}</div>`
+            ).join("") || "（無）";
+            const eq = document.getElementById("equip-list");
+            eq.innerHTML = ["weapon", "armor", "accessory"].map((slot) => {
+                const e = p.equip[slot];
+                const label = { weapon: "武器", armor: "護甲", accessory: "飾品" }[slot];
+                if (!e) return `<div class="equip-row">${label}：—</div>`;
+                return `<div class="equip-row" style="color:${e.rarity.color}">${label}：${e.rarity.name} ${e.name}</div>`;
+            }).join("");
+        }
+
+        async function loadPersonalBest() {
+            const el = document.getElementById("personal-best");
+            if (!uid) {
+                el.textContent = "登入後同步紀錄";
+                updateBossUi();
+                return;
+            }
+            try {
+                const snap = await getDoc(doc(db, "users", uid, "gameSurvival", "profile"));
+                if (!snap.exists()) {
+                    el.textContent = "尚無紀錄，開始第一場吧！";
+                    updateBossUi();
+                    return;
+                }
+                const d = snap.data();
+                lastBossAt = d.lastBossAt?.toMillis?.() || (d.lastBossAt?.seconds ? d.lastBossAt.seconds * 1000 : 0) || d.lastBossAt || 0;
+                updateBossUi();
+                el.innerHTML = `最高分 <strong>${d.bestScore || 0}</strong><br>最佳存活 ${formatTime(d.bestTime || 0)}<br>最高擊殺 ${d.bestKills || 0}`;
+            } catch (e) {
+                console.error(e);
+                el.textContent = "紀錄同步失敗，仍可遊玩";
+                updateBossUi();
+            }
+        }
+
+        async function recordBossAttempt() {
+            lastBossAt = Date.now();
+            updateBossUi();
+            if (!uid) return;
+            await setDoc(doc(db, "users", uid, "gameSurvival", "profile"), { lastBossAt: serverTimestamp() }, { merge: true });
+        }
+
+        function startRun() {
+            if (!engine) return alert("遊戲尚未準備好，請重新整理頁面");
+            showOverlay("overlay-menu", false);
+            engine.start({ bossAllowed: bossReady() });
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${String(s).padStart(2, "0")}`;
+        }
+
+        async function getUserCoins(uid) {
+            const snap = await getDoc(doc(db, "users", uid));
+            return snap.exists() ? snap.data().coins || 0 : 0;
+        }
+
+        async function saveResult(result) {
+            if (!uid) return;
+            try {
+            const ref = doc(db, "users", uid, "gameSurvival", "profile");
+            const old = await getDoc(ref);
+            const prev = old.exists() ? old.data() : {};
+            const bestScore = Math.max(prev.bestScore || 0, result.score);
+            const bestTime = result.won ? Math.max(prev.bestTime || 0, result.time) : (prev.bestTime || 0);
+            const bestKills = Math.max(prev.bestKills || 0, result.kills);
+            const coinReward = Math.floor(result.score / 5);
+            await setDoc(ref, {
+                bestScore, bestTime, bestKills,
+                lastRun: result,
+                totalRuns: (prev.totalRuns || 0) + 1,
+                displayName,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            if (coinReward > 0) {
+                const uRef = doc(db, "users", uid);
+                const uSnap = await getDoc(uRef);
+                if (!uSnap.exists()) {
+                    await setDoc(uRef, { coins: coinReward, xp: 0, lv: 1 }, { merge: true });
+                } else {
+                    await updateDoc(uRef, { coins: increment(coinReward) });
+                }
+            }
+            document.getElementById("user-coins").textContent = "💰 " + (await getUserCoins(uid));
+
+            const q = query(collection(db, "classes"), where("students", "array-contains", uid));
+            const classes = await getDocs(q);
+            for (const c of classes.docs) {
+                const lbRef = doc(db, "classes", c.id, "survivalScores", uid);
+                const lbOld = await getDoc(lbRef);
+                const oldScore = lbOld.exists() ? lbOld.data().score || 0 : 0;
+                if (result.score >= oldScore) {
+                    await setDoc(lbRef, {
+                        uid,
+                        displayName,
+                        score: result.score,
+                        time: result.time,
+                        kills: result.kills,
+                        level: result.level,
+                        won: result.won,
+                        updatedAt: serverTimestamp()
+                    });
+                }
+            }
+            await loadPersonalBest();
+            } catch (e) {
+                console.error(e);
+                alert("存檔失敗（分數仍有效）：" + (e.message || e));
+            }
+        }
+
+        function bindEngine() {
+            engine = createSurvivalGame(canvas, {
+                onLevelUp(choices) {
+                    showOverlay("overlay-menu", false);
+                    showOverlay("overlay-levelup", true);
+                    const grid = document.getElementById("pick-grid");
+                    grid.innerHTML = "";
+                    choices.forEach((c) => {
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "pick-btn";
+                        btn.innerHTML = `<div>${c.label}</div><div style="font-size:12px;color:#94a3b8;margin-top:4px;">${c.desc}</div>`;
+                        btn.onclick = () => {
+                            engine.pickSkill(c.id);
+                            showOverlay("overlay-levelup", false);
+                            refreshSideHud();
+                        };
+                        grid.appendChild(btn);
+                    });
+                },
+                onStateChange(st) {
+                    showOverlay("overlay-pause", st === "paused");
+                    if (st === "playing") refreshSideHud();
+                },
+                onTick() { refreshSideHud(); },
+                onBossSpawn() { recordBossAttempt(); },
+                async onEnd(result) {
+                    showOverlay("overlay-levelup", false);
+                    showOverlay("overlay-over", true);
+                    document.getElementById("over-title").textContent = result.won ? "🎉 異界征服！" : "💀 生存失敗";
+                    let extra = "";
+                    if (!result.won && !bossReady() && result.time >= 590) extra = "<br><small>Boss 仍在冷卻，本次為練習模式</small>";
+                    document.getElementById("over-stats").innerHTML =
+                        `存活 ${formatTime(result.time)} · 擊殺 ${result.kills} · Lv.${result.level}<br>得分 <strong>${result.score}</strong>（已兌換金幣）${extra}`;
+                    await saveResult(result);
+                }
+            });
+            engine.runLoop();
+        }
+
+        document.getElementById("btn-start").onclick = startRun;
+        document.getElementById("btn-resume").onclick = () => {
+            engine.resume();
+            showOverlay("overlay-pause", false);
+        };
+        document.getElementById("btn-retry").onclick = () => {
+            showOverlay("overlay-over", false);
+            if (bossReady()) {
+                showOverlay("overlay-menu", false);
+                startRun();
+            } else {
+                showOverlay("overlay-menu", true);
+                updateBossUi();
+            }
+        };
+
+        bindEngine();
+        updateBossUi();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) { location.href = "login.html"; return; }
+            uid = user.uid;
+            try {
+                const uRef = doc(db, "users", user.uid);
+                const uSnap = await getDoc(uRef);
+                if (!uSnap.exists()) {
+                    await setDoc(uRef, { email: user.email || "", coins: 100, xp: 0, lv: 1 }, { merge: true });
+                }
+                const d = (await getDoc(uRef)).data() || {};
+                displayName = (d.displayName && String(d.displayName).trim()) || user.email.split("@")[0];
+                document.getElementById("user-coins").textContent = "💰 " + (d.coins ?? 100);
+            } catch (e) {
+                console.error(e);
+                displayName = user.email?.split("@")[0] || "玩家";
+            }
+            await loadPersonalBest();
+            if (!bossUiInterval) bossUiInterval = setInterval(updateBossUi, 30000);
+        });
+    </script>
+</body>
+</html>

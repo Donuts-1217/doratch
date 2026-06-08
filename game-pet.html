@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doratch 寵物養成</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:"Noto Sans TC",sans-serif; background:#0f172a; color:#f8fafc; }
+        .bar { display:flex; justify-content:space-between; padding:14px 20px; background:#1e293b; }
+        .bar a { color:#94a3b8; text-decoration:none; font-weight:900; }
+        .wrap { max-width:520px; margin:0 auto; padding:24px; text-align:center; }
+        .pet-stage { font-size:100px; margin:20px 0; animation:bob 2s ease-in-out infinite; }
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        .stats { background:#1e293b; border-radius:16px; padding:20px; margin:16px 0; text-align:left; font-size:14px; line-height:1.8; }
+        .btn { width:100%; padding:14px; margin:8px 0; border:none; border-radius:12px; font-weight:900; font-size:15px; cursor:pointer; }
+        .btn-feed { background:#22c55e; color:#fff; }
+        .btn-battle { background:#ef4444; color:#fff; }
+        .progress { height:10px; background:#334155; border-radius:99px; overflow:hidden; margin:8px 0; }
+        .progress div { height:100%; background:linear-gradient(90deg,#4c97ff,#855cd6); transition:0.3s; }
+        .sync-hint { font-size:12px; color:#64748b; margin-top:8px; }
+    </style>
+</head>
+<body>
+    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+    <div class="wrap">
+        <h1>🥚 Doratch 寵物</h1>
+        <div class="pet-stage" id="sprite">🥚</div>
+        <div id="stagename" style="font-weight:900;font-size:1.2rem;">蛋</div>
+        <div class="stats">
+            <div>等級 Lv.<span id="lv">1</span></div>
+            <div>飽食度</div>
+            <div class="progress"><div id="food-bar" style="width:30%"></div></div>
+            <div>經驗值</div>
+            <div class="progress"><div id="xp-bar" style="width:0%"></div></div>
+            <div style="color:#94a3b8;font-size:12px;margin-top:8px;" id="hint">餵食升級後自動進化</div>
+        </div>
+        <button type="button" class="btn btn-feed" id="feed">🍖 餵食（+飽食 +XP）</button>
+        <button type="button" class="btn btn-battle" id="battle">⚔️ 對戰訓練</button>
+        <p class="sync-hint" id="sync-hint">本機模式 · 進度自動儲存</p>
+    </div>
+    <script type="module">
+        import { loadLocal, saveLocal, pickNewer, connectCloud, refreshPlatformCoins, setSyncHint } from "./js/game-local-sync.js";
+
+        const STORAGE_KEY = "doratch_gamePet_v1";
+        const STAGES = [
+            { name:"蛋", icon:"🥚", minLv:0 },
+            { name:"幼體", icon:"🐣", minLv:3 },
+            { name:"成熟體", icon:"🐉", minLv:8 },
+            { name:"究極體", icon:"🌟", minLv:15 }
+        ];
+        const DEFAULT_PET = { lv:1, xp:0, food:30, stage:0, wins:0 };
+
+        let uid = null, saveGameDoc = null, getUserCoins = null;
+        let pet = { ...DEFAULT_PET };
+
+        function xpNeed() { return pet.lv * 25; }
+        function stageIndex() {
+            for (let i = STAGES.length - 1; i >= 0; i--) {
+                if (pet.lv >= STAGES[i].minLv) return i;
+            }
+            return 0;
+        }
+
+        function render() {
+            pet.stage = stageIndex();
+            const s = STAGES[pet.stage];
+            document.getElementById("sprite").textContent = s.icon;
+            document.getElementById("stagename").textContent = s.name;
+            document.getElementById("lv").textContent = pet.lv;
+            document.getElementById("food-bar").style.width = Math.min(100, pet.food) + "%";
+            document.getElementById("xp-bar").style.width = Math.min(100, (pet.xp / xpNeed()) * 100) + "%";
+            const next = STAGES[pet.stage + 1];
+            document.getElementById("hint").textContent = next
+                ? `再升 ${Math.max(0, next.minLv - pet.lv)} 級可進化為「${next.name}」`
+                : "已達究極體！";
+        }
+
+        function persist(coinReward = 0) {
+            saveLocal(STORAGE_KEY, { pet });
+            if (uid && saveGameDoc) {
+                saveGameDoc(uid, "gamePet", { pet }, coinReward).catch((e) => console.error(e));
+            }
+        }
+
+        document.getElementById("feed").onclick = () => {
+            pet.food = Math.min(100, pet.food + 25);
+            pet.xp += 12;
+            while (pet.xp >= xpNeed()) {
+                pet.xp -= xpNeed();
+                pet.lv++;
+            }
+            render();
+            persist();
+        };
+
+        document.getElementById("battle").onclick = async () => {
+            if (pet.food < 15) return alert("飽食度不足，請先餵食");
+            pet.food -= 15;
+            const win = pet.lv + pet.stage * 3 > 3 + Math.floor(Math.random() * 8);
+            if (win) {
+                pet.wins++;
+                pet.xp += 20;
+                while (pet.xp >= xpNeed()) { pet.xp -= xpNeed(); pet.lv++; }
+                persist(5);
+                if (uid && getUserCoins) {
+                    await refreshPlatformCoins(uid, "coins", getUserCoins);
+                    alert("對戰勝利！+5 平台金幣");
+                } else {
+                    alert("對戰勝利！");
+                }
+            } else alert("對戰失敗，再練一下！");
+            render();
+        };
+
+        function initLocal() {
+            const local = loadLocal(STORAGE_KEY);
+            if (local?.pet) pet = { ...DEFAULT_PET, ...local.pet };
+            render();
+        }
+
+        initLocal();
+        setInterval(() => persist(), 20000);
+
+        connectCloud(async (user, api) => {
+            uid = user.uid;
+            saveGameDoc = api.saveGameDoc;
+            getUserCoins = api.getUserCoins;
+            setSyncHint("雲端同步已連線");
+            await refreshPlatformCoins(uid, "coins", api.getUserCoins);
+            const saved = await api.loadGameDoc(uid, "gamePet");
+            const local = loadLocal(STORAGE_KEY);
+            const cloudWrap = saved?.pet ? { pet: saved.pet, savedAt: saved.updatedAt } : null;
+            const picked = pickNewer(local, cloudWrap, saved?.updatedAt);
+            if (picked?.pet) pet = { ...DEFAULT_PET, ...picked.pet };
+            render();
+            persist();
+        }, setSyncHint);
+    </script>
+</body>
+</html>

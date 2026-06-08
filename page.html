@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="create-space.css">
     <title>Creative Blocks Pro - 終極工作台</title>
     
     <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
@@ -697,7 +698,13 @@
 <body>
 
 <nav>
-    <div class="nav-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
+    <div class="nav-logo" onclick="location.href='create.html'">🧩 Creative Blocks</div>
+
+    <div class="create-space-tabs">
+        <a href="create.html" class="hub-tab">🏠 選擇</a>
+        <a href="page.html" class="blockly-tab active">🧩 積木</a>
+        <a href="python-studio.html" class="python-tab">🐍 Python</a>
+    </div>
     
     <div class="project-title-container">
         <input type="text" id="project-title-input" value="未命名專案">
@@ -1158,6 +1165,7 @@
     let authorUid = urlParams.get('from');
     let aid = urlParams.get('aid'); // 任務 ID
     let cid = urlParams.get('cid'); // 班級 ID
+    const missionPreviewParam = urlParams.get('preview') === '1';
     /** 全服固定地圖挑戰 ID（與 challenge_zone.html 一致） */
     const GLOBAL_FIXED_MAP_CHALLENGE_ID = "fixed_arcade_v1";
     const rawGlobalChallenge = urlParams.get("globalChallenge");
@@ -2760,11 +2768,35 @@
         document.getElementById('nav-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
         document.getElementById('nav-avatar').style.display = 'block';
 
+        // 任務模式：若網址未帶 load=，自動還原學生上次儲存的作答專案
+        if (!currentPid && aid && cid) {
+            try {
+                const classSnap = await getDoc(doc(db, "classes", cid));
+                const isClassTeacher = classSnap.exists() && classSnap.data().teacherId === user.uid;
+                if (!isClassTeacher) {
+                    const subSnap = await getDoc(doc(db, "classes", cid, "assignments", aid, "submissions", user.uid));
+                    if (subSnap.exists()) {
+                        const atts = subSnap.data().atts || [];
+                        if (atts.length && atts[atts.length - 1].id) {
+                            currentPid = atts[atts.length - 1].id;
+                            authorUid = user.uid;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("無法還原任務草稿", e);
+            }
+        }
+
         if (currentPid) {
             const uid = authorUid || user.uid;
             const snap = await getDoc(doc(db, "users", uid, "projects", currentPid));
             if (snap.exists()) {
                 const d = snap.data();
+                if (d.projectType === "python") {
+                    location.href = `python-studio.html?load=${currentPid}${authorUid && authorUid !== user.uid ? "&from=" + authorUid : ""}`;
+                    return;
+                }
                 originalProjectData = d;
                 
                 document.getElementById('project-title-input').value = d.name;
@@ -2900,7 +2932,7 @@
 
             const snap = await getDoc(doc(db, "classes", cid, "assignments", aid));
             if (snap.exists()) {
-                teacherMissionPreview = !!(isTeacher && aid && cid);
+                teacherMissionPreview = !!(isTeacher && aid && cid && missionPreviewParam);
                 const data = snap.data();
                 currentMissionLv = data.lv || "LV1";
                 currentMissionType = data.type || "regular";
@@ -3120,8 +3152,8 @@
                 { merge: true }
             );
 
-            alert("繳交成功（已儲存程式與分數）。");
-            location.href = `class_view.html?id=${cid}`;
+            alert("✅ 繳交成功！程式與分數已儲存，老師可在班級任務中查看。");
+            location.href = `class_view.html?id=${encodeURIComponent(cid)}&aid=${encodeURIComponent(aid)}&submitted=1`;
         } catch (e) {
             console.error(e);
             alert("繳交失敗：" + (e.message || e));

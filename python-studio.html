@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="create-space.css">
+    <link rel="stylesheet" href="python-terminal.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --py-green: #306998; --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; --scratch-green: #4CB050; }
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; height: 100dvh; font-family: "Noto Sans TC", sans-serif; background: #0f172a; overflow: hidden; }
+        nav {
+            background: #0b0e14; color: white; padding: 0 16px; display: flex; align-items: center;
+            min-height: 65px; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.06); z-index: 100;
+        }
+        .nav-logo { font-weight: 900; font-size: 1rem; cursor: pointer; color: var(--py-green); white-space: nowrap; }
+        .project-title-container { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 160px; }
+        #project-title-input {
+            background: rgba(255,255,255,0.12); border: none; color: white; padding: 7px 12px;
+            border-radius: 8px; font-size: 14px; width: min(220px, 40vw); font-weight: 700;
+        }
+        #project-title-input:focus { outline: 2px solid var(--py-green); }
+        .nav-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; cursor: pointer;
+            font-size: 13px; font-family: inherit;
+        }
+        .btn-run { background: var(--scratch-green); color: white; }
+        .btn-save { background: var(--scratch-orange); color: white; }
+        .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #editor-status { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+        #main-workspace { display: flex; flex: 1; min-height: 0; }
+        #editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #1e293b; min-height: 0; }
+        .pane-header {
+            padding: 10px 16px; font-size: 13px; font-weight: 800; color: #cbd5e1;
+            background: #0f172a; border-bottom: 1px solid #334155;
+        }
+        .monaco-shell { flex: 1; min-height: 0; font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
+        #monaco-editor { width: 100%; height: 100%; min-height: 200px; }
+        .monaco-shell .monaco-editor,
+        .monaco-shell .monaco-editor .margin,
+        .monaco-shell .monaco-editor .view-lines {
+            font-family: "JetBrains Mono", Consolas, "Courier New", monospace !important;
+            font-variant-ligatures: none !important;
+        }
+        #editor-fallback {
+            display: none; flex: 1; width: 100%; box-sizing: border-box; min-height: 200px;
+            font-family: "JetBrains Mono", monospace; font-size: 14px; padding: 16px;
+            background: #1e1e1e; color: #d4d4d4; border: none; resize: none;
+        }
+        .monaco-editor .suggest-widget { max-height: min(280px, calc(100vh - 120px)) !important; z-index: 10000; }
+        #side-pane {
+            width: min(400px, 38vw); min-width: 280px; background: #0f172a;
+            display: flex; flex-direction: column; border-left: 2px solid #334155; min-height: 0;
+        }
+        .terminal-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+        .terminal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; background: #1e293b; border-bottom: 1px solid #334155;
+            font-size: 13px; font-weight: 800; color: #cbd5e1; flex-shrink: 0;
+        }
+        .terminal-head button {
+            border: none; background: rgba(255,255,255,0.08); color: #94a3b8;
+            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800;
+            cursor: pointer; font-family: inherit;
+        }
+        .terminal-body--term { padding: 0; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .terminal-body--term .py-terminal-root { flex: 1; min-height: 0; border-radius: 0; }
+        .engine-bar {
+            font-size: 12px; padding: 6px 14px; background: #252526; color: #94a3b8;
+            border-bottom: 1px solid #333;
+        }
+        .engine-bar.ready { color: #86efac; }
+        .engine-bar.error { color: #fca5a5; }
+        @media (max-width: 900px) {
+            #main-workspace { flex-direction: column; }
+            #side-pane { width: 100%; min-width: 0; max-height: 42vh; border-left: none; border-top: 2px solid #334155; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <script src="js/python-engine.js"></script>
+    <script src="js/python-terminal.js"></script>
+    <script src="js/python-monaco.js"></script>
+</head>
+<body>
+
+<nav>
+    <div class="nav-logo" onclick="location.href='create.html'">🐍 Python 創作</div>
+    <div class="create-space-tabs">
+        <a href="create.html" class="hub-tab">🏠 選擇</a>
+        <a href="page.html" class="blockly-tab">🧩 積木</a>
+        <a href="python-studio.html" class="python-tab active">🐍 Python</a>
+    </div>
+    <div class="project-title-container">
+        <input type="text" id="project-title-input" value="未命名 Python 作品">
+        <span id="editor-status">⚪ 編輯中</span>
+    </div>
+    <div class="nav-actions">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#94a3b8;cursor:pointer;">
+            <input type="checkbox" id="is-public-check" style="width:auto;margin:0;"> 公開
+        </label>
+        <button type="button" class="btn btn-run" id="btn-run" disabled>▶ 執行</button>
+        <button type="button" class="btn btn-save" id="btn-save">💾 儲存</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click()">📤 匯入</button>
+        <button type="button" class="btn btn-outline" id="btn-download">📥 下載 .py</button>
+        <input type="file" id="file-input" accept=".py,.txt" hidden>
+        <a href="projects.html" class="btn btn-outline" style="text-decoration:none;">📂 作品</a>
+    </div>
+</nav>
+
+<div id="engine-bar" class="engine-bar">Python 引擎載入中…</div>
+
+<div id="main-workspace">
+    <div id="editor-pane">
+        <div class="pane-header">程式碼 · Ctrl+Enter 執行</div>
+        <div class="monaco-shell">
+            <div id="monaco-editor"></div>
+        </div>
+        <textarea id="editor-fallback" spellcheck="false"></textarea>
+    </div>
+    <div id="side-pane">
+        <div class="terminal-panel">
+            <div class="terminal-head">
+                <span>▶ 執行視窗</span>
+                <button type="button" id="btn-clear-terminal">清除</button>
+            </div>
+            <div class="terminal-body terminal-body--term">
+                <div id="py-terminal"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+        getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const DEFAULT_CODE = `# Python 自由創作
+# 在此撰寫任意 Python 程式
+
+print("Hello, Doratch!")
+`;
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const Engine = window.PythonEngine;
+    let pyTerm = null;
+
+    const qs = new URLSearchParams(location.search);
+    let currentPid = qs.get("load");
+    let authorUid = qs.get("from");
+    let isOwner = true;
+    let engineReady = false;
+    let useMonaco = true;
+    let savedSnapshot = "";
+
+    function getCode() {
+        if (useMonaco && window.PythonMonaco?.isReady()) return window.PythonMonaco.getValue();
+        return document.getElementById("editor-fallback").value;
+    }
+
+    function setCode(code) {
+        if (useMonaco && window.PythonMonaco?.isReady()) window.PythonMonaco.setValue(code);
+        else document.getElementById("editor-fallback").value = code;
+    }
+
+    function snapshot() {
+        return JSON.stringify({
+            title: document.getElementById("project-title-input").value,
+            code: getCode(),
+            public: document.getElementById("is-public-check").checked
+        });
+    }
+
+    function markSaved() {
+        savedSnapshot = snapshot();
+        document.getElementById("editor-status").textContent = "✓ 已儲存";
+        document.getElementById("editor-status").style.color = "#86efac";
+    }
+
+    function markDirty() {
+        if (snapshot() !== savedSnapshot) {
+            document.getElementById("editor-status").textContent = "⚪ 編輯中";
+            document.getElementById("editor-status").style.color = "#94a3b8";
+        }
+    }
+
+    document.getElementById("btn-clear-terminal").onclick = () => {
+        if (pyTerm) pyTerm.clear();
+    };
+
+    document.getElementById("btn-run").onclick = async () => {
+        if (!engineReady || !pyTerm) return;
+        const code = getCode();
+        pyTerm.clear();
+        pyTerm.setRunning(true);
+        document.getElementById("btn-run").disabled = true;
+        try {
+            const { error } = await Engine.runPythonInteractive(code, {
+                onWrite: (text) => pyTerm.write(text),
+                onInput: (prompt) => pyTerm.readLine(prompt)
+            });
+            if (error) pyTerm.writeError(error);
+        } catch (e) {
+            pyTerm.writeError(String(e.message || e));
+        } finally {
+            pyTerm.setRunning(false);
+            document.getElementById("btn-run").disabled = false;
+        }
+    };
+
+    async function initMonaco() {
+        if (!window.PythonMonaco) {
+            useMonaco = false;
+            document.querySelector(".monaco-shell").style.display = "none";
+            const fb = document.getElementById("editor-fallback");
+            fb.style.display = "block";
+            fb.value = DEFAULT_CODE;
+            return;
+        }
+        try {
+            await window.PythonMonaco.init("monaco-editor");
+            useMonaco = true;
+            setCode(DEFAULT_CODE);
+        } catch (e) {
+            console.warn(e);
+            useMonaco = false;
+            document.querySelector(".monaco-shell").style.display = "none";
+            document.getElementById("editor-fallback").style.display = "block";
+            document.getElementById("editor-fallback").value = DEFAULT_CODE;
+        }
+    }
+
+    async function bootEngine() {
+        const bar = document.getElementById("engine-bar");
+        if (!Engine) {
+            bar.textContent = "引擎未載入，請重新整理或使用 Live Server";
+            bar.className = "engine-bar error";
+            return;
+        }
+        try {
+            await Engine.init((msg) => { bar.textContent = msg; bar.className = "engine-bar"; });
+            engineReady = true;
+            bar.textContent = "Python 已就緒 · 自由創作模式";
+            bar.className = "engine-bar ready";
+            document.getElementById("btn-run").disabled = false;
+        } catch (e) {
+            bar.textContent = e.message || String(e);
+            bar.className = "engine-bar error";
+        }
+    }
+
+
+    document.getElementById("btn-save").onclick = async () => {
+        const user = auth.currentUser;
+        if (!user) { location.href = "login.html"; return; }
+        const title = document.getElementById("project-title-input").value.trim() || "未命名 Python 作品";
+        const pythonCode = getCode();
+        const isPublic = document.getElementById("is-public-check").checked;
+        try {
+            if (isOwner && currentPid) {
+                await updateDoc(doc(db, "users", user.uid, "projects", currentPid), {
+                    name: title,
+                    projectType: "python",
+                    pythonCode,
+                    isPublic,
+                    updatedAt: serverTimestamp()
+                });
+                alert("儲存成功！");
+                markSaved();
+            } else {
+                const ref = await addDoc(collection(db, "users", user.uid, "projects"), {
+                    name: title,
+                    projectType: "python",
+                    pythonCode,
+                    authorEmail: user.email,
+                    isPublic: isOwner ? isPublic : false,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                currentPid = ref.id;
+                isOwner = true;
+                authorUid = user.uid;
+                history.replaceState({}, "", `python-studio.html?load=${currentPid}`);
+                alert("已建立並儲存新作品！");
+                markSaved();
+            }
+        } catch (e) {
+            alert("儲存失敗：" + e.message);
+        }
+    };
+
+    document.getElementById("btn-download").onclick = () => {
+        const blob = new Blob([getCode()], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (document.getElementById("project-title-input").value.trim() || "python") + ".py";
+        a.click();
+    };
+
+    document.getElementById("file-input").onchange = (ev) => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setCode(String(e.target.result || ""));
+            markDirty();
+        };
+        reader.readAsText(file);
+        ev.target.value = "";
+    };
+
+    document.getElementById("project-title-input").addEventListener("input", markDirty);
+    document.getElementById("is-public-check").addEventListener("change", markDirty);
+
+    window.addEventListener("beforeunload", (ev) => {
+        if (snapshot() !== savedSnapshot) {
+            ev.preventDefault();
+            ev.returnValue = "";
+        }
+    });
+
+    window.addEventListener("resize", () => {
+        if (window.PythonMonaco?.isReady()) window.PythonMonaco.layout();
+    });
+
+    async function loadProject(user) {
+        if (!currentPid) {
+            markSaved();
+            return;
+        }
+        const uid = authorUid || user.uid;
+        const snap = await getDoc(doc(db, "users", uid, "projects", currentPid));
+        if (!snap.exists()) {
+            alert("找不到作品");
+            markSaved();
+            return;
+        }
+        const d = snap.data();
+        if (d.projectType !== "python") {
+            location.href = `page.html?load=${currentPid}${authorUid ? "&from=" + authorUid : ""}`;
+            return;
+        }
+        document.getElementById("project-title-input").value = d.name || "未命名 Python 作品";
+        document.getElementById("is-public-check").checked = !!d.isPublic;
+        setCode(typeof d.pythonCode === "string" ? d.pythonCode : DEFAULT_CODE);
+        isOwner = uid === user.uid;
+        if (!isOwner) {
+            document.getElementById("btn-save").textContent = "⭐ 另存為我的作品";
+        }
+        markSaved();
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { location.href = "login.html"; return; }
+        await initMonaco();
+        pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
+        await bootEngine();
+        await loadProject(user);
+        if (useMonaco && window.PythonMonaco?.isReady()) {
+            window.PythonMonaco.getValue(); // ensure editor ready
+            const model = document.getElementById("editor-fallback");
+            if (model.style.display === "block") model.addEventListener("input", markDirty);
+            else {
+                setInterval(markDirty, 800);
+            }
+        }
+    });
+</script>
+</body>
+</html>

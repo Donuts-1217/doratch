@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doratch 點擊放置</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:"Noto Sans TC",sans-serif; background:#0f172a; color:#f8fafc; min-height:100vh; }
+        .bar { display:flex; justify-content:space-between; align-items:center; padding:14px 20px; background:#1e293b; border-bottom:1px solid #334155; }
+        .bar a { color:#94a3b8; text-decoration:none; font-weight:900; }
+        .wrap { max-width:720px; margin:0 auto; padding:24px 16px; }
+        .coin-big { font-size:2.5rem; font-weight:900; color:#fbbf24; text-align:center; margin:20px 0; }
+        .tap-btn {
+            display:block; width:180px; height:180px; margin:0 auto 24px; border-radius:50%; border:none;
+            background:linear-gradient(135deg,#fbbf24,#f59e0b); font-size:4rem; cursor:pointer;
+            box-shadow:0 12px 40px rgba(251,191,36,0.35); transition:transform 0.08s;
+            touch-action:manipulation; user-select:none;
+        }
+        .tap-btn:active { transform:scale(0.94); }
+        .shop { display:grid; gap:12px; }
+        .shop-item {
+            display:flex; justify-content:space-between; align-items:center; background:#1e293b;
+            padding:14px 16px; border-radius:14px; border:1px solid #334155;
+        }
+        .shop-item button { border:none; background:#4c97ff; color:#fff; padding:10px 16px; border-radius:10px; font-weight:900; cursor:pointer; }
+        .shop-item button:disabled { opacity:0.4; cursor:not-allowed; }
+        .stat { font-size:13px; color:#94a3b8; text-align:center; line-height:1.8; }
+        .sync-hint { text-align:center; font-size:12px; color:#64748b; margin-top:8px; }
+    </style>
+</head>
+<body>
+    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+    <div class="wrap">
+        <h1 style="text-align:center;margin:0;">🍪 Doratch 點擊放置</h1>
+        <p class="stat">點擊賺金幣 · 購買自動採集 · 離線最多累積 8 小時</p>
+        <div class="coin-big" id="game-coins">100</div>
+        <button type="button" class="tap-btn" id="tap">🍪</button>
+        <div class="stat" id="cps">每秒 +0 · 每次點擊 +1</div>
+        <h3>升級商店</h3>
+        <div class="shop" id="shop"></div>
+        <p class="sync-hint" id="sync-hint">本機模式 · 進度自動儲存</p>
+    </div>
+    <script type="module">
+        const STORAGE_KEY = "doratch_gameClicker_v1";
+
+        const UPGRADES = [
+            { id: "cursor", name: "👆 強化點擊", base: 15, inc: 1, click: 1 },
+            { id: "miner", name: "⛏️ 礦工", base: 50, inc: 8, cps: 0.5 },
+            { id: "factory", name: "🏭 工廠", base: 200, inc: 35, cps: 3 },
+            { id: "drone", name: "🤖 採集無人機", base: 800, inc: 120, cps: 15 }
+        ];
+
+        let uid = null;
+        let cloudReady = false;
+        let saveGameDoc = null;
+        let state = { coins: 100, total: 100, levels: {}, lastAt: Date.now() };
+
+        function clickPower() {
+            return 1 + (state.levels.cursor || 0) * UPGRADES[0].inc;
+        }
+        function cps() {
+            let n = 0;
+            UPGRADES.forEach((u) => { if (u.cps) n += (state.levels[u.id] || 0) * u.cps; });
+            return n;
+        }
+        function price(u) {
+            const lv = state.levels[u.id] || 0;
+            return Math.floor(u.base * Math.pow(1.15, lv));
+        }
+
+        function toMillis(v) {
+            if (!v) return 0;
+            if (typeof v === "number") return v;
+            if (v.toMillis) return v.toMillis();
+            if (v.seconds) return v.seconds * 1000;
+            return 0;
+        }
+
+        function loadLocal() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch { return null; }
+        }
+
+        function saveLocal() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    coins: state.coins,
+                    total: state.total,
+                    levels: { ...state.levels },
+                    lastAt: Date.now()
+                }));
+            } catch (e) { console.error(e); }
+        }
+
+        function applyOffline() {
+            const sec = Math.min(8 * 3600, (Date.now() - state.lastAt) / 1000);
+            if (sec > 5 && cps() > 0) {
+                const gain = Math.floor(sec * cps());
+                state.coins += gain;
+                state.total += gain;
+                if (gain > 0) alert(`離線收益 +${gain} 金幣（${Math.floor(sec / 60)} 分鐘）`);
+            }
+            state.lastAt = Date.now();
+        }
+
+        function render() {
+            document.getElementById("game-coins").textContent = Math.floor(state.coins).toLocaleString();
+            document.getElementById("cps").textContent = `每秒 +${cps().toFixed(1)} · 每次點擊 +${clickPower()}`;
+            const shop = document.getElementById("shop");
+            shop.innerHTML = "";
+            UPGRADES.forEach((u) => {
+                const p = price(u);
+                const lv = state.levels[u.id] || 0;
+                const row = document.createElement("div");
+                row.className = "shop-item";
+                row.innerHTML = `<div><strong>${u.name}</strong> Lv.${lv}<br><small style="color:#64748b;">${p} 金幣</small></div>`;
+                const btn = document.createElement("button");
+                btn.textContent = "購買";
+                btn.disabled = state.coins < p;
+                btn.onclick = () => {
+                    if (state.coins < p) return;
+                    state.coins -= p;
+                    state.levels[u.id] = lv + 1;
+                    saveLocal();
+                    persistCloud();
+                    render();
+                };
+                row.appendChild(btn);
+                shop.appendChild(row);
+            });
+        }
+
+        async function persistCloud() {
+            saveLocal();
+            if (!uid || !saveGameDoc) return;
+            try {
+                await saveGameDoc(uid, "gameClicker", {
+                    coins: state.coins,
+                    total: state.total,
+                    levels: { ...state.levels },
+                    lastAt: Date.now()
+                }, 0);
+            } catch (e) { console.error(e); }
+        }
+
+        function mergeCloud(data) {
+            if (!data) return;
+            const cloudAt = toMillis(data.lastAt);
+            const localAt = state.lastAt || 0;
+            const cloud = {
+                coins: data.coins ?? 0,
+                total: data.total ?? 0,
+                levels: data.levels || {},
+                lastAt: cloudAt || Date.now()
+            };
+            if (cloudAt > localAt + 5000) {
+                state = { ...cloud, levels: { ...cloud.levels } };
+            } else {
+                state.coins = Math.max(state.coins, cloud.coins);
+                state.total = Math.max(state.total, cloud.total);
+                Object.keys(cloud.levels).forEach((k) => {
+                    state.levels[k] = Math.max(state.levels[k] || 0, cloud.levels[k] || 0);
+                });
+            }
+        }
+
+        function tap() {
+            const g = clickPower();
+            state.coins += g;
+            state.total += g;
+            saveLocal();
+            render();
+        }
+
+        let lastTapAt = 0;
+        function onTap(e) {
+            if (e.type === "touchstart") e.preventDefault();
+            const now = Date.now();
+            if (now - lastTapAt < 100) return;
+            lastTapAt = now;
+            tap();
+        }
+
+        function initLocal() {
+            const local = loadLocal();
+            if (local) {
+                state.coins = local.coins ?? 100;
+                state.total = local.total ?? state.coins;
+                state.levels = local.levels || {};
+                state.lastAt = local.lastAt || Date.now();
+            }
+            applyOffline();
+            render();
+        }
+
+        document.getElementById("tap").addEventListener("click", onTap);
+        document.getElementById("tap").addEventListener("touchstart", onTap, { passive: false });
+
+        setInterval(() => {
+            const add = cps() / 10;
+            if (add > 0) {
+                state.coins += add;
+                state.total += add;
+                render();
+            }
+        }, 100);
+
+        setInterval(() => {
+            saveLocal();
+            persistCloud();
+        }, 15000);
+
+        initLocal();
+
+        try {
+            const api = await import("./js/doratch-game-api.js");
+            saveGameDoc = api.saveGameDoc;
+            api.requireLogin(async (user) => {
+                uid = user.uid;
+                cloudReady = true;
+                document.getElementById("sync-hint").textContent = "雲端同步已連線";
+                try {
+                    const platformCoins = await api.getUserCoins(uid);
+                    document.getElementById("coins").textContent = "💰 " + platformCoins;
+                } catch {
+                    document.getElementById("coins").textContent = "💰 —";
+                }
+                try {
+                    const saved = await api.loadGameDoc(uid, "gameClicker");
+                    mergeCloud(saved);
+                    applyOffline();
+                    render();
+                    await persistCloud();
+                } catch (e) {
+                    console.error(e);
+                    document.getElementById("sync-hint").textContent = "雲端讀取失敗 · 本機進度仍可用";
+                }
+            });
+        } catch (e) {
+            console.warn("Firebase 不可用，使用本機模式", e);
+            document.getElementById("sync-hint").textContent = "本機模式（未連線雲端）";
+            document.getElementById("coins").textContent = "💰 本機";
+        }
+    </script>
+</body>
+</html>

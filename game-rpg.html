@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doratch RPG 探索</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:"Noto Sans TC",sans-serif; background:#0f172a; color:#f8fafc; }
+        .bar { display:flex; justify-content:space-between; padding:14px 20px; background:#1e293b; }
+        .bar a { color:#94a3b8; text-decoration:none; font-weight:900; }
+        .wrap { max-width:800px; margin:0 auto; padding:20px; }
+        .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+        .tab { padding:10px 16px; border-radius:999px; border:2px solid #334155; background:#1e293b; color:#94a3b8; font-weight:900; cursor:pointer; }
+        .tab.active { border-color:#4c97ff; color:#fff; background:rgba(76,151,255,0.15); }
+        .panel { background:#1e293b; border-radius:16px; padding:20px; border:1px solid #334155; min-height:200px; }
+        .hero { display:flex; gap:16px; align-items:center; margin-bottom:16px; padding:16px; background:#0f172a; border-radius:12px; }
+        .btn { border:none; background:#4c97ff; color:#fff; padding:10px 18px; border-radius:10px; font-weight:900; cursor:pointer; margin:4px; }
+        .log { font-size:13px; color:#94a3b8; max-height:120px; overflow-y:auto; margin-top:12px; }
+        .sync-hint { text-align:center; font-size:12px; color:#64748b; margin-top:12px; }
+    </style>
+</head>
+<body>
+    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+    <div class="wrap">
+        <h1>🗺️ Doratch RPG 探索</h1>
+        <div class="hero">
+            <div style="font-size:48px;">🧙</div>
+            <div>
+                <div><strong id="pname">冒險者</strong> · Lv.<span id="plv">1</span></div>
+                <div style="font-size:13px;color:#94a3b8;">HP <span id="php">100/100</span> · 攻擊 <span id="patk">10</span> · 金幣 <span id="pgold">50</span></div>
+                <div style="font-size:12px;margin-top:4px;" id="pequip">裝備：無</div>
+            </div>
+        </div>
+        <div class="tabs">
+            <button type="button" class="tab active" data-map="forest">🌲 森林</button>
+            <button type="button" class="tab" data-map="cave">🕳️ 洞穴</button>
+            <button type="button" class="tab" data-map="town">🏘️ 城鎮</button>
+        </div>
+        <div class="panel" id="panel"></div>
+        <div class="log" id="log"></div>
+        <p class="sync-hint" id="sync-hint">本機模式 · 進度自動儲存</p>
+    </div>
+    <script type="module">
+        import { loadLocal, saveLocal, pickNewer, connectCloud, refreshPlatformCoins, setSyncHint } from "./js/game-local-sync.js";
+
+        const STORAGE_KEY = "doratch_gameRpg_v1";
+        const DEFAULT_PLAYER = { lv:1, xp:0, hp:100, maxHp:100, atk:10, gold:50, equip:null, questsDone:[], herbs:0 };
+
+        let uid = null, saveGameDoc = null, map = "forest";
+        let p = { ...DEFAULT_PLAYER };
+
+        const MAPS = {
+            forest: { name:"森林", mobs:[{n:"史萊姆",hp:20,xp:8,g:5},{n:"野狼",hp:35,xp:15,g:12}], quest:"收集 3 份草藥" },
+            cave: { name:"洞穴", mobs:[{n:"蝙蝠",hp:40,xp:18,g:15},{n:"石怪",hp:70,xp:30,g:25}], quest:"擊敗石怪 1 次" },
+            town: { shop:true }
+        };
+        const SHOP = [
+            { name:"鐵劍", atk:5, cost:30 },
+            { name:"皮甲", hp:20, cost:25 },
+            { name:"治療藥水", heal:40, cost:15 }
+        ];
+
+        function log(msg) {
+            const el = document.getElementById("log");
+            el.innerHTML = `<div>${new Date().toLocaleTimeString()} · ${msg}</div>` + el.innerHTML;
+        }
+
+        function renderHero() {
+            document.getElementById("plv").textContent = p.lv;
+            document.getElementById("php").textContent = `${p.hp}/${p.maxHp}`;
+            document.getElementById("patk").textContent = p.atk + (p.equip?.atk || 0);
+            document.getElementById("pgold").textContent = p.gold;
+            document.getElementById("pequip").textContent = "裝備：" + (p.equip ? p.equip.name : "無");
+        }
+
+        function levelUp() {
+            while (p.xp >= p.lv * 30) {
+                p.xp -= p.lv * 30;
+                p.lv++;
+                p.maxHp += 15;
+                p.hp = p.maxHp;
+                p.atk += 3;
+                log(`升級！現在 Lv.${p.lv}`);
+            }
+        }
+
+        function equipItem(item) {
+            if (p.equip?.hp) {
+                p.maxHp -= p.equip.hp;
+                p.hp = Math.min(p.hp, p.maxHp);
+            }
+            p.equip = { name: item.name, atk: item.atk || 0, hp: item.hp || 0 };
+            if (item.hp) { p.maxHp += item.hp; p.hp += item.hp; }
+        }
+
+        function persist() {
+            saveLocal(STORAGE_KEY, { player: p });
+            if (uid && saveGameDoc) {
+                saveGameDoc(uid, "gameRpg", { player: p }).catch((e) => console.error(e));
+            }
+        }
+
+        function fight(mob) {
+            if (Math.random() > 0.25) {
+                p.gold += mob.g;
+                p.xp += mob.xp;
+                log(`擊敗 ${mob.n}！+${mob.g} 金幣 +${mob.xp} XP`);
+                levelUp();
+                if (mob.n === "石怪" && !p.questsDone.includes("cave")) {
+                    p.questsDone.push("cave");
+                    p.gold += 50;
+                    log("任務完成：洞穴探索 +50 金幣");
+                }
+            } else {
+                p.hp -= 12;
+                log(`${mob.n} 反擊！HP -12`);
+                if (p.hp <= 0) { p.hp = p.maxHp; p.gold = Math.max(0, p.gold - 10); log("倒下… 被送回城鎮，損失 10 金幣"); }
+            }
+            renderHero();
+            persist();
+        }
+
+        function renderPanel() {
+            const panel = document.getElementById("panel");
+            const m = MAPS[map];
+            if (m.shop) {
+                panel.innerHTML = `<h3>🏘️ 城鎮商店</h3><p style="color:#94a3b8;font-size:14px;">${MAPS.forest.quest} / ${MAPS.cave.quest}</p>`;
+                SHOP.forEach((item) => {
+                    const btn = document.createElement("button");
+                    btn.className = "btn";
+                    btn.textContent = `${item.name} (${item.cost}G)`;
+                    btn.onclick = () => {
+                        if (p.gold < item.cost) return alert("金幣不足");
+                        p.gold -= item.cost;
+                        if (item.heal) p.hp = Math.min(p.maxHp, p.hp + item.heal);
+                        else equipItem(item);
+                        log(`購買 ${item.name}`);
+                        renderHero();
+                        persist();
+                    };
+                    panel.appendChild(btn);
+                });
+                return;
+            }
+            panel.innerHTML = `<h3>${m.name}</h3><p style="color:#94a3b8;">任務：${m.quest}</p>`;
+            m.mobs.forEach((mob) => {
+                const btn = document.createElement("button");
+                btn.className = "btn";
+                btn.textContent = `⚔️ 挑戰 ${mob.n} (HP ${mob.hp})`;
+                btn.onclick = () => fight(mob);
+                panel.appendChild(btn);
+            });
+            if (map === "forest") {
+                const q = document.createElement("button");
+                q.className = "btn";
+                q.style.background = "#22c55e";
+                q.textContent = "🌿 採集草藥";
+                q.onclick = () => {
+                    if (p.questsDone.includes("forest")) { log("森林任務已完成"); return; }
+                    p.gold += 8; p.xp += 5;
+                    p.herbs = (p.herbs || 0) + 1;
+                    if (p.herbs >= 3) {
+                        p.questsDone.push("forest");
+                        p.gold += 40;
+                        log("任務完成：森林採集 +40 金幣");
+                    } else log(`採集草藥 (${p.herbs}/3)`);
+                    renderHero();
+                    persist();
+                };
+                panel.appendChild(q);
+            }
+        }
+
+        document.querySelectorAll(".tab").forEach((t) => {
+            t.onclick = () => {
+                document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
+                t.classList.add("active");
+                map = t.dataset.map;
+                renderPanel();
+            };
+        });
+
+        function initLocal() {
+            const local = loadLocal(STORAGE_KEY);
+            if (local?.player) p = { ...DEFAULT_PLAYER, ...local.player };
+            renderHero();
+            renderPanel();
+        }
+
+        initLocal();
+        setInterval(persist, 20000);
+
+        connectCloud(async (user, api) => {
+            uid = user.uid;
+            saveGameDoc = api.saveGameDoc;
+            setSyncHint("雲端同步已連線");
+            await refreshPlatformCoins(uid, "coins", api.getUserCoins);
+            const saved = await api.loadGameDoc(uid, "gameRpg");
+            const local = loadLocal(STORAGE_KEY);
+            const picked = pickNewer(local, saved?.player ? { player: saved.player, savedAt: saved.updatedAt } : null, saved?.updatedAt);
+            if (picked?.player) p = { ...DEFAULT_PLAYER, ...picked.player };
+            else if (!local?.player) p.gold = 50;
+            renderHero();
+            renderPanel();
+            persist();
+        }, setSyncHint);
+    </script>
+</body>
+</html>

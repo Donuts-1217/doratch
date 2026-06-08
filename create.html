@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="create-space.css">
+    <title>創作空間 - Doratch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: #f0f2f5; color: #334155; }
+        .app-container { display: flex; min-height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; padding: 40px 24px 56px; box-sizing: border-box; }
+        @media (max-width: 1024px) {
+            .main-content { margin-left: 0; padding: 20px 16px 40px; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar-main" data-doratch-active="create"></aside>
+    <main class="main-content">
+        <div class="create-hub">
+            <div class="create-hub-hero">
+                <h1>🚀 創作空間</h1>
+                <p>先選擇你要用的語言或工具，再進入對應的工作台。每種創作方式都是<strong>獨立畫面</strong>，作品會保存在「我的作品」。</p>
+            </div>
+
+            <section class="hub-section" aria-labelledby="hub-live-title">
+                <h2 class="hub-section-title" id="hub-live-title">現在可用</h2>
+                <div class="create-hub-grid">
+                    <a href="page.html" class="create-hub-card blockly">
+                        <span class="badge live">可用</span>
+                        <span class="icon">🧩</span>
+                        <span class="lang-tag">Blockly</span>
+                        <h2>積木創作</h2>
+                        <p>拖曳積木、舞台預覽、角色腳本。適合互動動畫、小遊戲與地圖挑戰。</p>
+                        <span class="go">進入積木工作台 →</span>
+                    </a>
+                    <a href="python-studio.html" class="create-hub-card python">
+                        <span class="badge live">可用</span>
+                        <span class="icon">🐍</span>
+                        <span class="lang-tag">Python</span>
+                        <h2>Python 創作</h2>
+                        <p>Monaco 編輯器自由撰寫 Python，支援 input / print 執行，可儲存 .py 作品。</p>
+                        <span class="go">進入 Python 工作台 →</span>
+                    </a>
+                </div>
+            </section>
+
+            <section class="hub-section" aria-labelledby="hub-soon-title">
+                <h2 class="hub-section-title" id="hub-soon-title">即將推出</h2>
+                <div class="create-hub-grid">
+                    <div class="create-hub-card cpp soon" role="button" tabindex="0" data-soon="C++ 創作工作台">
+                        <span class="badge soon">即將推出</span>
+                        <span class="icon">⚙️</span>
+                        <span class="lang-tag">C++</span>
+                        <h2>C++ 創作</h2>
+                        <p>編譯型語言練習，適合 APCS、資訊競賽基礎與演算法。</p>
+                        <span class="go">開發中…</span>
+                    </div>
+                    <div class="create-hub-card html soon" role="button" tabindex="0" data-soon="HTML 網頁創作">
+                        <span class="badge soon">即將推出</span>
+                        <span class="icon">🌐</span>
+                        <span class="lang-tag">HTML</span>
+                        <h2>HTML 創作</h2>
+                        <p>撰寫網頁結構，即時預覽，從標籤與語意化標記開始。</p>
+                        <span class="go">開發中…</span>
+                    </div>
+                    <div class="create-hub-card css soon" role="button" tabindex="0" data-soon="CSS 樣式創作">
+                        <span class="badge soon">即將推出</span>
+                        <span class="icon">🎨</span>
+                        <span class="lang-tag">CSS</span>
+                        <h2>CSS 創作</h2>
+                        <p>排版、色彩與動畫，搭配 HTML 做出自己的網頁風格。</p>
+                        <span class="go">開發中…</span>
+                    </div>
+                </div>
+            </section>
+
+            <p class="create-hub-foot">
+                想練習題目而不是自由創作？<br>
+                <a href="python.html" class="py">Python 學習關卡</a> ·
+                <a href="challenge_zone.html" class="ch">挑戰區</a>
+            </p>
+        </div>
+    </main>
+</div>
+<script src="doratch-shell.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const app = initializeApp({
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    });
+    onAuthStateChanged(getAuth(app), (user) => {
+        if (!user) location.href = "login.html";
+    });
+
+    function showSoon(name) {
+        alert(name + " 正在開發中，完成後會從這裡進入。");
+    }
+    document.querySelectorAll(".create-hub-card.soon").forEach((el) => {
+        const name = el.getAttribute("data-soon") || "此功能";
+        el.addEventListener("click", () => showSoon(name));
+        el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                showSoon(name);
+            }
+        });
+    });
+</script>
+</body>
+</html>

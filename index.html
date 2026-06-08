@@ -154,10 +154,15 @@
     </div>
 
     <section class="features">
+        <div class="feat-card" onclick="location.href='python.html'" style="cursor:pointer;">
+            <div class="feat-icon">🐍</div>
+            <h3>Python 文字程式</h3>
+            <p>從 print、input 到 APCS 經典題。瀏覽器內執行真實 Python，自動測試通關。</p>
+        </div>
         <div class="feat-card">
             <div class="feat-icon">🛡️</div>
             <h3>APCS 能力認證</h3>
-            <p>實時檢測你的演算法與邏輯能力。每完成一個挑戰，系統將自動分析你的開發水平並賦予專業勳章。</p>
+            <p>Blockly 積木與 Python 雙軌並進。完成挑戰可獲專業勳章與平台金幣。</p>
         </div>
         <div class="feat-card">
             <div class="feat-icon">⚔️</div>
@@ -219,7 +224,7 @@
                     <button class="btn" style="padding:10px 20px; font-size:14px; background:rgba(255,255,255,0.05); color:white; border:1px solid #334155; border-radius:12px; cursor:pointer;" onclick="window.handleLogout()">登出</button>
                 `;
                 hero.innerHTML = `
-                    <a href="page.html" class="btn btn-primary">🚀 開始編程</a>
+                    <a href="create.html" class="btn btn-primary">🚀 開始編程</a>
                     <a href="dashboard.html" class="btn btn-outline">進入工作空間</a>
                 `;
             } else {

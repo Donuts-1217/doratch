@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="python-terminal.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --py-green: #306998;
+            --py-yellow: #FFD43B;
+            --scratch-blue: #4C97FF;
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; color: #334155; }
+        .app-container { display: flex; min-height: 100vh; }
+        .main-content { flex: 1; margin-left: 260px; padding: 24px; box-sizing: border-box; }
+        @media (max-width: 1024px) {
+            .main-content { margin-left: 0; padding: 16px; }
+            .py-layout { grid-template-columns: 1fr !important; }
+        }
+        .py-hero {
+            background: linear-gradient(135deg, var(--py-green), #1e3a5f);
+            color: white; border-radius: 20px; padding: 28px 32px; margin-bottom: 20px;
+        }
+        .py-hero h1 { margin: 0 0 8px; font-size: 1.75rem; }
+        .py-hero p { margin: 0; opacity: 0.9; line-height: 1.6; font-size: 14px; }
+        .py-layout {
+            display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start;
+        }
+        .lesson-list {
+            background: white; border-radius: 16px; padding: 12px;
+            border: 1px solid #e2e8f0; max-height: calc(100vh - 200px); overflow-y: auto;
+        }
+        .lesson-item {
+            display: block; width: 100%; text-align: left; border: none; background: transparent;
+            padding: 12px; border-radius: 12px; cursor: pointer; font-family: inherit;
+            border: 2px solid transparent; margin-bottom: 4px;
+        }
+        .lesson-item:hover { background: #f1f5f9; }
+        .lesson-item.active { border-color: var(--scratch-blue); background: #eff6ff; }
+        .lesson-item.done .lesson-title::after { content: " ✓"; color: #16a34a; }
+        .lesson-title { font-weight: 900; font-size: 13px; display: block; }
+        .lesson-lv { font-size: 11px; color: var(--muted); margin-top: 4px; }
+        .lesson-track-label {
+            font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: 0.04em;
+            padding: 14px 8px 6px; margin-top: 4px;
+        }
+        .lesson-track-label:first-child { margin-top: 0; padding-top: 4px; }
+        .work-panel { display: flex; flex-direction: column; gap: 12px; }
+        .card {
+            background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0;
+        }
+        .card h2 { margin: 0 0 8px; font-size: 1.2rem; color: var(--py-green); }
+        .card p { margin: 0 0 12px; font-size: 14px; line-height: 1.65; color: #64748b; }
+        .goals { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8; color: #475569; }
+        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .btn {
+            border: none; padding: 10px 18px; border-radius: 10px; font-weight: 900;
+            cursor: pointer; font-family: inherit; font-size: 14px;
+        }
+        .btn-run { background: var(--py-yellow); color: #1e293b; }
+        .btn-test { background: var(--scratch-blue); color: white; }
+        .btn-reset { background: #e2e8f0; color: #475569; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .monaco-shell {
+            position: relative;
+            border-radius: 12px;
+            border: 2px solid #334155;
+            overflow: hidden;
+            font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
+        }
+        #monaco-editor {
+            width: 100%;
+            height: 320px;
+        }
+        /* 編輯器游標對齊：與 Monaco 同字體同 line-height */
+        .monaco-shell .monaco-editor,
+        .monaco-shell .monaco-editor .margin,
+        .monaco-shell .monaco-editor .view-lines {
+            font-family: "JetBrains Mono", Consolas, "Courier New", monospace !important;
+            font-variant-ligatures: none !important;
+        }
+        /* 自動完成：fixed 定位，空間不足時改顯示在游標下方 */
+        .monaco-editor .suggest-widget {
+            max-height: min(280px, calc(100vh - 120px)) !important;
+            z-index: 10000;
+        }
+        .editor-hint {
+            font-size: 12px; color: #64748b; margin: 6px 0 0; line-height: 1.5;
+        }
+        .editor-hint kbd {
+            background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px;
+            font-family: inherit;
+        }
+        #editor-fallback {
+            display: none; width: 100%; min-height: 280px; box-sizing: border-box;
+            font-family: "JetBrains Mono", monospace; font-size: 14px; line-height: 1.5;
+            padding: 16px; border-radius: 12px; border: 2px solid #334155;
+            background: var(--bg); color: #e2e8f0;
+        }
+        .terminal-panel {
+            background: #0f172a; border-radius: 12px; border: 2px solid #334155;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        .terminal-head {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; background: #1e293b; border-bottom: 1px solid #334155;
+            font-size: 13px; font-weight: 900; color: #cbd5e1;
+        }
+        .terminal-head button {
+            border: none; background: rgba(255,255,255,0.08); color: #94a3b8;
+            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800;
+            cursor: pointer; font-family: inherit;
+        }
+        .terminal-head button:hover { color: #e2e8f0; }
+        .terminal-body--term { padding: 0; min-height: 220px; display: flex; flex-direction: column; }
+        .status-bar {
+            font-size: 13px; padding: 10px 14px; border-radius: 10px; background: #f1f5f9;
+            color: #64748b;
+        }
+        .status-bar.ready { background: #dcfce7; color: #166534; }
+        .status-bar.loading { background: #fef3c7; color: #92400e; }
+        .status-bar.error { background: #fee2e2; color: #991b1b; }
+        .file-warn {
+            display: none; margin-bottom: 12px; padding: 12px 16px; border-radius: 12px;
+            background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; font-size: 13px; line-height: 1.6;
+        }
+        .file-warn.show { display: block; }
+        .test-row { font-size: 13px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+        .test-row.pass { color: #16a34a; }
+        .test-row.fail { color: #dc2626; }
+        .progress-text { font-size: 13px; color: #64748b; margin-top: 8px; }
+        .teach-card { border-color: #bfdbfe; background: linear-gradient(180deg, #f8fbff 0%, #fff 100%); }
+        .teach-card-head {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; gap: 12px;
+        }
+        .teach-card-head h2 { margin: 0; font-size: 1.1rem; color: #1e40af; }
+        .teach-toggle {
+            border: none; background: #e0e7ff; color: #3730a3; padding: 6px 12px;
+            border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit;
+        }
+        .lesson-teach { font-size: 14px; line-height: 1.75; color: #475569; max-height: 420px; overflow-y: auto; }
+        .lesson-teach.collapsed { display: none; }
+        .teach-block { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0; }
+        .teach-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .teach-block h3 { margin: 0 0 8px; font-size: 14px; font-weight: 900; color: #334155; }
+        .teach-block p { margin: 0 0 10px; }
+        .teach-apis { margin: 0; padding-left: 18px; }
+        .teach-apis code { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .teach-code {
+            background: #1e293b; color: #e2e8f0; padding: 12px 14px; border-radius: 10px;
+            font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; line-height: 1.55;
+            overflow-x: auto; margin: 8px 0 4px;
+        }
+        .teach-code-note { font-size: 12px; color: #94a3b8; margin: 0 0 8px !important; }
+        .teach-steps { margin: 0; padding-left: 22px; }
+        .teach-steps li { margin-bottom: 6px; }
+        .teach-tips { margin: 0; padding-left: 18px; color: #b45309; }
+        .teach-run { background: #f0fdf4; margin: 0 -4px; padding: 12px; border-radius: 10px; border: 1px solid #bbf7d0 !important; }
+        .teach-empty { color: #94a3b8; font-size: 13px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <script src="js/python-lessons-data.js"></script>
+    <script src="js/python-lessons-teach.js"></script>
+    <script src="js/python-engine.js"></script>
+    <script src="js/python-terminal.js"></script>
+    <script src="js/python-monaco.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar-main" data-doratch-active="python">
+        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Doratch</div>
+        <a href="index.html" class="nav-item">🏠 平台首頁</a>
+        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
+        <div style="margin:20px 30px 10px;font-size:11px;color:#475569;letter-spacing:1px;">創作與探索</div>
+        <a href="python.html" class="nav-item active">🐍 Python 學習</a>
+        <a href="create.html" class="nav-item">🚀 創作空間</a>
+        <a href="challenge_zone.html" class="nav-item">🎯 挑戰區</a>
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px;height:32px;border-radius:50%;" alt="">
+                <div style="flex:1;overflow:hidden;">
+                    <div id="side-username" style="font-size:12px;font-weight:bold;">—</div>
+                    <div style="font-size:10px;color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="py-hero">
+            <h1>🐍 Doratch Python 學習</h1>
+            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 完成關卡賺金幣</p>
+        </div>
+
+        <div id="file-warn" class="file-warn">
+            ⚠️ 你正在用<strong>本機檔案</strong>開啟。若引擎無法載入，請在 VS Code 用 <strong>Live Server</strong> 開啟，或執行 <code>npx serve</code> 後用 http://localhost 進入。
+        </div>
+
+        <div id="engine-status" class="status-bar loading">Python 引擎載入中…</div>
+        <div style="margin-top:8px;">
+            <button type="button" class="btn btn-reset" id="btn-reload-engine" style="display:none;">🔄 重新載入引擎</button>
+        </div>
+
+        <div class="py-layout" style="margin-top:16px;">
+            <div class="lesson-list" id="lesson-list"></div>
+            <div class="work-panel">
+                <div class="card teach-card">
+                    <div class="teach-card-head">
+                        <h2 id="lesson-title">—</h2>
+                        <button type="button" class="teach-toggle" id="teach-toggle">收起教學</button>
+                    </div>
+                    <p id="lesson-summary" style="margin-bottom:12px;"></p>
+                    <ul class="goals" id="lesson-goals"></ul>
+                    <div id="lesson-teach" class="lesson-teach"></div>
+                </div>
+                <div class="card">
+                    <div class="toolbar">
+                        <button type="button" class="btn btn-run" id="btn-run" disabled>▶ 執行</button>
+                        <button type="button" class="btn btn-test" id="btn-test" disabled>✅ 跑測試</button>
+                        <button type="button" class="btn btn-reset" id="btn-reset">🗑 清空重寫</button>
+                    </div>
+                    <label style="font-size:13px;font-weight:900;color:#64748b;">程式碼</label>
+                    <div class="monaco-shell">
+                        <div id="monaco-editor"></div>
+                    </div>
+                    <textarea id="editor-fallback" spellcheck="false" placeholder="# 在此撰寫 Python…"></textarea>
+                    <p class="editor-hint">
+                        💡 語法輔助：<kbd>pr</kbd> → <strong>print(</strong> ·
+                        <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行 ·
+                        執行視窗像 VS Code：<strong>input() 時才出現輸入框</strong>
+                    </p>
+                </div>
+                <div class="card" style="padding:0;border:none;background:transparent;">
+                    <div class="terminal-panel">
+                        <div class="terminal-head">
+                            <span>▶ 執行視窗</span>
+                            <button type="button" id="btn-clear-terminal">清除</button>
+                        </div>
+                        <div class="terminal-body terminal-body--term">
+                            <div id="py-terminal"></div>
+                        </div>
+                        <div id="test-results"></div>
+                    </div>
+                </div>
+                <p class="progress-text" id="progress-text"></p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="doratch-shell.js"></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const PYTHON_LESSONS = window.PYTHON_LESSONS || [];
+    const getLesson = window.getPythonLesson || (() => PYTHON_LESSONS[0]);
+    const Engine = window.PythonEngine;
+    let pyTerm = null;
+
+    if (location.protocol === "file:") {
+        document.getElementById("file-warn").classList.add("show");
+    }
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const STORAGE_KEY = "doratch_python_progress_v1";
+    let uid = null;
+    let currentId = new URLSearchParams(location.search).get("lesson") || PYTHON_LESSONS[0].id;
+    let completed = new Set();
+    let engineReady = false;
+    let useMonaco = true;
+
+    function getCode() {
+        if (useMonaco && window.PythonMonaco?.isReady()) {
+            return window.PythonMonaco.getValue();
+        }
+        return document.getElementById("editor-fallback").value;
+    }
+
+    function setCode(code) {
+        if (useMonaco && window.PythonMonaco?.isReady()) {
+            window.PythonMonaco.setValue(code);
+        } else {
+            document.getElementById("editor-fallback").value = code;
+        }
+    }
+
+    function initMonacoEditor() {
+        if (!window.PythonMonaco) {
+            useMonaco = false;
+            document.getElementById("monaco-editor").style.display = "none";
+            var fb = document.getElementById("editor-fallback");
+            fb.style.display = "block";
+            return Promise.resolve();
+        }
+        return window.PythonMonaco.init("monaco-editor").then(function () {
+            useMonaco = true;
+        }).catch(function (e) {
+            console.warn("Monaco 載入失敗，改用純文字編輯", e);
+            useMonaco = false;
+            document.getElementById("monaco-editor").style.display = "none";
+            document.getElementById("editor-fallback").style.display = "block";
+        });
+    }
+
+    function loadLocalProgress() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) completed = new Set(JSON.parse(raw).completed || []);
+        } catch (_) {}
+    }
+
+    function saveLocalProgress() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ completed: [...completed] }));
+        } catch (_) {}
+    }
+
+    async function saveCloudProgress(lessonId) {
+        if (!uid) return;
+        try {
+            await setDoc(doc(db, "users", uid, "pythonProgress", "profile"), {
+                completed: [...completed],
+                lastLesson: lessonId,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (e) { console.warn(e); }
+    }
+
+    async function loadCloudProgress() {
+        if (!uid) return;
+        try {
+            const snap = await getDoc(doc(db, "users", uid, "pythonProgress", "profile"));
+            if (snap.exists()) {
+                (snap.data().completed || []).forEach((id) => completed.add(id));
+            }
+        } catch (_) {}
+    }
+
+    function renderLessonList() {
+        const list = document.getElementById("lesson-list");
+        list.innerHTML = "";
+        const tracks = [
+            { id: "base", label: "📘 Python 基礎" },
+            { id: "discord", label: "🤖 Discord Bot 入門" }
+        ];
+        tracks.forEach((track) => {
+            const items = PYTHON_LESSONS.filter((l) => (l.track || "base") === track.id);
+            if (!items.length) return;
+            const label = document.createElement("div");
+            label.className = "lesson-track-label";
+            label.textContent = track.label;
+            list.appendChild(label);
+            items.forEach((l) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "lesson-item" + (l.id === currentId ? " active" : "") + (completed.has(l.id) ? " done" : "");
+                btn.innerHTML = `<span class="lesson-title">${l.title}</span><span class="lesson-lv">${l.lv}</span>`;
+                btn.onclick = () => selectLesson(l.id);
+                list.appendChild(btn);
+            });
+        });
+        updateProgressText();
+    }
+
+    function updateProgressText() {
+        const el = document.getElementById("progress-text");
+        el.textContent = `進度：${completed.size} / ${PYTHON_LESSONS.length} 關完成`;
+    }
+
+    function selectLesson(id) {
+        currentId = id;
+        const lesson = getLesson(id);
+        history.replaceState({}, "", `python.html?lesson=${encodeURIComponent(id)}`);
+        document.getElementById("lesson-title").textContent = lesson.title;
+        document.getElementById("lesson-summary").textContent = lesson.summary;
+        document.getElementById("lesson-goals").innerHTML =
+            "<li style=\"list-style:none;font-weight:900;color:#64748b;margin-bottom:6px;\">🎯 通關條件</li>" +
+            lesson.goals.map((g) => `<li>${g}</li>`).join("");
+        const teachEl = document.getElementById("lesson-teach");
+        if (window.renderPythonTeach) {
+            teachEl.innerHTML = window.renderPythonTeach(id);
+            teachEl.classList.remove("collapsed");
+            document.getElementById("teach-toggle").textContent = "收起教學";
+        }
+        setCode(lesson.starter);
+        document.getElementById("test-results").innerHTML = "";
+        if (pyTerm) pyTerm.clear();
+        renderLessonList();
+    }
+
+    async function awardCoins(amount) {
+        if (!uid || amount <= 0) return;
+        try {
+            const ref = doc(db, "users", uid);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) {
+                await setDoc(ref, { coins: amount, xp: 0, lv: 1 }, { merge: true });
+            } else {
+                await updateDoc(ref, { coins: increment(amount) });
+            }
+            const c = (await getDoc(ref)).data()?.coins ?? 0;
+            document.getElementById("side-coins").textContent = c;
+        } catch (e) { console.warn(e); }
+    }
+
+    document.getElementById("btn-clear-terminal").onclick = () => {
+        if (pyTerm) pyTerm.clear();
+        document.getElementById("test-results").innerHTML = "";
+    };
+
+    document.getElementById("btn-run").onclick = async () => {
+        if (!engineReady || !pyTerm) return;
+        const code = getCode();
+        document.getElementById("test-results").innerHTML = "";
+        pyTerm.clear();
+        pyTerm.setRunning(true);
+        document.getElementById("btn-run").disabled = true;
+        try {
+            const { error } = await Engine.runPythonInteractive(code, {
+                onWrite: (text) => pyTerm.write(text),
+                onInput: (prompt) => pyTerm.readLine(prompt)
+            });
+            if (error) pyTerm.writeError(error);
+        } catch (e) {
+            pyTerm.writeError(String(e.message || e));
+        } finally {
+            pyTerm.setRunning(false);
+            document.getElementById("btn-run").disabled = false;
+        }
+    };
+
+    document.getElementById("btn-test").onclick = async () => {
+        const lesson = getLesson(currentId);
+        const code = getCode();
+        const box = document.getElementById("test-results");
+        if (pyTerm) pyTerm.clear();
+        box.innerHTML = "";
+        try {
+            const pre = Engine.validateSubmission(code, lesson.rules || {});
+            if (!pre.ok) {
+                if (pyTerm) pyTerm.writeError(pre.message);
+                return;
+            }
+            const { allPass, validationFailed, validationMessage, results } = await Engine.runTests(code, lesson);
+            if (validationFailed) {
+                if (pyTerm) pyTerm.writeError(validationMessage);
+                return;
+            }
+            if (allPass) {
+                if (pyTerm) pyTerm.write("\n✓ 全部測試通過\n");
+            } else {
+                const failed = results.filter((r) => !r.pass);
+                if (failed.length && pyTerm) pyTerm.writeError("測試未通過：" + failed[0].label);
+            }
+            box.innerHTML = results.map((r) =>
+                `<div class="test-row ${r.pass ? "pass" : "fail"}">` +
+                `${r.label}：${r.pass ? "✓ 通過" : "✗ 失敗"}` +
+                (r.stdin ? `<br><small>輸入：${r.stdin}</small>` : "") +
+                `<br><small>期望：${r.expected} · 得到：${r.got}</small></div>`
+            ).join("");
+            if (allPass) {
+                const firstTime = !completed.has(currentId);
+                completed.add(currentId);
+                saveLocalProgress();
+                saveCloudProgress(currentId);
+                renderLessonList();
+                if (firstTime) {
+                    await awardCoins(15);
+                    alert("🎉 全部測試通過！+15 金幣");
+                } else {
+                    alert("🎉 全部測試通過！");
+                }
+            } else {
+                alert("尚有測試未通過，請修改程式後再試。");
+            }
+        } catch (e) {
+            if (pyTerm) pyTerm.writeError(String(e.message || e));
+            box.innerHTML = "";
+        }
+    };
+
+    document.getElementById("btn-reset").onclick = () => {
+        if (!confirm("確定清空？將還原為題目說明（不含解答）。")) return;
+        setCode(getLesson(currentId).starter);
+    };
+
+    function enableEngineUi() {
+        engineReady = true;
+        const bar = document.getElementById("engine-status");
+        bar.textContent = "Python 已就緒 · 可直接寫程式";
+        bar.className = "status-bar ready";
+        document.getElementById("btn-run").disabled = false;
+        document.getElementById("btn-test").disabled = false;
+        document.getElementById("btn-reload-engine").style.display = "none";
+    }
+
+    function failEngineUi(msg) {
+        const bar = document.getElementById("engine-status");
+        bar.textContent = msg;
+        bar.className = "status-bar error";
+        document.getElementById("btn-reload-engine").style.display = "inline-block";
+    }
+
+    function bootEngine() {
+        if (!Engine) {
+            failEngineUi("引擎腳本未載入。請重新整理，或改用 Live Server 開啟。");
+            return;
+        }
+        Engine.init((msg) => {
+            const bar = document.getElementById("engine-status");
+            bar.textContent = msg;
+            bar.className = "status-bar loading";
+        }).then(enableEngineUi).catch((e) => {
+            failEngineUi("引擎載入失敗：" + (e.message || e));
+        });
+    }
+
+    document.getElementById("btn-reload-engine").onclick = () => bootEngine();
+
+    document.getElementById("teach-toggle").onclick = () => {
+        const el = document.getElementById("lesson-teach");
+        const btn = document.getElementById("teach-toggle");
+        const collapsed = el.classList.toggle("collapsed");
+        btn.textContent = collapsed ? "展開教學" : "收起教學";
+    };
+
+    loadLocalProgress();
+    renderLessonList();
+    bootEngine();
+
+    initMonacoEditor().then(function () {
+        pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
+        selectLesson(currentId);
+        window.addEventListener("resize", function () {
+            if (window.PythonMonaco) window.PythonMonaco.layout();
+        });
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            location.href = "login.html";
+            return;
+        }
+        uid = user.uid;
+        document.getElementById("side-username").textContent = user.email.split("@")[0];
+        document.getElementById("side-avatar").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email)}&background=random`;
+        const uSnap = await getDoc(doc(db, "users", uid));
+        if (uSnap.exists()) {
+            document.getElementById("side-coins").textContent = uSnap.data().coins || 0;
+        }
+        await loadCloudProgress();
+        renderLessonList();
+    });
+</script>
+</body>
+</html>

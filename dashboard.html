@@ -479,40 +479,87 @@
     };
 
     window.joinClass = async () => {
-        const code = document.getElementById('join-code').value.trim().toUpperCase();
-        const ref = doc(db, "classes", code);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-            try {
-                const groupCount = await checkGroupLimit();
-                if (groupCount >= 20) {
-                    alert("加入失敗：您最多只能加入 20 個群組或伺服器！");
-                    return;
-                }
+        const code = document.getElementById("join-code")?.value?.trim().toUpperCase();
+        if (!code) return alert("請輸入班級代碼");
 
-                const classData = snap.data();
-                await updateDoc(ref, { students: arrayUnion(auth.currentUser.uid) });
-                await setDoc(
-                    doc(db, "chats", code),
-                    {
+        const user = auth.currentUser;
+        if (!user) return alert("請先登入");
+
+        const ref = doc(db, "classes", code);
+        let snap;
+        try {
+            snap = await getDoc(ref);
+        } catch (e) {
+            console.error(e);
+            alert("無法查詢班級：" + (e.message || "請確認網路與登入狀態"));
+            return;
+        }
+
+        if (!snap.exists()) {
+            alert("查無此班級代碼，請向老師確認邀請碼（代碼通常像 C1A2B3）。");
+            return;
+        }
+
+        const classData = snap.data() || {};
+        const students = classData.students || [];
+
+        if (classData.teacherId === user.uid) {
+            alert("您是此班級的老師，已可直接進入。");
+            closeModal("joinModal");
+            location.href = `class_view.html?id=${encodeURIComponent(code)}`;
+            return;
+        }
+
+        if (students.includes(user.uid)) {
+            alert("您已在這個班級中！");
+            closeModal("joinModal");
+            history.replaceState({}, "", location.pathname);
+            await fetchClasses(user);
+            return;
+        }
+
+        try {
+            const groupCount = await checkGroupLimit();
+            if (groupCount >= 20) {
+                alert("加入失敗：您最多只能加入 20 個群組或伺服器！");
+                return;
+            }
+
+            await updateDoc(ref, { students: arrayUnion(user.uid) });
+
+            try {
+                const chatRef = doc(db, "chats", code);
+                const chatSnap = await getDoc(chatRef);
+                if (chatSnap.exists()) {
+                    await updateDoc(chatRef, {
+                        participants: arrayUnion(user.uid),
+                        lastMessage: "成員已加入班級",
+                        updatedAt: serverTimestamp()
+                    });
+                } else {
+                    await setDoc(chatRef, {
                         type: "group",
                         name: classData.className || code,
                         teacherId: classData.teacherId || "",
-                        participants: arrayUnion(auth.currentUser.uid),
+                        participants: [user.uid],
                         lastMessage: "成員已加入班級",
                         updatedAt: serverTimestamp()
-                    },
-                    { merge: true }
-                );
-                alert("成功加入班級！");
-                closeModal("joinModal");
-                await fetchClasses(auth.currentUser);
-            } catch (e) {
-                console.error(e);
-                alert("加入失敗：" + (e.message || "請稍後再試"));
+                    });
+                }
+            } catch (chatErr) {
+                console.warn("班級群組同步失敗（班級已加入）", chatErr);
             }
-        } else {
-            alert("查無此班級代碼，請向老師確認邀請碼。");
+
+            alert("成功加入班級！");
+            closeModal("joinModal");
+            history.replaceState({}, "", location.pathname);
+            await fetchClasses(user);
+        } catch (e) {
+            console.error(e);
+            const msg = e.code === "permission-denied"
+                ? "加入失敗：權限不足。請確認 Firestore 規則已部署，或請老師協助。"
+                : ("加入失敗：" + (e.message || "請稍後再試"));
+            alert(msg);
         }
     };
 
@@ -556,6 +603,13 @@
             console.error("班級列表", e);
         });
         loadAnnouncements();
+        const joinCode = new URLSearchParams(location.search).get("join");
+        if (joinCode) {
+            const inp = document.getElementById("join-code");
+            if (inp) inp.value = joinCode.trim().toUpperCase();
+            openModal("joinModal");
+            setTimeout(() => { joinClass().catch((e) => console.error(e)); }, 400);
+        }
     });
 </script>
 </body>

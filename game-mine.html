@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doratch 採礦</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:"Noto Sans TC",sans-serif; background:#0f172a; color:#f8fafc; }
+        .bar { display:flex; justify-content:space-between; padding:14px 20px; background:#1e293b; }
+        .bar a { color:#94a3b8; text-decoration:none; font-weight:900; }
+        .wrap { max-width:640px; margin:0 auto; padding:16px; }
+        canvas { display:block; width:100%; border-radius:12px; background:#1e293b; cursor:crosshair; touch-action:none; }
+        .hud { display:flex; justify-content:space-between; margin:12px 0; font-weight:900; flex-wrap:wrap; gap:8px; }
+        .btn { border:none; background:#4c97ff; color:#fff; padding:10px 16px; border-radius:10px; font-weight:900; cursor:pointer; }
+        .sync-hint { font-size:12px; color:#64748b; margin-top:8px; }
+    </style>
+</head>
+<body>
+    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+    <div class="wrap">
+        <h1>⛏️ Doratch 採礦</h1>
+        <div class="hud">
+            <span>💎 礦幣：<strong id="ore-coins">0</strong></span>
+            <span>深度：<strong id="depth">1</strong></span>
+            <span>鎬子 Lv.<strong id="pick-lv">1</strong></span>
+        </div>
+        <canvas id="cvs" width="400" height="400"></canvas>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn" id="sell">💰 賣礦換幣</button>
+            <button type="button" class="btn" id="upgrade" style="background:#855cd6;">⬆️ 升級鎬子</button>
+            <button type="button" class="btn" id="deeper" style="background:#ea580c;">⬇️ 挖更深（解鎖稀有礦）</button>
+        </div>
+        <p style="font-size:13px;color:#64748b;">點格子挖礦 · 越深礦越值錢 · 升級鎬子挖更快</p>
+        <p class="sync-hint" id="sync-hint">本機模式 · 進度自動儲存</p>
+    </div>
+    <script type="module">
+        import { loadLocal, saveLocal, pickNewer, connectCloud, refreshPlatformCoins, setSyncHint } from "./js/game-local-sync.js";
+
+        const STORAGE_KEY = "doratch_gameMine_v1";
+        const TILE = 40;
+        const COLS = 10, ROWS = 10;
+        const ORES = ["🪨", "🟫", "⚪", "🟡", "💎"];
+        const VALUES = [1, 2, 4, 10, 30];
+        const DEFAULT_STATE = { pickLv: 1, depth: 1, oreCoins: 0, inventory: 0 };
+
+        let uid = null, saveGameDoc = null, getUserCoins = null;
+        let cvs, ctx;
+        let grid = [], pickLv = 1, depth = 1, oreCoins = 0, inventory = 0;
+
+        function genGrid() {
+            grid = [];
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    const hard = Math.random() < 0.15 + depth * 0.02;
+                    const tier = Math.min(ORES.length - 1, Math.floor(Math.random() * (2 + depth)));
+                    grid.push({ x, y, hp: hard ? 2 + depth : 1, maxHp: hard ? 2 + depth : 1, tier, mined: false });
+                }
+            }
+        }
+
+        function draw() {
+            if (!ctx) return;
+            ctx.fillStyle = "#0f172a";
+            ctx.fillRect(0, 0, cvs.width, cvs.height);
+            grid.forEach((cell) => {
+                const px = cell.x * TILE, py = cell.y * TILE;
+                if (cell.mined) {
+                    ctx.fillStyle = "#334155";
+                    ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+                    return;
+                }
+                ctx.fillStyle = cell.hp > 1 ? "#475569" : "#1e293b";
+                ctx.fillRect(px + 1, py + 1, TILE - 2, TILE - 2);
+                ctx.font = "20px sans-serif";
+                ctx.fillText(ORES[cell.tier], px + 10, py + 28);
+                if (cell.hp < cell.maxHp) {
+                    ctx.fillStyle = "#ef4444";
+                    ctx.fillRect(px + 4, py + TILE - 8, (TILE - 8) * (cell.hp / cell.maxHp), 4);
+                }
+            });
+        }
+
+        function updateHud() {
+            document.getElementById("ore-coins").textContent = oreCoins;
+            document.getElementById("depth").textContent = depth;
+            document.getElementById("pick-lv").textContent = pickLv;
+        }
+
+        function persist(coinReward = 0) {
+            saveLocal(STORAGE_KEY, { pickLv, depth, oreCoins, inventory });
+            if (uid && saveGameDoc) {
+                saveGameDoc(uid, "gameMine", { pickLv, depth, oreCoins, inventory }, coinReward).catch((e) => console.error(e));
+            }
+        }
+
+        function applyState(data) {
+            if (!data) return;
+            pickLv = data.pickLv ?? 1;
+            depth = data.depth ?? 1;
+            oreCoins = data.oreCoins ?? 0;
+            inventory = data.inventory ?? 0;
+        }
+
+        function mineAt(mx, my) {
+            const x = Math.floor(mx / TILE), y = Math.floor(my / TILE);
+            const cell = grid.find((c) => c.x === x && c.y === y && !c.mined);
+            if (!cell) return;
+            cell.hp -= pickLv;
+            if (cell.hp <= 0) {
+                cell.mined = true;
+                const val = VALUES[cell.tier] * depth;
+                inventory += val;
+                oreCoins += val;
+            }
+            draw();
+            updateHud();
+            persist();
+        }
+
+        function bindCanvas() {
+            cvs.onclick = (e) => {
+                const r = cvs.getBoundingClientRect();
+                mineAt((e.clientX - r.left) * (cvs.width / r.width), (e.clientY - r.top) * (cvs.height / r.height));
+            };
+            cvs.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                const t = e.touches[0];
+                const r = cvs.getBoundingClientRect();
+                mineAt((t.clientX - r.left) * (cvs.width / r.width), (t.clientY - r.top) * (cvs.height / r.height));
+            }, { passive: false });
+        }
+
+        function bindButtons() {
+            document.getElementById("sell").onclick = async () => {
+                if (inventory <= 0) return alert("沒有礦可賣");
+                const reward = Math.floor(inventory / 2);
+                inventory = 0;
+                persist(reward);
+                if (uid && getUserCoins) await refreshPlatformCoins(uid, "coins", getUserCoins);
+                alert(`賣礦獲得 ${reward} 平台金幣`);
+                updateHud();
+            };
+            document.getElementById("upgrade").onclick = () => {
+                const cost = pickLv * 40;
+                if (oreCoins < cost) return alert(`需要 ${cost} 礦幣`);
+                oreCoins -= cost;
+                pickLv++;
+                updateHud();
+                persist();
+            };
+            document.getElementById("deeper").onclick = () => {
+                const cost = depth * 60;
+                if (oreCoins < cost) return alert(`需要 ${cost} 礦幣解鎖更深層`);
+                oreCoins -= cost;
+                depth++;
+                genGrid();
+                draw();
+                updateHud();
+                persist();
+            };
+        }
+
+        function initLocal() {
+            cvs = document.getElementById("cvs");
+            ctx = cvs.getContext("2d");
+            applyState(loadLocal(STORAGE_KEY) || DEFAULT_STATE);
+            genGrid();
+            draw();
+            updateHud();
+            bindCanvas();
+            bindButtons();
+        }
+
+        initLocal();
+        setInterval(() => persist(), 20000);
+
+        connectCloud(async (user, api) => {
+            uid = user.uid;
+            saveGameDoc = api.saveGameDoc;
+            getUserCoins = api.getUserCoins;
+            setSyncHint("雲端同步已連線");
+            await refreshPlatformCoins(uid, "coins", api.getUserCoins);
+            const saved = await api.loadGameDoc(uid, "gameMine");
+            const local = loadLocal(STORAGE_KEY);
+            const picked = pickNewer(local, saved, saved?.updatedAt);
+            applyState(picked || DEFAULT_STATE);
+            genGrid();
+            draw();
+            updateHud();
+            persist();
+        }, setSyncHint);
+    </script>
+</body>
+</html>

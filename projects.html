@@ -124,7 +124,7 @@
         <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
         
         <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
-        <a href="page.html" class="nav-item">🚀 創作空間</a>
+        <a href="create.html" class="nav-item">🚀 創作空間</a>
         <a href="main.html?view=mine" class="nav-item active">📂 我的作品</a>
         <a href="main.html" class="nav-item">🌍 探索中心</a>
 
@@ -150,7 +150,9 @@
     <main class="main-content">
         <div class="header">
             <h1>📂 我的作品集</h1>
-            <a href="page.html" class="new-btn">+ 創作新作品</a>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <a href="create.html" class="new-btn">+ 創作新作品</a>
+            </div>
         </div>
         <div id="project-list" class="project-grid">
             <div class="empty-msg">正在尋找你的驚人創作...</div>
@@ -193,7 +195,7 @@
             const snapshot = await getDocs(q);
             listDiv.innerHTML = "";
             if (snapshot.empty) {
-                listDiv.innerHTML = `<div class="empty-msg"><p>你目前還沒有任何作品喔！</p><a href="page.html">立刻去動手做一個吧！</a></div>`;
+                listDiv.innerHTML = `<div class="empty-msg"><p>你目前還沒有任何作品喔！</p><a href="create.html">立刻去創作空間開始吧！</a></div>`;
                 return;
             }
             snapshot.forEach((projectDoc) => {
@@ -201,22 +203,26 @@
                 const pid = projectDoc.id;
                 const date = project.updatedAt?.toDate().toLocaleDateString() || "未知時間";
                 const remixBadge = project.originalPid ? `<span style="background:var(--accent); color:white; font-size:10px; padding:2px 6px; border-radius:10px;">♻️ Remix</span>` : "";
+                const isPython = project.projectType === "python";
+                const thumb = isPython ? "🐍" : "🧩";
+                const typeLabel = isPython ? "Python" : "積木";
+                const editHref = isPython ? `python-studio.html?load=${pid}` : `page.html?load=${pid}`;
                 const card = document.createElement('div');
                 card.className = 'project-card';
                 card.innerHTML = `
                     <span class="status-tag ${project.isPublic ? 'tag-public' : 'tag-private'}">
                         ${project.isPublic ? '● 已發布' : '○ 草稿'}
                     </span>
-                    <div class="thumbnail">🧩</div>
+                    <div class="thumbnail">${thumb}</div>
                     <div class="card-body">
                         <div class="card-title">
                             <span style="overflow:hidden; text-overflow:ellipsis;">${project.name || "未命名作品"}</span>
                             ${remixBadge}
                         </div>
-                        <div class="card-meta">最後更新：${date}</div>
+                        <div class="card-meta">${typeLabel} · 最後更新：${date}</div>
                     </div>
                     <div class="actions">
-                        <a href="page.html?load=${pid}" class="btn-act btn-edit">開啟編輯</a>
+                        <a href="${editHref}" class="btn-act btn-edit">開啟編輯</a>
                         <button class="btn-act btn-delete" onclick="handleDelete('${pid}')">刪除</button>
                     </div>
                 `;

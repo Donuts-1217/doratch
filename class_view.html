@@ -106,6 +106,37 @@
             background: #fff7ed !important;
         }
 
+        .submit-flow-card {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px;
+            padding: 16px; margin-bottom: 16px; font-size: 13px; line-height: 1.6;
+        }
+        .submit-flow-card ol { margin: 8px 0 0; padding-left: 20px; }
+        .submit-flow-card li { margin-bottom: 6px; }
+        .submit-flow-card li.done { color: #059669; font-weight: 900; }
+        .submit-flow-card li.current { color: #1d4ed8; font-weight: 900; }
+        .submit-score-box {
+            padding: 12px; background: #ecfdf5; border-radius: 12px;
+            border: 1px solid #a7f3d0; margin-bottom: 12px; font-size: 14px;
+        }
+        .class-manage-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 0; border-bottom: 1px solid #eee; gap: 10px;
+        }
+        .class-manage-row:last-child { border-bottom: none; }
+        .btn-copy-code {
+            border: none; background: var(--scratch-orange); color: #fff;
+            padding: 8px 14px; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 12px;
+        }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .stat-box { background: #f8fafc; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #e2e8f0; }
+        .stat-box strong { display: block; font-size: 1.6rem; color: var(--scratch-blue); }
+        .stat-box span { font-size: 12px; color: #64748b; font-weight: 900; }
+        .lb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .lb-table th, .lb-table td { padding: 10px 8px; border-bottom: 1px solid #eee; text-align: left; }
+        .lb-table th { color: #64748b; font-size: 11px; }
+        .manage-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        #tab-manage { display: none; }
+
         /* 榮譽牆網格 */
         .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         .project-card { background: #f8f9fa; border-radius: 16px; overflow: hidden; border: 1px solid #eee; cursor: pointer; transition: 0.3s; }
@@ -385,6 +416,7 @@
             <div class="tab" onclick="switchTab('classwork', this)">📋 課堂任務</div>
             <div class="tab" onclick="switchTab('projects', this)">🌟 榮譽牆</div>
             <div class="tab" onclick="switchTab('people', this)">👥 同學們</div>
+            <div class="tab" id="tab-manage" onclick="switchTab('manage', this)">⚙️ 班級管理</div>
         </div>
 
         <div id="section-stream" class="content-section active">
@@ -395,8 +427,8 @@
                         <p id="class-code-area" style="font-weight:900; color:var(--scratch-orange); background:#fff8e1; padding:10px 20px; border-radius:10px; display:inline-block; margin-bottom:15px;"></p>
                         <p style="color:#666;">歡迎來到 Creative Blocks！請隨時關注最新的任務與挑戰。</p>
                     </div>
-                    <div id="teacher-controls" style="display:none;">
-                        <button class="btn-solid" style="padding:10px 20px; border-radius:10px; font-size:13px;" onclick="alert('班級管理功能即將上線！')">⚙️ 班級設定</button>
+                    <div id="teacher-controls" style="display:none; gap:10px; flex-wrap:wrap;">
+                        <button type="button" class="btn-solid" style="padding:10px 20px; border-radius:10px; font-size:13px;" onclick="openClassManage()">⚙️ 班級管理</button>
                     </div>
                 </div>
                 <div style="margin-top:20px;">
@@ -429,6 +461,34 @@
 
         <div id="section-people" class="content-section">
             <div id="people-list"></div>
+        </div>
+
+        <div id="section-manage" class="content-section">
+            <div class="card">
+                <h3>📊 班級總覽</h3>
+                <div class="stat-grid" id="class-stat-grid">
+                    <div class="stat-box"><strong id="stat-students">0</strong><span>學生人數</span></div>
+                    <div class="stat-box"><strong id="stat-assignments">0</strong><span>任務數</span></div>
+                    <div class="stat-box"><strong id="stat-submitted">0</strong><span>已繳交人次</span></div>
+                    <div class="stat-box"><strong id="stat-game">0</strong><span>異界生存紀錄</span></div>
+                </div>
+                <div class="manage-actions">
+                    <button type="button" class="btn-solid" style="width:auto; padding:10px 18px; border-radius:12px;" onclick="openClassManage()">⚙️ 學生與邀請碼</button>
+                    <button type="button" class="btn-solid" style="width:auto; padding:10px 18px; border-radius:12px; background:var(--scratch-purple);" onclick="copyClassInviteLink()">🔗 複製加入連結</button>
+                    <button type="button" class="btn-solid" style="width:auto; padding:10px 18px; border-radius:12px; background:var(--scratch-green);" onclick="openModal('modal-create-assign')">+ 發布任務</button>
+                    <a href="game.html" class="btn-solid" style="width:auto; padding:10px 18px; border-radius:12px; text-decoration:none; display:inline-block; background:#0ea5e9;">🎮 遊戲中心</a>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📢 班級公告</h3>
+                <textarea id="class-announcement" rows="4" placeholder="寫給全班看的公告（例如：本週練習異界生存、下週繳交地圖任務）" style="width:100%; padding:12px; border:2px solid #eee; border-radius:12px; font-family:inherit; box-sizing:border-box;"></textarea>
+                <button type="button" class="btn-solid" style="width:auto; margin-top:12px; padding:10px 24px; border-radius:12px;" onclick="saveClassAnnouncement()">儲存公告</button>
+            </div>
+            <div class="card">
+                <h3>🏆 異界生存 · 班級排行榜</h3>
+                <p style="font-size:13px; color:#666; margin:0 0 12px;">學生在 <a href="game-survival.html">異界生存</a> 的得分會同步到此班級。</p>
+                <div id="class-survival-lb">載入中…</div>
+            </div>
         </div>
     </div>
 
@@ -464,13 +524,17 @@
             <div class="side-panel">
                 <!-- 學生側邊 -->
                 <div class="work-card" id="student-panel">
-                    <h4>您的挑戰狀態 <span class="work-status" id="work-status">已指派</span></h4>
+                    <h4>繳交狀態 <span class="work-status" id="work-status">載入中</span></h4>
+                    <div id="submit-flow-card" class="submit-flow-card"></div>
                     <div id="att-list"></div>
                     <div id="student-work-actions">
-                        <button class="btn-full btn-solid" style="background:var(--scratch-purple);" onclick="startMission()">🚀 開始挑戰任務</button>
-                        <button class="btn-full btn-outline" onclick="openModal('modal-add-source')">+ 手動添加附件</button>
-                        <button class="btn-full btn-solid" id="btn-handin" onclick="handleSubmit()">正式繳交任務</button>
-                        <p id="student-submit-hint" style="display:none; font-size:12px; color:#64748b; margin:12px 0 0; line-height:1.55;"></p>
+                        <button type="button" class="btn-full btn-solid" id="btn-start-mission" style="background:var(--scratch-purple);" onclick="startMission()">🚀 開始作答</button>
+                        <button type="button" class="btn-full btn-outline" id="btn-unsubmit" style="display:none;" onclick="handleUnsubmit()">↩ 取消繳交（要修改時）</button>
+                        <details id="submit-attach-extra" style="margin-top:12px; font-size:13px;">
+                            <summary style="cursor:pointer; font-weight:900; color:#64748b;">一般任務：附加 XML 作品（選用）</summary>
+                            <p style="color:#64748b; margin:8px 0; line-height:1.5;">地圖任務請在作答頁按「✅ 繳交作業」，不必附加檔案。</p>
+                            <button type="button" class="btn-full btn-outline" style="margin-top:8px;" onclick="openModal('modal-add-source')">+ 附加 XML 檔案</button>
+                        </details>
                     </div>
                 </div>
                 <!-- 老師側邊 -->
@@ -678,15 +742,48 @@
 
 <div id="modal-cloud" class="modal" onclick="if(event.target==this)closeModal('modal-cloud')">
     <div class="modal-content">
-        <h3 style="margin-top:0;">選擇要繳交的作品</h3>
+        <h3 style="margin-top:0;">選擇要附加的作品</h3>
+        <p style="font-size:13px; color:#64748b; margin:0 0 12px;">此為選用附件；正式繳交請在作答頁按「✅ 繳交作業」。</p>
         <div id="cloud-list" style="max-height:400px; overflow-y:auto; padding-right:10px;"></div>
+    </div>
+</div>
+
+<!-- Modal: 班級管理 -->
+<div id="modal-class-manage" class="modal" onclick="if(event.target===this)closeModal('modal-class-manage')">
+    <div class="modal-content" style="max-width:520px;">
+        <h2 style="margin-top:0; color:var(--scratch-blue);">⚙️ 班級管理</h2>
+        <div class="form-group">
+            <label>班級名稱</label>
+            <input type="text" id="manage-class-name" placeholder="班級名稱">
+        </div>
+        <div class="form-group">
+            <label>邀請碼</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="manage-class-code" readonly style="background:#f8fafc; font-weight:900; letter-spacing:1px;">
+                <button type="button" class="btn-copy-code" onclick="copyClassCode()">複製代碼</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>加入連結（貼給學生）</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="manage-invite-link" readonly style="background:#f8fafc; font-size:12px;">
+                <button type="button" class="btn-copy-code" onclick="copyClassInviteLink()">複製連結</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>學生人數：<span id="manage-student-count">0</span></label>
+            <div id="manage-student-list" style="max-height:220px; overflow-y:auto; border:1px solid #eee; border-radius:12px; padding:8px 12px;"></div>
+        </div>
+        <button type="button" class="btn-full btn-solid" onclick="saveClassManage()">儲存班級名稱</button>
+        <button type="button" class="btn-full btn-outline" style="margin-top:10px; color:var(--danger); border-color:#fecaca;" onclick="deleteThisClass()">🗑️ 永久刪除此班級</button>
+        <button type="button" class="btn-full btn-outline" style="margin-top:10px;" onclick="closeModal('modal-class-manage')">關閉</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, arrayRemove, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -694,7 +791,23 @@
     const db = getFirestore(app);
 
     const classId = new URLSearchParams(window.location.search).get('id');
-    let currentUser = null, currentClass = null, currentAssignId = null, isTeacher = false, targetSid = null, unsub = null;
+    let currentUser = null, currentClass = null, currentAssignId = null, currentAssignData = null, isTeacher = false, targetSid = null, unsub = null;
+    /** 學生此任務最新作答專案 id（來自 submission.atts） */
+    let latestMissionProjectId = null;
+
+    function userLabel(ud, emailFallback) {
+        const dn = String(ud?.displayName || "").trim();
+        if (dn.length >= 2) return dn.slice(0, 20);
+        const em = String(emailFallback || ud?.email || "").trim();
+        return em.includes("@") ? em.split("@")[0] : (em || "使用者");
+    }
+
+    function formatAssignDate(createdAt) {
+        try {
+            if (createdAt?.toDate) return createdAt.toDate().toLocaleDateString("zh-TW");
+        } catch (_) {}
+        return "剛才";
+    }
 
     const apcsBank = [
         {
@@ -1396,16 +1509,225 @@
         if(name === 'classwork') loadList();
         if(name === 'projects') loadGallery();
         if(name === 'people') loadPeople();
+        if(name === 'manage' && isTeacher) loadManageDashboard();
     };
 
     window.startMission = () => {
         if (!currentAssignId || !classId) return alert("任務資料載入中，請稍後再試。");
-        location.href = `page.html?aid=${currentAssignId}&cid=${classId}&ml=0`;
+        let url = `page.html?aid=${encodeURIComponent(currentAssignId)}&cid=${encodeURIComponent(classId)}&ml=0`;
+        if (latestMissionProjectId && currentUser) {
+            url += `&load=${encodeURIComponent(latestMissionProjectId)}&from=${encodeURIComponent(currentUser.uid)}`;
+        }
+        location.href = url;
+    };
+
+    function renderSubmitFlowCard(subData) {
+        const card = document.getElementById("submit-flow-card");
+        if (!card || !currentAssignData) return;
+        const isMap = currentAssignData.type === "map";
+        const turnedIn = subData?.status === "turned-in";
+        const hasScore = subData?.mapTotalScore != null && subData.mapTotalScore !== "";
+        if (isMap) {
+            card.innerHTML = `
+                <strong>地圖任務怎麼繳交？</strong>
+                <ol>
+                    <li class="${turnedIn || hasScore ? "done" : "current"}">① 點下方「開始／繼續作答」</li>
+                    <li class="${turnedIn ? "done" : ""}">② 寫程式，用「統測」跑地圖得分</li>
+                    <li class="${turnedIn ? "done" : "current"}">③ 在作答頁右上角按 <strong>✅ 繳交作業</strong></li>
+                </ol>
+                <p style="margin:10px 0 0; color:#64748b; font-size:12px;">請勿在此頁按「繳交」— 分數與程式會在作答頁一併送出。</p>
+            `;
+        } else {
+            card.innerHTML = `
+                <strong>一般任務怎麼繳交？</strong>
+                <ol>
+                    <li class="current">① 點「開始／繼續作答」完成積木</li>
+                    <li>② 在作答頁按 <strong>✅ 繳交作業</strong>（會儲存程式）</li>
+                    <li>③ 若要交 XML，可展開下方「附加檔案」</li>
+                </ol>
+            `;
+        }
+    }
+
+    function classInviteUrl() {
+        const base = location.origin + location.pathname.replace(/[^/]+$/, "");
+        return `${base}dashboard.html?join=${encodeURIComponent(classId)}`;
+    }
+
+    window.copyClassInviteLink = async () => {
+        const link = classInviteUrl();
+        try {
+            await navigator.clipboard.writeText(link);
+            alert("已複製加入連結！\n學生開啟後可到「我的班級」輸入代碼：" + classId);
+        } catch (_) {
+            prompt("複製此連結：", link);
+        }
+    };
+
+    window.saveClassAnnouncement = async () => {
+        if (!isTeacher) return;
+        const text = document.getElementById("class-announcement").value.trim();
+        try {
+            await updateDoc(doc(db, "classes", classId), { classAnnouncement: text, announcementAt: serverTimestamp() });
+            currentClass.classAnnouncement = text;
+            alert("班級公告已儲存。");
+            loadActivityLog();
+        } catch (e) {
+            alert("儲存失敗：" + (e.message || e));
+        }
+    };
+
+    async function loadManageDashboard() {
+        if (!isTeacher || !currentClass) return;
+        const students = currentClass.students || [];
+        document.getElementById("stat-students").textContent = String(students.length);
+        const ann = document.getElementById("class-announcement");
+        if (ann) ann.value = currentClass.classAnnouncement || "";
+
+        let assignCount = 0;
+        let submitCount = 0;
+        try {
+            const aSnap = await getDocs(collection(db, "classes", classId, "assignments"));
+            assignCount = aSnap.size;
+            for (const a of aSnap.docs) {
+                const subs = await getDocs(collection(db, "classes", classId, "assignments", a.id, "submissions"));
+                subs.forEach((s) => { if (s.data().status === "turned-in") submitCount++; });
+            }
+        } catch (e) { console.warn(e); }
+        document.getElementById("stat-assignments").textContent = String(assignCount);
+        document.getElementById("stat-submitted").textContent = String(submitCount);
+
+        const lbEl = document.getElementById("class-survival-lb");
+        try {
+            const lbSnap = await getDocs(collection(db, "classes", classId, "survivalScores"));
+            document.getElementById("stat-game").textContent = String(lbSnap.size);
+            if (lbSnap.empty) {
+                lbEl.innerHTML = '<p style="color:#999; text-align:center; padding:20px;">尚無紀錄，請鼓勵學生遊玩 <a href="game-survival.html">異界生存</a></p>';
+                return;
+            }
+            const rows = lbSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (b.score || 0) - (a.score || 0));
+            lbEl.innerHTML = `<table class="lb-table"><thead><tr><th>#</th><th>學生</th><th>得分</th><th>擊殺</th><th>存活</th></tr></thead><tbody>` +
+                rows.map((r, i) => {
+                    const t = r.time ? `${Math.floor(r.time / 60)}:${String(Math.floor(r.time % 60)).padStart(2, "0")}` : "—";
+                    return `<tr><td>${i + 1}</td><td>${r.displayName || "學生"}</td><td><strong>${r.score || 0}</strong></td><td>${r.kills || 0}</td><td>${t}${r.won ? " 🏆" : ""}</td></tr>`;
+                }).join("") + "</tbody></table>";
+        } catch (e) {
+            lbEl.innerHTML = '<p style="color:#999;">排行榜載入失敗</p>';
+        }
+    }
+
+    async function loadActivityLog() {
+        const log = document.getElementById("activity-log");
+        if (!log) return;
+        const parts = [];
+        if (currentClass?.classAnnouncement) {
+            parts.push(`<div style="text-align:left; padding:12px; background:#fff8e1; border-radius:12px; margin-bottom:10px;"><strong>📢 班級公告</strong><br>${currentClass.classAnnouncement}</div>`);
+        }
+        try {
+            const aSnap = await getDocs(query(collection(db, "classes", classId, "assignments"), orderBy("createdAt", "desc")));
+            aSnap.docs.slice(0, 5).forEach((d) => {
+                const data = d.data();
+                parts.push(`<div style="text-align:left; padding:10px; border-bottom:1px solid #eee; font-size:13px;">📋 任務「${data.title}」已發布</div>`);
+            });
+        } catch (_) {}
+        log.innerHTML = parts.length ? parts.join("") : '<div style="color:#999;">尚無近期動態</div>';
+    }
+
+    window.openClassManage = async () => {
+        if (!isTeacher || !currentClass) return;
+        document.getElementById("manage-class-name").value = currentClass.className || "";
+        document.getElementById("manage-class-code").value = classId;
+        const linkEl = document.getElementById("manage-invite-link");
+        if (linkEl) linkEl.value = classInviteUrl();
+        await renderManageStudentList();
+        openModal("modal-class-manage");
+    };
+
+    async function renderManageStudentList() {
+        const list = document.getElementById("manage-student-list");
+        const countEl = document.getElementById("manage-student-count");
+        const students = currentClass.students || [];
+        if (countEl) countEl.textContent = String(students.length);
+        if (!list) return;
+        if (students.length === 0) {
+            list.innerHTML = '<p style="color:#999; font-size:13px; margin:8px 0;">尚無學生，請將邀請碼提供給學生加入。</p>';
+            return;
+        }
+        list.innerHTML = "";
+        for (const uid of students) {
+            const uSnap = await getDoc(doc(db, "users", uid));
+            const name = uSnap.exists() ? userLabel(uSnap.data(), uSnap.data().email) : uid.slice(0, 6);
+            const row = document.createElement("div");
+            row.className = "class-manage-row";
+            row.innerHTML = `
+                <span style="font-weight:900;">👤 ${name}</span>
+                <button type="button" class="btn-solid" style="width:auto; margin:0; padding:6px 12px; font-size:12px; background:#ef4444;" data-uid="${uid}">移出班級</button>
+            `;
+            row.querySelector("button").onclick = () => removeStudentFromClass(uid, name);
+            list.appendChild(row);
+        }
+    }
+
+    window.copyClassCode = async () => {
+        const code = classId || "";
+        try {
+            await navigator.clipboard.writeText(code);
+            alert("已複製邀請碼：" + code);
+        } catch (_) {
+            prompt("請手動複製邀請碼：", code);
+        }
+    };
+
+    window.saveClassManage = async () => {
+        const name = document.getElementById("manage-class-name").value.trim();
+        if (!name) return alert("請輸入班級名稱。");
+        try {
+            await updateDoc(doc(db, "classes", classId), { className: name });
+            currentClass.className = name;
+            document.getElementById("banner-name").innerText = name;
+            document.getElementById("nav-title").innerText = name;
+            const chatRef = doc(db, "chats", classId);
+            const chatSnap = await getDoc(chatRef);
+            if (chatSnap.exists()) await updateDoc(chatRef, { name });
+            alert("班級名稱已更新。");
+        } catch (e) {
+            alert("儲存失敗：" + (e.message || e));
+        }
+    };
+
+    async function removeStudentFromClass(uid, name) {
+        if (!confirm(`確定將「${name}」移出班級嗎？`)) return;
+        try {
+            await updateDoc(doc(db, "classes", classId), { students: arrayRemove(uid) });
+            const chatRef = doc(db, "chats", classId);
+            const chatSnap = await getDoc(chatRef);
+            if (chatSnap.exists()) {
+                await updateDoc(chatRef, { participants: arrayRemove(uid) });
+            }
+            currentClass.students = (currentClass.students || []).filter((id) => id !== uid);
+            await renderManageStudentList();
+            loadPeople();
+            alert("已移出班級。");
+        } catch (e) {
+            alert("操作失敗：" + (e.message || e));
+        }
+    }
+
+    window.deleteThisClass = async () => {
+        if (!confirm("確定永久刪除此班級？任務與繳交紀錄都會消失，無法復原。")) return;
+        try {
+            await deleteDoc(doc(db, "classes", classId));
+            try { await deleteDoc(doc(db, "chats", classId)); } catch (_) {}
+            alert("班級已刪除。");
+            location.href = "dashboard.html";
+        } catch (e) {
+            alert("刪除失敗：" + (e.message || e));
+        }
     };
 
     window.openTeacherMissionPreview = () => {
         if (!currentAssignId || !classId) return alert("任務資料載入中，請稍後再試。");
-        location.href = `page.html?aid=${encodeURIComponent(currentAssignId)}&cid=${encodeURIComponent(classId)}&ml=0`;
+        location.href = `page.html?aid=${encodeURIComponent(currentAssignId)}&cid=${encodeURIComponent(classId)}&ml=0&preview=1`;
     };
 
     function renderBank() {
@@ -1523,15 +1845,16 @@
         }
     };
 
-    window.deleteAssign = async (aid) => {
-        if(!confirm("確定要刪除此任務嗎？學生的繳交紀錄也會一併消失。")) return;
-        if(event) event.stopPropagation();
+    window.deleteAssign = async (aid, ev) => {
+        if (ev) ev.stopPropagation();
+        if (!confirm("確定要刪除此任務嗎？學生的繳交紀錄也會一併消失。")) return;
         await deleteDoc(doc(db, "classes", classId, "assignments", aid));
         loadList();
     };
 
     async function loadList() {
-        const list = document.getElementById('assignment-list');
+        const list = document.getElementById("assignment-list");
+        if (!list) return;
         list.innerHTML = '<div class="empty-state">正在載入任務...</div>';
         const q = query(collection(db, "classes", classId, "assignments"), orderBy("createdAt", "desc"));
         const snap = await getDocs(q);
@@ -1553,10 +1876,10 @@
                     <div style="font-weight:900; font-size:1.15rem; color:#1967d2;">${data.title}</div>
                     <div style="font-size:12px; color:#666; margin-top:5px;">
                         ${data.assignedTo === 'all' ? '' : '<span style="color:var(--scratch-purple); font-weight:bold;">[指定任務] </span>'}
-                        難易度：<span style="color:var(--scratch-orange); font-weight:bold;">${data.lv || 'LV1'}</span> • 發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}
+                        難易度：<span style="color:var(--scratch-orange); font-weight:bold;">${data.lv || 'LV1'}</span> • ${data.type === 'map' ? '🗺️ 地圖 ' : ''}發布於 ${formatAssignDate(data.createdAt)}
                     </div>
                 </div>
-                ${isTeacher ? `<div class="btn-delete" onclick="deleteAssign('${d.id}')">🗑️ 刪除</div>` : ''}
+                ${isTeacher ? `<div class="btn-delete" onclick="deleteAssign('${d.id}', event)">🗑️ 刪除</div>` : ''}
             `;
             list.appendChild(div);
         });
@@ -1564,12 +1887,14 @@
 
     window.openDetail = (aid, data) => {
         currentAssignId = aid;
+        currentAssignData = data;
         document.getElementById('home-view').style.display='none';
         document.getElementById('detail-view').style.display='block';
         document.getElementById('det-title').innerText = data.title;
         document.getElementById('det-lv').innerText = data.lv || 'LV1';
         document.getElementById('det-hints').innerText = data.hints || '本任務老師尚未提供額外提示。';
-        document.getElementById('det-meta').innerText = `由 ${data.teacherName} 老師發布於 ${data.createdAt?.toDate().toLocaleDateString() || '剛才'}`;
+        const typeLabel = data.type === 'map' ? '地圖邏輯挑戰' : '一般任務';
+        document.getElementById('det-meta').innerText = `${typeLabel} · 由 ${data.teacherName || '老師'} 發布於 ${formatAssignDate(data.createdAt)}`;
         
         const gList = document.getElementById('det-goals');
         gList.innerHTML = '';
@@ -1603,50 +1928,67 @@
     };
 
     async function loadMySub() {
+        if (!currentAssignId || !currentUser) return;
         const snap = await getDoc(doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid));
-        const list = document.getElementById('att-list'), st = document.getElementById('work-status'), btn = document.getElementById('btn-handin');
-        const hint = document.getElementById('student-submit-hint');
-        const actions = document.getElementById('student-work-actions');
-        list.innerHTML = '';
-        actions.style.display = 'block';
-        if(snap.exists()) {
-            const d = snap.data();
-            const turnedIn = d.status === 'turned-in';
-            st.innerText = turnedIn ? '已繳交' : '未完成';
-            st.className = `work-status ${turnedIn ? 'done' : ''}`;
-            btn.innerText = turnedIn ? '取消繳交並修改' : '正式繳交任務';
-            btn.classList.toggle('btn-unsubmit', turnedIn);
-            if (hint) {
-                hint.style.display = turnedIn ? 'block' : 'none';
-                hint.textContent = turnedIn ? '若要修改附件或繼續編輯，請先取消繳交（類似 Classroom「收回作業」）。取消後狀態會變為未完成，可再次繳交。' : '';
+        const list = document.getElementById("att-list");
+        const st = document.getElementById("work-status");
+        const btnStart = document.getElementById("btn-start-mission");
+        const btnUnsub = document.getElementById("btn-unsubmit");
+        const attachExtra = document.getElementById("submit-attach-extra");
+        const subData = snap.exists() ? snap.data() : { status: "assigned", atts: [] };
+        const atts = subData.atts || [];
+        latestMissionProjectId = atts.length ? (atts[atts.length - 1].id || null) : null;
+        const turnedIn = subData.status === "turned-in";
+        const isMap = currentAssignData?.type === "map";
+
+        if (st) {
+            st.innerText = turnedIn ? "已繳交" : "尚未繳交";
+            st.className = "work-status" + (turnedIn ? " done" : "");
+        }
+        if (btnStart) {
+            btnStart.innerText = turnedIn ? "📝 繼續查看／修改作答" : (isMap ? "🚀 開始地圖作答" : "🚀 開始作答");
+        }
+        if (btnUnsub) btnUnsub.style.display = turnedIn ? "block" : "none";
+        if (attachExtra) attachExtra.style.display = isMap ? "none" : "block";
+
+        renderSubmitFlowCard(subData);
+
+        if (list) {
+            list.innerHTML = "";
+            if (subData.mapTotalScore != null && subData.mapTotalScore !== "") {
+                let detail = "";
+                if (subData.mapScores && typeof subData.mapScores === "object") {
+                    const keys = Object.keys(subData.mapScores).map(Number).sort((a, b) => a - b);
+                    detail = '<div style="font-size:12px; color:#047857; margin-top:6px;">' +
+                        keys.map((k) => `第 ${k + 1} 關 ${subData.mapScores[k]} 枚`).join(" · ") + "</div>";
+                }
+                list.innerHTML = `<div class="submit-score-box">🗺️ 地圖總分：<strong style="font-size:1.2rem;">${subData.mapTotalScore}</strong>${detail}</div>`;
             }
-            if (d.mapTotalScore != null && d.mapTotalScore !== '') {
-                list.innerHTML += `<div style="padding:12px; background:#ecfdf5; border-radius:12px; border:1px solid #a7f3d0; margin-bottom:12px; font-size:14px;">🗺️ 地圖累積分數（各關最佳金幣加總）：<strong>${d.mapTotalScore}</strong></div>`;
+            if (turnedIn && subData.submittedAt?.toDate) {
+                list.innerHTML += `<p style="font-size:12px; color:#64748b; margin:0 0 10px;">繳交時間：${subData.submittedAt.toDate().toLocaleString("zh-TW")}</p>`;
             }
-            (d.atts||[]).forEach((a,i)=> {
-                list.innerHTML += `<div class="attachment-item" style="padding:15px; background:#fff; border-radius:12px; border:1px solid #eee; margin-bottom:10px;">🧩 ${a.name}</div>`;
+            (subData.atts || []).forEach((a) => {
+                list.innerHTML += `<div class="attachment-item" style="padding:12px; background:#fff; border-radius:12px; border:1px solid #eee; margin-bottom:8px; font-size:13px;">📎 附件：${a.name || "作品"}</div>`;
             });
-        } else {
-            st.innerText = '未完成';
-            st.className = 'work-status';
-            btn.innerText = '正式繳交任務';
-            btn.classList.remove('btn-unsubmit');
-            if (hint) { hint.style.display = 'none'; hint.textContent = ''; }
+            if (!turnedIn && isMap) {
+                list.innerHTML += '<p style="font-size:12px; color:#b45309; margin:0;">尚未繳交：請到作答頁完成統測後按「✅ 繳交作業」。</p>';
+            }
         }
     }
 
-    window.handleSubmit = async () => {
+    window.handleUnsubmit = async () => {
+        if (!currentAssignId || !currentUser) return;
+        if (!confirm("確定取消繳交？取消後可再修改程式，並需在作答頁重新按「✅ 繳交作業」。")) return;
         const ref = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
-        const snap = await getDoc(ref);
-        const turnedIn = snap.exists() && snap.data().status === 'turned-in';
-        if (turnedIn && !confirm('確定要取消繳交嗎？收回後可繼續修改作品並再次繳交。')) return;
-        const next = turnedIn ? 'assigned' : 'turned-in';
-        if(!snap.exists()) {
-            await setDoc(ref, { studentId: currentUser.uid, status: next, atts: [], submittedAt: serverTimestamp() });
-        } else {
-            await updateDoc(ref, { status: next, submittedAt: serverTimestamp() });
+        try {
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            await updateDoc(ref, { status: "assigned", submittedAt: serverTimestamp() });
+            await loadMySub();
+            alert("已取消繳交，請到作答頁修改後再次繳交。");
+        } catch (e) {
+            alert("操作失敗：" + (e.message || e));
         }
-        loadMySub();
     };
 
     window.showCloud = async () => {
@@ -1660,11 +2002,26 @@
             div.style.padding='20px'; div.style.borderBottom='1px solid #f1f3f4'; div.style.cursor='pointer'; div.style.borderRadius='12px';
             div.innerHTML = `<div style="font-weight:900;">🧩 ${d.data().name}</div>`;
             div.onclick = async () => {
-                const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
-                const sSnap = await getDoc(subRef);
-                if(!sSnap.exists()) await setDoc(subRef, { studentId: currentUser.uid, status: 'assigned', atts: [{ id: d.id, name: d.data().name }], submittedAt: serverTimestamp() });
-                else await updateDoc(subRef, { atts: arrayUnion({ id: d.id, name: d.data().name }) });
-                closeModal('modal-cloud'); loadMySub();
+                try {
+                    const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
+                    const sSnap = await getDoc(subRef);
+                    const att = { id: d.id, name: d.data().name };
+                    const existing = sSnap.exists() ? (sSnap.data().atts || []) : [];
+                    if (existing.some((a) => a.id === att.id)) {
+                        alert("此作品已在附件清單中。");
+                        return;
+                    }
+                    if (!sSnap.exists()) {
+                        await setDoc(subRef, { studentId: currentUser.uid, status: "assigned", atts: [att], submittedAt: serverTimestamp() });
+                    } else {
+                        await updateDoc(subRef, { atts: arrayUnion(att) });
+                    }
+                    closeModal("modal-cloud");
+                    await loadMySub();
+                    alert("已加入附件。完成後請到作答頁按「✅ 繳交作業」正式繳交。");
+                } catch (e) {
+                    alert("加入失敗：" + (e.message || e));
+                }
             };
             list.appendChild(div);
         });
@@ -1674,12 +2031,25 @@
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = async (e) => {
-            const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
-            const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
-            const sSnap = await getDoc(subRef);
-            if(!sSnap.exists()) await setDoc(subRef, { studentId: currentUser.uid, status: 'assigned', atts: [{ id: ref.id, name: file.name }], submittedAt: serverTimestamp() });
-            else await updateDoc(subRef, { atts: arrayUnion({ id: ref.id, name: file.name }) });
-            closeModal('modal-add-source'); loadMySub();
+            try {
+                const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
+                const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
+                const sSnap = await getDoc(subRef);
+                const att = { id: ref.id, name: file.name };
+                if (!sSnap.exists()) {
+                    await setDoc(subRef, { studentId: currentUser.uid, status: "assigned", atts: [att], submittedAt: serverTimestamp() });
+                } else {
+                    const existing = sSnap.data().atts || [];
+                    if (!existing.some((a) => a.id === att.id)) {
+                        await updateDoc(subRef, { atts: arrayUnion(att) });
+                    }
+                }
+                closeModal("modal-add-source");
+                await loadMySub();
+                alert("已上傳附件。完成後請到作答頁按「✅ 繳交作業」正式繳交。");
+            } catch (err) {
+                alert("上傳失敗：" + (err.message || err));
+            }
         };
         reader.readAsText(file);
     };
@@ -1722,15 +2092,16 @@
             const uSnap = await getDoc(doc(db, "users", uid));
             if(!uSnap.exists()) continue;
             const u = uSnap.data();
+            const label = userLabel(u, u.email);
             const div = document.createElement('div');
             div.className = 'grading-row';
             div.style.background = 'white'; div.style.marginBottom = '10px'; div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
             div.onclick = () => { targetSid = uid; showReview(u, sub); listenC(); };
             const mapPts = sub.mapTotalScore != null && sub.mapTotalScore !== '' ? `<div style="font-size:11px; color:#059669; font-weight:800;">🗺️ ${sub.mapTotalScore} 分</div>` : '';
             div.innerHTML = `
-                <img src="https://ui-avatars.com/api/?name=${u.email}&background=random" style="width:35px; height:35px; border-radius:50%; margin-right:12px;">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(label)}&background=random" style="width:35px; height:35px; border-radius:50%; margin-right:12px;">
                 <div style="flex:1;">
-                    <div style="font-weight:900;">${u.email.split('@')[0]}</div>
+                    <div style="font-weight:900;">${label}</div>
                     <div style="font-size:11px; color:var(--scratch-purple);">LV.${u.lv || 1} • ${u.xp || 0} XP</div>
                     ${mapPts}
                 </div>
@@ -1746,7 +2117,7 @@
         document.getElementById('teacher-panel').style.display='none';
         document.getElementById('teacher-review').style.display='block';
         document.getElementById('comment-box').style.display='block';
-        const name = u.email.split('@')[0];
+        const name = userLabel(u, u.email);
         document.getElementById('review-name').innerText = name;
         document.getElementById('chat-with').innerText = `與 ${name} 對話中`;
 
@@ -1831,11 +2202,12 @@
         list.innerHTML = '載入中...';
         let html = '<div class="card"><h3>老師</h3>';
         const tSnap = await getDoc(doc(db, "users", currentClass.teacherId));
-        if(tSnap.exists()) html += `<div style="padding:10px; font-weight:900;">👑 ${tSnap.data().email.split('@')[0]}</div>`;
+        if(tSnap.exists()) html += `<div style="padding:10px; font-weight:900;">👑 ${userLabel(tSnap.data(), tSnap.data().email)}</div>`;
         html += '</div><div class="card"><h3>學生名單</h3>';
+        if (!(currentClass.students || []).length) html += '<p style="color:#999;">尚無學生</p>';
         for(const uid of (currentClass.students || [])) {
             const uSnap = await getDoc(doc(db, "users", uid));
-            if(uSnap.exists()) html += `<div style="padding:10px; border-bottom:1px solid #eee;">👤 ${uSnap.data().email.split('@')[0]}</div>`;
+            if(uSnap.exists()) html += `<div style="padding:10px; border-bottom:1px solid #eee;">👤 ${userLabel(uSnap.data(), uSnap.data().email)}</div>`;
         }
         list.innerHTML = html + '</div>';
     }
@@ -1880,13 +2252,33 @@
             isTeacher = u.uid === currentClass.teacherId;
             if(isTeacher) {
                 document.getElementById('btn-show-create').style.display='block';
-                document.getElementById('teacher-controls').style.display='block';
+                const tc = document.getElementById('teacher-controls');
+                if (tc) tc.style.display = 'flex';
+                const tabM = document.getElementById('tab-manage');
+                if (tabM) tabM.style.display = 'block';
                 document.getElementById('class-code-area').innerText = `🔑 班級邀請碼：${classId}`;
             } else {
                 document.getElementById('class-code-area').style.display='none';
             }
-            loadList(); // 初始化載入列表
+            loadActivityLog();
+            loadList().then(() => maybeOpenAssignFromUrl()).catch(console.error);
         });
+    }
+
+    async function maybeOpenAssignFromUrl() {
+        const aid = new URLSearchParams(window.location.search).get("aid");
+        if (!aid) return;
+        try {
+            const aSnap = await getDoc(doc(db, "classes", classId, "assignments", aid));
+            if (!aSnap.exists()) return;
+            switchTab("classwork", document.querySelector('.tab[onclick*="classwork"]'));
+            openDetail(aid, aSnap.data());
+            if (new URLSearchParams(window.location.search).get("submitted") === "1" && !isTeacher) {
+                setTimeout(() => alert("✅ 繳交成功！老師已可在班級任務中查看你的成績。"), 300);
+            }
+        } catch (e) {
+            console.warn("open assign from url", e);
+        }
     }
 
     init();

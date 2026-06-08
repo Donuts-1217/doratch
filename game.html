@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
-    <title>邏輯電競中心 - Creative Blocks</title>
+    <title>遊戲中心 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -43,6 +43,28 @@
         .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; }
         .game-card { background: var(--card-bg); border-radius: 24px; padding: 30px; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .game-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .featured-survival {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: center;
+            background: linear-gradient(135deg, rgba(76,151,255,0.15), rgba(133,92,214,0.2));
+            border: 2px solid var(--primary); border-radius: 28px; padding: 36px; margin-bottom: 40px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .featured-survival:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(76,151,255,0.25); }
+        .featured-survival h2 { margin: 0 0 12px; font-size: 2rem; }
+        .featured-tag { display: inline-block; background: var(--secondary); color: #0f172a; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; margin-bottom: 12px; }
+        .mode-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+        .mode-card {
+            background: var(--card-bg); border-radius: 20px; padding: 22px; border: 1px solid rgba(255,255,255,0.06);
+            transition: 0.3s; position: relative;
+        }
+        .mode-card.playable { cursor: pointer; }
+        .mode-card.playable:hover { border-color: var(--primary); transform: translateY(-4px); }
+        .mode-card.soon { opacity: 0.65; }
+        .mode-card .mode-icon { font-size: 2rem; margin-bottom: 10px; }
+        .mode-card h4 { margin: 0 0 8px; }
+        .mode-card p { margin: 0; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+        .soon-badge { position: absolute; top: 12px; right: 12px; font-size: 10px; background: #334155; padding: 4px 8px; border-radius: 6px; font-weight: 900; }
+        @media (max-width: 768px) { .featured-survival { grid-template-columns: 1fr; } }
         
         #game-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1000; padding: 40px; box-sizing: border-box; }
         .game-frame { max-width: 800px; margin: 0 auto; background: var(--card-bg); border-radius: 32px; padding: 40px; min-height: 600px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border: 1px solid rgba(255,255,255,0.1); }
@@ -149,7 +171,7 @@
 
         <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
         <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
-        <a href="game.html" class="nav-item active">🎮 指令塔防</a>
+        <a href="game.html" class="nav-item active">🎮 遊戲中心</a>
         <a href="shop.html" class="nav-item">🛒 創意商城</a>
         <a href="chat.html" class="nav-item">💬 交流大廳</a>
         <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
@@ -170,8 +192,59 @@
 
 <div class="container">
     <div class="hero">
-        <h1>挑戰你的邏輯極限</h1>
-        <p>在這裡，好玩是必須的。透過遊戲賺取金幣，打造你的專屬角色。</p>
+        <h1>Doratch 遊戲中心</h1>
+        <p>邏輯競技 × 異界生存 × 放置養成 — 玩遊戲賺金幣，班級排行榜同步。</p>
+    </div>
+
+    <div class="featured-survival" onclick="location.href='game-survival.html'">
+        <div>
+            <span class="featured-tag">⭐ 最推薦</span>
+            <h2>🌌 Doratch：異界生存</h2>
+            <p style="color:#cbd5e1; line-height:1.7; margin:0;">
+                WASD 移動 · 怪物追逐 · 自動攻擊 · 升級選技能<br>
+                火球 / 閃電 / 冰凍 / 分裂箭 / 召喚寵物 · 裝備稀有度<br>
+                <strong style="color:var(--secondary);">存活 10 分鐘並擊敗 Boss · Boss 每小時 1 次</strong>
+            </p>
+            <button type="button" class="btn-nav" style="margin-top:16px; background:var(--primary); padding:14px 28px;" onclick="event.stopPropagation(); location.href='game-survival.html'">立即遊玩 →</button>
+        </div>
+        <div style="font-size:100px; text-align:center; opacity:0.9;">🧙‍♂️👹💰</div>
+    </div>
+
+    <div class="mode-section">
+        <div class="section-title">🎮 遊戲模式一覽</div>
+        <div class="mode-grid">
+            <div class="mode-card playable" onclick="location.href='game-survival.html'">
+                <div class="mode-icon">🌌</div>
+                <h4>① 異界生存</h4>
+                <p>Vampire Survivors 風格。Canvas 實作，已可遊玩。</p>
+            </div>
+            <div class="mode-card playable" onclick="location.href='game-clicker.html'">
+                <div class="mode-icon">🍪</div>
+                <h4>② 點擊放置</h4>
+                <p>點擊、自動採集、礦工、工廠、離線收益。</p>
+            </div>
+            <div class="mode-card playable" onclick="location.href='game-rpg.html'">
+                <div class="mode-icon">🗺️</div>
+                <h4>③ RPG 探索</h4>
+                <p>森林／洞穴／城鎮、任務、商店、裝備。</p>
+            </div>
+            <div class="mode-card playable" onclick="location.href='game-cards.html'">
+                <div class="mode-icon">🃏</div>
+                <h4>④ 卡牌遊戲</h4>
+                <p>抽卡 SSR～N、組隊、打 Boss。</p>
+            </div>
+            <div class="mode-card playable" onclick="location.href='game-pet.html'">
+                <div class="mode-icon">🥚</div>
+                <h4>⑤ 寵物養成</h4>
+                <p>蛋→幼體→成熟→究極，餵食、對戰、進化。</p>
+            </div>
+            <div class="mode-card playable" onclick="location.href='game-mine.html'">
+                <div class="mode-icon">⛏️</div>
+                <h4>⑥ 採礦冒險</h4>
+                <p>2D 挖礦、賣礦、升級鎬子、挖更深。</p>
+            </div>
+            <div class="mode-card soon" style="opacity:0.5;cursor:default;"><span class="soon-badge">暫不開放</span><div class="mode-icon">💬</div><h4>⑦ Discord 連動</h4><p>OAuth、排行榜同步（規劃中）。</p></div>
+        </div>
     </div>
 
     <div class="mode-section">
@@ -233,7 +306,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let score = 0, earned = 0, gameInterval = null;
+    let score = 0, earned = 0, gameInterval = null, currentGameMode = null;
     let globalQuestions = [{ text: "1+1=?", options: ["2", "3", "4"], answer: 0, diff: 1 }];
     let userUnitLevels = { input: 1, print: 1, ifelse: 1, while: 1, try: 1 };
     let userMaxStage = 1;
@@ -250,7 +323,12 @@
     });
 
     async function fetchUserData(user) {
-        const snap = await getDoc(doc(db, "users", user.uid));
+        const uRef = doc(db, "users", user.uid);
+        let snap = await getDoc(uRef);
+        if (!snap.exists()) {
+            await setDoc(uRef, { email: user.email || "", coins: 100, xp: 0, lv: 1 }, { merge: true });
+            snap = await getDoc(uRef);
+        }
         if (snap.exists()) {
             const data = snap.data();
             const coins = data.coins || 0;
@@ -295,6 +373,13 @@
         document.getElementById('game-overlay').style.display = 'block';
         const content = document.getElementById('game-content');
         content.innerHTML = ''; score = 0; earned = 0;
+        document.getElementById('score').innerText = '0';
+        document.getElementById('earned').innerText = '0';
+        const titles = { raid: '巨獸對抗賽', '2048': '2048 數據融合', runner: 'Cyber Runner', color: '色彩直覺', codewar: '代碼戰爭' };
+        document.getElementById('game-title').innerText = titles[mode] || '遊戲中';
+        if(gameInterval) clearInterval(gameInterval);
+        gameInterval = null;
+        window.onkeydown = null;
         
         if(mode === 'raid') {
             const config = raidConfig.bosses[level-1];
@@ -349,15 +434,20 @@
     }
 
     function handleRaidAnswer(idx, ans) {
-        if(idx === ans) {
+        if (idx === ans) {
             raidConfig.combo++;
             const dmg = 10 + raidConfig.combo * 5;
             raidConfig.hp -= dmg;
+            score += dmg;
+            earned += 2;
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = earned;
             spawnDamage(dmg);
             updateRaidUI();
-            if(raidConfig.hp <= 0) {
-                alert(`🎊 擊敗了 ${raidConfig.bosses[raidConfig.currentLevel-1].name}！`);
+            if (raidConfig.hp <= 0) {
                 earned = raidConfig.currentLevel * 100;
+                document.getElementById('earned').innerText = earned;
+                alert(`🎊 擊敗了 ${raidConfig.bosses[raidConfig.currentLevel - 1].name}！獲得 ${earned} 金幣`);
                 exitGame();
             } else {
                 showRaidQuestion();
@@ -386,41 +476,171 @@
 
     window.exitGame = async () => {
         if(gameInterval) clearInterval(gameInterval);
-        if(earned > 0) {
-            const updates = { coins: increment(earned) };
-            if(window.currentMaxStage > userMaxStage) updates.maxStage = window.currentMaxStage;
-            await updateDoc(doc(db, "users", auth.currentUser.uid), updates);
+        window.onkeydown = null;
+        gameInterval = null;
+        if(earned > 0 && auth.currentUser) {
+            try {
+                const uRef = doc(db, "users", auth.currentUser.uid);
+                const uSnap = await getDoc(uRef);
+                const updates = { coins: increment(Math.floor(earned)) };
+                if(window.currentMaxStage > userMaxStage) updates.maxStage = window.currentMaxStage;
+                if(!uSnap.exists()) {
+                    await setDoc(uRef, { email: auth.currentUser.email || "", coins: Math.floor(earned), xp: 0, lv: 1, ...updates }, { merge: true });
+                } else {
+                    await updateDoc(uRef, updates);
+                }
+            } catch (e) { console.error(e); }
         }
-        location.reload();
+        document.getElementById('game-overlay').style.display = 'none';
+        document.getElementById('game-content').innerHTML = '';
+        score = 0; earned = 0;
+        document.getElementById('score').innerText = '0';
+        document.getElementById('earned').innerText = '0';
+        currentGameMode = null;
+        if(auth.currentUser) fetchUserData(auth.currentUser);
     };
 
     // --- 2048 ---
     function init2048() {
         const container = document.getElementById('game-content');
-        container.innerHTML = `<div class="grid-2048" id="grid2048"></div>`;
+        container.innerHTML = `<p style="color:#94a3b8;margin-bottom:12px;">方向鍵移動 · 合成數字賺金幣</p><div class="grid-2048" id="grid2048"></div><p id="g2048-msg" style="color:#94a3b8;margin-top:12px;"></p>`;
         let grid = Array(16).fill(0);
-        const addRandom = () => { let empty = grid.map((v,i)=>v===0?i:null).filter(v=>v!==null); if(empty.length) grid[empty[Math.floor(Math.random()*empty.length)]] = Math.random()<0.9?2:4; };
-        const render = () => { const el = document.getElementById('grid2048'); el.innerHTML=''; grid.forEach(v=>{ const c=document.createElement('div'); c.className='cell-2048'; c.innerText=v||''; c.style.background=v?'#4C97FF':'#1E293B'; el.appendChild(c); }); };
+        let over = false;
+        let won2048 = false;
+        const addRandom = () => {
+            const empty = grid.map((v, i) => v === 0 ? i : null).filter(v => v !== null);
+            if (!empty.length) return false;
+            grid[empty[Math.floor(Math.random() * empty.length)]] = Math.random() < 0.9 ? 2 : 4;
+            return true;
+        };
+        const render = () => {
+            const el = document.getElementById('grid2048');
+            el.innerHTML = '';
+            grid.forEach(v => {
+                const c = document.createElement('div');
+                c.className = 'cell-2048';
+                c.innerText = v || '';
+                c.style.background = v ? '#4C97FF' : '#1E293B';
+                c.style.color = 'white';
+                el.appendChild(c);
+            });
+            score = grid.reduce((a, b) => a + b, 0);
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = Math.floor(earned);
+        };
+        function slide(row) {
+            let arr = row.filter(v => v);
+            for (let i = 0; i < arr.length - 1; i++) {
+                if (arr[i] === arr[i + 1]) {
+                    arr[i] *= 2;
+                    earned += arr[i] / 20;
+                    arr.splice(i + 1, 1);
+                }
+            }
+            while (arr.length < 4) arr.push(0);
+            return arr;
+        }
+        function canMove() {
+            for (let i = 0; i < 16; i++) {
+                if (!grid[i]) return true;
+                const x = i % 4, y = (i / 4) | 0;
+                if (x < 3 && grid[i] === grid[i + 1]) return true;
+                if (y < 3 && grid[i] === grid[i + 4]) return true;
+            }
+            return false;
+        }
+        function move(dir) {
+            if (over) return;
+            const old = grid.join(',');
+            if (dir === 'left' || dir === 'right') {
+                for (let r = 0; r < 4; r++) {
+                    let row = grid.slice(r * 4, r * 4 + 4);
+                    if (dir === 'right') row.reverse();
+                    row = slide(row);
+                    if (dir === 'right') row.reverse();
+                    for (let c = 0; c < 4; c++) grid[r * 4 + c] = row[c];
+                }
+            } else {
+                for (let c = 0; c < 4; c++) {
+                    let col = [grid[c], grid[c + 4], grid[c + 8], grid[c + 12]];
+                    if (dir === 'down') col.reverse();
+                    col = slide(col);
+                    if (dir === 'down') col.reverse();
+                    for (let r = 0; r < 4; r++) grid[r * 4 + c] = col[r];
+                }
+            }
+            if (old !== grid.join(',')) {
+                addRandom();
+                render();
+                if (!won2048 && grid.includes(2048)) {
+                    won2048 = true;
+                    earned += 50;
+                    document.getElementById('g2048-msg').textContent = '🎉 達成 2048！+50 金幣';
+                }
+                if (!canMove()) {
+                    over = true;
+                    earned += Math.floor(score / 50);
+                    document.getElementById('g2048-msg').textContent = '無法移動，遊戲結束…';
+                    setTimeout(() => exitGame(), 1500);
+                }
+            }
+        }
         addRandom(); addRandom(); render();
-        window.onkeydown = (e) => { /* 2048 move logic */ render(); };
+        window.onkeydown = (e) => {
+            const k = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' }[e.key];
+            if (k) { e.preventDefault(); move(k); }
+        };
     }
 
     // --- Runner ---
     function initRunner() {
         const content = document.getElementById('game-content');
-        content.innerHTML = `<canvas id="runner-cvs" width="600" height="200"></canvas>`;
+        content.innerHTML = `<p style="color:#94a3b8;margin-bottom:12px;">空白鍵或 ↑ 跳躍 · 避開紅色障礙</p><canvas id="runner-cvs" width="600" height="200" style="max-width:100%;background:#1e293b;border-radius:12px;"></canvas>`;
         const cvs = document.getElementById('runner-cvs');
         const ctx = cvs.getContext('2d');
-        let x = 0;
+        let py = 150, vy = 0, grounded = true;
+        let obstacles = [], frame = 0, alive = true;
+        const GY = 150;
+        const jump = () => { if (grounded) { vy = -11; grounded = false; } };
+        window.onkeydown = (e) => {
+            if (e.code === 'Space' || e.key === 'ArrowUp') { jump(); e.preventDefault(); }
+        };
         gameInterval = setInterval(() => {
-            ctx.clearRect(0,0,600,200);
-            ctx.fillStyle = '#4C97FF'; ctx.fillRect(50, 150, 30, 30);
-            x++; score++; document.getElementById('score').innerText = score;
+            if (!alive) return;
+            frame++;
+            ctx.clearRect(0, 0, 600, 200);
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, GY + 30, 600, 20);
+            vy += 0.6;
+            py += vy;
+            if (py >= GY) { py = GY; vy = 0; grounded = true; }
+            ctx.fillStyle = '#4C97FF';
+            ctx.fillRect(50, py, 30, 30);
+            if (frame % 70 === 0) obstacles.push({ x: 600, w: 18 + Math.random() * 20, h: 22 + Math.random() * 28 });
+            obstacles.forEach(o => {
+                o.x -= 5;
+                ctx.fillStyle = '#EF4444';
+                ctx.fillRect(o.x, GY + 30 - o.h, o.w, o.h);
+            });
+            obstacles = obstacles.filter(o => o.x > -50);
+            const hit = obstacles.some(o => o.x < 80 && o.x + o.w > 50 && py + 30 > GY + 30 - o.h);
+            if (hit) {
+                alive = false;
+                earned += Math.floor(score / 10);
+                alert(`撞到了！得分 ${score}，獲得 ${Math.floor(score / 10)} 金幣`);
+                exitGame();
+                return;
+            }
+            score++;
+            if (score % 100 === 0) earned += 5;
+            document.getElementById('score').innerText = score;
+            document.getElementById('earned').innerText = Math.floor(earned);
         }, 20);
     }
 
     // --- Stroop ---
     function initStroop() {
+        document.getElementById('game-title').innerText = "色彩直覺";
         const next = () => {
             const colors = ['RED', 'BLUE', 'GREEN'];
             const hex = ['#EF4444', '#3B82F6', '#10B981'];

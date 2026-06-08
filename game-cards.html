@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doratch 卡牌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { margin:0; font-family:"Noto Sans TC",sans-serif; background:#0f172a; color:#f8fafc; }
+        .bar { display:flex; justify-content:space-between; padding:14px 20px; background:#1e293b; }
+        .bar a { color:#94a3b8; text-decoration:none; font-weight:900; }
+        .wrap { max-width:900px; margin:0 auto; padding:20px; }
+        .btn { border:none; background:#855cd6; color:#fff; padding:12px 20px; border-radius:12px; font-weight:900; cursor:pointer; margin:4px; }
+        .cards { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+        .card {
+            width:100px; padding:10px; border-radius:12px; text-align:center; font-size:12px;
+            border:2px solid #334155; background:#1e293b; cursor:pointer;
+        }
+        .card.SSR { border-color:#ef4444; box-shadow:0 0 12px rgba(239,68,68,0.4); }
+        .card.SR { border-color:#a855f7; }
+        .card.R { border-color:#3b82f6; }
+        .card.N { border-color:#64748b; }
+        .team { display:flex; gap:8px; min-height:80px; padding:12px; background:#1e293b; border-radius:12px; margin:12px 0; }
+        .slot { width:90px; height:70px; border:2px dashed #475569; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer; }
+        .sync-hint { text-align:center; font-size:12px; color:#64748b; margin-top:12px; }
+    </style>
+</head>
+<body>
+    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+    <div class="wrap">
+        <h1>🃏 Doratch 卡牌</h1>
+        <p style="color:#94a3b8;">抽卡 SSR / SR / R / N · 組 3 人隊伍 · 打關卡 Boss</p>
+        <button type="button" class="btn" id="pull">🎴 抽卡（50 金幣）</button>
+        <span id="gems" style="margin-left:12px;font-weight:900;color:#fbbf24;">遊戲金幣：100</span>
+        <h3>卡庫</h3>
+        <div class="cards" id="collection"></div>
+        <h3>出戰隊伍（點卡庫卡片加入，點隊伍移除）</h3>
+        <div class="team" id="team"></div>
+        <button type="button" class="btn" style="background:#ea580c;" id="boss">👹 挑戰 Boss 關卡</button>
+        <p id="battle-log" style="color:#94a3b8;font-size:14px;margin-top:12px;"></p>
+        <p class="sync-hint" id="sync-hint">本機模式 · 進度自動儲存</p>
+    </div>
+    <script type="module">
+        import { loadLocal, saveLocal, pickNewer, connectCloud, refreshPlatformCoins, setSyncHint } from "./js/game-local-sync.js";
+
+        const STORAGE_KEY = "doratch_gameCards_v1";
+        const POOL = [
+            { name:"火球法師", r:"R", atk:12 }, { name:"見習生", r:"N", atk:6 },
+            { name:"聖騎士", r:"SR", atk:22 }, { name:"暗影刺客", r:"SR", atk:20 },
+            { name:"龍裔", r:"SSR", atk:35 }, { name:"異界領主", r:"SSR", atk:40 },
+            { name:"治療師", r:"R", atk:8 }, { name:"盾衛", r:"N", atk:7 }
+        ];
+        const RATES = { SSR:0.05, SR:0.15, R:0.35, N:0.45 };
+
+        let uid = null, saveGameDoc = null, getUserCoins = null;
+        let gems = 100, collection = [], team = [];
+
+        function pullRarity() {
+            const r = Math.random();
+            if (r < RATES.SSR) return "SSR";
+            if (r < RATES.SSR + RATES.SR) return "SR";
+            if (r < RATES.SSR + RATES.SR + RATES.R) return "R";
+            return "N";
+        }
+
+        function persist(coinReward = 0) {
+            saveLocal(STORAGE_KEY, { gems, collection, team });
+            if (uid && saveGameDoc) {
+                saveGameDoc(uid, "gameCards", { gems, collection, team }, coinReward).catch((e) => console.error(e));
+            }
+        }
+
+        function pullCard() {
+            if (gems < 50) return alert("金幣不足（需 50）");
+            gems -= 50;
+            const r = pullRarity();
+            const pool = POOL.filter((c) => c.r === r);
+            const card = { ...pool[Math.floor(Math.random() * pool.length)], id: Date.now() + Math.random() };
+            collection.push(card);
+            render();
+            persist();
+        }
+
+        function teamPower() {
+            return team.reduce((s, c) => s + c.atk, 0);
+        }
+
+        function render() {
+            document.getElementById("gems").textContent = `遊戲金幣：${gems}`;
+            const col = document.getElementById("collection");
+            col.innerHTML = collection.map((c, i) =>
+                `<div class="card ${c.r}" data-i="${i}"><div>${c.r}</div><strong>${c.name}</strong><br>ATK ${c.atk}</div>`
+            ).join("");
+            col.querySelectorAll(".card").forEach((el) => {
+                el.onclick = () => {
+                    const c = collection[+el.dataset.i];
+                    if (team.length >= 3) return alert("隊伍已滿（3人）");
+                    if (team.some((t) => t.id === c.id)) return;
+                    team.push(c);
+                    render();
+                    persist();
+                };
+            });
+            const tm = document.getElementById("team");
+            const emptySlots = Array.from({ length: Math.max(0, 3 - team.length) }, () => '<div class="slot">空位</div>').join("");
+            tm.innerHTML = team.map((c, i) =>
+                `<div class="slot" data-i="${i}"><div class="card ${c.r}" style="width:100%;border:none;">${c.name}<br>${c.atk}</div></div>`
+            ).join("") + emptySlots;
+            tm.querySelectorAll(".slot[data-i]").forEach((el) => {
+                el.onclick = () => {
+                    team.splice(+el.dataset.i, 1);
+                    render();
+                    persist();
+                };
+            });
+        }
+
+        function applyData(data) {
+            if (!data) return;
+            gems = data.gems ?? 100;
+            collection = data.collection || [];
+            team = data.team || [];
+        }
+
+        function initLocal() {
+            applyData(loadLocal(STORAGE_KEY));
+            render();
+        }
+
+        document.getElementById("pull").onclick = pullCard;
+        document.getElementById("boss").onclick = async () => {
+            if (team.length < 1) return alert("請至少加入 1 張卡到隊伍");
+            const bossHp = 80 + Math.floor(Math.random() * 40);
+            const power = teamPower();
+            const win = power >= bossHp * 0.45 + Math.random() * 20;
+            const logEl = document.getElementById("battle-log");
+            if (win) {
+                const reward = 30 + team.length * 15;
+                gems += reward;
+                logEl.textContent = `🎉 勝利！隊伍戰力 ${power} vs Boss HP ${bossHp} · 獲得 ${reward} 金幣`;
+                persist(Math.floor(reward / 3));
+                if (uid && getUserCoins) await refreshPlatformCoins(uid, "coins", getUserCoins);
+            } else {
+                logEl.textContent = `💀 失敗… 戰力 ${power} 不足以擊敗 Boss（${bossHp} HP）`;
+            }
+            render();
+        };
+
+        initLocal();
+        setInterval(() => persist(), 20000);
+
+        connectCloud(async (user, api) => {
+            uid = user.uid;
+            saveGameDoc = api.saveGameDoc;
+            getUserCoins = api.getUserCoins;
+            setSyncHint("雲端同步已連線");
+            await refreshPlatformCoins(uid, "coins", api.getUserCoins);
+            const saved = await api.loadGameDoc(uid, "gameCards");
+            const local = loadLocal(STORAGE_KEY);
+            const cloudWrap = saved ? { ...saved, savedAt: saved.updatedAt } : null;
+            const picked = pickNewer(local, cloudWrap, saved?.updatedAt);
+            applyData(picked);
+            render();
+            persist();
+        }, setSyncHint);
+    </script>
+</body>
+</html>
