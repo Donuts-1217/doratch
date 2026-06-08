@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="python-terminal.css">
+    <link rel="stylesheet" href="discord-bot-sim.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -171,6 +172,10 @@
     <script src="js/python-lessons-data.js"></script>
     <script src="js/python-lessons-teach.js"></script>
     <script src="js/python-engine.js"></script>
+    <script src="js/discord-py-mock.js"></script>
+    <script src="js/discord-bot-runtime.js"></script>
+    <script src="js/discord-bot-engine.js"></script>
+    <script src="js/discord-bot-simulator.js"></script>
     <script src="js/python-terminal.js"></script>
     <script src="js/python-monaco.js"></script>
 </head>
@@ -253,6 +258,9 @@
                 </div>
                 <p class="progress-text" id="progress-text"></p>
             </div>
+            <div id="bot-sim-panel" class="bot-sim-panel" style="display:none;">
+                <div id="bot-simulator"></div>
+            </div>
         </div>
     </main>
 </div>
@@ -288,6 +296,25 @@
     let completed = new Set();
     let engineReady = false;
     let useMonaco = true;
+    let botSim = null;
+
+    function isDiscordLesson(id) {
+        var lesson = getLesson(id);
+        return (lesson.track || "base") === "discord";
+    }
+
+    function updateDiscordLayout() {
+        var layout = document.querySelector(".py-layout");
+        var panel = document.getElementById("bot-sim-panel");
+        var discord = isDiscordLesson(currentId);
+        if (discord) {
+            layout.classList.add("py-layout-discord");
+            panel.style.display = "block";
+        } else {
+            layout.classList.remove("py-layout-discord");
+            panel.style.display = "none";
+        }
+    }
 
     function getCode() {
         if (useMonaco && window.PythonMonaco?.isReady()) {
@@ -406,6 +433,8 @@
         document.getElementById("test-results").innerHTML = "";
         if (pyTerm) pyTerm.clear();
         renderLessonList();
+        updateDiscordLayout();
+        if (botSim) botSim.clearMessages();
     }
 
     async function awardCoins(amount) {
@@ -453,6 +482,10 @@
         const lesson = getLesson(currentId);
         const code = getCode();
         const box = document.getElementById("test-results");
+        if (!lesson.tests || !lesson.tests.length) {
+            alert("本關請用右側 Bot 模擬器測試：連線 → !前綴指令、/斜線指令、按鈕與下拉選單");
+            return;
+        }
         if (pyTerm) pyTerm.clear();
         box.innerHTML = "";
         try {
@@ -550,6 +583,15 @@
 
     initMonacoEditor().then(function () {
         pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
+        botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
+            getCode: getCode,
+            onConnect: function (token) {
+                if (token === window.DiscordBotEngine.DEMO_TOKEN) {
+                    return { name: "Doratch 示範 Bot", isDemo: true };
+                }
+                return { name: "自訂 Bot", isDemo: false };
+            }
+        });
         selectLesson(currentId);
         window.addEventListener("resize", function () {
             if (window.PythonMonaco) window.PythonMonaco.layout();

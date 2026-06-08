@@ -70,6 +70,27 @@
         .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; }
         .msg-time { font-size: 12px; color: var(--text-muted); }
         .msg-text { font-size: 15px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+        .message-row.bot-msg .msg-author { color: #23a559; }
+        .message-row.bot-msg .msg-avatar { border-color: rgba(35,165,89,0.4); }
+        .bot-badge { background: #23a559; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+        .msg-embed {
+            margin-top: 6px; padding: 10px 12px; border-left: 3px solid #5865f2;
+            background: rgba(88,101,242,0.08); border-radius: 6px; font-size: 14px; line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .msg-components { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .msg-comp-btn {
+            border: none; padding: 8px 14px; border-radius: 6px; font-weight: 800; font-size: 13px;
+            cursor: pointer; color: #fff; font-family: inherit;
+        }
+        .msg-comp-btn--primary { background: #5865f2; }
+        .msg-comp-btn--secondary { background: #4e5058; }
+        .msg-comp-btn--success { background: #23a559; }
+        .msg-comp-btn--danger { background: #ed4245; }
+        .msg-comp-select {
+            min-width: 160px; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
+            background: #1e293b; color: #e2e8f0; font-size: 13px;
+        }
         
         /* 檔案附件卡片 */
         .msg-file-card { background: var(--card-bg); border: 1px solid rgba(76, 151, 255, 0.2); border-radius: 16px; padding: 20px; margin-top: 10px; display: inline-flex; align-items: center; gap: 20px; max-width: 400px; cursor: pointer; transition: 0.3s; }
@@ -80,12 +101,34 @@
         .file-sub { font-size: 12px; color: var(--text-muted); }
 
         /* 輸入區 */
-        .input-area { padding: 0 30px 30px 30px; flex-shrink: 0; }
-        .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; padding: 15px 25px; transition: 0.3s; }
+        .input-area { padding: 0 30px 30px 30px; flex-shrink: 0; position: relative; }
+        .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; padding: 12px 20px; transition: 0.3s; gap: 12px; }
         .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(76, 151, 255, 0.1); }
-        .btn-attach { background: rgba(255,255,255,0.1); color: white; border: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; margin-right: 20px; transition: 0.2s; }
+        .btn-attach { background: rgba(255,255,255,0.1); color: white; border: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; flex-shrink: 0; }
         .btn-attach:hover { background: var(--primary); }
-        .input-box { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; }
+        .btn-slash-chip {
+            background: rgba(88,101,242,0.2); color: #a5b4fc; border: none; width: 32px; height: 32px;
+            border-radius: 10px; font-weight: 900; font-size: 16px; cursor: pointer; flex-shrink: 0;
+        }
+        .btn-slash-chip:hover { background: #5865f2; color: #fff; }
+        .input-box { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; min-width: 0; }
+
+        /* 斜線指令選單 */
+        .slash-picker {
+            position: absolute; bottom: 100%; left: 30px; right: 30px; margin-bottom: 8px;
+            background: #2b2d31; border: 1px solid #1e1f22; border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45); max-height: 280px; overflow-y: auto; z-index: 50;
+        }
+        .slash-picker-item {
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; width: 100%; text-align: left;
+            border: none; background: transparent; color: #dbdee1; padding: 12px 16px; cursor: pointer;
+            font-family: inherit; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .slash-picker-item:hover, .slash-picker-item.active { background: rgba(88,101,242,0.15); }
+        .slash-cmd-name { color: #fff; font-weight: 900; font-size: 15px; }
+        .slash-cmd-desc { color: #949ba4; font-size: 13px; flex: 1; min-width: 120px; }
+        .slash-cmd-bot { color: #23a559; font-size: 11px; font-weight: 800; }
+        .slash-picker-empty { padding: 20px; text-align: center; color: #949ba4; font-size: 13px; line-height: 1.6; }
         
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
@@ -99,15 +142,31 @@
         /* 成員列表側邊欄 */
         .member-sidebar { width: 260px; background: var(--sidebar-bg); border-left: 1px solid rgba(255,255,255,0.05); display: none; flex-direction: column; flex-shrink: 0; }
         .member-sidebar.active { display: flex; }
-        .member-sidebar-header { height: 70px; padding: 0 25px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; font-weight: 900; color: white; }
-        .member-list { flex: 1; overflow-y: auto; padding: 20px; }
-        .member-item { display: flex; align-items: center; padding: 10px 15px; border-radius: 12px; margin-bottom: 4px; transition: 0.2s; }
-        .member-item:hover { background: rgba(255,255,255,0.03); }
-        .member-avatar { width: 36px; height: 36px; border-radius: 12px; margin-right: 15px; }
-        .member-name { font-size: 14px; color: var(--text-muted); font-weight: bold; }
-        .member-item:hover .member-name { color: white; }
-        .kick-btn { background: #FF4D4D; color: white; border: none; border-radius: 4px; padding: 2px 6px; font-size: 11px; cursor: pointer; opacity: 0; transition: 0.2s; white-space: nowrap; }
+        .member-sidebar-header { height: 70px; padding: 0 25px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; font-weight: 900; color: white; }
+        .member-list { flex: 1; overflow-y: auto; padding: 12px 16px 20px; }
+        .member-section-title {
+            font-size: 11px; font-weight: 900; color: #64748b; text-transform: uppercase;
+            letter-spacing: 0.08em; padding: 12px 8px 6px; margin-top: 4px;
+        }
+        .member-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 10px; margin-bottom: 2px; transition: 0.2s; gap: 8px; }
+        .member-item:hover { background: rgba(255,255,255,0.04); }
+        .member-item--bot { border: 1px solid rgba(35,165,89,0.15); background: rgba(35,165,89,0.05); }
+        .member-item--bot:hover { background: rgba(35,165,89,0.1); }
+        .member-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-left: 4px; }
+        .member-status.online { background: #23a559; box-shadow: 0 0 6px rgba(35,165,89,0.6); }
+        .member-status.bot { background: #5865f2; }
+        .member-avatar { width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; }
+        .member-info { flex: 1; min-width: 0; }
+        .member-name { font-size: 14px; color: #e2e8f0; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member-role { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .member-cmds { color: #5865f2 !important; line-height: 1.4; word-break: break-word; white-space: normal; }
+        .member-tag { font-size: 10px; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 4px; font-weight: 800; }
+        .member-tag.bot { background: rgba(35,165,89,0.25); color: #86efac; }
+        .member-empty-hint { font-size: 12px; color: #64748b; padding: 8px 12px 16px; line-height: 1.5; text-align: center; }
+        .kick-btn { background: #FF4D4D; color: white; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; opacity: 0; transition: 0.2s; white-space: nowrap; flex-shrink: 0; }
         .member-item:hover .kick-btn { opacity: 1; }
+        .kick-btn.bot-disconnect { opacity: 0.7; background: rgba(255,255,255,0.1); color: #fca5a5; }
+        .member-item--bot:hover .bot-disconnect { opacity: 1; }
 
         /* 全域導覽列樣式 */
         .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
@@ -238,7 +297,7 @@
     </div>
     
     <div class="member-sidebar" id="member-sidebar">
-        <div class="member-sidebar-header">成員名單</div>
+        <div class="member-sidebar-header" id="member-sidebar-header">成員</div>
         <div class="member-list" id="member-list"></div>
     </div>
 </div>
@@ -254,6 +313,14 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<script src="js/python-engine.js"></script>
+<script src="js/discord-py-mock.js"></script>
+<script src="js/discord-bot-runtime.js"></script>
+<script src="js/discord-bot-engine.js"></script>
+<script src="js/chat-discord-ui.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -274,6 +341,8 @@
     let currentUser = null;
     let currentChatId = null;
     let currentChatParticipants = [];
+    let currentChatAttachedBots = [];
+    let currentChatBotsMeta = [];
     let unsubscribeMessages = null;
     let unsubscribeChatDoc = null;
     let modalMode = ''; // 'private' or 'group'
@@ -312,6 +381,10 @@
         } catch (e) {}
 
         loadChats();
+
+        if (window.PythonEngine && window.DiscordBotEngine) {
+            window.PythonEngine.init(function () { /* bot engine loading */ }).catch(function () { /* ignore */ });
+        }
 
         const urlParams = new URLSearchParams(window.location.search);
         const openId = urlParams.get('open');
@@ -471,6 +544,7 @@
 
         const displayTitle = chatType === 'server' ? `${chatName} <span style="font-size:12px; color:#949ba4;">(代碼: ${chatId})</span>` : chatName;
         const inviteBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">邀請</button>` : '';
+        const botBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:8px; background:#23a559;" onclick="openModal('connectBot')" title="連接 Discord Bot">🤖 Bot</button>` : '';
         const memberToggleBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:8px; background:#4e5058;" onclick="toggleMemberSidebar()" title="顯示成員名單">👥</button>` : '';
         
         let manageBtnHtml = '';
@@ -488,16 +562,19 @@
                 <h3 id="current-chat-name" style="margin: 0; font-size: 1.1rem;">${icon} ${displayTitle}</h3>
                 <div style="margin-left:auto; display:flex; align-items:center;">
                     ${inviteBtnHtml}
+                    ${botBtnHtml}
                     ${memberToggleBtnHtml}
                     ${manageBtnHtml}
                 </div>
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
+                <div class="slash-picker" id="slash-picker" style="display:none;"></div>
                 <div class="input-wrapper">
                     <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上傳 .xml 專案檔">➕</button>
                     <input type="file" id="file-input" accept=".xml" style="display:none" onchange="sendFile(this)">
-                    <input type="text" id="msg-input" class="input-box" placeholder="傳送訊息到 #${chatName}" onkeypress="if(event.key==='Enter') sendMessage()">
+                    <button type="button" class="btn-slash-chip" id="btn-slash-chip" title="斜線指令">/</button>
+                    <input type="text" id="msg-input" class="input-box" placeholder="傳送訊息，或輸入 / 使用斜線指令…">
                 </div>
             </div>
         `;
@@ -508,10 +585,10 @@
         // 監聽聊天室文件（用於更新成員名單等）
         unsubscribeChatDoc = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
             if (docSnap.exists()) {
-                currentChatParticipants = docSnap.data().participants || [];
-                if (document.getElementById('member-sidebar').classList.contains('active')) {
-                    loadMembers();
-                }
+                const data = docSnap.data();
+                currentChatParticipants = data.participants || [];
+                currentChatAttachedBots = data.attachedBots || [];
+                refreshChatBotsMeta();
             }
         });
 
@@ -534,16 +611,22 @@
             const msg = docSnap.data();
             window.currentMessages[docSnap.id] = msg;
             
-            const senderName = (msg.senderEmail || "未知").split('@')[0];
+            const senderName = msg.type === 'bot'
+                ? (msg.botName || "Bot")
+                : (msg.senderEmail || "未知").split('@')[0];
             const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
             const timeStr = timeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const fullTimeStr = timeObj.toLocaleDateString() + ' ' + timeStr;
-            const avatarUrl = `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
+            const avatarUrl = msg.type === 'bot'
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
+                : `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
             
             const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
             const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
             const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
+            const botBadge = msg.type === 'bot' ? `<span class="bot-badge">BOT</span>` : '';
+            const rowClass = msg.type === 'bot' ? 'message-row bot-msg' : 'message-row';
             
             let contentHtml = '';
             if (msg.type === 'file') {
@@ -558,24 +641,23 @@
                     </div>
                 `;
             } else {
-                const safeText = msg.text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                contentHtml = `<div class="msg-text">${safeText}</div>`;
+                contentHtml = msg.type === 'bot' ? renderBotMessageBody(msg) : `<div class="msg-text">${escHtml(msg.text || "")}</div>`;
             }
 
             if (isConsecutive) {
                 html += `
-                    <div class="message-row consecutive">
+                    <div class="${rowClass} consecutive">
                         <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}</span></div>
                         <div class="msg-content">${contentHtml}</div>
                     </div>
                 `;
             } else {
                 html += `
-                    <div class="message-row">
+                    <div class="${rowClass}">
                         <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar"></div>
                         <div class="msg-content">
                             <div class="msg-header">
-                                <span class="msg-author">${senderName}${teacherBadge}</span>
+                                <span class="msg-author">${senderName}${teacherBadge}${botBadge}</span>
                                 <span class="msg-time">${fullTimeStr}</span>
                             </div>
                             ${contentHtml}
@@ -591,7 +673,25 @@
         msgArea.scrollTop = msgArea.scrollHeight;
     });
         
-        setTimeout(() => document.getElementById('msg-input').focus(), 100);
+        setTimeout(() => {
+            const input = document.getElementById('msg-input');
+            if (input && window.ChatDiscordUI) {
+                input._chatSend = () => window.sendMessage();
+                window.ChatDiscordUI.mountInput(
+                    input,
+                    document.getElementById('slash-picker'),
+                    document.getElementById('btn-slash-chip')
+                );
+            }
+            refreshChatBotsMeta();
+            const memberSidebar = document.getElementById('member-sidebar');
+            if (chatType === 'group' || chatType === 'server') {
+                memberSidebar.classList.add('active');
+            } else {
+                memberSidebar.classList.remove('active');
+            }
+            input && input.focus();
+        }, 100);
     };
 
     // 退出群組邏輯
@@ -622,6 +722,36 @@
         } catch (e) { alert("解散失敗：" + e.message); }
     };
 
+    async function refreshChatBotsMeta() {
+        if (!window.ChatDiscordUI) return;
+        try {
+            currentChatBotsMeta = await window.ChatDiscordUI.loadBotsMeta(
+                currentChatAttachedBots,
+                loadBotCode
+            );
+            if (document.getElementById('member-sidebar')?.classList.contains('active')) {
+                loadMembers();
+            }
+        } catch (e) {
+            console.warn("Bot meta 更新失敗", e);
+        }
+    }
+
+    window.disconnectBot = async (token) => {
+        if (!currentChatId || !token) return;
+        if (!confirm("確定要中斷此 Bot 的連接嗎？")) return;
+        try {
+            const chatSnap = await getDoc(doc(db, "chats", currentChatId));
+            const bots = (chatSnap.data()?.attachedBots || []).filter(b => b.token !== token);
+            await updateDoc(doc(db, "chats", currentChatId), {
+                attachedBots: bots,
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            alert("中斷 Bot 失敗：" + e.message);
+        }
+    };
+
     // --- 成員管理相關 ---
     window.toggleMemberSidebar = () => {
         const sidebar = document.getElementById('member-sidebar');
@@ -632,13 +762,11 @@
     };
 
     window.loadMembers = async () => {
-        if (!currentChatId || currentChatParticipants.length === 0) return;
+        if (!currentChatId) return;
         const listDiv = document.getElementById('member-list');
-        listDiv.innerHTML = '<div style="color:#949ba4; font-size:12px; padding:10px;">載入成員中...</div>';
-        
+        listDiv.innerHTML = '<div class="member-empty-hint">載入成員中…</div>';
+
         try {
-            // Firestore 的 'in' 查詢最多支援 10-30 個（視版本而定），因為我們限制 20 人，這裡直接分批或用 loop
-            // 這裡簡單處理：直接 query users 集合
             const members = [];
             for (const uid of currentChatParticipants) {
                 const userSnap = await getDoc(doc(db, "users", uid));
@@ -647,39 +775,30 @@
                 }
             }
 
-            // 排序：房主最前面
             members.sort((a, b) => {
                 if (a.uid === currentChatTeacherId) return -1;
                 if (b.uid === currentChatTeacherId) return 1;
-                return 0;
+                return ((a.email || "").split("@")[0]).localeCompare((b.email || "").split("@")[0]);
             });
 
-            listDiv.innerHTML = '';
-            members.forEach(member => {
-                const isOwner = member.uid === currentChatTeacherId;
-                const isMe = member.uid === currentUser.uid;
-                const avatarUrl = `https://ui-avatars.com/api/?name=${member.email}&background=random`;
-                const displayName = (member.email || "未知").split('@')[0];
-                
-                const kickBtnHtml = (currentChatTeacherId === currentUser.uid && !isOwner && !isMe) 
-                    ? `<button class="kick-btn" onclick="kickMember('${member.uid}', '${displayName}')">踢出</button>` 
-                    : '';
-                const crown = isOwner ? '<span style="margin-left:4px;">👑</span>' : '';
-
-                const item = document.createElement('div');
-                item.className = 'member-item';
-                item.innerHTML = `
-                    <img src="${avatarUrl}" class="member-avatar">
-                    <div class="member-info">
-                        <div class="member-name">${displayName}${crown}</div>
-                    </div>
-                    ${kickBtnHtml}
-                `;
-                listDiv.appendChild(item);
-            });
+            if (window.ChatDiscordUI) {
+                window.ChatDiscordUI.renderMemberList(listDiv, {
+                    members: members,
+                    botsMeta: currentChatBotsMeta,
+                    teacherId: currentChatTeacherId,
+                    currentUid: currentUser.uid,
+                    onKick: window.kickMember,
+                    onDisconnectBot: window.disconnectBot,
+                    onUseSlash: (name) => {
+                        window.ChatDiscordUI.pickSlashByName(name);
+                        const input = document.getElementById('msg-input');
+                        if (input) input.focus();
+                    }
+                });
+            }
         } catch (e) {
             console.error("載入成員失敗:", e);
-            listDiv.innerHTML = '<div style="color:#FF4D4D; font-size:12px; padding:10px;">載入失敗</div>';
+            listDiv.innerHTML = '<div class="member-empty-hint" style="color:#fca5a5;">載入失敗</div>';
         }
     };
 
@@ -712,6 +831,141 @@
         }
     }
 
+    async function loadBotCode(ownerId, botId) {
+        const botSnap = await getDoc(doc(db, "users", ownerId, "discordBots", botId));
+        if (!botSnap.exists()) return null;
+        return botSnap.data();
+    }
+
+    const BTN_STYLE_MAP = { 1: "primary", 2: "secondary", 3: "success", 4: "danger", 5: "link" };
+
+    function escHtml(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function renderBotComponentsHtml(view, botToken) {
+        if (!view || !view.items || !view.items.length) return "";
+        let html = '<div class="msg-components">';
+        view.items.forEach(item => {
+            if (item.type === "button") {
+                const st = BTN_STYLE_MAP[item.style] || "secondary";
+                html += `<button type="button" class="msg-comp-btn msg-comp-btn--${st}" onclick="handleChatBotComponent('${escHtml(botToken)}','${escHtml(view.view_id)}','${escHtml(item.custom_id)}',[])">${escHtml((item.emoji ? item.emoji + " " : "") + (item.label || "Button"))}</button>`;
+            } else if (item.type === "select") {
+                html += `<select class="msg-comp-select" onchange="if(this.value){handleChatBotComponent('${escHtml(botToken)}','${escHtml(view.view_id)}','${escHtml(item.custom_id)}',[this.value]);this.value='';}"><option value="">${escHtml(item.placeholder || "選擇…")}</option>`;
+                (item.options || []).forEach(opt => {
+                    html += `<option value="${escHtml(opt.value || opt.label)}">${escHtml(opt.label || opt.value)}</option>`;
+                });
+                html += "</select>";
+            }
+        });
+        html += "</div>";
+        return html;
+    }
+
+    function renderBotMessageBody(msg) {
+        let html = "";
+        if (msg.text) {
+            html += `<div class="msg-text">${escHtml(msg.text)}</div>`;
+        }
+        if (msg.embed && window.DiscordBotRuntime) {
+            const embedText = window.DiscordBotRuntime.formatEmbedText(msg.embed);
+            if (embedText) html += `<div class="msg-embed">${escHtml(embedText)}</div>`;
+        }
+        if (msg.view && msg.botToken) {
+            html += renderBotComponentsHtml(msg.view, msg.botToken);
+        }
+        return html || '<div class="msg-text"></div>';
+    }
+
+    async function postBotResponses(entry, botData, responses) {
+        const botName = entry.name || botData.name || "Bot";
+        for (const resp of responses) {
+            const hasContent = resp.content || resp.embed || (resp.view && resp.view.items && resp.view.items.length);
+            if (!hasContent) continue;
+            const previewText = resp.content || (window.DiscordBotRuntime ? window.DiscordBotRuntime.formatEmbedText(resp.embed) : "") || "🎛 互動元件";
+            await addDoc(collection(db, "chats", currentChatId, "messages"), {
+                senderId: "bot:" + entry.token,
+                senderEmail: "bot@" + entry.token.slice(0, 8),
+                botName: botName,
+                botToken: entry.token,
+                botOwnerId: entry.ownerId,
+                botId: entry.botId,
+                text: resp.content || previewText.slice(0, 200),
+                embed: resp.embed || null,
+                view: resp.view || null,
+                ephemeral: !!resp.ephemeral,
+                type: "bot",
+                createdAt: serverTimestamp()
+            });
+        }
+        const preview = responses[0]?.content || (window.DiscordBotRuntime && responses[0]?.embed ? window.DiscordBotRuntime.formatEmbedText(responses[0].embed) : "") || "…";
+        await updateDoc(doc(db, "chats", currentChatId), {
+            lastMessage: "🤖 " + botName + ": " + String(preview).slice(0, 40),
+            updatedAt: serverTimestamp()
+        });
+    }
+
+    window.handleChatBotComponent = async (botToken, viewId, customId, values) => {
+        if (!currentChatId) return;
+        const entry = currentChatAttachedBots.find(b => b.token === botToken);
+        if (!entry) return;
+        try {
+            const botData = await loadBotCode(entry.ownerId, entry.botId);
+            if (!botData || !botData.pythonCode) return;
+            const r = await window.DiscordBotRuntime.handleInteraction({
+                code: botData.pythonCode,
+                type: "component",
+                payload: { viewId, customId, values: values || [] }
+            });
+            if (r.error || !r.responses || !r.responses.length) return;
+            await postBotResponses(entry, botData, r.responses);
+        } catch (e) {
+            console.warn("Bot 元件回覆失敗:", e);
+        }
+    };
+
+    async function processAttachedBots(userText) {
+        if (!currentChatAttachedBots.length || !window.DiscordBotEngine) return;
+        if (!userText || (userText.charAt(0) !== "!" && userText.charAt(0) !== "/")) return;
+
+        const isSlash = userText.charAt(0) === "/";
+        const slashName = isSlash ? userText.slice(1).split(/\s+/)[0] : null;
+
+        for (const entry of currentChatAttachedBots) {
+            try {
+                const tokenSnap = await getDoc(doc(db, "botTokens", entry.token));
+                if (!tokenSnap.exists() || !tokenSnap.data().active) continue;
+
+                const botData = await loadBotCode(entry.ownerId, entry.botId);
+                if (!botData || !botData.pythonCode) continue;
+
+                let responses = [];
+                if (isSlash && window.DiscordBotRuntime && window.DiscordBotRuntime.isDiscordPyCode(botData.pythonCode)) {
+                    const r = await window.DiscordBotRuntime.handleInteraction({
+                        code: botData.pythonCode,
+                        type: "slash",
+                        payload: slashName
+                    });
+                    if (r.error) continue;
+                    responses = r.responses || [];
+                } else if (!isSlash) {
+                    const res = await window.DiscordBotEngine.runBotCode(botData.pythonCode, userText);
+                    if (res.error) continue;
+                    if (res.responses && res.responses.length) {
+                        responses = res.responses;
+                    } else if (res.reply) {
+                        responses = [{ content: res.reply }];
+                    }
+                }
+                if (!responses.length) continue;
+
+                await postBotResponses(entry, botData, responses);
+            } catch (e) {
+                console.warn("Bot 回覆失敗:", e);
+            }
+        }
+    }
+
     // 4. 傳送文字訊息
     window.sendMessage = async () => {
         if (!currentChatId) return;
@@ -721,6 +975,7 @@
 
         input.value = '';
         input.disabled = true;
+        if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
 
         try {
             await addDoc(collection(db, "chats", currentChatId, "messages"), {
@@ -737,6 +992,7 @@
             });
             
             trimPrivateMessages(currentChatId);
+            await processAttachedBots(text);
         } catch (e) {
             alert("傳送失敗: " + e.message);
         } finally {
@@ -829,6 +1085,9 @@
         } else if (mode === 'invite') {
             title.innerText = '邀請成員加入';
             input.placeholder = '請輸入要邀請的 Email';
+        } else if (mode === 'connectBot') {
+            title.innerText = '連接 Discord Bot';
+            input.placeholder = '貼上 Bot Token（doratch-…）';
         }
         
         input.value = '';
@@ -960,11 +1219,46 @@
                     pendingInvites: arrayUnion(targetUid)
                 });
                 alert("邀請已送出！需等待對方確認後才會加入。");
+            } else if (modalMode === 'connectBot') {
+                const token = inputVal.trim();
+                if (!window.DiscordBotEngine || !window.DiscordBotEngine.isValidTokenFormat(token)) {
+                    alert("Token 格式不正確（需以 doratch- 開頭）");
+                    throw new Error("Invalid token");
+                }
+                const tokenSnap = await getDoc(doc(db, "botTokens", token));
+                if (!tokenSnap.exists()) {
+                    alert("找不到此 Token，請確認 Bot 已在 Python 創作空間部署。");
+                    throw new Error("Token not found");
+                }
+                const meta = tokenSnap.data();
+                if (!meta.active) {
+                    alert("此 Bot 尚未部署或已停用，請先在創作空間按「部署到交流大廳」。");
+                    throw new Error("Bot inactive");
+                }
+                const exists = currentChatAttachedBots.some(function (b) { return b.token === token; });
+                if (exists) {
+                    alert("此 Bot 已連接在此聊天室。");
+                    throw new Error("Already connected");
+                }
+                const botEntry = {
+                    token: token,
+                    ownerId: meta.ownerId,
+                    botId: meta.botId,
+                    name: meta.name || "Bot"
+                };
+                await updateDoc(doc(db, "chats", currentChatId), {
+                    attachedBots: arrayUnion(botEntry),
+                    updatedAt: serverTimestamp()
+                });
+                alert("🤖 已連接 Bot「" + botEntry.name + "」！成員輸入 ! 或 / 指令即可觸發。");
+                await refreshChatBotsMeta();
             }
             closeModal();
         } catch (e) {
             console.error(e);
-            if (e && e.message !== "User not found" && e.message !== "Self chat") {
+            if (e && e.message !== "User not found" && e.message !== "Self chat" &&
+                e.message !== "Invalid token" && e.message !== "Token not found" &&
+                e.message !== "Bot inactive" && e.message !== "Already connected") {
                 alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
             }
         } finally {
@@ -976,5 +1270,3 @@
 
 </body>
 </html>
-    </div>
-</div>

@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="create-space.css">
     <link rel="stylesheet" href="python-terminal.css">
+    <link rel="stylesheet" href="discord-bot-sim.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --py-green: #306998; --scratch-blue: #4C97FF; --scratch-orange: #FFAB19; --scratch-green: #4CB050; }
@@ -51,10 +52,32 @@
             background: #1e1e1e; color: #d4d4d4; border: none; resize: none;
         }
         .monaco-editor .suggest-widget { max-height: min(280px, calc(100vh - 120px)) !important; z-index: 10000; }
-        #side-pane {
-            width: min(400px, 38vw); min-width: 280px; background: #0f172a;
-            display: flex; flex-direction: column; border-left: 2px solid #334155; min-height: 0;
+        #side-pane { width: min(420px, 40vw); min-width: 300px; background: #0f172a; display: flex; flex-direction: column; border-left: 2px solid #334155; min-height: 0; }
+        .side-tabs { display: flex; border-bottom: 1px solid #334155; flex-shrink: 0; }
+        .side-tab {
+            flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8;
+            font-weight: 800; font-size: 12px; cursor: pointer; font-family: inherit;
         }
+        .side-tab.active { color: #fff; background: #1e293b; border-bottom: 2px solid #5865f2; }
+        .side-pane-view { flex: 1; min-height: 0; display: none; flex-direction: column; }
+        .side-pane-view.active { display: flex; }
+        .bot-settings {
+            padding: 12px 14px; background: #1e293b; border-bottom: 1px solid #334155;
+            font-size: 12px; color: #cbd5e1; flex-shrink: 0;
+        }
+        .bot-settings label { display: flex; align-items: center; gap: 8px; font-weight: 800; margin-bottom: 8px; cursor: pointer; }
+        .bot-settings input[type="text"] {
+            width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px;
+            border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 12px; margin-bottom: 8px;
+        }
+        .bot-settings .btn-sm {
+            border: none; padding: 6px 10px; border-radius: 6px; font-weight: 800; font-size: 11px;
+            cursor: pointer; margin-right: 6px; font-family: inherit;
+        }
+        .btn-token { background: #5865f2; color: #fff; }
+        .btn-deploy { background: #23a559; color: #fff; }
+        #bot-sim-host { flex: 1; min-height: 0; padding: 8px; display: flex; flex-direction: column; }
+        #bot-sim-host .dbs-root { flex: 1; min-height: 280px; }
         .terminal-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
         .terminal-head {
             display: flex; align-items: center; justify-content: space-between;
@@ -82,6 +105,10 @@
     <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
     <script src="js/python-engine.js"></script>
+    <script src="js/discord-py-mock.js"></script>
+    <script src="js/discord-bot-runtime.js"></script>
+    <script src="js/discord-bot-engine.js"></script>
+    <script src="js/discord-bot-simulator.js"></script>
     <script src="js/python-terminal.js"></script>
     <script src="js/python-monaco.js"></script>
 </head>
@@ -106,6 +133,7 @@
         <button type="button" class="btn btn-save" id="btn-save">💾 儲存</button>
         <button type="button" class="btn btn-outline" onclick="document.getElementById('file-input').click()">📤 匯入</button>
         <button type="button" class="btn btn-outline" id="btn-download">📥 下載 .py</button>
+        <a href="templates/discord_bot_main.py" download class="btn btn-outline" style="text-decoration:none;" title="VS Code + discord.py 範本">📋 VS Code 範本</a>
         <input type="file" id="file-input" accept=".py,.txt" hidden>
         <a href="projects.html" class="btn btn-outline" style="text-decoration:none;">📂 作品</a>
     </div>
@@ -122,14 +150,33 @@
         <textarea id="editor-fallback" spellcheck="false"></textarea>
     </div>
     <div id="side-pane">
-        <div class="terminal-panel">
-            <div class="terminal-head">
-                <span>▶ 執行視窗</span>
-                <button type="button" id="btn-clear-terminal">清除</button>
+        <div class="bot-settings" id="bot-settings" style="display:none;">
+            <label><input type="checkbox" id="is-bot-check"> 🤖 Discord Bot 專案</label>
+            <div id="bot-fields" style="display:none;">
+                <input type="text" id="bot-name-input" placeholder="Bot 名稱（例如：問候小助手）">
+                <div class="bot-token-display" id="bot-token-display">載入 Token…</div>
+                <button type="button" class="btn-sm btn-token" id="btn-copy-token">📋 複製 Token</button>
+                <button type="button" class="btn-sm btn-deploy" id="btn-deploy-bot">🚀 部署到交流大廳</button>
+                <p style="margin:8px 0 0;color:#94a3b8;line-height:1.5;">你的 Token <strong>固定不變</strong>，寫在程式 <code>TOKEN = '…'</code> 與 <code>bot.run(TOKEN)</code>，和 VS Code 跑 <code>python main.py</code> 相同。上 Discord 時只需把 TOKEN 換成 Developer Portal 的真 Token。</p>
             </div>
-            <div class="terminal-body terminal-body--term">
-                <div id="py-terminal"></div>
+        </div>
+        <div class="side-tabs" id="side-tabs" style="display:none;">
+            <button type="button" class="side-tab" data-view="terminal">▶ 終端</button>
+            <button type="button" class="side-tab active" data-view="botsim">🤖 模擬器</button>
+        </div>
+        <div class="side-pane-view active" id="view-terminal">
+            <div class="terminal-panel">
+                <div class="terminal-head">
+                    <span>▶ 執行視窗</span>
+                    <button type="button" id="btn-clear-terminal">清除</button>
+                </div>
+                <div class="terminal-body terminal-body--term">
+                    <div id="py-terminal"></div>
+                </div>
             </div>
+        </div>
+        <div class="side-pane-view" id="view-botsim">
+            <div id="bot-sim-host"><div id="bot-simulator"></div></div>
         </div>
     </div>
 </div>
@@ -138,7 +185,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
-        getFirestore, doc, getDoc, addDoc, updateDoc, collection, serverTimestamp
+        getFirestore, doc, getDoc, addDoc, updateDoc, setDoc, collection, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const DEFAULT_CODE = `# Python 自由創作
@@ -146,6 +193,10 @@
 
 print("Hello, Doratch!")
 `;
+
+    const DEFAULT_BOT_CODE = (typeof window !== "undefined" && window.DiscordPyMock)
+        ? window.DiscordPyMock.DEMO_BOT_CODE
+        : "import discord\nfrom discord.ext import commands\n\nbot = commands.Bot(command_prefix='!')\n\n@bot.command()\ndef hello(ctx):\n    ctx.send('Hello!')\n\nbot.run('YOUR_BOT_TOKEN')\n";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -158,6 +209,10 @@ print("Hello, Doratch!")
     const db = getFirestore(app);
     const Engine = window.PythonEngine;
     let pyTerm = null;
+    let botSim = null;
+    let botToken = "";
+    let botId = null;
+    let botDeployed = false;
 
     const qs = new URLSearchParams(location.search);
     let currentPid = qs.get("load");
@@ -166,6 +221,7 @@ print("Hello, Doratch!")
     let engineReady = false;
     let useMonaco = true;
     let savedSnapshot = "";
+    const startAsBot = qs.get("mode") === "bot";
 
     function getCode() {
         if (useMonaco && window.PythonMonaco?.isReady()) return window.PythonMonaco.getValue();
@@ -181,9 +237,134 @@ print("Hello, Doratch!")
         return JSON.stringify({
             title: document.getElementById("project-title-input").value,
             code: getCode(),
-            public: document.getElementById("is-public-check").checked
+            public: document.getElementById("is-public-check").checked,
+            isBot: document.getElementById("is-bot-check").checked,
+            botName: document.getElementById("bot-name-input").value,
+            botToken: botToken
         });
     }
+
+    function updateBotUi() {
+        var isBot = document.getElementById("is-bot-check").checked;
+        document.getElementById("bot-fields").style.display = isBot ? "block" : "none";
+        document.getElementById("side-tabs").style.display = isBot ? "flex" : "none";
+        if (isBot) {
+            showSideView("botsim");
+            if (botSim && botToken) botSim.setToken(botToken);
+        } else {
+            showSideView("terminal");
+        }
+    }
+
+    function showSideView(name) {
+        document.querySelectorAll(".side-pane-view").forEach(function (el) {
+            el.classList.toggle("active", el.id === "view-" + name);
+        });
+        document.querySelectorAll(".side-tab").forEach(function (btn) {
+            btn.classList.toggle("active", btn.dataset.view === name);
+        });
+    }
+
+    document.querySelectorAll(".side-tab").forEach(function (btn) {
+        btn.onclick = function () { showSideView(btn.dataset.view); };
+    });
+
+    document.getElementById("is-bot-check").addEventListener("change", async function () {
+        if (this.checked && !/\bdef\s+handle\s*\(/.test(getCode()) && !/\bcommands\.Bot\b/.test(getCode())) {
+            if (confirm("要載入 discord.py Bot 範本嗎？（與 VS Code main.py 相同結構）")) {
+                const user = auth.currentUser;
+                if (user) {
+                    const token = await ensureUserBotToken(user);
+                    setCode(window.DiscordBotEngine.applyTokenToCode(DEFAULT_BOT_CODE, token));
+                } else {
+                    setCode(DEFAULT_BOT_CODE);
+                }
+            }
+        }
+        if (this.checked && auth.currentUser) {
+            await ensureUserBotToken(auth.currentUser);
+            syncTokenIntoEditor();
+        }
+        updateBotUi();
+        markDirty();
+    });
+
+    async function ensureUserBotToken(user) {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        let token = snap.exists() ? snap.data().doratchBotToken : null;
+        if (!token) {
+            token = window.DiscordBotEngine.generateStableToken(user.uid);
+            await setDoc(userRef, { doratchBotToken: token }, { merge: true });
+        }
+        botToken = token;
+        document.getElementById("bot-token-display").textContent = token;
+        return token;
+    }
+
+    function syncTokenIntoEditor() {
+        if (!botToken) return;
+        const updated = window.DiscordBotEngine.applyTokenToCode(getCode(), botToken);
+        if (updated !== getCode()) setCode(updated);
+    }
+
+    document.getElementById("btn-copy-token").onclick = function () {
+        if (!botToken) { alert("Token 載入中，請稍候"); return; }
+        navigator.clipboard.writeText(botToken).then(function () {
+            alert("已複製 Token！可貼到交流大廳 🤖 Bot 連接。");
+        }).catch(function () {
+            prompt("複製你的 Token：", botToken);
+        });
+    };
+
+    async function saveBotRecord(user, pythonCode) {
+        if (!document.getElementById("is-bot-check").checked || !botToken) return;
+        var fromCode = window.DiscordBotEngine.extractTokenFromCode(pythonCode);
+        if (fromCode && fromCode !== "YOUR_BOT_TOKEN") botToken = fromCode;
+        var botName = document.getElementById("bot-name-input").value.trim() || "我的 Bot";
+        if (!botId) botId = currentPid ? ("bot_" + currentPid) : ("bot_" + user.uid);
+        var payload = {
+            name: botName,
+            token: botToken,
+            pythonCode: pythonCode,
+            projectId: currentPid || null,
+            active: botDeployed,
+            updatedAt: serverTimestamp()
+        };
+        await setDoc(doc(db, "users", user.uid, "discordBots", botId), payload, { merge: true });
+        await setDoc(doc(db, "botTokens", botToken), {
+            ownerId: user.uid,
+            botId: botId,
+            name: botName,
+            active: botDeployed,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }
+
+    document.getElementById("btn-deploy-bot").onclick = async function () {
+        var user = auth.currentUser;
+        if (!user) { location.href = "login.html"; return; }
+        if (!document.getElementById("is-bot-check").checked) {
+            alert("請先勾選「Discord Bot 專案」");
+            return;
+        }
+        if (!botToken) {
+            alert("Token 尚未載入，請稍候或重新整理");
+            return;
+        }
+        if (!/\basync\s+def\b/.test(getCode()) || !/\bawait\b/.test(getCode())) {
+            alert("discord.py Bot 需使用 async def 與 await（與真實 Discord Bot 相同）");
+            return;
+        }
+        botDeployed = true;
+        try {
+            await saveBotRecord(user, getCode());
+            alert("🚀 Bot 已部署！到交流大廳群組／伺服器，按「連接 Bot」貼上 Token 即可。");
+            markSaved();
+        } catch (e) {
+            alert("部署失敗：" + e.message);
+        }
+    };
 
     function markSaved() {
         savedSnapshot = snapshot();
@@ -267,6 +448,10 @@ print("Hello, Doratch!")
     document.getElementById("btn-save").onclick = async () => {
         const user = auth.currentUser;
         if (!user) { location.href = "login.html"; return; }
+        if (document.getElementById("is-bot-check").checked) {
+            await ensureUserBotToken(user);
+            syncTokenIntoEditor();
+        }
         const title = document.getElementById("project-title-input").value.trim() || "未命名 Python 作品";
         const pythonCode = getCode();
         const isPublic = document.getElementById("is-public-check").checked;
@@ -277,8 +462,13 @@ print("Hello, Doratch!")
                     projectType: "python",
                     pythonCode,
                     isPublic,
+                    isBot: document.getElementById("is-bot-check").checked,
+                    botName: document.getElementById("bot-name-input").value.trim(),
+                    botToken: botToken || null,
+                    botId: botId || null,
                     updatedAt: serverTimestamp()
                 });
+                await saveBotRecord(user, pythonCode);
                 alert("儲存成功！");
                 markSaved();
             } else {
@@ -288,6 +478,10 @@ print("Hello, Doratch!")
                     pythonCode,
                     authorEmail: user.email,
                     isPublic: isOwner ? isPublic : false,
+                    isBot: document.getElementById("is-bot-check").checked,
+                    botName: document.getElementById("bot-name-input").value.trim(),
+                    botToken: botToken || null,
+                    botId: botId || null,
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp()
                 });
@@ -295,6 +489,7 @@ print("Hello, Doratch!")
                 isOwner = true;
                 authorUid = user.uid;
                 history.replaceState({}, "", `python-studio.html?load=${currentPid}`);
+                await saveBotRecord(user, pythonCode);
                 alert("已建立並儲存新作品！");
                 markSaved();
             }
@@ -357,6 +552,20 @@ print("Hello, Doratch!")
         document.getElementById("project-title-input").value = d.name || "未命名 Python 作品";
         document.getElementById("is-public-check").checked = !!d.isPublic;
         setCode(typeof d.pythonCode === "string" ? d.pythonCode : DEFAULT_CODE);
+        document.getElementById("is-bot-check").checked = !!d.isBot;
+        document.getElementById("bot-name-input").value = d.botName || "";
+        botToken = d.botToken || "";
+        botId = d.botId || (currentPid ? "bot_" + currentPid : null);
+        if (d.isBot && isOwner && user.uid === uid) {
+            await ensureUserBotToken(user);
+            syncTokenIntoEditor();
+        }
+        document.getElementById("bot-token-display").textContent = botToken || "（載入中）";
+        if (d.isBot) {
+            var tokenSnap = botToken ? await getDoc(doc(db, "botTokens", botToken)) : null;
+            botDeployed = tokenSnap && tokenSnap.exists() ? !!tokenSnap.data().active : false;
+        }
+        updateBotUi();
         isOwner = uid === user.uid;
         if (!isOwner) {
             document.getElementById("btn-save").textContent = "⭐ 另存為我的作品";
@@ -366,10 +575,43 @@ print("Hello, Doratch!")
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
+        document.getElementById("bot-settings").style.display = "block";
         await initMonaco();
         pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
+        botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
+            getCode: getCode,
+            onConnect: async function (token) {
+                if (token === window.DiscordBotEngine.DEMO_TOKEN) {
+                    throw new Error("創作模式請使用程式內 TOKEN 或側邊欄的固定 Token");
+                }
+                var codeTok = window.DiscordBotEngine.extractTokenFromCode(getCode());
+                if (codeTok && codeTok !== "YOUR_BOT_TOKEN" && token !== codeTok && token !== botToken) {
+                    throw new Error("Token 需與程式 TOKEN = '…' 一致");
+                }
+                if (token !== botToken) {
+                    var snap = await getDoc(doc(db, "botTokens", token));
+                    if (!snap.exists() || snap.data().ownerId !== user.uid) {
+                        throw new Error("Token 無效或不屬於你");
+                    }
+                }
+                return { name: document.getElementById("bot-name-input").value.trim() || "我的 Bot" };
+            }
+        });
         await bootEngine();
         await loadProject(user);
+        if (startAsBot && !currentPid) {
+            document.getElementById("is-bot-check").checked = true;
+            const token = await ensureUserBotToken(user);
+            setCode(window.DiscordBotEngine.applyTokenToCode(DEFAULT_BOT_CODE, token));
+            document.getElementById("project-title-input").value = "我的 Discord Bot";
+            updateBotUi();
+        } else if (document.getElementById("is-bot-check").checked) {
+            await ensureUserBotToken(user);
+            syncTokenIntoEditor();
+            updateBotUi();
+        } else {
+            updateBotUi();
+        }
         if (useMonaco && window.PythonMonaco?.isReady()) {
             window.PythonMonaco.getValue(); // ensure editor ready
             const model = document.getElementById("editor-fallback");
