@@ -38,7 +38,7 @@
             padding: 10px 16px; font-size: 13px; font-weight: 800; color: #cbd5e1;
             background: #0f172a; border-bottom: 1px solid #334155;
         }
-        .monaco-shell { flex: 1; min-height: 0; font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
+        .monaco-shell { flex: 1; min-height: 0; display: none; font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
         #monaco-editor { width: 100%; height: 100%; min-height: 200px; }
         .monaco-shell .monaco-editor,
         .monaco-shell .monaco-editor .margin,
@@ -47,7 +47,7 @@
             font-variant-ligatures: none !important;
         }
         #editor-fallback {
-            display: none; flex: 1; width: 100%; box-sizing: border-box; min-height: 200px;
+            display: block; flex: 1; width: 100%; box-sizing: border-box; min-height: 240px;
             font-family: "JetBrains Mono", monospace; font-size: 14px; padding: 16px;
             background: #1e1e1e; color: #d4d4d4; border: none; resize: none;
         }
@@ -114,6 +114,7 @@
     <script src="discord-bot-simulator.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
+    <script src="doratch-ui-boot.js"></script>
     <script src="doratch-engine-boot.js"></script>
 </head>
 <body>
@@ -152,7 +153,11 @@
         <div class="monaco-shell">
             <div id="monaco-editor"></div>
         </div>
-        <textarea id="editor-fallback" spellcheck="false"></textarea>
+        <textarea id="editor-fallback" spellcheck="false"># Python 自由創作
+# 在此撰寫任意 Python 程式
+
+print("Hello, Doratch!")
+</textarea>
     </div>
     <div id="side-pane">
         <div class="bot-settings" id="bot-settings" style="display:none;">
@@ -223,35 +228,68 @@ print("Hello, Doratch!")
     let currentPid = qs.get("load");
     let authorUid = qs.get("from");
     let isOwner = true;
-    let engineReady = false;
-    let useMonaco = true;
+    let engineReady = !!window.__DORATCH_ENGINE_READY__;
+    let useMonaco = false;
     let savedSnapshot = "";
     const startAsBot = qs.get("mode") === "bot";
 
+    function isEngineReady() {
+        return engineReady || window.__DORATCH_ENGINE_READY__ ||
+            (window.DoratchEngineBoot && window.DoratchEngineBoot.isReady());
+    }
+
+    function getPyTerm() {
+        if (pyTerm) return pyTerm;
+        if (window.DoratchUiBoot && window.DoratchUiBoot.getTerminal) {
+            pyTerm = window.DoratchUiBoot.getTerminal();
+        }
+        if (!pyTerm && window.PythonTerminal) {
+            pyTerm = window.PythonTerminal.get("py-terminal");
+        }
+        return pyTerm;
+    }
+
+    window.addEventListener("doratch-engine-ready", function () {
+        engineReady = true;
+    });
+
     function getCode() {
+        if (window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) {
+            return window.PythonMonaco.getValue();
+        }
         if (useMonaco && window.PythonMonaco?.isReady()) return window.PythonMonaco.getValue();
         return document.getElementById("editor-fallback").value;
     }
 
     function setCode(code) {
+        if (window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) {
+            window.PythonMonaco.setValue(code);
+            return;
+        }
         if (useMonaco && window.PythonMonaco?.isReady()) window.PythonMonaco.setValue(code);
         else document.getElementById("editor-fallback").value = code;
     }
 
     function showTextEditorFallback(code) {
         useMonaco = false;
-        document.querySelector(".monaco-shell").style.display = "none";
-        var fb = document.getElementById("editor-fallback");
-        fb.style.display = "block";
-        if (typeof code === "string") fb.value = code;
+        if (window.DoratchUiBoot) window.DoratchUiBoot.showFallbackEditor(code);
+        else {
+            document.querySelector(".monaco-shell").style.display = "none";
+            var fb = document.getElementById("editor-fallback");
+            fb.style.display = "block";
+            if (typeof code === "string") fb.value = code;
+        }
     }
 
     function showMonacoEditor() {
-        document.querySelector(".monaco-shell").style.display = "";
-        document.getElementById("editor-fallback").style.display = "none";
+        if (window.DoratchUiBoot) window.DoratchUiBoot.showMonacoEditor();
+        else {
+            document.querySelector(".monaco-shell").style.display = "flex";
+            document.getElementById("editor-fallback").style.display = "none";
+        }
+        useMonaco = true;
     }
 
-    showTextEditorFallback(DEFAULT_CODE);
     document.getElementById("editor-fallback").addEventListener("input", markDirty);
 
     function snapshot() {
@@ -401,30 +439,44 @@ print("Hello, Doratch!")
     }
 
     document.getElementById("btn-clear-terminal").onclick = () => {
-        if (pyTerm) pyTerm.clear();
+        if (getPyTerm()) getPyTerm().clear();
     };
 
     document.getElementById("btn-run").onclick = async () => {
-        if (!engineReady || !pyTerm) return;
+        const term = getPyTerm();
+        if (!isEngineReady()) {
+            alert("Python 引擎尚未就緒，請稍候或按「重新載入引擎」");
+            return;
+        }
+        if (!term) {
+            alert("終端機尚未載入，請重新整理頁面");
+            return;
+        }
+        showSideView("terminal");
         const code = getCode();
-        pyTerm.clear();
-        pyTerm.setRunning(true);
+        term.clear();
+        term.setRunning(true);
         document.getElementById("btn-run").disabled = true;
         try {
             const { error } = await Engine.runPythonInteractive(code, {
-                onWrite: (text) => pyTerm.write(text),
-                onInput: (prompt) => pyTerm.readLine(prompt)
+                onWrite: (text) => term.write(text),
+                onInput: (prompt) => term.readLine(prompt)
             });
-            if (error) pyTerm.writeError(error);
+            if (error) term.writeError(error);
         } catch (e) {
-            pyTerm.writeError(String(e.message || e));
+            term.writeError(String(e.message || e));
         } finally {
-            pyTerm.setRunning(false);
+            term.setRunning(false);
             document.getElementById("btn-run").disabled = false;
         }
     };
 
     async function initMonaco() {
+        if (window.DoratchUiBoot) {
+            var ok = await window.DoratchUiBoot.initMonacoEditor();
+            useMonaco = !!ok;
+            return;
+        }
         if (!window.PythonMonaco) {
             showTextEditorFallback(DEFAULT_CODE);
             return;
@@ -436,9 +488,7 @@ print("Hello, Doratch!")
             setCode(document.getElementById("editor-fallback").value || DEFAULT_CODE);
         } catch (e) {
             console.warn(e);
-            showTextEditorFallback(
-                document.getElementById("editor-fallback").value || DEFAULT_CODE
-            );
+            showTextEditorFallback(document.getElementById("editor-fallback").value || DEFAULT_CODE);
         }
     }
 
@@ -480,25 +530,14 @@ print("Hello, Doratch!")
     document.getElementById("btn-reload-engine").onclick = () => bootEngine(true);
 
     function waitEngineReady() {
-        if (window.__DORATCH_ENGINE_READY__) {
-            engineReady = true;
-            return Promise.resolve(true);
-        }
+        if (isEngineReady()) return Promise.resolve(true);
         return new Promise(function (resolve) {
             window.addEventListener("doratch-engine-ready", function () {
                 engineReady = true;
                 resolve(true);
             }, { once: true });
-            if (window.DoratchEngineBoot) {
-                window.DoratchEngineBoot.start(false).then(function () {
-                    engineReady = true;
-                    resolve(true);
-                }).catch(function () { resolve(false); });
-            }
         });
     }
-
-    const engineBootPromise = waitEngineReady();
 
 
     document.getElementById("btn-save").onclick = async () => {
@@ -632,11 +671,9 @@ print("Hello, Doratch!")
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
         document.getElementById("bot-settings").style.display = "block";
-        pyTerm = window.PythonTerminal && window.PythonTerminal.mount
-            ? window.PythonTerminal.mount(document.getElementById("py-terminal"))
-            : null;
-        botSim = window.DiscordBotSimulator && window.DiscordBotSimulator.mount
-            ? window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
+        pyTerm = getPyTerm();
+        if (!botSim && window.DiscordBotSimulator) {
+            botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
             getCode: getCode,
             onConnect: async function (token) {
                 if (token === window.DiscordBotEngine.DEMO_TOKEN) {
@@ -654,8 +691,13 @@ print("Hello, Doratch!")
                 }
                 return { name: document.getElementById("bot-name-input").value.trim() || "我的 Bot" };
             }
-        });
-        await Promise.all([initMonaco(), engineBootPromise]);
+            });
+        }
+        engineReady = isEngineReady();
+        await initMonaco();
+        if (window.PythonMonaco && window.PythonMonaco.isReady()) {
+            window.PythonMonaco.layout();
+        }
         await loadProject(user);
         if (startAsBot && !currentPid) {
             document.getElementById("is-bot-check").checked = true;

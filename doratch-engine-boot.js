@@ -10,10 +10,10 @@
         var bar = statusBar();
         if (!bar) return;
         bar.textContent = msg;
-        bar.className = bar.className.replace(/\b(ready|error|loading)\b/g, "").trim();
-        if (kind === "ready") bar.className = (bar.className + " ready").trim();
-        else if (kind === "error") bar.className = (bar.className + " error").trim();
-        else bar.className = (bar.className + " loading").trim();
+        var base = bar.className.replace(/\b(ready|error|loading)\b/g, "").trim();
+        if (kind === "ready") bar.className = (base + " ready").trim();
+        else if (kind === "error") bar.className = (base + " error").trim();
+        else bar.className = (base + (base ? " " : "") + "loading").trim();
     }
 
     function enableRun() {
@@ -25,10 +25,16 @@
         if (reload) reload.style.display = "none";
     }
 
+    function markReady() {
+        global.__DORATCH_ENGINE_READY__ = true;
+        setStatus("Python 已就緒 · 可直接寫程式", "ready");
+        enableRun();
+        global.dispatchEvent(new CustomEvent("doratch-engine-ready"));
+    }
+
     function boot(isReload) {
         if (!isReload && global.__DORATCH_ENGINE_READY__) {
-            setStatus("Python 已就緒", "ready");
-            enableRun();
+            markReady();
             return Promise.resolve(true);
         }
         if (!global.PythonEngine) {
@@ -43,10 +49,7 @@
         return global.PythonEngine.init(function (msg) {
             setStatus(msg, "loading");
         }).then(function () {
-            global.__DORATCH_ENGINE_READY__ = true;
-            setStatus("Python 已就緒", "ready");
-            enableRun();
-            global.dispatchEvent(new CustomEvent("doratch-engine-ready"));
+            markReady();
             return true;
         }).catch(function (e) {
             global.__DORATCH_ENGINE_READY__ = false;

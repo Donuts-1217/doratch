@@ -99,8 +99,9 @@
             background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px;
             font-family: inherit;
         }
+        .monaco-shell { display: none; }
         #editor-fallback {
-            display: none; width: 100%; min-height: 280px; box-sizing: border-box;
+            display: block; width: 100%; min-height: 280px; box-sizing: border-box;
             font-family: "JetBrains Mono", monospace; font-size: 14px; line-height: 1.5;
             padding: 16px; border-radius: 12px; border: 2px solid #334155;
             background: var(--bg); color: #e2e8f0;
@@ -201,6 +202,7 @@
     <script src="discord-bot-simulator.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
+    <script src="doratch-ui-boot.js"></script>
     <script src="doratch-engine-boot.js"></script>
 </head>
 <body>
@@ -337,9 +339,29 @@
     let uid = null;
     let currentId = new URLSearchParams(location.search).get("lesson") || PYTHON_LESSONS[0].id;
     let completed = new Set();
-    let engineReady = false;
-    let useMonaco = true;
+    let engineReady = !!window.__DORATCH_ENGINE_READY__;
+    let useMonaco = false;
     let botSim = null;
+
+    function isEngineReady() {
+        return engineReady || window.__DORATCH_ENGINE_READY__ ||
+            (window.DoratchEngineBoot && window.DoratchEngineBoot.isReady());
+    }
+
+    function getPyTerm() {
+        if (pyTerm) return pyTerm;
+        if (window.DoratchUiBoot && window.DoratchUiBoot.getTerminal) {
+            pyTerm = window.DoratchUiBoot.getTerminal();
+        }
+        if (!pyTerm && window.PythonTerminal) {
+            pyTerm = window.PythonTerminal.get("py-terminal");
+        }
+        return pyTerm;
+    }
+
+    window.addEventListener("doratch-engine-ready", function () {
+        engineReady = true;
+    });
 
     function isDiscordLesson(id) {
         var lesson = getLesson(id);
@@ -360,6 +382,9 @@
     }
 
     function getCode() {
+        if (window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) {
+            return window.PythonMonaco.getValue();
+        }
         if (useMonaco && window.PythonMonaco?.isReady()) {
             return window.PythonMonaco.getValue();
         }
@@ -367,6 +392,10 @@
     }
 
     function setCode(code) {
+        if (window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) {
+            window.PythonMonaco.setValue(code);
+            return;
+        }
         if (useMonaco && window.PythonMonaco?.isReady()) {
             window.PythonMonaco.setValue(code);
         } else {
@@ -375,22 +404,24 @@
     }
 
     function initMonacoEditor() {
+        if (window.DoratchUiBoot) {
+            return window.DoratchUiBoot.initMonacoEditor().then(function (ok) {
+                useMonaco = !!ok;
+            });
+        }
         if (!window.PythonMonaco) {
             useMonaco = false;
-            document.getElementById("monaco-editor").style.display = "none";
-            var fb = document.getElementById("editor-fallback");
-            fb.style.display = "block";
+            document.getElementById("editor-fallback").style.display = "block";
             return Promise.resolve();
         }
         return window.PythonMonaco.init("monaco-editor").then(function () {
             useMonaco = true;
-            document.getElementById("monaco-editor").style.display = "";
+            document.querySelector(".monaco-shell").style.display = "";
             document.getElementById("editor-fallback").style.display = "none";
             setCode(document.getElementById("editor-fallback").value || getLesson(currentId).starter);
         }).catch(function (e) {
             console.warn("Monaco 載入失敗，改用純文字編輯", e);
             useMonaco = false;
-            document.getElementById("monaco-editor").style.display = "none";
             document.getElementById("editor-fallback").style.display = "block";
         });
     }
@@ -481,14 +512,14 @@
                     if (!confirm("載入「示範程式」到編輯器？\n\n這是試玩用語法範例，不是本關答案。\n通關仍要依 starter 自己完成題目。")) return;
                     setCode(demo);
                     document.getElementById("test-results").innerHTML = "";
-                    if (pyTerm) pyTerm.clear();
+                    if (getPyTerm()) getPyTerm().clear();
                     if (botSim) botSim.clearMessages();
                 };
             });
         }
         setCode(lesson.starter);
         document.getElementById("test-results").innerHTML = "";
-        if (pyTerm) pyTerm.clear();
+        if (getPyTerm()) getPyTerm().clear();
         renderLessonList();
         updateDiscordLayout();
         if (botSim) botSim.clearMessages();
@@ -510,27 +541,35 @@
     }
 
     document.getElementById("btn-clear-terminal").onclick = () => {
-        if (pyTerm) pyTerm.clear();
+        if (getPyTerm()) getPyTerm().clear();
         document.getElementById("test-results").innerHTML = "";
     };
 
     document.getElementById("btn-run").onclick = async () => {
-        if (!engineReady || !pyTerm) return;
+        const term = getPyTerm();
+        if (!isEngineReady()) {
+            alert("Python 引擎尚未就緒，請稍候或按「重新載入引擎」");
+            return;
+        }
+        if (!term) {
+            alert("終端機尚未載入，請重新整理頁面");
+            return;
+        }
         const code = getCode();
         document.getElementById("test-results").innerHTML = "";
-        pyTerm.clear();
-        pyTerm.setRunning(true);
+        term.clear();
+        term.setRunning(true);
         document.getElementById("btn-run").disabled = true;
         try {
             const { error } = await Engine.runPythonInteractive(code, {
-                onWrite: (text) => pyTerm.write(text),
-                onInput: (prompt) => pyTerm.readLine(prompt)
+                onWrite: (text) => term.write(text),
+                onInput: (prompt) => term.readLine(prompt)
             });
-            if (error) pyTerm.writeError(error);
+            if (error) term.writeError(error);
         } catch (e) {
-            pyTerm.writeError(String(e.message || e));
+            term.writeError(String(e.message || e));
         } finally {
-            pyTerm.setRunning(false);
+            term.setRunning(false);
             document.getElementById("btn-run").disabled = false;
         }
     };
@@ -539,10 +578,11 @@
         const lesson = getLesson(currentId);
         const code = getCode();
         const box = document.getElementById("test-results");
-        if (!engineReady) {
+        if (!isEngineReady()) {
             alert("Python 引擎尚未就緒，請稍候或按「重新載入引擎」。");
             return;
         }
+        const term = getPyTerm();
         if (!lesson.tests || !lesson.tests.length) {
             if (isDiscordLesson(currentId)) {
                 alert("本關請用右側 Bot 模擬器：連線 → 測 /斜線指令 → 改程式後按「重新連線」");
@@ -552,24 +592,24 @@
             }
             return;
         }
-        if (pyTerm) pyTerm.clear();
+        if (term) term.clear();
         box.innerHTML = "";
         try {
             const pre = Engine.validateSubmission(code, lesson.rules || {});
             if (!pre.ok) {
-                if (pyTerm) pyTerm.writeError(pre.message);
+                if (term) term.writeError(pre.message);
                 return;
             }
             const { allPass, validationFailed, validationMessage, results } = await Engine.runTests(code, lesson);
             if (validationFailed) {
-                if (pyTerm) pyTerm.writeError(validationMessage);
+                if (term) term.writeError(validationMessage);
                 return;
             }
             if (allPass) {
-                if (pyTerm) pyTerm.write("\n✓ 全部測試通過\n");
+                if (term) term.write("\n✓ 全部測試通過\n");
             } else {
                 const failed = results.filter((r) => !r.pass);
-                if (failed.length && pyTerm) pyTerm.writeError("測試未通過：" + failed[0].label);
+                if (failed.length && term) term.writeError("測試未通過：" + failed[0].label);
             }
             box.innerHTML = results.map((r) =>
                 `<div class="test-row ${r.pass ? "pass" : "fail"}">` +
@@ -593,7 +633,7 @@
                 alert("尚有測試未通過，請修改程式後再試。");
             }
         } catch (e) {
-            if (pyTerm) pyTerm.writeError(String(e.message || e));
+            if (term) term.writeError(String(e.message || e));
             box.innerHTML = "";
         }
     };
@@ -664,26 +704,20 @@
 
     loadLocalProgress();
     renderLessonList();
-
-    (function showEditorWhileLoading() {
-        useMonaco = false;
-        document.getElementById("monaco-editor").style.display = "none";
-        var fb = document.getElementById("editor-fallback");
-        fb.style.display = "block";
-        fb.value = getLesson(currentId).starter;
-    })();
-
-    pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
-    botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
-        getCode: getCode,
-        onConnect: function (token) {
-            if (token === window.DiscordBotEngine.DEMO_TOKEN) {
-                return { name: "Doratch 示範 Bot", isDemo: true };
-            }
-            return { name: "自訂 Bot", isDemo: false };
-        }
-    });
     selectLesson(currentId);
+
+    pyTerm = getPyTerm();
+    botSim = window.DiscordBotSimulator && window.DiscordBotSimulator.mount
+        ? window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
+            getCode: getCode,
+            onConnect: function (token) {
+                if (token === window.DiscordBotEngine.DEMO_TOKEN) {
+                    return { name: "Doratch 示範 Bot", isDemo: true };
+                }
+                return { name: "自訂 Bot", isDemo: false };
+            }
+        })
+        : null;
 
     initMonacoEditor().then(function () {
         window.addEventListener("resize", function () {
