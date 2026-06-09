@@ -47,8 +47,23 @@
         return new Promise(function (resolve) { setTimeout(resolve, ms); });
     }
 
+    function scriptAlreadyLoaded(filename) {
+        var nodes = document.getElementsByTagName("script");
+        for (var i = 0; i < nodes.length; i++) {
+            var src = nodes[i].getAttribute("src") || "";
+            if (src === filename || src.endsWith("/" + filename) || src.indexOf(filename) !== -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function loadScript(url) {
         url = resolveUrl(url);
+        var file = url.split("/").pop().split("?")[0];
+        if (scriptAlreadyLoaded(file)) {
+            return wait(50);
+        }
         var marker = "doratch-sk-" + url;
         var existing = document.querySelector('script[data-doratch-sk="' + marker + '"]');
         if (existing) {
@@ -88,9 +103,18 @@
             ));
         }
         var src = SOURCES[index];
-        return loadScript(src.sk).then(function () {
-            return loadScript(src.std);
-        }).then(function () {
+        var skOnPage = typeof global.Sk !== "undefined";
+        var chain;
+        if (index === 0 && skOnPage && !getBuiltinFilesMap()) {
+            chain = loadScript(src.std);
+        } else if (index === 0 && scriptAlreadyLoaded(src.sk.split("/").pop()) && !getBuiltinFilesMap()) {
+            chain = loadScript(src.std);
+        } else {
+            chain = loadScript(src.sk).then(function () {
+                return loadScript(src.std);
+            });
+        }
+        return chain.then(function () {
             return wait(80);
         }).then(function () {
             if (skulptReady()) return true;

@@ -71,30 +71,44 @@
     }
 
     function waitForSkulpt(maxMs) {
-        maxMs = maxMs || 20000;
-        var loaderFn = global.DoratchSkulptLoader && global.DoratchSkulptLoader.load;
-        var chain = loaderFn
-            ? loaderFn(maxMs)
-            : new Promise(function (resolve, reject) {
-                var start = Date.now();
-                function tick() {
-                    if (skulptReady()) {
-                        resolve(true);
-                        return;
-                    }
-                    if (Date.now() - start >= maxMs) {
-                        reject(new Error("Skulpt 引擎載入逾時，請重新整理頁面。"));
-                        return;
-                    }
-                    setTimeout(tick, 50);
+        maxMs = maxMs || 15000;
+        return new Promise(function (resolve, reject) {
+            var start = Date.now();
+            var loaderTried = false;
+
+            function done() {
+                if (global.DiscordPyMock && global.DiscordPyMock.inject) {
+                    global.DiscordPyMock.inject();
                 }
-                tick();
-            });
-        return chain.then(function () {
-            if (global.DiscordPyMock && global.DiscordPyMock.inject) {
-                global.DiscordPyMock.inject();
+                resolve(true);
             }
-            return true;
+
+            function fail(msg) {
+                reject(new Error(msg));
+            }
+
+            function tick() {
+                if (skulptReady()) {
+                    done();
+                    return;
+                }
+                var elapsed = Date.now() - start;
+                if (elapsed >= maxMs) {
+                    fail("Skulpt 引擎載入逾時。請確認 skulpt.min.js 與 skulpt-stdlib.js 在根目錄且可開啟。");
+                    return;
+                }
+                if (!loaderTried && elapsed > 400 && global.DoratchSkulptLoader) {
+                    loaderTried = true;
+                    global.DoratchSkulptLoader.load(maxMs - elapsed).then(function () {
+                        tick();
+                    }).catch(function (e) {
+                        fail(e.message || String(e));
+                    });
+                    return;
+                }
+                setTimeout(tick, 40);
+            }
+            tick();
         });
     }
 

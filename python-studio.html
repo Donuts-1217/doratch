@@ -114,6 +114,7 @@
     <script src="discord-bot-simulator.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
+    <script src="doratch-engine-boot.js"></script>
 </head>
 <body>
 
@@ -442,6 +443,15 @@ print("Hello, Doratch!")
     }
 
     async function bootEngine(isReload) {
+        if (window.DoratchEngineBoot) {
+            try {
+                await window.DoratchEngineBoot.start(!!isReload);
+                engineReady = true;
+            } catch (_) {
+                engineReady = false;
+            }
+            return;
+        }
         const bar = document.getElementById("engine-bar");
         const reloadBtn = document.getElementById("btn-reload-engine");
         if (!Engine) {
@@ -464,20 +474,31 @@ print("Hello, Doratch!")
             bar.textContent = e.message || String(e);
             bar.className = "engine-bar error";
             if (reloadBtn) reloadBtn.style.display = "inline-block";
-            if (window.DoratchSkulptLoader && window.DoratchSkulptLoader.probe) {
-                window.DoratchSkulptLoader.probe().then(function (rows) {
-                    var bad = rows.filter(function (r) { return !r.ok; });
-                    if (bad.length) {
-                        bar.textContent = (e.message || String(e)) + " （404：" + bad.map(function (b) { return b.path; }).join("、") + "）";
-                    }
-                }).catch(function () {});
-            }
         }
     }
 
     document.getElementById("btn-reload-engine").onclick = () => bootEngine(true);
 
-    const engineBootPromise = bootEngine(false);
+    function waitEngineReady() {
+        if (window.__DORATCH_ENGINE_READY__) {
+            engineReady = true;
+            return Promise.resolve(true);
+        }
+        return new Promise(function (resolve) {
+            window.addEventListener("doratch-engine-ready", function () {
+                engineReady = true;
+                resolve(true);
+            }, { once: true });
+            if (window.DoratchEngineBoot) {
+                window.DoratchEngineBoot.start(false).then(function () {
+                    engineReady = true;
+                    resolve(true);
+                }).catch(function () { resolve(false); });
+            }
+        });
+    }
+
+    const engineBootPromise = waitEngineReady();
 
 
     document.getElementById("btn-save").onclick = async () => {

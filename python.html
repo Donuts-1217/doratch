@@ -201,6 +201,7 @@
     <script src="discord-bot-simulator.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
+    <script src="doratch-engine-boot.js"></script>
 </head>
 <body>
 <div class="app-container">
@@ -628,6 +629,12 @@
     }
 
     function bootEngine(isReload) {
+        if (window.DoratchEngineBoot) {
+            window.DoratchEngineBoot.start(!!isReload).then(enableEngineUi).catch(function (e) {
+                failEngineUi("引擎載入失敗：" + (e.message || e));
+            });
+            return;
+        }
         if (!Engine) {
             failEngineUi("引擎腳本未載入。請確認根目錄 .js 檔案已 push 到 GitHub。");
             return;
@@ -645,6 +652,8 @@
     }
 
     document.getElementById("btn-reload-engine").onclick = () => bootEngine(true);
+    window.addEventListener("doratch-engine-ready", enableEngineUi);
+    if (window.__DORATCH_ENGINE_READY__) enableEngineUi();
 
     document.getElementById("teach-toggle").onclick = () => {
         const el = document.getElementById("lesson-teach");
@@ -664,7 +673,6 @@
         fb.value = getLesson(currentId).starter;
     })();
 
-    bootEngine(false);
     pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
     botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
         getCode: getCode,
