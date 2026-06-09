@@ -1,4 +1,4 @@
-/** GitHub Pages / 子路徑部署：解析 js/、vendor/ 等相對資源 */
+/** GitHub Pages：所有 .js 與 HTML 同層（根目錄） */
 (function (global) {
     "use strict";
 

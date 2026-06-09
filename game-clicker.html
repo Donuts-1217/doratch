@@ -216,7 +216,7 @@
         initLocal();
 
         try {
-            const api = await import("./js/doratch-game-api.js");
+            const api = await import("./doratch-game-api.js");
             saveGameDoc = api.saveGameDoc;
             api.requireLogin(async (user) => {
                 uid = user.uid;

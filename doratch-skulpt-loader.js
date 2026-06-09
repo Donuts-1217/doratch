@@ -7,8 +7,8 @@
 
     var SOURCES = [
         {
-            sk: "vendor/skulpt/skulpt.min.js",
-            std: "vendor/skulpt/skulpt-stdlib.js",
+            sk: "skulpt.min.js",
+            std: "skulpt-stdlib.js",
             label: "本地"
         },
         {
@@ -83,8 +83,8 @@
             return Promise.reject(new Error(
                 "Python 引擎（Skulpt）載入失敗。" + hint +
                 (global.DoratchBase && global.DoratchBase.isGitHubPages()
-                    ? " 請確認 GitHub → Settings → Pages 已開啟，並用 https://帳號.github.io/倉庫名/python.html 開啟（不是 github.com 原始碼頁）。"
-                    : " 請確認 vendor/skulpt/ 存在，或重新整理。")
+                    ? " 請確認 GitHub → Settings → Pages 已開啟，並用 https://帳號.github.io/倉庫名/python.html 開啟。"
+                    : " 請確認 skulpt.min.js 與根目錄腳本已上傳。")
             ));
         }
         var src = SOURCES[index];
@@ -137,10 +137,10 @@
         getLastError: function () { return lastFailUrl; },
         probe: function () {
             var tests = [
-                "js/doratch-base.js",
-                "js/python-engine.js",
-                "vendor/skulpt/skulpt.min.js",
-                "vendor/skulpt/skulpt-stdlib.js"
+                "doratch-base.js",
+                "python-engine.js",
+                "skulpt.min.js",
+                "skulpt-stdlib.js"
             ];
             return Promise.all(tests.map(function (p) {
                 var url = resolveUrl(p);
