@@ -383,8 +383,10 @@
 
         loadChats();
 
-        if (window.PythonEngine && window.DiscordBotEngine) {
-            window.PythonEngine.init(function () { /* bot engine loading */ }).catch(function () { /* ignore */ });
+        if (window.PythonEngine) {
+            window.PythonEngine.init(function () { /* bot runtime warming */ }).catch(function (e) {
+                console.warn("Python 引擎初始化失敗", e);
+            });
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -726,6 +728,9 @@
     async function refreshChatBotsMeta() {
         if (!window.ChatDiscordUI) return;
         try {
+            if (window.PythonEngine && window.PythonEngine.waitForSkulpt) {
+                await window.PythonEngine.waitForSkulpt(10000);
+            }
             currentChatBotsMeta = await window.ChatDiscordUI.loadBotsMeta(
                 currentChatAttachedBots,
                 loadBotCode

@@ -362,6 +362,9 @@
         }
         return window.PythonMonaco.init("monaco-editor").then(function () {
             useMonaco = true;
+            document.getElementById("monaco-editor").style.display = "";
+            document.getElementById("editor-fallback").style.display = "none";
+            setCode(document.getElementById("editor-fallback").value || getLesson(currentId).starter);
         }).catch(function (e) {
             console.warn("Monaco 載入失敗，改用純文字編輯", e);
             useMonaco = false;
@@ -514,8 +517,17 @@
         const lesson = getLesson(currentId);
         const code = getCode();
         const box = document.getElementById("test-results");
+        if (!engineReady) {
+            alert("Python 引擎尚未就緒，請稍候或按「重新載入引擎」。");
+            return;
+        }
         if (!lesson.tests || !lesson.tests.length) {
-            alert("本關請用右側 Bot 模擬器測試：連線 → !前綴指令、/斜線指令、按鈕與下拉選單");
+            if (isDiscordLesson(currentId)) {
+                alert("本關請用右側 Bot 模擬器：連線 → 測 /斜線指令 → 改程式後按「重新連線」");
+                updateDiscordLayout();
+            } else {
+                alert("本關沒有自動測試。");
+            }
             return;
         }
         if (pyTerm) pyTerm.clear();
@@ -611,20 +623,29 @@
 
     loadLocalProgress();
     renderLessonList();
+
+    (function showEditorWhileLoading() {
+        useMonaco = false;
+        document.getElementById("monaco-editor").style.display = "none";
+        var fb = document.getElementById("editor-fallback");
+        fb.style.display = "block";
+        fb.value = getLesson(currentId).starter;
+    })();
+
     bootEngine();
+    pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
+    botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
+        getCode: getCode,
+        onConnect: function (token) {
+            if (token === window.DiscordBotEngine.DEMO_TOKEN) {
+                return { name: "Doratch 示範 Bot", isDemo: true };
+            }
+            return { name: "自訂 Bot", isDemo: false };
+        }
+    });
+    selectLesson(currentId);
 
     initMonacoEditor().then(function () {
-        pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
-        botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
-            getCode: getCode,
-            onConnect: function (token) {
-                if (token === window.DiscordBotEngine.DEMO_TOKEN) {
-                    return { name: "Doratch 示範 Bot", isDemo: true };
-                }
-                return { name: "自訂 Bot", isDemo: false };
-            }
-        });
-        selectLesson(currentId);
         window.addEventListener("resize", function () {
             if (window.PythonMonaco) window.PythonMonaco.layout();
         });

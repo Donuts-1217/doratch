@@ -234,6 +234,22 @@ print("Hello, Doratch!")
         else document.getElementById("editor-fallback").value = code;
     }
 
+    function showTextEditorFallback(code) {
+        useMonaco = false;
+        document.querySelector(".monaco-shell").style.display = "none";
+        var fb = document.getElementById("editor-fallback");
+        fb.style.display = "block";
+        if (typeof code === "string") fb.value = code;
+    }
+
+    function showMonacoEditor() {
+        document.querySelector(".monaco-shell").style.display = "";
+        document.getElementById("editor-fallback").style.display = "none";
+    }
+
+    showTextEditorFallback(DEFAULT_CODE);
+    document.getElementById("editor-fallback").addEventListener("input", markDirty);
+
     function snapshot() {
         return JSON.stringify({
             title: document.getElementById("project-title-input").value,
@@ -406,23 +422,19 @@ print("Hello, Doratch!")
 
     async function initMonaco() {
         if (!window.PythonMonaco) {
-            useMonaco = false;
-            document.querySelector(".monaco-shell").style.display = "none";
-            const fb = document.getElementById("editor-fallback");
-            fb.style.display = "block";
-            fb.value = DEFAULT_CODE;
+            showTextEditorFallback(DEFAULT_CODE);
             return;
         }
         try {
             await window.PythonMonaco.init("monaco-editor");
             useMonaco = true;
-            setCode(DEFAULT_CODE);
+            showMonacoEditor();
+            setCode(document.getElementById("editor-fallback").value || DEFAULT_CODE);
         } catch (e) {
             console.warn(e);
-            useMonaco = false;
-            document.querySelector(".monaco-shell").style.display = "none";
-            document.getElementById("editor-fallback").style.display = "block";
-            document.getElementById("editor-fallback").value = DEFAULT_CODE;
+            showTextEditorFallback(
+                document.getElementById("editor-fallback").value || DEFAULT_CODE
+            );
         }
     }
 
@@ -444,6 +456,8 @@ print("Hello, Doratch!")
             bar.className = "engine-bar error";
         }
     }
+
+    const engineBootPromise = bootEngine();
 
 
     document.getElementById("btn-save").onclick = async () => {
@@ -577,7 +591,6 @@ print("Hello, Doratch!")
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
         document.getElementById("bot-settings").style.display = "block";
-        await initMonaco();
         pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
         botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
             getCode: getCode,
@@ -598,7 +611,7 @@ print("Hello, Doratch!")
                 return { name: document.getElementById("bot-name-input").value.trim() || "我的 Bot" };
             }
         });
-        await bootEngine();
+        await Promise.all([initMonaco(), engineBootPromise]);
         await loadProject(user);
         if (startAsBot && !currentPid) {
             document.getElementById("is-bot-check").checked = true;
