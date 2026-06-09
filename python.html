@@ -187,8 +187,8 @@
         .teach-run { background: #f0fdf4; margin: 0 -4px; padding: 12px; border-radius: 10px; border: 1px solid #bbf7d0 !important; }
         .teach-empty { color: #94a3b8; font-size: 13px; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <script src="js/doratch-base.js"></script>
+    <script src="js/doratch-skulpt-loader.js"></script>
     <script src="js/python-lessons-data.js"></script>
     <script src="js/python-lessons-teach.js"></script>
     <script src="js/skulpt-compat.js"></script>
@@ -228,7 +228,10 @@
         </div>
 
         <div id="file-warn" class="file-warn">
-            ⚠️ 你正在用<strong>本機檔案</strong>開啟。若引擎無法載入，請在 VS Code 用 <strong>Live Server</strong> 開啟，或執行 <code>npx serve</code> 後用 http://localhost 進入。
+            ⚠️ 你正在用<strong>本機檔案</strong>開啟。若引擎無法載入，請在 VS Code 用 <strong>Live Server</strong> 開啟，或 push 到 GitHub Pages 後用 <strong>https://帳號.github.io/倉庫名/python.html</strong> 進入。
+        </div>
+        <div id="gh-warn" class="file-warn" style="display:none;">
+            📦 <strong>GitHub Pages</strong>：Python 引擎使用倉庫內 <code>vendor/skulpt/</code>。若登入失敗，請到 Firebase Console → Authentication → Settings → Authorized domains 加入 <code>你的帳號.github.io</code>。
         </div>
 
         <div id="engine-status" class="status-bar loading">Python 引擎載入中…</div>
@@ -299,6 +302,9 @@
 
     if (location.protocol === "file:") {
         document.getElementById("file-warn").classList.add("show");
+    }
+    if (window.DoratchBase && window.DoratchBase.isGitHubPages()) {
+        document.getElementById("gh-warn").style.display = "block";
     }
 
     const firebaseConfig = {
@@ -598,10 +604,13 @@
         document.getElementById("btn-reload-engine").style.display = "inline-block";
     }
 
-    function bootEngine() {
+    function bootEngine(isReload) {
         if (!Engine) {
-            failEngineUi("引擎腳本未載入。請重新整理，或改用 Live Server 開啟。");
+            failEngineUi("引擎腳本未載入。請確認 js/ 資料夾已 push 到 GitHub。");
             return;
+        }
+        if (isReload && window.DoratchSkulptLoader && window.DoratchSkulptLoader.reset) {
+            window.DoratchSkulptLoader.reset();
         }
         Engine.init((msg) => {
             const bar = document.getElementById("engine-status");
@@ -612,7 +621,7 @@
         });
     }
 
-    document.getElementById("btn-reload-engine").onclick = () => bootEngine();
+    document.getElementById("btn-reload-engine").onclick = () => bootEngine(true);
 
     document.getElementById("teach-toggle").onclick = () => {
         const el = document.getElementById("lesson-teach");
@@ -632,7 +641,7 @@
         fb.value = getLesson(currentId).starter;
     })();
 
-    bootEngine();
+    bootEngine(false);
     pyTerm = window.PythonTerminal.mount(document.getElementById("py-terminal"));
     botSim = window.DiscordBotSimulator.mount(document.getElementById("bot-simulator"), {
         getCode: getCode,

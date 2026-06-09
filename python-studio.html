@@ -102,8 +102,8 @@
             #side-pane { width: 100%; min-width: 0; max-height: 42vh; border-left: none; border-top: 2px solid #334155; }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    <script src="js/doratch-base.js"></script>
+    <script src="js/doratch-skulpt-loader.js"></script>
     <script src="js/skulpt-compat.js"></script>
     <script src="js/python-engine.js"></script>
     <script src="js/discord-py-mock.js"></script>
@@ -141,6 +141,7 @@
 </nav>
 
 <div id="engine-bar" class="engine-bar">Python 引擎載入中…</div>
+<button type="button" id="btn-reload-engine" class="btn btn-outline" style="display:none;margin:0 16px 8px;font-size:12px;">🔄 重新載入引擎</button>
 
 <div id="main-workspace">
     <div id="editor-pane">
@@ -438,14 +439,20 @@ print("Hello, Doratch!")
         }
     }
 
-    async function bootEngine() {
+    async function bootEngine(isReload) {
         const bar = document.getElementById("engine-bar");
+        const reloadBtn = document.getElementById("btn-reload-engine");
         if (!Engine) {
-            bar.textContent = "引擎未載入，請重新整理或使用 Live Server";
+            bar.textContent = "引擎未載入，請重新整理或確認 js/ 已 push 到 GitHub";
             bar.className = "engine-bar error";
+            if (reloadBtn) reloadBtn.style.display = "inline-block";
             return;
         }
         try {
+            if (reloadBtn) reloadBtn.style.display = "none";
+            if (isReload && window.DoratchSkulptLoader && window.DoratchSkulptLoader.reset) {
+                window.DoratchSkulptLoader.reset();
+            }
             await Engine.init((msg) => { bar.textContent = msg; bar.className = "engine-bar"; });
             engineReady = true;
             bar.textContent = "Python 已就緒 · 自由創作模式";
@@ -454,10 +461,13 @@ print("Hello, Doratch!")
         } catch (e) {
             bar.textContent = e.message || String(e);
             bar.className = "engine-bar error";
+            if (reloadBtn) reloadBtn.style.display = "inline-block";
         }
     }
 
-    const engineBootPromise = bootEngine();
+    document.getElementById("btn-reload-engine").onclick = () => bootEngine(true);
+
+    const engineBootPromise = bootEngine(false);
 
 
     document.getElementById("btn-save").onclick = async () => {
