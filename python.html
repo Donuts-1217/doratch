@@ -147,7 +147,7 @@
             border: none; background: #e0e7ff; color: #3730a3; padding: 6px 12px;
             border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit;
         }
-        .lesson-teach { font-size: 14px; line-height: 1.75; color: #475569; max-height: 420px; overflow-y: auto; }
+        .lesson-teach { font-size: 14px; line-height: 1.75; color: #475569; max-height: 520px; overflow-y: auto; }
         .lesson-teach.collapsed { display: none; }
         .teach-block { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0; }
         .teach-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
@@ -161,6 +161,26 @@
             overflow-x: auto; margin: 8px 0 4px;
         }
         .teach-code-note { font-size: 12px; color: #94a3b8; margin: 0 0 8px !important; }
+        .teach-code-demo { background: #0f172a; border: 2px solid #6366f1; }
+        .teach-code-note.demo { color: #818cf8; font-weight: 700; }
+        .teach-banner {
+            background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px;
+            padding: 10px 12px; font-size: 13px; color: #1e40af; margin-bottom: 14px; line-height: 1.6;
+        }
+        .teach-sim { background: #faf5ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 12px; }
+        .teach-sim h3 { color: #5b21b6 !important; }
+        .teach-demo-program { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 12px; }
+        .teach-demo-program h3 { color: #166534 !important; }
+        .teach-load-demo {
+            margin-top: 8px; border: none; background: #5865f2; color: #fff;
+            padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800;
+            cursor: pointer; font-family: inherit;
+        }
+        .teach-load-demo:hover { background: #4752c4; }
+        .teach-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+        .teach-table th, .teach-table td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
+        .teach-table th { background: #f1f5f9; font-weight: 800; }
+        .teach-table code { font-size: 12px; }
         .teach-steps { margin: 0; padding-left: 22px; }
         .teach-steps li { margin-bottom: 6px; }
         .teach-tips { margin: 0; padding-left: 18px; color: #b45309; }
@@ -171,6 +191,7 @@
     <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
     <script src="js/python-lessons-data.js"></script>
     <script src="js/python-lessons-teach.js"></script>
+    <script src="js/skulpt-compat.js"></script>
     <script src="js/python-engine.js"></script>
     <script src="js/discord-py-mock.js"></script>
     <script src="js/discord-bot-runtime.js"></script>
@@ -428,6 +449,17 @@
             teachEl.innerHTML = window.renderPythonTeach(id);
             teachEl.classList.remove("collapsed");
             document.getElementById("teach-toggle").textContent = "收起教學";
+            teachEl.querySelectorAll(".teach-load-demo").forEach(function (btn) {
+                btn.onclick = function () {
+                    var demo = window.loadPythonLessonDemo ? window.loadPythonLessonDemo(id) : "";
+                    if (!demo) return;
+                    if (!confirm("載入「示範程式」到編輯器？\n\n這是試玩用語法範例，不是本關答案。\n通關仍要依 starter 自己完成題目。")) return;
+                    setCode(demo);
+                    document.getElementById("test-results").innerHTML = "";
+                    if (pyTerm) pyTerm.clear();
+                    if (botSim) botSim.clearMessages();
+                };
+            });
         }
         setCode(lesson.starter);
         document.getElementById("test-results").innerHTML = "";
