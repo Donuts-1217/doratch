@@ -17,16 +17,18 @@
             display: flex; justify-content: center; align-items: center; margin: 0; 
             min-height: 100vh;
             min-height: 100dvh;
-            overflow-x: clip;
-            overflow-y: auto;
+            overflow: hidden;
             padding: max(20px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
             box-sizing: border-box;
+            position: relative;
         }
         
         /* 動態背景球 */
         .bg-circle {
             position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1);
             z-index: -1; animation: float 20s infinite linear;
+            pointer-events: none;
+            will-change: transform;
         }
         @keyframes float {
             0% { transform: translate(0, 0) rotate(0deg); }
@@ -38,6 +40,8 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.15); width: 100%; max-width: 360px; 
             text-align: center; backdrop-filter: blur(10px);
             transition: 0.3s transform;
+            max-height: calc(100dvh - 40px);
+            overflow-y: auto;
         }
         .auth-card:hover { transform: translateY(-5px); }
         
@@ -173,7 +177,6 @@
         signOut 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { validateDisplayNameInput, needsDisplayName } from "./doratch-user.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -189,6 +192,26 @@
     const db = getFirestore(app);
 
     let mode = 'login';
+
+    const DISPLAY_NAME_MIN = 2;
+    const DISPLAY_NAME_MAX = 20;
+    function normalizeDisplayName(raw) {
+        if (raw == null) return "";
+        return String(raw).trim().slice(0, DISPLAY_NAME_MAX);
+    }
+    function needsDisplayName(userData) {
+        return normalizeDisplayName(userData && userData.displayName).length < DISPLAY_NAME_MIN;
+    }
+    function validateDisplayNameInput(raw) {
+        const name = normalizeDisplayName(raw);
+        if (name.length < DISPLAY_NAME_MIN) {
+            return { ok: false, name, error: `顯示名稱至少 ${DISPLAY_NAME_MIN} 個字元` };
+        }
+        if (!/^[\p{L}\p{N}\u4e00-\u9fff_\-\s]+$/u.test(name)) {
+            return { ok: false, name, error: "僅可使用中文、英文、數字、空格、底線或連字號" };
+        }
+        return { ok: true, name, error: "" };
+    }
 
     async function redirectAfterLogin(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
@@ -207,9 +230,12 @@
         box.style.display = 'block';
     }
 
-    window.switchMode = (target) => {
+    window.switchMode = (target, opts) => {
+        opts = opts || {};
         mode = target;
-        document.getElementById('message-box').style.display = 'none';
+        if (!opts.keepMessage) {
+            document.getElementById('message-box').style.display = 'none';
+        }
         const title = document.getElementById('auth-title');
         const mainBtn = document.getElementById('main-btn');
         const toggleArea = document.getElementById('toggle-area');
@@ -220,11 +246,13 @@
             mainBtn.innerText = "註冊並發送驗證信";
             toggleArea.innerHTML = `已有帳號？ <span onclick="switchMode('login')">點此登入</span>`;
             nameGroup.style.display = 'block';
+            document.getElementById('display-name').focus();
         } else {
             title.innerText = "會員登入";
             mainBtn.innerText = "登入";
             toggleArea.innerHTML = `還沒有帳號嗎？ <span onclick="switchMode('reg')">立即註冊</span>`;
             nameGroup.style.display = 'none';
+            document.getElementById('email').focus();
         }
     };
 
@@ -263,34 +291,77 @@
                     請至信箱點擊連結後再登入。<br>
                     <span class="spam-notice">⚠️ 若沒看到信件，請務必查看「垃圾郵件」資料夾！</span>
                 `, "success");
-                switchMode('login');
+                switchMode('login', { keepMessage: true });
             } else {
                 const res = await signInWithEmailAndPassword(auth, email, password);
                 const user = res.user;
+                // 先強制刷新一次使用者狀態，避免剛驗證完成時 still cached 判斷錯誤
+                try { await user.reload(); } catch (_) {}
+                const freshUser = auth.currentUser || user;
+                const verified = !!freshUser.emailVerified;
 
-                if (user.emailVerified) {
-                    showMsg("🎉 登入成功，正在導向...", "success");
-                    setTimeout(() => redirectAfterLogin(user), 800);
-                } else {
+                if (!verified) {
                     showMsg(`
                         ⚠️ Email 尚未驗證！<br>
-                        請先至信箱點擊連結。<br>
-                        <span class="spam-notice">💡 找不到信嗎？請檢查「垃圾郵件」資料夾。</span>
+                        請先到信箱點擊驗證連結後再登入。<br>
+                        <span class="spam-notice">💡 若剛完成驗證，請稍候 3 秒再重試；或重新開啟此頁。</span>
                     `, "error");
                     await signOut(auth);
+                    return;
                 }
+
+                const userRef = doc(db, "users", freshUser.uid);
+                const snap = await getDoc(userRef);
+                const current = snap.exists() ? snap.data() : {};
+                const userPayload = {
+                    uid: freshUser.uid,
+                    email: freshUser.email || email,
+                    displayName: current.displayName || "",
+                    xp: Number.isFinite(current.xp) ? current.xp : 0,
+                    lv: Number.isFinite(current.lv) ? current.lv : 1,
+                    coins: Number.isFinite(current.coins) ? current.coins : 0,
+                    lastSeen: serverTimestamp()
+                };
+                if (!snap.exists()) {
+                    userPayload.role = "student";
+                    userPayload.createdAt = serverTimestamp();
+                }
+                await setDoc(userRef, userPayload, { merge: true });
+
+                showMsg("🎉 登入成功，正在導向...", "success");
+                setTimeout(() => redirectAfterLogin(freshUser), 500);
             }
         } catch (error) {
             let errorMsg = "認證失敗，請檢查帳密";
             if (error.code === 'auth/email-already-in-use') errorMsg = "此 Email 已被註冊";
             if (error.code === 'auth/invalid-credential') errorMsg = "帳號或密碼錯誤";
             if (error.code === 'auth/weak-password') errorMsg = "密碼至少需要 6 位數";
+            if (error.code === 'auth/invalid-email') errorMsg = "Email 格式不正確";
+            if (error.code === 'auth/user-disabled') errorMsg = "此帳號已停用，請聯絡管理員";
+            if (error.code === 'auth/too-many-requests') errorMsg = "嘗試次數過多，請稍後再試";
+            if (error.code === 'auth/network-request-failed') errorMsg = "網路連線失敗，請檢查網路後重試";
             showMsg(errorMsg, "error");
         } finally {
             btn.disabled = false;
             btn.innerText = mode === 'reg' ? "註冊並發送驗證信" : "登入";
         }
     };
+
+    ["email", "password", "display-name"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                handleAuth();
+            }
+        });
+    });
+
+    document.getElementById("main-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        handleAuth();
+    });
 </script>
 
 </body>

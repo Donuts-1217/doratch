@@ -6,10 +6,52 @@
     var sessionCounter = 0;
 
     function preprocessDiscordPy(code) {
+        var normalized = String(code || "").replace(/\r\n/g, "\n");
+        // 容錯：裝飾器區塊與 def 中間若有空行，Skulpt 會直接 SyntaxError，這裡做逐行修復
+        (function () {
+            var lines = normalized.split("\n");
+            var out = [];
+            var decoDepth = 0;
+            var seenDecorator = false;
+            var nextNonEmptyCache = function (start) {
+                for (var n = start; n < lines.length; n++) {
+                    if (String(lines[n] || "").trim()) return String(lines[n] || "").trim();
+                }
+                return "";
+            };
+            for (var i = 0; i < lines.length; i++) {
+                var raw = String(lines[i] || "");
+                var t = raw.trim();
+                var startsDecorator = t.indexOf("@") === 0;
+                if (startsDecorator) seenDecorator = true;
+                if (startsDecorator || decoDepth > 0) {
+                    var opens = (raw.match(/\(/g) || []).length;
+                    var closes = (raw.match(/\)/g) || []).length;
+                    decoDepth += opens - closes;
+                    if (decoDepth < 0) decoDepth = 0;
+                }
+
+                if (!t && seenDecorator && decoDepth === 0) {
+                    var next = nextNonEmptyCache(i + 1);
+                    if (/^(?:@|async\s+def|def)\b/.test(next)) {
+                        continue; // 移除裝飾器區塊後的空行
+                    }
+                }
+
+                out.push(raw);
+                if (seenDecorator && decoDepth === 0 && /^(?:async\s+def|def)\b/.test(t)) {
+                    seenDecorator = false;
+                }
+                if (!seenDecorator && decoDepth === 0 && t && t.indexOf("@") !== 0) {
+                    // 普通區塊，維持原狀
+                }
+            }
+            normalized = out.join("\n");
+        })();
         if (global.SkulptCompat) {
-            return global.SkulptCompat.preprocessForSkulpt(code);
+            return global.SkulptCompat.preprocessForSkulpt(normalized);
         }
-        return String(code || "").replace(/\r\n/g, "\n");
+        return normalized;
     }
 
     function isDiscordPyCode(code) {
@@ -109,45 +151,94 @@
         "\nimport json as _json\n" +
         "import discord.ext.commands as _dbc\n" +
         "_b = _dbc.get_active_bot()\n" +
+        "if _b is None:\n" +
+        "    try:\n" +
+        "        _dbc.set_active_bot(bot)\n" +
+        "        _b = bot\n" +
+        "    except NameError:\n" +
+        "        try:\n" +
+        "            _dbc.set_active_bot(client)\n" +
+        "            _b = client\n" +
+        "        except NameError:\n" +
+        "            _b = None\n" +
         "if _b:\n" +
+        "    _slash_out = _dbc.client_list_slash(_b)\n" +
         "    _cmds = getattr(_b, '_commands', {})\n" +
         "    if _cmds is None:\n" +
         "        _cmds = {}\n" +
-        "    _slash_raw = getattr(_b, '_slash', {})\n" +
-        "    if _slash_raw is None:\n" +
-        "        _slash_raw = {}\n" +
-        "    _slash_out = []\n" +
-        "    for _sk in _slash_raw:\n" +
-        "        _se = _slash_raw[_sk]\n" +
-        "        _sd = ''\n" +
-        "        if _se is not None and 'description' in _se:\n" +
-        "            _sd = _se['description']\n" +
-        "        _slash_out.append({'name': _sk, 'description': _sd})\n" +
-        "    _meta = {'slash': _slash_out, 'prefix': list(_cmds.keys()), 'user': _b.user}\n" +
+        "    _prefix = []\n" +
+        "    _seen = set()\n" +
+        "    for _k in list(_cmds.keys()):\n" +
+        "        _lk = str(_k).lower()\n" +
+        "        if _lk in _seen:\n" +
+        "            continue\n" +
+        "        _seen.add(_lk)\n" +
+        "        _prefix.append(_k)\n" +
+        "    _meta = {'slash': _slash_out, 'prefix': _prefix, 'user': getattr(_b, 'user', 'MyBot#0001')}\n" +
         "    print('__DORATCH_META__' + _json.dumps(_meta))\n";
+
+    var ACTIVE_BOT_FALLBACK =
+        "\nimport discord.ext.commands as _dbc\n" +
+        "if _dbc.get_active_bot() is None:\n" +
+        "    try:\n" +
+        "        _dbc.set_active_bot(bot)\n" +
+        "    except NameError:\n" +
+        "        try:\n" +
+        "            _dbc.set_active_bot(client)\n" +
+        "        except NameError:\n" +
+        "            pass\n";
+
+    function stripBotRun(code) {
+        return String(code || "").replace(
+            /^[ \t]*(?:bot|client)\.run\s*\([^)]*\)\s*$/gm,
+            "# __doratch__: bot.run skipped for dispatch"
+        );
+    }
 
     function buildDispatchSnippet(kind, payload) {
         var py =
             "\nimport json as _json\n" +
             "import discord.ext.commands as _dbc\n" +
             "import discord.ext.async_runner as _ar\n" +
-            "async def __doratch_dispatch__():\n" +
+            "def __doratch_dispatch__():\n" +
             "    _b = _dbc.get_active_bot()\n" +
+            "    if not _b:\n" +
+            "        try:\n" +
+            "            _dbc.set_active_bot(bot)\n" +
+            "            _b = bot\n" +
+            "        except NameError:\n" +
+            "            try:\n" +
+            "                _dbc.set_active_bot(client)\n" +
+            "                _b = client\n" +
+            "            except NameError:\n" +
+            "                _b = None\n" +
             "    if not _b:\n" +
             "        return []\n";
         if (kind === "prefix") {
-            py += "    return await _b.dispatch_prefix(" + JSON.stringify(payload) + ")\n";
+            py +=
+                "    if hasattr(_b, 'dispatch_prefix_sync'):\n" +
+                "        return _b.dispatch_prefix_sync(" + JSON.stringify(payload) + ")\n" +
+                "    return _ar.run(_b.dispatch_prefix(" + JSON.stringify(payload) + "))\n";
         } else if (kind === "slash") {
-            py += "    return await _b.dispatch_slash(" + JSON.stringify(payload) + ")\n";
+            py +=
+                "    if hasattr(_b, 'dispatch_slash_sync'):\n" +
+                "        return _b.dispatch_slash_sync(" + JSON.stringify(payload) + ")\n" +
+                "    return _ar.run(_b.dispatch_slash(" + JSON.stringify(payload) + "))\n";
         } else if (kind === "component") {
-            py += "    return await _dbc._dispatch_component_async(" +
+            py +=
+                "    if hasattr(_dbc, 'dispatch_component'):\n" +
+                "        return _dbc.dispatch_component(" +
                 JSON.stringify(payload.viewId) + ", " +
                 JSON.stringify(payload.customId) + ", " +
-                JSON.stringify(payload.values || []) + ")\n";
+                JSON.stringify(payload.values || []) + ")\n" +
+                "    return _ar.run(_dbc._dispatch_component_async(" +
+                JSON.stringify(payload.viewId) + ", " +
+                JSON.stringify(payload.customId) + ", " +
+                JSON.stringify(payload.values || []) + "))\n";
         } else {
             py += "    return []\n";
         }
-        py += "__resp__ = _ar.run(__doratch_dispatch__())\n";
+        py += "__resp__ = __doratch_dispatch__()\n";
         py += "print('__DORATCH_JSON__' + _json.dumps(__resp__ if __resp__ else []))\n";
         return py;
     }
@@ -182,18 +273,50 @@
         return "s" + (++sessionCounter) + "_" + String(code || "").length;
     }
 
+    /** 從原始碼解析 @bot.command / @client.command（裝飾器未生效時的備援） */
+    function extractPrefixCommandsFromCode(code) {
+        code = String(code || "");
+        var handlers = [];
+        var lines = code.split("\n");
+        for (var i = 0; i < lines.length; i++) {
+            if (!/\.command\b/.test(lines[i])) continue;
+            if (/\.tree\.command/.test(lines[i])) continue;
+            var block = lines.slice(i, Math.min(i + 8, lines.length)).join(" ");
+            var nameM = block.match(/name\s*=\s*['"]([^'"]+)['"]/);
+            var funcName = null;
+            for (var j = i + 1; j < Math.min(i + 12, lines.length); j++) {
+                var dm = lines[j].match(/^\s*async\s+def\s+(\w+)\s*\(/);
+                if (dm) {
+                    funcName = dm[1];
+                    break;
+                }
+                var dm2 = lines[j].match(/^\s*def\s+(\w+)\s*\(/);
+                if (dm2) {
+                    funcName = dm2[1];
+                    break;
+                }
+            }
+            if (!funcName) continue;
+            handlers.push({
+                name: nameM ? nameM[1] : funcName,
+                funcName: funcName
+            });
+        }
+        return handlers;
+    }
+
     /** 從原始碼解析 @client.tree.command / @bot.tree.command（Skulpt 裝飾器可能未生效時的備援） */
     function extractSlashCommandsFromCode(code) {
         code = String(code || "");
         var handlers = [];
         var lines = code.split("\n");
         for (var i = 0; i < lines.length; i++) {
-            if (!/\.tree\.command\s*\(/.test(lines[i])) continue;
+            if (!/\.tree\.command\b/.test(lines[i])) continue;
             var block = lines.slice(i, Math.min(i + 6, lines.length)).join(" ");
             var nameM = block.match(/name\s*=\s*['"]([^'"]+)['"]/);
             var descM = block.match(/description\s*=\s*['"]([^'"]*)['"]/);
             var funcName = null;
-            for (var j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+            for (var j = i + 1; j < Math.min(i + 12, lines.length); j++) {
                 var dm = lines[j].match(/^\s*async\s+def\s+(\w+)\s*\(/);
                 if (dm) {
                     funcName = dm[1];
@@ -210,32 +333,94 @@
         return handlers;
     }
 
-    function buildSlashFixSnippet(handlers) {
-        if (!handlers || !handlers.length) return "";
+    function buildCommandFixSnippet(slashHandlers, prefixHandlers) {
+        var slash = slashHandlers || [];
+        var prefix = prefixHandlers || [];
+        if (!slash.length && !prefix.length) return "";
         var py = "\nimport discord.ext.commands as _dbc\n" +
             "_b = _dbc.get_active_bot()\n" +
+            "if _b is None:\n" +
+            "    try:\n" +
+            "        _dbc.set_active_bot(bot)\n" +
+            "        _b = bot\n" +
+            "    except NameError:\n" +
+            "        try:\n" +
+            "            _dbc.set_active_bot(client)\n" +
+            "            _b = client\n" +
+            "        except NameError:\n" +
+            "            _b = None\n" +
             "if _b:\n" +
             "    if not hasattr(_b, '_slash') or _b._slash is None:\n" +
-            "        _b._slash = {}\n";
-        handlers.forEach(function (h) {
+            "        _b._slash = {}\n" +
+            "    if not hasattr(_b, '_commands') or _b._commands is None:\n" +
+            "        _b._commands = {}\n" +
+            "    if getattr(_b, 'tree', None) is None:\n" +
+            "        _b.tree = _dbc.CommandTree(_b)\n";
+        slash.forEach(function (h) {
             var desc = JSON.stringify(h.description || "");
+            var lc = h.name.toLowerCase();
             py += "    if '" + h.name + "' not in _b._slash:\n" +
                 "        try:\n" +
                 "            _b._slash['" + h.name + "'] = {'description': " + desc + ", 'func': " + h.funcName + "}\n" +
+                "            _b._slash['" + lc + "'] = {'description': " + desc + ", 'func': " + h.funcName + "}\n" +
+                "        except NameError:\n" +
+                "            pass\n";
+        });
+        prefix.forEach(function (h) {
+            var lc = h.name.toLowerCase();
+            py += "    if '" + h.name + "' not in _b._commands:\n" +
+                "        try:\n" +
+                "            _b._commands['" + h.name + "'] = " + h.funcName + "\n" +
+                "            _b._commands['" + lc + "'] = " + h.funcName + "\n" +
                 "        except NameError:\n" +
                 "            pass\n";
         });
         return py;
     }
 
-    function mergeSlashMeta(meta, handlers) {
+    function buildSlashFixSnippet(handlers) {
+        return buildCommandFixSnippet(handlers, []);
+    }
+
+    function mergeMetaFromSource(meta, slashHandlers, prefixHandlers) {
         if (!meta) meta = { slash: [], prefix: [], user: "MyBot#0001" };
         if (!meta.slash || !meta.slash.length) {
-            meta.slash = handlers.map(function (h) {
+            var seenSlash = {};
+            meta.slash = (slashHandlers || []).map(function (h) {
                 return { name: h.name, description: h.description || "" };
+            }).filter(function (h) {
+                var key = String(h.name).toLowerCase();
+                if (seenSlash[key]) return false;
+                seenSlash[key] = true;
+                return true;
+            });
+        }
+        if (!meta.prefix || !meta.prefix.length) {
+            var seenPrefix = {};
+            meta.prefix = (prefixHandlers || []).map(function (h) { return h.name; }).filter(function (n) {
+                var key = String(n).toLowerCase();
+                if (seenPrefix[key]) return false;
+                seenPrefix[key] = true;
+                return true;
             });
         }
         return meta;
+    }
+
+    function mergeSlashMeta(meta, handlers) {
+        return mergeMetaFromSource(meta, handlers, []);
+    }
+
+    function parseBotMetaFromCode(code) {
+        var slash = extractSlashCommandsFromCode(code);
+        var prefix = extractPrefixCommandsFromCode(code);
+        return {
+            slash: slash.map(function (h) {
+                return { name: h.name, description: h.description || "" };
+            }),
+            prefix: prefix.map(function (h) { return h.name; }),
+            user: "MyBot#0001"
+        };
     }
 
     async function loadBot(code) {
@@ -253,18 +438,26 @@
             return { ok: false, error: null, legacy: true };
         }
         var handlers = extractSlashCommandsFromCode(originalCode);
+        var prefixHandlers = extractPrefixCommandsFromCode(originalCode);
         code = preprocessDiscordPy(originalCode);
 
-        var body = code + buildSlashFixSnippet(handlers) + META_SNIPPET;
+        var body = code + ACTIVE_BOT_FALLBACK + buildCommandFixSnippet(handlers, prefixHandlers) + META_SNIPPET;
         var res = await runSkulptBody(body, { userLineCount: originalLines });
         if (res.error) return { ok: false, error: res.error };
 
         var meta = extractInitMeta(res.output);
-        if (!meta) return { ok: false, error: "Bot 未正確啟動。請確認有 client.run(TOKEN) 或 bot.run(TOKEN)，且指令為 async def。" };
-        meta = mergeSlashMeta(meta, handlers);
+        if (!meta) {
+            var parsedOnly = parseBotMetaFromCode(originalCode);
+            if (!parsedOnly.slash.length && !parsedOnly.prefix.length) {
+                return { ok: false, error: "Bot 未正確啟動。請確認有 bot.run(TOKEN) 或 client.run(TOKEN)，且指令為 async def。" };
+            }
+            meta = parsedOnly;
+        } else {
+            meta = mergeMetaFromSource(meta, handlers, prefixHandlers);
+        }
 
         var key = getSessionKey(code);
-        sessions[key] = { code: code, userLines: originalLines, handlers: handlers };
+        sessions[key] = { code: code, userLines: originalLines, handlers: handlers, prefixHandlers: prefixHandlers };
 
         return {
             ok: true,
@@ -278,8 +471,9 @@
         var stored = sessions[sessionKey];
         var src = stored ? stored.code : preprocessDiscordPy(code);
         var handlers = stored ? stored.handlers : extractSlashCommandsFromCode(code);
+        var prefixHandlers = stored ? stored.prefixHandlers : extractPrefixCommandsFromCode(code);
         var userLineCount = stored ? (stored.userLines || 0) : String(code || "").split("\n").length;
-        var body = src + buildSlashFixSnippet(handlers) + buildDispatchSnippet(kind, payload);
+        var body = stripBotRun(src) + ACTIVE_BOT_FALLBACK + buildCommandFixSnippet(handlers, prefixHandlers) + buildDispatchSnippet(kind, payload);
         var res = await runSkulptBody(body, { userLineCount: userLineCount });
         if (res.error) return { responses: [], error: res.error };
         var raw = extractJsonOutput(res.output);
@@ -328,6 +522,9 @@
         handleInteraction: handleInteraction,
         normalizeResponses: normalizeResponses,
         formatEmbedText: formatEmbedText,
+        extractSlashCommandsFromCode: extractSlashCommandsFromCode,
+        extractPrefixCommandsFromCode: extractPrefixCommandsFromCode,
+        parseBotMetaFromCode: parseBotMetaFromCode,
         invalidateSession: function (key) { delete sessions[key]; }
     };
 })(typeof window !== "undefined" ? window : globalThis);

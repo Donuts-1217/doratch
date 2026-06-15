@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
     <title>個人檔案 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -13,16 +14,7 @@
         }
         body { font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
 
-        /* 全域導覽列樣式 */
-        .app-container { display: flex; min-height: 100vh; }
-        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
-        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--primary); cursor: pointer; }
-        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { color: var(--primary); border-left: 4px solid var(--primary); }
-        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
-        .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+        .main-content { padding: 40px; overflow-x: auto; box-sizing: border-box; }
 
         /* 個人資料卡 */
         .profile-hero { 
@@ -91,23 +83,8 @@
         #name-form-msg { font-size: 13px; color: #F87171; margin-top: 8px; min-height: 1.2em; }
     
         
-        /* 響應式縮放與排版 */
-        html, body { max-width: 100vw; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 100vw; overflow: hidden; }
-        .main-content { overflow-x: auto; box-sizing: border-box; }
-        
         @media (max-width: 1024px) {
-            .app-container { flex-direction: column; }
-            
-            /* 導覽列改為橫向可滑動 */
-            .sidebar-main { width: 100vw; height: auto; position: static; flex-direction: row; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-            .sidebar-logo { display: none; }
-            .sidebar-main > div[style*="uppercase"] { display: none; }
-            .nav-item { padding: 12px 20px; font-size: 14px; flex-shrink: 0; border-left: none !important; border-bottom: 2px solid transparent; }
-            .nav-item.active { border-bottom: 2px solid var(--primary); }
-            .sidebar-footer { width: auto; border: none; padding: 5px 15px; display: flex; align-items: center; margin-top: 0; flex-shrink: 0; }
-            
-            .main-content { margin-left: 0; padding: 15px; width: 100vw; }
+            .main-content { padding: 15px; }
             
             /* 卡片與通用排版 */
             #user-stats-card { flex-wrap: wrap; justify-content: center; text-align: center; }
@@ -141,24 +118,7 @@
 <body>
 
 <div class="app-container">
-    <aside class="sidebar-main">
-        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
-        <a href="index.html" class="nav-item">🏠 平台首頁</a>
-        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
-
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
-        <a href="page.html" class="nav-item">🚀 創作空間</a>
-        <a href="main.html?view=mine" class="nav-item">📂 我的作品</a>
-        <a href="main.html" class="nav-item">🌍 探索中心</a>
-
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
-        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
-        <a href="game.html" class="nav-item">🎮 指令塔防</a>
-        <a href="shop.html" class="nav-item">🛒 創意商城</a>
-        <a href="chat.html" class="nav-item">💬 交流大廳</a>
-        <a href="profile.html" class="nav-item active">👤 個人檔案</a>
-        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
-        
+    <aside class="sidebar-main" data-doratch-active="profile">
         <div class="sidebar-footer">
             <div class="user-mini-card">
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
@@ -229,18 +189,41 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import {
-        getDisplayLabel,
-        avatarUrlFor,
-        validateDisplayNameInput,
-        needsDisplayName,
-        normalizeDisplayName
-    } from "./doratch-user.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const DISPLAY_NAME_MIN = 2;
+    const DISPLAY_NAME_MAX = 20;
+    function normalizeDisplayName(raw) {
+        if (raw == null) return "";
+        return String(raw).trim().slice(0, DISPLAY_NAME_MAX);
+    }
+    function getDisplayLabel(userData, email) {
+        const dn = normalizeDisplayName(userData && userData.displayName);
+        if (dn.length >= DISPLAY_NAME_MIN) return dn;
+        const em = (email || "").trim();
+        if (em.includes("@")) return em.split("@")[0];
+        return em || "使用者";
+    }
+    function avatarUrlFor(userData, email, size) {
+        const label = getDisplayLabel(userData, email);
+        return "https://ui-avatars.com/api/?name=" + encodeURIComponent(label) + "&size=" + (size || 128) + "&background=random";
+    }
+    function needsDisplayName(userData) {
+        return normalizeDisplayName(userData && userData.displayName).length < DISPLAY_NAME_MIN;
+    }
+    function validateDisplayNameInput(raw) {
+        const name = normalizeDisplayName(raw);
+        if (name.length < DISPLAY_NAME_MIN) {
+            return { ok: false, name, error: `顯示名稱至少 ${DISPLAY_NAME_MIN} 個字元` };
+        }
+        if (!/^[\p{L}\p{N}\u4e00-\u9fff_\-\s]+$/u.test(name)) {
+            return { ok: false, name, error: "僅可使用中文、英文、數字、空格、底線或連字號" };
+        }
+        return { ok: true, name, error: "" };
+    }
 
     const params = new URLSearchParams(location.search);
     const forceSetup = params.get("needDisplayName") === "1";
@@ -363,9 +346,16 @@
             }
         } catch (e) {
             console.error("資料載入失敗", e);
+            if (user) {
+                const fallbackData = { displayName: "", coins: 0, lv: 1 };
+                applyDisplayUI(user, fallbackData);
+                document.getElementById("count-coins").innerText = 0;
+                document.getElementById("count-lv").innerText = 1;
+                document.getElementById("side-coins").innerText = 0;
+            }
         }
     });
 </script>
-
+<script src="doratch-shell.js"></script>
 </body>
 </html>

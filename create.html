@@ -10,16 +10,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: #f0f2f5; color: #334155; }
-        .app-container { display: flex; min-height: 100vh; }
-        .main-content { flex: 1; margin-left: 260px; padding: 40px 24px 56px; box-sizing: border-box; }
+        .main-content { padding: 40px 24px 56px; box-sizing: border-box; }
         @media (max-width: 1024px) {
-            .main-content { margin-left: 0; padding: 20px 16px 40px; }
+            .main-content { padding: 20px 16px 40px; }
         }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <aside class="sidebar-main" data-doratch-active="create"></aside>
+    <aside class="sidebar-main" data-doratch-active="create">
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" style="width:32px;height:32px;border-radius:50%;" alt="">
+                <div style="flex:1;overflow:hidden;">
+                    <div id="side-username" style="font-size:12px;font-weight:bold;">—</div>
+                    <div style="font-size:10px;color:#64748B;">💰 <span id="side-coins">0</span></div>
+                </div>
+            </div>
+        </div>
+    </aside>
     <main class="main-content">
         <div class="create-hub">
             <div class="create-hub-hero">
@@ -46,7 +55,7 @@
                         <p>Monaco 編輯器自由撰寫 Python，支援 input / print 執行，可儲存 .py 作品。</p>
                         <span class="go">進入 Python 工作台 →</span>
                     </a>
-                    <a href="python-studio.html?mode=bot" class="create-hub-card python" style="border-color:#5865f2;">
+                    <a href="bot-studio.html" class="create-hub-card python" style="border-color:#5865f2;">
                         <span class="badge live">可用</span>
                         <span class="icon">🤖</span>
                         <span class="lang-tag">Discord Bot</span>

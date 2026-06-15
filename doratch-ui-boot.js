@@ -26,6 +26,7 @@
             else if (!String(fb.value || "").trim()) {
                 fb.value = "# Python\nprint('Hello, Doratch!')\n";
             }
+            bindEditorKeys();
         }
         global.__DORATCH_USE_MONACO__ = false;
     }
@@ -64,6 +65,60 @@
         return pyTermRef || mountTerminal();
     }
 
+    function findAssistSnippet(key) {
+        if (!global.PythonCompletions || !key) return null;
+        var lists = [
+            global.PythonCompletions.BASE_SNIPPETS,
+            global.PythonCompletions.DISCORD_SNIPPETS,
+            global.PythonCompletions.LEGACY_BOT_SNIPPETS
+        ];
+        for (var i = 0; i < lists.length; i++) {
+            var item = lists[i].find(function (s) { return s.label === key; });
+            if (item) return item;
+        }
+        return null;
+    }
+
+    function insertAssistSnippet(key) {
+        var item = findAssistSnippet(key);
+        if (!item) return false;
+
+        if (global.__DORATCH_USE_MONACO__ && global.PythonMonaco && global.PythonMonaco.isReady()) {
+            if (global.PythonMonaco.insertSnippet(item.insert)) {
+                document.dispatchEvent(new CustomEvent("doratch-editor-change"));
+                return true;
+            }
+            var cur = global.PythonMonaco.getValue();
+            global.PythonMonaco.setValue(cur + (cur.endsWith("\n") ? "" : "\n") + item.insert);
+            document.dispatchEvent(new CustomEvent("doratch-editor-change"));
+            return true;
+        }
+
+        var fb = fallbackEl();
+        if (!fb) return false;
+        fb.focus();
+        var pos = fb.selectionStart;
+        var before = fb.value.slice(0, pos);
+        var after = fb.value.slice(pos);
+        var sep = before && !before.endsWith("\n") ? "\n" : "";
+        fb.value = before + sep + item.insert + after;
+        var caret = before.length + sep.length + item.insert.length;
+        fb.selectionStart = fb.selectionEnd = caret;
+        fb.dispatchEvent(new Event("input", { bubbles: true }));
+        document.dispatchEvent(new CustomEvent("doratch-editor-change"));
+        return true;
+    }
+
+    function bindAssistBars() {
+        document.querySelectorAll("#bot-assist-bar [data-snippet], #py-assist-bar [data-snippet]").forEach(function (btn) {
+            if (btn.dataset.assistBound === "1") return;
+            btn.dataset.assistBound = "1";
+            btn.addEventListener("click", function () {
+                insertAssistSnippet(btn.getAttribute("data-snippet"));
+            });
+        });
+    }
+
     function bindEditorKeys() {
         var fb = fallbackEl();
         if (!fb || fb.dataset.keysBound === "1") return;
@@ -75,6 +130,12 @@
                 if (btn && !btn.disabled) btn.click();
             }
         });
+        if (global.PythonEditorAssist) {
+            global.PythonEditorAssist.attach(fb, {
+                getCode: function () { return fb.value; },
+                forceBot: !!global.__DORATCH_FORCE_BOT_ASSIST__
+            });
+        }
     }
 
     function initMonacoEditor() {
@@ -123,6 +184,7 @@
         showFallbackEditor();
         mountTerminal();
         bindEditorKeys();
+        bindAssistBars();
         setTimeout(function () { initMonacoEditor(); }, 50);
     }
 
@@ -132,6 +194,8 @@
         mountTerminal: mountTerminal,
         getTerminal: getTerminal,
         initMonacoEditor: initMonacoEditor,
+        insertAssistSnippet: insertAssistSnippet,
+        bindAssistBars: bindAssistBars,
         isMonaco: function () {
             return !!(global.__DORATCH_USE_MONACO__ && global.PythonMonaco && global.PythonMonaco.isReady());
         }

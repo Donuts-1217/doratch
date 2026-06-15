@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
-    <title>創意商城 - Creative Blocks</title>
+    <link rel="stylesheet" href="doratch-shell.css">
+    <title>創意商城 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -34,53 +35,80 @@
         .btn-buy.owned { background: #EEE; color: #999; cursor: default; }
         .btn-buy:active { transform: scale(0.95); }
 
-        /* 大轉盤樣式 */
-        .game-section { background: white; border-radius: 25px; padding: 40px; text-align: center; margin-bottom: 40px; box-shadow: var(--card-shadow); position: relative; overflow: hidden; }
-        .wheel-container { position: relative; width: 300px; height: 300px; margin: 0 auto 30px; }
-        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 10px solid #333; position: relative; transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1); background: conic-gradient(
-            #FFAB19 0deg 60deg, #4C97FF 60deg 120deg, #855CD6 120deg 180deg, 
-            #4CB050 180deg 240deg, #FF4D4D 240deg 300deg, #FFD700 300deg 360deg
-        ); }
-        .wheel-pointer { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 40px; height: 50px; background: #333; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; }
-        .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; border-radius: 50%; border: 5px solid #333; z-index: 5; }
-        .wheel-text { position: absolute; width: 100%; height: 100%; top: 0; left: 0; font-weight: bold; color: white; font-size: 14px; }
-        .btn-spin { padding: 15px 40px; border-radius: 30px; border: none; background: var(--scratch-orange); color: white; font-weight: 900; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 171, 25, 0.4); }
-        .btn-spin:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
-
         .category-title { font-weight: 900; font-size: 1.5rem; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
         .btn-nav { text-decoration:none; background: rgba(0,0,0,0.05); color: #444; border: 1px solid rgba(0,0,0,0.1); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
         .btn-nav:hover { background: var(--scratch-blue); color: white; }
         .nav-actions { display: flex; gap: 10px; align-items: center; }
 
-        /* 全域導覽列樣式 */
-        .app-container { display: flex; min-height: 100vh; }
-        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.05); }
-        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--scratch-blue); cursor: pointer; }
-        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { color: var(--scratch-blue); border-left: 4px solid var(--scratch-blue); }
-        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
-        .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+        .main-content { padding: 40px; overflow-x: auto; box-sizing: border-box; }
+        .auth-cta {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .auth-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 13px;
+        }
+        .auth-btn.primary { background: #0f172a; color: #fff; }
+        .auth-btn.ghost { background: rgba(15, 23, 42, 0.08); color: #0f172a; }
+        .coin-policy {
+            margin-bottom: 20px;
+            border: 1px solid #fde68a;
+            background: #fff7d6;
+            border-radius: 14px;
+            padding: 14px 16px;
+            color: #7c2d12;
+            font-weight: 700;
+        }
+        .review-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: var(--card-shadow);
+        }
+        .review-card input,
+        .review-card textarea {
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            margin-top: 8px;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        .review-card button {
+            border: none;
+            border-radius: 10px;
+            background: #0f172a;
+            color: #fff;
+            font-weight: 900;
+            cursor: pointer;
+            padding: 10px 14px;
+        }
+        .review-card .btn-light {
+            background: #334155;
+        }
+        .btn-buy.disabled {
+            background: #cbd5e1 !important;
+            color: #334155 !important;
+            cursor: not-allowed;
+        }
     
         
-        /* 響應式縮放與排版 */
-        html, body { max-width: 100vw; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 100vw; overflow: hidden; }
-        .main-content { overflow-x: auto; box-sizing: border-box; }
-        
         @media (max-width: 1024px) {
-            .app-container { flex-direction: column; }
-            
-            /* 導覽列改為橫向可滑動 */
-            .sidebar-main { width: 100vw; height: auto; position: static; flex-direction: row; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-            .sidebar-logo { display: none; }
-            .sidebar-main > div[style*="uppercase"] { display: none; }
-            .nav-item { padding: 12px 20px; font-size: 14px; flex-shrink: 0; border-left: none !important; border-bottom: 2px solid transparent; }
-            .nav-item.active { border-bottom: 2px solid var(--primary); }
-            .sidebar-footer { width: auto; border: none; padding: 5px 15px; display: flex; align-items: center; margin-top: 0; flex-shrink: 0; }
-            
-            .main-content { margin-left: 0; padding: 15px; width: 100vw; }
+            .main-content { padding: 15px; }
             
             /* 卡片與通用排版 */
             #user-stats-card { flex-wrap: wrap; justify-content: center; text-align: center; }
@@ -114,23 +142,7 @@
 <body>
 
 <div class="app-container">
-    <aside class="sidebar-main">
-        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
-        <a href="index.html" class="nav-item">🏠 平台首頁</a>
-        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
-        
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
-        <a href="page.html" class="nav-item">🚀 創作空間</a>
-        <a href="main.html?view=mine" class="nav-item">📂 我的作品</a>
-        <a href="main.html" class="nav-item">🌍 探索中心</a>
-
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
-        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
-        <a href="game.html" class="nav-item">🎮 指令塔防</a>
-        <a href="shop.html" class="nav-item active">🛒 創意商城</a>
-        <a href="chat.html" class="nav-item">💬 交流大廳</a>
-        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--scratch-purple);">🛠️ 管理面板</a>
-        
+    <aside class="sidebar-main" data-doratch-active="shop">
         <div class="sidebar-footer">
             <div class="user-mini-card">
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
@@ -144,12 +156,14 @@
     </aside>
 
     <main class="main-content">
+<div class="coin-policy">💡 金幣取得方式已改為「提交程式作品 → 由管理員審核核發」。抽獎功能已移除。</div>
 
 <div class="container">
     <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px; display:flex; justify-content:space-between; align-items:center;">
         <div>
             <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
-            <p style="margin:10px 0 0; opacity:0.9;">使用任務獲得的金幣，兌換你的專屬個性化道具！</p>
+            <p style="margin:10px 0 0; opacity:0.9;">使用審核核發的金幣，兌換你的專屬個性化道具！</p>
+            <div id="auth-cta" class="auth-cta"></div>
         </div>
         <div style="background:rgba(255,255,255,0.2); padding:12px 25px; border-radius:20px; text-align:center;">
             <div style="font-size:11px; opacity:0.8;">我的金幣</div>
@@ -157,18 +171,21 @@
         </div>
     </div>
 
-    <!-- 幸運大轉盤 -->
-    <div class="game-section">
-        <h2 style="margin-top:0;">🎡 每日幸運大轉盤</h2>
-        <p style="color:#666; margin-bottom:30px;">每天可以免費轉一次，最高可獲得 200 金幣！</p>
-        <div class="wheel-container">
-            <div class="wheel-pointer"></div>
-            <div id="lucky-wheel" class="wheel">
-                <div class="wheel-center"></div>
-            </div>
+    <div class="review-card">
+        <h3 style="margin:0 0 8px;">🧾 程式作品送審（管理員核發金幣）</h3>
+        <p style="margin:0 0 12px; color:#64748B; font-size:13px;">支援 Python / 積木方塊 / 其他作品。每位使用者每天限上傳 1 件，按「上傳給管理員審核」才會送出。</p>
+        <select id="review-work-type" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
+            <option value="python">Python 作品</option>
+            <option value="blockly">積木方塊作品</option>
+            <option value="other">其他作品</option>
+        </select>
+        <input id="review-project-url" type="text" placeholder="作品連結（例如 project.html?id=...）">
+        <textarea id="review-note" rows="3" placeholder="補充：這次完成了什麼功能、難度、測試結果"></textarea>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-light" onclick="saveCoinReviewDraft()">暫存內容</button>
+            <button type="button" onclick="submitCoinReview()">上傳給管理員審核</button>
         </div>
-        <button id="btn-spin" class="btn-spin" onclick="spinWheel()">立即抽獎！</button>
-        <p id="spin-timer" style="margin-top:15px; color:#999; font-size:13px;"></p>
+        <div id="review-status" style="margin-top:10px; font-size:12px; color:#64748B;"></div>
     </div>
 
     <div class="category-title">🎨 個人風格</div>
@@ -181,7 +198,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -193,6 +210,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+    const REVIEW_DRAFT_KEY = "doratch_coin_review_draft_v1";
 
     const itemsBank = [
         { id: 'theme_dark', category: 'style', name: '深淵黑主題', desc: '為你的編輯器換上酷炫的深色模式', price: 1000, icon: '🌑' },
@@ -204,14 +222,42 @@
     ];
 
     let currentUserData = null;
+    let currentUser = null;
 
-    window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+    window.handleLogout = () => {
+        if (!auth.currentUser) return location.href = 'login.html';
+        return signOut(auth).then(() => location.href='index.html');
+    };
 
     onAuthStateChanged(auth, async (user) => {
-        if (!user) return location.href = 'login.html';
+        currentUser = user || null;
+        if (!user) {
+            applyGuestState();
+            return;
+        }
         fetchSidebarData(user);
         loadMallData(user);
     });
+
+    function applyGuestState() {
+        const authCta = document.getElementById('auth-cta');
+        const sideUser = document.getElementById('side-username');
+        const sideCoins = document.getElementById('side-coins');
+        const sideAvatar = document.getElementById('side-avatar');
+        if (authCta) {
+            authCta.innerHTML = '<a class="auth-btn primary" href="login.html">登入帳號</a><a class="auth-btn ghost" href="create.html">前往寫程式</a>';
+        }
+        if (sideUser) sideUser.innerText = '訪客';
+        if (sideCoins) sideCoins.innerText = '0';
+        if (sideAvatar) sideAvatar.src = 'https://ui-avatars.com/api/?name=Guest&background=334155&color=fff';
+        const userCoinsEl = document.getElementById('user-coins');
+        if (userCoinsEl) userCoinsEl.innerText = '0';
+        const reviewStatus = document.getElementById('review-status');
+        if (reviewStatus) reviewStatus.innerText = '請先登入後送出審核。';
+        currentUserData = { coins: 0, inventory: [] };
+        restoreCoinReviewDraft();
+        renderItems();
+    }
 
     async function fetchSidebarData(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
@@ -234,68 +280,66 @@
     }
 
     async function loadMallData(user) {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        currentUserData = snap.data() || { coins: 0, inventory: [], lastSpin: 0 };
+        const authCta = document.getElementById('auth-cta');
+        if (authCta) authCta.innerHTML = '<a class="auth-btn ghost" href="create.html">提交程式送審</a><a class="auth-btn ghost" href="projects.html">我的作品</a>';
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) {
+            await setDoc(userRef, {
+                email: user.email || "",
+                coins: 0,
+                inventory: [],
+                xp: 0,
+                lv: 1,
+                role: "student",
+                createdAt: serverTimestamp()
+            }, { merge: true });
+        }
+        const fresh = await getDoc(userRef);
+        currentUserData = fresh.data() || { coins: 0, inventory: [] };
         const coins = currentUserData.coins || 0;
         // 更新頁首與側邊欄的金幣顯示
         const userCoinsEl = document.getElementById('user-coins');
         if (userCoinsEl) userCoinsEl.innerText = coins;
         const sideCoinsEl = document.getElementById('side-coins');
         if (sideCoinsEl) sideCoinsEl.innerText = coins;
+        const reviewStatus = document.getElementById('review-status');
+        if (reviewStatus) reviewStatus.innerText = '每日最多上傳 1 件給管理員審核。';
+        restoreCoinReviewDraft();
 
         renderItems();
-        checkSpinStatus();
+    };
+
+    function todayKey() {
+        const d = new Date();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${d.getFullYear()}-${m}-${day}`;
     }
 
-    function checkSpinStatus() {
-        const last = currentUserData.lastSpin || 0;
-        const now = Date.now();
-        const diff = now - last;
-        const coolDown = 24 * 60 * 60 * 1000; // 24小時
-
-        const btn = document.getElementById('btn-spin');
-        const timer = document.getElementById('spin-timer');
-
-        if(diff < coolDown) {
-            btn.disabled = true;
-            const hours = Math.ceil((coolDown - diff) / (1000 * 60 * 60));
-            timer.innerText = `下次抽獎還需等待約 ${hours} 小時`;
-        } else {
-            btn.disabled = false;
-            timer.innerText = "今日免費次數已準備就緒！";
-        }
+    function restoreCoinReviewDraft() {
+        try {
+            const raw = localStorage.getItem(REVIEW_DRAFT_KEY);
+            if (!raw) return;
+            const data = JSON.parse(raw) || {};
+            const typeEl = document.getElementById('review-work-type');
+            const urlEl = document.getElementById('review-project-url');
+            const noteEl = document.getElementById('review-note');
+            if (typeEl && data.workType) typeEl.value = data.workType;
+            if (urlEl && data.projectUrl) urlEl.value = data.projectUrl;
+            if (noteEl && data.note) noteEl.value = data.note;
+        } catch (_) {}
     }
 
-    window.spinWheel = async () => {
-        const btn = document.getElementById('btn-spin');
-        btn.disabled = true;
-
-        const wheel = document.getElementById('lucky-wheel');
-        const randomDegree = Math.floor(Math.random() * 360) + 1800; // 旋轉至少 5 圈
-        wheel.style.transform = `rotate(${randomDegree}deg)`;
-
-        // 旋轉動畫結束後結算 (4秒)
-        setTimeout(async () => {
-            const actualDegree = randomDegree % 360;
-            let prize = 10;
-            if(actualDegree < 60) prize = 50;
-            else if(actualDegree < 120) prize = 20;
-            else if(actualDegree < 180) prize = 100;
-            else if(actualDegree < 240) prize = 30;
-            else if(actualDegree < 300) prize = 10;
-            else prize = 200;
-
-            alert(`🎉 恭喜！你抽中了 💰 ${prize} 金幣！`);
-            
-            try {
-                const ref = doc(db, "users", auth.currentUser.uid);
-                await updateDoc(ref, {
-                    coins: increment(prize),
-                    lastSpin: Date.now()
-                });
-                location.reload();
-            } catch(e) { console.error(e); }
-        }, 4000);
+    window.saveCoinReviewDraft = () => {
+        const payload = {
+            workType: (document.getElementById('review-work-type').value || 'python'),
+            projectUrl: (document.getElementById('review-project-url').value || '').trim(),
+            note: (document.getElementById('review-note').value || '').trim()
+        };
+        localStorage.setItem(REVIEW_DRAFT_KEY, JSON.stringify(payload));
+        const reviewStatus = document.getElementById('review-status');
+        if (reviewStatus) reviewStatus.innerText = '已暫存送審內容。';
     };
 
     function renderItems() {
@@ -305,6 +349,7 @@
 
         itemsBank.forEach(item => {
             const isOwned = (currentUserData.inventory || []).includes(item.id);
+            const canBuy = !!currentUser && !isOwned;
             const div = document.createElement('div');
             div.className = 'item-card';
             div.innerHTML = `
@@ -312,8 +357,8 @@
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
                 <div class="item-price">💰 ${item.price}</div>
-                <button class="btn-buy ${isOwned?'owned':'available'}" onclick="buyItem('${item.id}', ${item.price})">
-                    ${isOwned ? '已擁有' : '立即購買'}
+                <button class="btn-buy ${isOwned ? 'owned' : (canBuy ? 'available' : 'disabled')}" onclick="buyItem('${item.id}', ${item.price})">
+                    ${isOwned ? '已擁有' : (canBuy ? '立即購買' : '請先登入')}
                 </button>
             `;
             if(item.category === 'style') styleList.appendChild(div);
@@ -322,25 +367,100 @@
     }
 
     window.buyItem = async (id, price) => {
-        if((currentUserData.inventory || []).includes(id)) return;
-        if(currentUserData.coins < price) return alert("金幣不足！快去完成任務賺錢吧！");
+        if (!currentUser) {
+            alert("請先登入後再購買。");
+            location.href = "login.html";
+            return;
+        }
+        if((currentUserData.inventory || []).includes(id)) return alert("此道具已擁有。");
+        if(currentUserData.coins < price) return alert("金幣不足！請先提交程式作品，等待管理員審核核發金幣。");
 
         if(!confirm(`確定要花費 💰 ${price} 購買此物品嗎？`)) return;
 
         try {
-            const ref = doc(db, "users", auth.currentUser.uid);
-            await updateDoc(ref, {
-                coins: increment(-price),
-                inventory: arrayUnion(id)
+            const ref = doc(db, "users", currentUser.uid);
+            await runTransaction(db, async (tx) => {
+                const snap = await tx.get(ref);
+                const data = snap.exists() ? (snap.data() || {}) : {};
+                const inv = Array.isArray(data.inventory) ? data.inventory.slice() : [];
+                const currentCoins = Number.isFinite(data.coins) ? data.coins : 0;
+                if (inv.includes(id)) throw new Error("ALREADY_OWNED");
+                if (currentCoins < price) throw new Error("INSUFFICIENT_COINS");
+                inv.push(id);
+                tx.set(ref, {
+                    coins: currentCoins - price,
+                    inventory: inv,
+                    lastPurchaseAt: serverTimestamp()
+                }, { merge: true });
             });
-            alert("購買成功！快去個人面板查看吧！");
-            loadMallData(auth.currentUser);
-        } catch(e) { alert("購買失敗：" + e.message); }
+            alert("購買成功！已儲存到 Firebase。");
+            await loadMallData(currentUser);
+        } catch(e) {
+            if (String(e && e.message) === "ALREADY_OWNED") return alert("此道具已擁有。");
+            if (String(e && e.message) === "INSUFFICIENT_COINS") return alert("金幣不足，請先提交程式作品等待管理員核發。");
+            alert("購買失敗：" + (e.message || e));
+        }
+    };
+
+    window.submitCoinReview = async () => {
+        if (!currentUser) {
+            alert("請先登入後送出審核。");
+            location.href = "login.html";
+            return;
+        }
+        const workType = (document.getElementById('review-work-type').value || 'python').trim();
+        const projectUrl = (document.getElementById('review-project-url').value || '').trim();
+        const note = (document.getElementById('review-note').value || '').trim();
+        if (!projectUrl && !note) {
+            alert("請至少填寫作品連結或說明。");
+            return;
+        }
+        try {
+            const userRef = doc(db, "users", currentUser.uid);
+            const reqRef = doc(collection(db, "coin_review_requests"));
+            const day = todayKey();
+            await runTransaction(db, async (tx) => {
+                const userSnap = await tx.get(userRef);
+                const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+                if (String(userData.lastCoinReviewDay || "") === day) {
+                    throw new Error("DAILY_LIMIT");
+                }
+                tx.set(reqRef, {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email || "",
+                    workType: workType,
+                    projectUrl: projectUrl || "",
+                    note: note || "",
+                    status: "pending",
+                    suggestedCoins: 50,
+                    awardedCoins: 0,
+                    createdAt: serverTimestamp()
+                });
+                tx.set(userRef, {
+                    lastCoinReviewDay: day,
+                    lastCoinReviewAt: serverTimestamp()
+                }, { merge: true });
+            });
+            localStorage.removeItem(REVIEW_DRAFT_KEY);
+            document.getElementById('review-work-type').value = 'python';
+            document.getElementById('review-project-url').value = '';
+            document.getElementById('review-note').value = '';
+            const reviewStatus = document.getElementById('review-status');
+            if (reviewStatus) reviewStatus.innerText = '已送出審核申請，請等待管理員核發金幣。';
+            alert("送審成功，請等待管理員審核。");
+        } catch (e) {
+            console.error(e);
+            if (String(e && e.message) === "DAILY_LIMIT") {
+                alert("你今天已經上傳過 1 件作品，明天再上傳。");
+                return;
+            }
+            alert("送審失敗：" + (e.message || e));
+        }
     };
 </script>
 
 </main>
 </div>
-
+<script src="doratch-shell.js"></script>
 </body>
 </html>

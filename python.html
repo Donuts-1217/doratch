@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="python-terminal.css">
+    <link rel="stylesheet" href="python-editor-assist.css">
     <link rel="stylesheet" href="discord-bot-sim.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -19,10 +20,9 @@
             --muted: #94a3b8;
         }
         body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; color: #334155; }
-        .app-container { display: flex; min-height: 100vh; }
-        .main-content { flex: 1; margin-left: 260px; padding: 24px; box-sizing: border-box; }
+        .main-content { padding: 24px; box-sizing: border-box; }
         @media (max-width: 1024px) {
-            .main-content { margin-left: 0; padding: 16px; }
+            .main-content { padding: 16px; }
             .py-layout { grid-template-columns: 1fr !important; }
         }
         .py-hero {
@@ -200,6 +200,8 @@
     <script src="discord-bot-runtime.js"></script>
     <script src="discord-bot-engine.js"></script>
     <script src="discord-bot-simulator.js"></script>
+    <script src="python-completions-data.js"></script>
+    <script src="python-editor-assist.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
     <script src="doratch-ui-boot.js"></script>
@@ -208,13 +210,6 @@
 <body>
 <div class="app-container">
     <aside class="sidebar-main" data-doratch-active="python">
-        <div class="sidebar-logo" onclick="location.href='index.html'">🧩 Doratch</div>
-        <a href="index.html" class="nav-item">🏠 平台首頁</a>
-        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
-        <div style="margin:20px 30px 10px;font-size:11px;color:#475569;letter-spacing:1px;">創作與探索</div>
-        <a href="python.html" class="nav-item active">🐍 Python 學習</a>
-        <a href="create.html" class="nav-item">🚀 創作空間</a>
-        <a href="challenge_zone.html" class="nav-item">🎯 挑戰區</a>
         <div class="sidebar-footer">
             <div class="user-mini-card">
                 <img id="side-avatar" src="" style="width:32px;height:32px;border-radius:50%;" alt="">
@@ -265,15 +260,41 @@
                         <button type="button" class="btn btn-test" id="btn-test" disabled>✅ 跑測試</button>
                         <button type="button" class="btn btn-reset" id="btn-reset">🗑 清空重寫</button>
                     </div>
+                    <div class="assist-bar" id="py-assist-bar" style="margin-bottom:8px;border-radius:10px;">
+                        <span style="color:#64748b;font-weight:800;">🐍 快插：</span>
+                        <button type="button" data-snippet="print">print</button>
+                        <button type="button" data-snippet="for">for</button>
+                        <button type="button" data-snippet="if">if</button>
+                        <button type="button" data-snippet="def">def</button>
+                        <button type="button" data-snippet="input-str">input</button>
+                        <button type="button" data-snippet="listcomp">串列推導</button>
+                        <button type="button" data-snippet="try">try/except</button>
+                    </div>
+                    <div class="assist-bar" id="bot-assist-bar" style="display:none;margin-bottom:8px;border-radius:10px;">
+                        <span style="color:#64748b;font-weight:800;">🤖 Bot 快插：</span>
+                        <button type="button" data-snippet="bot-if-hello">!hello</button>
+                        <button type="button" data-snippet="handle-func">handle()</button>
+                        <button type="button" data-snippet="bot-elif-chain">! 多指令</button>
+                        <button type="button" data-snippet="bot-skeleton">discord.py 骨架</button>
+                        <button type="button" data-snippet="@bot.command">@bot.command</button>
+                        <button type="button" data-snippet="@bot.tree.command">/ 斜線</button>
+                        <button type="button" data-snippet="send_">send_</button>
+                        <button type="button" data-snippet="ui.View">UI 按鈕</button>
+                    </div>
                     <label style="font-size:13px;font-weight:900;color:#64748b;">程式碼</label>
                     <div class="monaco-shell">
                         <div id="monaco-editor"></div>
                     </div>
                     <textarea id="editor-fallback" spellcheck="false" placeholder="# 在此撰寫 Python…"></textarea>
-                    <p class="editor-hint">
-                        💡 語法輔助：<kbd>pr</kbd> → <strong>print(</strong> ·
-                        <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行 ·
-                        執行視窗像 VS Code：<strong>input() 時才出現輸入框</strong>
+                    <p class="editor-hint" id="editor-hint-base">
+                        💡 語法輔助：<kbd>Ctrl</kbd>+<kbd>Space</kbd> 開啟選單 ·
+                        輸入 <kbd>pr</kbd> <kbd>def</kbd> <kbd>for</kbd> <kbd>if</kbd> <kbd>try</kbd> ·
+                        變數後加 <kbd>.</kbd> 提示方法（如 <kbd>s.split</kbd>） ·
+                        <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行
+                    </p>
+                    <p class="editor-hint editor-hint-bot" id="editor-hint-bot" style="display:none;">
+                        🤖 Bot 輔助：<kbd>@</kbd> 或 <kbd>bot.</kbd>、<kbd>ctx.</kbd>、<kbd>interaction.</kbd> 自動提示 ·
+                        快插按鈕可插入骨架 · discord.py 關卡用右側模擬器測 <kbd>!</kbd> / <kbd>/</kbd> 指令
                     </p>
                 </div>
                 <div class="card" style="padding:0;border:none;background:transparent;">
@@ -371,13 +392,26 @@
     function updateDiscordLayout() {
         var layout = document.querySelector(".py-layout");
         var panel = document.getElementById("bot-sim-panel");
+        var assistBar = document.getElementById("bot-assist-bar");
+        var hintBase = document.getElementById("editor-hint-base");
+        var hintBot = document.getElementById("editor-hint-bot");
         var discord = isDiscordLesson(currentId);
         if (discord) {
             layout.classList.add("py-layout-discord");
             panel.style.display = "block";
+            if (assistBar) assistBar.style.display = "flex";
+            if (hintBase) hintBase.style.display = "none";
+            if (hintBot) hintBot.style.display = "block";
+            window.__DORATCH_FORCE_BOT_ASSIST__ = true;
+            if (window.PythonEditorAssist) window.PythonEditorAssist.setForceBot(true);
         } else {
             layout.classList.remove("py-layout-discord");
             panel.style.display = "none";
+            if (assistBar) assistBar.style.display = "none";
+            if (hintBase) hintBase.style.display = "block";
+            if (hintBot) hintBot.style.display = "none";
+            window.__DORATCH_FORCE_BOT_ASSIST__ = false;
+            if (window.PythonEditorAssist) window.PythonEditorAssist.setForceBot(false);
         }
     }
 

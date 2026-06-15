@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
     <title>聊天室 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -12,7 +13,7 @@
             --bg: #0F172A; --card-bg: #1E293B; --sidebar-bg: #0B0E14;
             --text: #F8FAFC; --text-muted: #94A3B8;
         }
-        body { font-family: "Outfit", "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: "Outfit", "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         /* 導覽列 */
         nav { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; padding: 0 5%; height: 70px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; }
@@ -168,85 +169,13 @@
         .kick-btn.bot-disconnect { opacity: 0.7; background: rgba(255,255,255,0.1); color: #fca5a5; }
         .member-item--bot:hover .bot-disconnect { opacity: 1; }
 
-        /* 全域導覽列樣式 */
-        .app-container { display: flex; height: 100vh; width: 100vw; overflow: hidden; }
-        .sidebar-main { width: 260px; background: #0B0E14; color: white; display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.05); }
-        .sidebar-logo { padding: 30px; font-weight: 900; font-size: 1.2rem; color: var(--primary); cursor: pointer; }
-        .nav-item { padding: 15px 30px; display: flex; align-items: center; gap: 12px; color: #94A3B8; text-decoration: none; font-weight: bold; transition: 0.3s; cursor: pointer; }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { color: var(--primary); border-left: 4px solid var(--primary); }
-        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .user-mini-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.03); }
-        .main-chat-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    
-        
-        /* 響應式縮放與排版 */
-        html, body { max-width: 100vw; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 100vw; overflow: hidden; }
-        .main-content { overflow-x: auto; box-sizing: border-box; }
-        
-        @media (max-width: 1024px) {
-            .app-container { flex-direction: column; }
-            
-            /* 導覽列改為橫向可滑動 */
-            .sidebar-main { width: 100vw; height: auto; position: static; flex-direction: row; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-            .sidebar-logo { display: none; }
-            .sidebar-main > div[style*="uppercase"] { display: none; }
-            .nav-item { padding: 12px 20px; font-size: 14px; flex-shrink: 0; border-left: none !important; border-bottom: 2px solid transparent; }
-            .nav-item.active { border-bottom: 2px solid var(--primary); }
-            .sidebar-footer { width: auto; border: none; padding: 5px 15px; display: flex; align-items: center; margin-top: 0; flex-shrink: 0; }
-            
-            .main-content { margin-left: 0; padding: 15px; width: 100vw; }
-            
-            /* 卡片與通用排版 */
-            #user-stats-card { flex-wrap: wrap; justify-content: center; text-align: center; }
-            #user-stats-card > div { width: 100%; }
-            .header, .header-title { flex-direction: column; gap: 15px; text-align: center; }
-            .project-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-            .game-grid { grid-template-columns: 1fr; }
-            
-            /* 遊戲區域適應 */
-            .boss-raid-container, .game-frame { width: 100%; box-sizing: border-box; padding: 20px 10px; min-height: auto; }
-            .duel-arena { grid-template-columns: 1fr; }
-            .boss-image-container { width: 200px; height: 200px; margin: 0 auto 15px; }
-        }
-        
-        @media (max-width: 740px) {
-            /* 精準縮放 700px 的遊戲畫布 (塔防與PvP) */
-            [style*="width:700px"] { 
-                transform-origin: top left;
-                transform: scale(calc((100vw - 30px) / 700));
-                margin-bottom: calc(-300px * (1 - ((100vw - 30px) / 700))); 
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .nav-item { font-size: 13px; padding: 10px 15px; }
-            .hero h1 { font-size: 2.5rem; }
-        }
-
+        .app-container { flex: 1; min-height: 0; height: 100%; max-height: 100vh; overflow: hidden; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <aside class="sidebar-main">
-        <div class="sidebar-logo" onclick="location.href='dashboard.html'">🧩 Creative Blocks</div>
-        <a href="index.html" class="nav-item">🏠 平台首頁</a>
-        <a href="dashboard.html" class="nav-item">🏫 我的班級</a>
-        
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">創作與探索</div>
-        <a href="page.html" class="nav-item">🚀 創作空間</a>
-        <a href="main.html?view=mine" class="nav-item">📂 我的作品</a>
-        <a href="main.html" class="nav-item">🌍 探索中心</a>
-
-        <div style="margin: 20px 30px 10px; font-size: 11px; color: #475569; letter-spacing: 1px; text-transform: uppercase;">指令競技</div>
-        <a href="lab.html" class="nav-item">🧪 指令實驗室</a>
-        <a href="game.html" class="nav-item">🎮 指令塔防</a>
-        <a href="shop.html" class="nav-item">🛒 創意商城</a>
-        <a href="chat.html" class="nav-item active">💬 交流大廳</a>
-        <a href="admin.html" id="admin-link-main" class="nav-item" style="display:none; color:var(--accent);">🛠️ 管理面板</a>
-        
+    <aside class="sidebar-main" data-doratch-active="chat">
         <div class="sidebar-footer">
             <div class="user-mini-card">
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
@@ -314,6 +243,9 @@
     </div>
 </div>
 
+    </div>
+</div>
+
     <script src="doratch-base.js"></script>
     <script src="skulpt.min.js"></script>
     <script src="skulpt-stdlib.js"></script>
@@ -346,6 +278,7 @@
     let currentChatParticipants = [];
     let currentChatAttachedBots = [];
     let currentChatBotsMeta = [];
+    const botSessionCache = {};
     let unsubscribeMessages = null;
     let unsubscribeChatDoc = null;
     let modalMode = ''; // 'private' or 'group'
@@ -541,6 +474,7 @@
         currentChatId = chatId;
         currentChatTeacherId = teacherId;
         currentChatType = chatType;
+        Object.keys(botSessionCache).forEach(k => delete botSessionCache[k]);
         
         // 更新樣式
         document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
@@ -616,13 +550,14 @@
             const msg = docSnap.data();
             window.currentMessages[docSnap.id] = msg;
             
-            const senderName = msg.type === 'bot'
+            const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
+            const senderName = isBotMsg
                 ? (msg.botName || "Bot")
                 : (msg.senderEmail || "未知").split('@')[0];
             const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
             const timeStr = timeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const fullTimeStr = timeObj.toLocaleDateString() + ' ' + timeStr;
-            const avatarUrl = msg.type === 'bot'
+            const avatarUrl = isBotMsg
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
                 : `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
             
@@ -630,8 +565,8 @@
             const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
             const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
-            const botBadge = msg.type === 'bot' ? `<span class="bot-badge">BOT</span>` : '';
-            const rowClass = msg.type === 'bot' ? 'message-row bot-msg' : 'message-row';
+            const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
+            const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
             
             let contentHtml = '';
             if (msg.type === 'file') {
@@ -646,7 +581,7 @@
                     </div>
                 `;
             } else {
-                contentHtml = msg.type === 'bot' ? renderBotMessageBody(msg) : `<div class="msg-text">${escHtml(msg.text || "")}</div>`;
+                contentHtml = isBotMsg ? renderBotMessageBody(msg) : `<div class="msg-text">${escHtml(msg.text || "")}</div>`;
             }
 
             if (isConsecutive) {
@@ -749,6 +684,7 @@
         if (!currentChatId || !token) return;
         if (!confirm("確定要中斷此 Bot 的連接嗎？")) return;
         try {
+            delete botSessionCache[token];
             const chatSnap = await getDoc(doc(db, "chats", currentChatId));
             const bots = (chatSnap.data()?.attachedBots || []).filter(b => b.token !== token);
             await updateDoc(doc(db, "chats", currentChatId), {
@@ -887,13 +823,15 @@
 
     async function postBotResponses(entry, botData, responses) {
         const botName = entry.name || botData.name || "Bot";
+        const botSenderId = "bot:" + (entry.botId || entry.token);
         for (const resp of responses) {
             const hasContent = resp.content || resp.embed || (resp.view && resp.view.items && resp.view.items.length);
             if (!hasContent) continue;
             const previewText = resp.content || (window.DiscordBotRuntime ? window.DiscordBotRuntime.formatEmbedText(resp.embed) : "") || "🎛 互動元件";
             await addDoc(collection(db, "chats", currentChatId, "messages"), {
-                senderId: "bot:" + entry.token,
+                senderId: botSenderId,
                 senderEmail: "bot@" + entry.token.slice(0, 8),
+                senderType: "bot",
                 botName: botName,
                 botToken: entry.token,
                 botOwnerId: entry.ownerId,
@@ -913,6 +851,100 @@
         });
     }
 
+    async function postBotError(entry, message) {
+        if (!currentChatId || !entry || !message) return;
+        const botName = entry.name || "Bot";
+        const botSenderId = "bot:" + (entry.botId || entry.token || "unknown");
+        const text = "⚠️ " + String(message).slice(0, 260);
+        await addDoc(collection(db, "chats", currentChatId, "messages"), {
+            senderId: botSenderId,
+            senderEmail: "bot@" + String(entry.token || "sys").slice(0, 8),
+            senderType: "bot",
+            botName: botName,
+            botToken: entry.token || "",
+            botOwnerId: entry.ownerId || "",
+            botId: entry.botId || "",
+            text: text,
+            type: "bot",
+            createdAt: serverTimestamp()
+        });
+    }
+
+    function findBotCommandBody(code, commandName, isSlash) {
+        const lines = String(code || "").replace(/\r/g, "").split("\n");
+        const target = String(commandName || "").trim().toLowerCase();
+        if (!target) return { matched: false, body: "" };
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = (lines[i] || "").trim();
+            const hit = isSlash ? /\.tree\.command\b/.test(line) : (/\.command\b/.test(line) && !/\.tree\.command\b/.test(line));
+            if (!hit) continue;
+
+            let deco = line;
+            for (let d = i + 1; d < Math.min(i + 4, lines.length) && deco.indexOf(")") === -1; d++) {
+                deco += " " + (lines[d] || "").trim();
+            }
+
+            let defLine = -1;
+            let funcName = "";
+            for (let j = i + 1; j < Math.min(i + 14, lines.length); j++) {
+                const m = (lines[j] || "").match(/^\s*(?:async\s+)?def\s+(\w+)\s*\(/);
+                if (m) {
+                    defLine = j;
+                    funcName = m[1];
+                    break;
+                }
+            }
+            if (defLine === -1) continue;
+
+            const named = (deco.match(/name\s*=\s*['"]([^'"]+)['"]/) || [])[1];
+            const cmdName = String(named || funcName || "").toLowerCase();
+            if (cmdName !== target) continue;
+
+            const defIndent = (lines[defLine].match(/^\s*/) || [""])[0].length;
+            const bodyLines = [];
+            for (let k = defLine + 1; k < lines.length; k++) {
+                const raw = lines[k] || "";
+                const trim = raw.trim();
+                if (!trim) {
+                    bodyLines.push(raw);
+                    continue;
+                }
+                const indent = (raw.match(/^\s*/) || [""])[0].length;
+                if (indent <= defIndent) break;
+                bodyLines.push(raw);
+            }
+            return { matched: true, body: bodyLines.join("\n") };
+        }
+        return { matched: false, body: "" };
+    }
+
+    function extractLiteralReplyFromBody(body) {
+        const text = String(body || "");
+        const patterns = [
+            /await\s+ctx\.(?:send|reply)\s*\(([^)]*)\)/m,
+            /await\s+interaction\.response\.send_message\s*\(([^)]*)\)/m,
+            /await\s+interaction\.followup\.send\s*\(([^)]*)\)/m
+        ];
+        for (const re of patterns) {
+            const mm = text.match(re);
+            if (!mm || !mm[1]) continue;
+            const arg = mm[1];
+            const qm = arg.match(/['"]([^'"]+)['"]/);
+            if (qm && qm[1]) return qm[1];
+        }
+        return "";
+    }
+
+    function buildCodeFallbackResponse(code, commandName, isSlash) {
+        const info = findBotCommandBody(code, commandName, isSlash);
+        if (!info.matched) return null;
+        const literal = extractLiteralReplyFromBody(info.body);
+        if (literal) return { content: literal };
+        const prefix = isSlash ? "/" : "!";
+        return { content: "✅ " + prefix + commandName + " 已執行（此指令未輸出文字）" };
+    }
+
     window.handleChatBotComponent = async (botToken, viewId, customId, values) => {
         if (!currentChatId) return;
         const entry = currentChatAttachedBots.find(b => b.token === botToken);
@@ -920,11 +952,14 @@
         try {
             const botData = await loadBotCode(entry.ownerId, entry.botId);
             if (!botData || !botData.pythonCode) return;
+            const sessionKey = botSessionCache[entry.token] || null;
             const r = await window.DiscordBotRuntime.handleInteraction({
                 code: botData.pythonCode,
+                sessionKey: sessionKey,
                 type: "component",
                 payload: { viewId, customId, values: values || [] }
             });
+            if (r.sessionKey) botSessionCache[entry.token] = r.sessionKey;
             if (r.error || !r.responses || !r.responses.length) return;
             await postBotResponses(entry, botData, r.responses);
         } catch (e) {
@@ -933,43 +968,115 @@
     };
 
     async function processAttachedBots(userText) {
-        if (!currentChatAttachedBots.length || !window.DiscordBotEngine) return;
+        const hasRuntime = !!window.DiscordBotRuntime;
+        const hasLegacyEngine = !!window.DiscordBotEngine;
+        if (!currentChatAttachedBots.length || (!hasRuntime && !hasLegacyEngine)) return;
         if (!userText || (userText.charAt(0) !== "!" && userText.charAt(0) !== "/")) return;
 
         const isSlash = userText.charAt(0) === "/";
-        const slashName = isSlash ? userText.slice(1).split(/\s+/)[0] : null;
+        const slashParts = isSlash ? userText.slice(1).trim().split(/\s+/).filter(Boolean) : [];
+        const slashName = isSlash ? (slashParts[0] || null) : null;
+        const slashArgs = isSlash ? slashParts.slice(1) : [];
+        const prefixName = !isSlash ? userText.slice(1).split(/\s+/)[0] : null;
 
         for (const entry of currentChatAttachedBots) {
             try {
-                const tokenSnap = await getDoc(doc(db, "botTokens", entry.token));
-                if (!tokenSnap.exists() || !tokenSnap.data().active) continue;
-
                 const botData = await loadBotCode(entry.ownerId, entry.botId);
                 if (!botData || !botData.pythonCode) continue;
 
                 let responses = [];
-                if (isSlash && window.DiscordBotRuntime && window.DiscordBotRuntime.isDiscordPyCode(botData.pythonCode)) {
+                let runtimeError = null;
+                const canUseRuntime = hasRuntime && window.DiscordBotRuntime.isDiscordPyCode(botData.pythonCode);
+                if (canUseRuntime) {
+                    const payload = isSlash ? { name: slashName, args: slashArgs } : userText;
                     const r = await window.DiscordBotRuntime.handleInteraction({
                         code: botData.pythonCode,
-                        type: "slash",
-                        payload: slashName
+                        sessionKey: botSessionCache[entry.token] || null,
+                        type: isSlash ? "slash" : "prefix",
+                        payload: payload
                     });
-                    if (r.error) continue;
-                    responses = r.responses || [];
-                } else if (!isSlash) {
+                    if (r.sessionKey) botSessionCache[entry.token] = r.sessionKey;
+                    if (r.error) {
+                        runtimeError = r.error;
+                    } else {
+                        responses = r.responses || [];
+                    }
+                }
+
+                // / 指令無回覆時，自動嘗試轉成 ! 指令（很多 Bot 只註冊 prefix）
+                if (!responses.length && isSlash && canUseRuntime && slashName) {
+                    const altPrefix = "!" + slashName + (slashArgs.length ? (" " + slashArgs.join(" ")) : "");
+                    const r2 = await window.DiscordBotRuntime.handleInteraction({
+                        code: botData.pythonCode,
+                        sessionKey: botSessionCache[entry.token] || null,
+                        type: "prefix",
+                        payload: altPrefix
+                    });
+                    if (r2.sessionKey) botSessionCache[entry.token] = r2.sessionKey;
+                    if (!r2.error && r2.responses && r2.responses.length) {
+                        responses = r2.responses;
+                    } else if (r2.error && !runtimeError) {
+                        runtimeError = r2.error;
+                    }
+                }
+
+                // Runtime 沒回覆時，prefix 退回 legacy 模式，避免「無反應」
+                if (!responses.length && !isSlash && hasLegacyEngine) {
                     const res = await window.DiscordBotEngine.runBotCode(botData.pythonCode, userText);
-                    if (res.error) continue;
+                    if (res.error) {
+                        if (!runtimeError) runtimeError = res.error;
+                    }
                     if (res.responses && res.responses.length) {
                         responses = res.responses;
                     } else if (res.reply) {
                         responses = [{ content: res.reply }];
                     }
                 }
-                if (!responses.length) continue;
+
+                // slash 也允許 legacy fallback（先試原文，再試 !cmd）
+                if (!responses.length && isSlash && hasLegacyEngine) {
+                    const resSlash = await window.DiscordBotEngine.runBotCode(botData.pythonCode, userText);
+                    if (!resSlash.error) {
+                        if (resSlash.responses && resSlash.responses.length) {
+                            responses = resSlash.responses;
+                        } else if (resSlash.reply) {
+                            responses = [{ content: resSlash.reply }];
+                        }
+                    }
+                    if (!responses.length && slashName) {
+                        const resPrefix = await window.DiscordBotEngine.runBotCode(botData.pythonCode, "!" + slashName);
+                        if (!resPrefix.error) {
+                            if (resPrefix.responses && resPrefix.responses.length) {
+                                responses = resPrefix.responses;
+                            } else if (resPrefix.reply) {
+                                responses = [{ content: resPrefix.reply }];
+                            }
+                        }
+                    }
+                }
+
+                if (!responses.length) {
+                    const fallbackCmd = isSlash ? slashName : prefixName;
+                    const codeFallback = buildCodeFallbackResponse(botData.pythonCode, fallbackCmd, isSlash);
+                    if (codeFallback) {
+                        responses = [codeFallback];
+                    }
+                }
+
+                if (!responses.length) {
+                    if (runtimeError) {
+                        console.warn("Bot 無回覆:", runtimeError, entry.name || entry.botId || entry.token);
+                        await postBotError(entry, "Bot 指令執行失敗：" + runtimeError);
+                    } else {
+                        await postBotError(entry, "Bot 未匹配指令：" + userText);
+                    }
+                    continue;
+                }
 
                 await postBotResponses(entry, botData, responses);
             } catch (e) {
                 console.warn("Bot 回覆失敗:", e);
+                await postBotError(entry, "Bot 例外：" + (e && e.message ? e.message : String(e)));
             }
         }
     }
@@ -1275,6 +1382,6 @@
         }
     };
 </script>
-
+<script src="doratch-shell.js"></script>
 </body>
 </html>

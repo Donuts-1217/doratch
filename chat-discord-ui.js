@@ -46,7 +46,19 @@
                         meta.slash = load.meta.slash || [];
                         meta.prefix = load.meta.prefix || [];
                         meta.botName = (load.meta.user || meta.name).split("#")[0];
-                        meta.slash.forEach(function (cmd) {
+                        load.meta.slash.forEach(function (cmd) {
+                            flatSlash.push({
+                                name: cmd.name,
+                                description: cmd.description || "",
+                                botName: meta.name,
+                                botToken: entry.token
+                            });
+                        });
+                    } else if (global.DiscordBotRuntime.parseBotMetaFromCode) {
+                        var parsed = global.DiscordBotRuntime.parseBotMetaFromCode(botData.pythonCode);
+                        meta.slash = parsed.slash || [];
+                        meta.prefix = parsed.prefix || [];
+                        parsed.slash.forEach(function (cmd) {
                             flatSlash.push({
                                 name: cmd.name,
                                 description: cmd.description || "",

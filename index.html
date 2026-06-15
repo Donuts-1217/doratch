@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="stylesheet" href="responsive-global.css">
-    <title>Creative Blocks Pro - 引領未來的積木程式平台</title>
+    <title>Doratch - 程式學習與創作平台</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -17,8 +17,9 @@
         nav { 
             background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); 
             height: 80px; display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 5%; position: fixed; width: 90%; top: 0; z-index: 1000;
+            padding: 0 5%; position: fixed; width: 100%; top: 0; left: 0; z-index: 1000;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            box-sizing: border-box;
         }
         .logo { font-size: 1.6rem; font-weight: 900; color: var(--primary); cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
         .nav-links { display: flex; gap: 25px; align-items: center; }
@@ -135,7 +136,7 @@
     <div class="bg-dots"></div>
 
     <nav>
-        <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
+        <div class="logo" onclick="location.href='index.html'">🚀 Doratch</div>
         <div class="nav-links" id="nav-actions">
             <span style="color:#64748B;">Connecting...</span>
         </div>
@@ -143,10 +144,10 @@
 
     <div class="hero">
         <div style="background:rgba(76, 151, 255, 0.1); color:var(--primary); padding:8px 20px; border-radius:50px; font-weight:900; font-size:12px; margin-bottom:30px; letter-spacing:1px; border:1px solid rgba(76,151,255,0.2);">
-            ✨ 2026 全球同步：支援 APCS 自動檢測系統
+            ✨ 2026 全新升級：Doratch 學習體驗
         </div>
         <h1>編程，不只是代碼<br><span>更是無限的冒險</span></h1>
-        <p>結合 1v1 決鬥、領土攻城戰與專業 APCS 測評。這不僅是一個編程平台，更是你通往未來的數位競技場。</p>
+        <p>結合挑戰練習、作品探索與即時互動。這不僅是一個編程平台，更是你通往未來的數位競技場。</p>
         
         <div id="hero-actions">
             <div style="color:#64748B;">Preparing Arena...</div>
@@ -157,11 +158,11 @@
         <div class="feat-card" onclick="location.href='python.html'" style="cursor:pointer;">
             <div class="feat-icon">🐍</div>
             <h3>Python 文字程式</h3>
-            <p>從 print、input 到 APCS 經典題。瀏覽器內執行真實 Python，自動測試通關。</p>
+            <p>從 print、input 到一般邏輯題。瀏覽器內執行真實 Python，自動測試通關。</p>
         </div>
         <div class="feat-card">
             <div class="feat-icon">🛡️</div>
-            <h3>APCS 能力認證</h3>
+            <h3>一般題庫挑戰</h3>
             <p>Blockly 積木與 Python 雙軌並進。完成挑戰可獲專業勳章與平台金幣。</p>
         </div>
         <div class="feat-card">
@@ -190,14 +191,14 @@
     </section>
 
     <footer>
-        <div class="logo" style="margin-bottom:20px;">Creative Blocks Pro</div>
+        <div class="logo" style="margin-bottom:20px;">Doratch</div>
         <div class="footer-links">
-            <a href="#">開發文檔</a>
-            <a href="#">隱私權益</a>
-            <a href="#">APCS 指南</a>
-            <a href="login.html">進入競技場</a>
+            <a href="main.html">作品探索</a>
+            <a href="challenge_zone.html">挑戰區</a>
+            <a href="create.html">創作中心</a>
+            <a href="game.html">進入競技場</a>
         </div>
-        <p style="color:#475569; font-size:13px;">&copy; 2026 Creative Blocks Pro. Powering the next generation of engineers.</p>
+        <p style="color:#475569; font-size:13px;">&copy; 2026 Doratch. Build, learn, and challenge together.</p>
     </footer>
 
     <script type="module">
@@ -228,7 +229,7 @@
                     <a href="dashboard.html" class="btn btn-outline">進入工作空間</a>
                 `;
             } else {
-                nav.innerHTML = `<a href="main.html">作品探索</a><a href="projects.html">我的作品</a><a href="challenge_zone.html">🎯 挑戰區</a><a href="login.html" style="color:var(--primary);">登入競技場</a>`;
+                nav.innerHTML = `<a href="main.html">作品探索</a><a href="challenge_zone.html">🎯 挑戰區</a><a href="game.html" style="color:var(--primary);">🎮 進入競技場</a><a href="login.html" style="color:var(--secondary);">🔐 登入</a>`;
                 hero.innerHTML = `<a href="login.html" class="btn btn-primary">立即開始冒險</a><a href="main.html" class="btn btn-outline">看看大家的作品</a>`;
             }
         });

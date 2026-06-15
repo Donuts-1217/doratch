@@ -1,20 +1,95 @@
 /**
- * Doratch — 全站側欄導覽（與各頁 app-container 搭配）
+ * Doratch — 全站側欄導覽與版面（單一來源）
  */
-.app-container .sidebar-main {
-    width: 260px;
+
+/* ── Layout shell ── */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    height: 100vh;
+    width: 100%;
+    max-width: 100vw;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.app-container:has(> .main-chat-wrapper) {
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar-main,
+.sidebar[data-doratch-admin-nav] {
     background: #0b0e14;
     color: #fff;
     display: flex;
     flex-direction: column;
-    position: fixed;
-    height: 100vh;
-    z-index: 1000;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.app-container .sidebar-main {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    position: sticky !important;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+.sidebar[data-doratch-admin-nav] {
+    flex-shrink: 0;
+}
+
+body:has(> .sidebar[data-doratch-admin-nav]) {
+    display: flex;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
+}
+
+.doratch-nav-host {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.app-container > .main-content,
+.app-container > .main-chat-wrapper,
+.app-container > main.main-content {
+    flex: 1 1 auto !important;
+    min-width: 0;
+    min-height: 0;
+    margin-left: 0 !important;
+    width: auto !important;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.main-chat-wrapper {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+}
+
+.sidebar[data-doratch-admin-nav] + .main {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* ── Brand & nav items ── */
 .doratch-brand-logo,
-.app-container .sidebar-logo {
+.sidebar-main .sidebar-logo,
+.sidebar[data-doratch-admin-nav] .sidebar-logo {
     padding: 30px;
     font-weight: 900;
     font-size: 1.35rem;
@@ -23,10 +98,11 @@
     letter-spacing: 0.06em;
     text-transform: lowercase;
     font-family: "Outfit", "Noto Sans TC", sans-serif;
+    flex-shrink: 0;
 }
 
 .doratch-brand-logo span,
-.app-container .sidebar-logo span {
+.sidebar-main .sidebar-logo span {
     color: #94a3b8;
     font-size: 0.65em;
     font-weight: 700;
@@ -36,7 +112,8 @@
     text-transform: uppercase;
 }
 
-.app-container .nav-item {
+.sidebar-main .nav-item,
+.sidebar[data-doratch-admin-nav] .doratch-admin-quick-nav .nav-item {
     padding: 15px 30px;
     display: flex;
     align-items: center;
@@ -55,15 +132,81 @@
     box-sizing: border-box;
 }
 
-.app-container .nav-item:hover,
-.app-container .nav-item.active {
+.sidebar-main .nav-item:hover,
+.sidebar-main .nav-item.active,
+.sidebar[data-doratch-admin-nav] .doratch-admin-quick-nav .nav-item:hover,
+.sidebar[data-doratch-admin-nav] .doratch-admin-quick-nav .nav-item.active {
     background: rgba(255, 255, 255, 0.05);
     color: #fff;
 }
 
-.app-container .nav-item.active {
+.sidebar-main .nav-item.active,
+.sidebar[data-doratch-admin-nav] .doratch-admin-quick-nav .nav-item.active {
     color: #4c97ff;
     border-left: 4px solid #4c97ff;
+}
+
+.sidebar-main .nav-item--category {
+    font-size: 15px;
+    padding: 14px 30px;
+}
+
+.sidebar-main .nav-item--category.active {
+    font-weight: 900;
+}
+
+.doratch-nav-category {
+    position: relative;
+}
+
+.sidebar-main .nav-item--toggle {
+    justify-content: space-between;
+}
+
+.doratch-caret {
+    color: #64748b;
+    transition: transform 0.2s ease;
+}
+
+.doratch-nav-category.is-open .doratch-caret {
+    transform: rotate(90deg);
+    color: #4c97ff;
+}
+
+.doratch-submenu {
+    display: none;
+    position: fixed;
+    left: var(--submenu-left, 280px);
+    top: var(--submenu-top, 100px);
+    min-width: 220px;
+    max-width: 260px;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+    z-index: 3000;
+}
+
+.doratch-submenu.is-open {
+    display: block;
+}
+
+.doratch-submenu-item {
+    display: block;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+    padding: 10px 12px;
+    border-radius: 8px;
+}
+
+.doratch-submenu-item:hover,
+.doratch-submenu-item.active {
+    color: #fff;
+    background: rgba(76, 151, 255, 0.2);
 }
 
 .doratch-nav-section-label {
@@ -74,13 +217,16 @@
     text-transform: uppercase;
 }
 
-.app-container .sidebar-footer {
+.sidebar-main .sidebar-footer,
+.sidebar[data-doratch-admin-nav] .sidebar-footer {
     margin-top: auto;
     padding: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
-.app-container .user-mini-card {
+.sidebar-main .user-mini-card,
+.sidebar[data-doratch-admin-nav] .user-mini-card {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -89,40 +235,58 @@
     background: rgba(255, 255, 255, 0.03);
 }
 
-.app-container .main-content {
-    flex: 1;
-    margin-left: 260px;
+.doratch-admin-quick-nav {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 4px;
 }
 
+/* ── Mobile ── */
 @media (max-width: 1024px) {
     .app-container {
         flex-direction: column;
-    }
-    .app-container .sidebar-main {
-        width: 100vw;
         height: auto;
-        position: static;
-        flex-direction: row;
-        overflow-x: auto;
-        white-space: nowrap;
-        flex-wrap: nowrap;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        min-height: 100vh;
+        overflow-x: hidden;
     }
+
+    .app-container:has(> .main-chat-wrapper) {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .app-container .sidebar-main {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        max-width: 100vw;
+        height: auto !important;
+        max-height: none !important;
+        position: static !important;
+        flex-direction: row;
+        align-items: stretch;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        align-self: stretch;
+    }
+
     .doratch-brand-logo,
-    .app-container .sidebar-logo {
+    .sidebar-main .sidebar-logo {
         display: none;
     }
+
     .doratch-nav-host {
         display: flex;
         flex-direction: row;
         align-items: center;
         flex-wrap: nowrap;
+        overflow: visible;
     }
+
     .doratch-nav-section-label {
         display: none;
     }
-    .app-container .nav-item {
+
+    .sidebar-main .nav-item {
         padding: 12px 20px;
         font-size: 14px;
         flex-shrink: 0;
@@ -130,24 +294,60 @@
         border-bottom: 2px solid transparent;
         width: auto;
     }
-    .app-container .nav-item.active {
+
+    .sidebar-main .nav-item.active {
         border-bottom: 2px solid #4c97ff;
         border-left: none !important;
     }
-    .app-container .sidebar-footer {
+
+    .doratch-nav-category {
+        position: static;
+    }
+
+    .doratch-submenu {
+        left: auto;
+        right: auto;
+        top: auto;
+        position: static;
+        margin-left: 4px;
+        margin-right: 10px;
+        min-width: auto;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.04);
+        box-shadow: none;
+        padding: 4px;
+    }
+
+    .doratch-submenu-item {
+        display: inline-flex;
+        font-size: 12px;
+        padding: 7px 10px;
+    }
+
+    .sidebar-main .sidebar-footer {
         width: auto;
         border: none;
         padding: 5px 15px;
         margin-top: 0;
         flex-shrink: 0;
     }
-    .app-container .main-content {
-        margin-left: 0;
-        width: 100vw;
+
+    .app-container > .main-content,
+    .app-container > .main-chat-wrapper,
+    .app-container > main.main-content {
+        padding: 16px;
+        width: 100% !important;
+        max-width: 100vw;
+    }
+
+    .main-chat-wrapper {
+        height: auto;
+        min-height: calc(100vh - 52px);
     }
 }
 
-/* 頂部橫向導覽（首頁 / 登入 / 編輯器） */
+/* ── Top nav (index / login) ── */
 .doratch-top-brand {
     font-size: 1.35rem;
     font-weight: 900;

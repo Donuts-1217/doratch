@@ -231,7 +231,11 @@
                 els.slashBar.style.display = "none";
                 return;
             }
+            var seen = {};
             cmds.forEach(function (c) {
+                var key = String(c.name || "").toLowerCase();
+                if (!c.name || seen[key]) return;
+                seen[key] = true;
                 var btn = document.createElement("button");
                 btn.type = "button";
                 btn.className = "dbs-slash-cmd";
@@ -244,11 +248,18 @@
         }
 
         function showSlashBar() {
-            if (!(state.meta && state.meta.slash && state.meta.slash.length)) {
-                systemNote("此 Bot 尚未註冊斜線指令（@bot.tree.command）");
+            var hasSlash = state.meta && state.meta.slash && state.meta.slash.length;
+            var hasPrefix = state.meta && state.meta.prefix && state.meta.prefix.length;
+            if (!hasSlash && !hasPrefix) {
+                systemNote("此 Bot 尚未註冊指令（@bot.command 或 @bot.tree.command）");
                 return;
             }
-            els.slashBar.style.display = els.slashBar.style.display === "block" ? "none" : "block";
+            if (!hasSlash && hasPrefix) {
+                systemNote("前綴指令：" + state.meta.prefix.map(function (c) { return "!" + c; }).join(" · ") + "（在下方輸入框輸入）");
+                return;
+            }
+            renderSlashCommands();
+            els.slashBar.style.display = els.slashBar.style.display === "flex" ? "none" : "flex";
         }
 
         function hideSlashBar() {
@@ -309,8 +320,9 @@
                 }
                 if (state.meta.slash && state.meta.slash.length) {
                     systemNote("斜線指令：/" + state.meta.slash.map(function (c) { return c.name; }).join(" · /"));
-                } else {
-                    systemNote("⚠️ 未偵測到斜線指令，請確認有 @client.tree.command 或 @bot.tree.command");
+                }
+                if (!(state.meta.slash && state.meta.slash.length) && !(state.meta.prefix && state.meta.prefix.length)) {
+                    systemNote("⚠️ 未偵測到指令。請確認有 @bot.command 或 @bot.tree.command，並按「重新連線」");
                 }
             } else {
                 botName = token === global.DiscordBotEngine.DEMO_TOKEN ? "Doratch 示範 Bot" : "Legacy Bot";

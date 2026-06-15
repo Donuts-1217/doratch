@@ -24,7 +24,13 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && (
         isAdmin() ||
-        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']))
+        (
+          request.auth.uid == userId &&
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+            request.resource.data.role == resource.data.role
+          )
+        )
       );
       allow delete: if isAdmin();
 
@@ -217,6 +223,30 @@ service cloud.firestore {
     match /mall_items/{itemId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // 程式作品送審（金幣核發）
+    match /coin_review_requests/{requestId} {
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      allow read: if request.auth != null && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+
+      // 一般使用者只能更新自己的補充資訊；管理員可審核狀態與核發金額
+      allow update: if request.auth != null && (
+        (
+          resource.data.userId == request.auth.uid &&
+          request.resource.data.userId == resource.data.userId &&
+          request.resource.data.status == resource.data.status
+        ) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
     }
   }
 }

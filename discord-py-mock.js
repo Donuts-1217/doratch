@@ -15,7 +15,11 @@
             "    def __exit__(self, *a):\n" +
             "        return False\n" +
             "    def write(self, data):\n" +
-            "        _files[self.path] = _files.get(self.path, '') + str(data)\n" +
+            "        s = str(data)\n" +
+            "        _files[self.path] = _files.get(self.path, '') + s\n" +
+            "        return len(s)\n" +
+            "    def flush(self):\n" +
+            "        return None\n" +
             "\n" +
             "class _MemReader:\n" +
             "    def __init__(self, path):\n" +
@@ -26,11 +30,15 @@
             "        return False\n" +
             "    def read(self):\n" +
             "        return _files.get(self.path, '')\n" +
+            "    def readline(self):\n" +
+            "        data = _files.get(self.path, '')\n" +
+            "        idx = data.find('\\n')\n" +
+            "        return data if idx < 0 else data[:idx + 1]\n" +
             "\n" +
             "def _exists(path):\n" +
             "    return path in _files\n" +
             "\n" +
-            "def _open(path, mode='r'):\n" +
+            "def _open(path, mode='r', *args, **kwargs):\n" +
             "    if 'w' in str(mode):\n" +
             "        return _MemWriter(path)\n" +
             "    return _MemReader(path)\n" +
@@ -75,6 +83,17 @@
             "    green = 0x23a559\n" +
             "    red = 0xed4245\n" +
             "\n" +
+            "class Color:\n" +
+            "    @staticmethod\n" +
+            "    def blue():\n" +
+            "        return Colour.blue\n" +
+            "    @staticmethod\n" +
+            "    def green():\n" +
+            "        return Colour.green\n" +
+            "    @staticmethod\n" +
+            "    def red():\n" +
+            "        return Colour.red\n" +
+            "\n" +
             "class Interaction:\n" +
             "    pass\n" +
             "\n" +
@@ -101,7 +120,10 @@
             "        self._commands = {}\n" +
             "        self._events = {}\n" +
             "        self._token = None\n" +
-            "        self.tree = None\n" +
+            "        import discord.ext.commands as _cmds\n" +
+            "        self.tree = _cmds.CommandTree(self)\n" +
+            "        global __ACTIVE_BOT\n" +
+            "        __ACTIVE_BOT = self\n" +
             "\n" +
             "    def run(self, token):\n" +
             "        import discord.ext.commands as _cmds\n" +
@@ -115,24 +137,40 @@
             "        import discord.ext.commands as _cmds\n" +
             "        return await _cmds.client_dispatch_slash(self, name)\n" +
             "\n" +
+            "    def dispatch_slash_sync(self, name):\n" +
+            "        import discord.ext.commands as _cmds\n" +
+            "        return _cmds.client_dispatch_slash_sync(self, name)\n" +
+            "\n" +
             "    def event(self, func):\n" +
             "        self._events[func.__name__] = func\n" +
             "        return func\n" +
+            "\n" +
+            "import discord.app_commands as app_commands\n" +
             "\n",
 
         "src/lib/discord/ext/async_runner.py":
-            "import asyncio\n" +
+            "def _drain(awaitable):\n" +
+            "    if awaitable is None:\n" +
+            "        return None\n" +
+            "    if not hasattr(awaitable, '__await__'):\n" +
+            "        return awaitable\n" +
+            "    it = awaitable.__await__()\n" +
+            "    send_val = None\n" +
+            "    while True:\n" +
+            "        try:\n" +
+            "            yielded = it.send(send_val)\n" +
+            "            send_val = None\n" +
+            "            if yielded is None:\n" +
+            "                continue\n" +
+            "            if hasattr(yielded, '__await__'):\n" +
+            "                send_val = _drain(yielded)\n" +
+            "        except StopIteration as e:\n" +
+            "            return getattr(e, 'value', None)\n" +
             "\n" +
             "def run(coro):\n" +
             "    if coro is None:\n" +
             "        return None\n" +
-            "    try:\n" +
-            "        if hasattr(asyncio, 'run'):\n" +
-            "            return asyncio.run(coro)\n" +
-            "    except Exception:\n" +
-            "        pass\n" +
-            "    loop = asyncio.get_event_loop()\n" +
-            "    return loop.run_until_complete(coro)\n" +
+            "    return _drain(coro)\n" +
             "\n" +
             "async def invoke(handler, *args, **kwargs):\n" +
             "    result = handler(*args, **kwargs)\n" +
@@ -194,10 +232,10 @@
             "                cb = getattr(self, item['callback_name'])\n" +
             "                if item['kind'] == 'button':\n" +
             "                    btn = Button(label=item.get('label'), custom_id=custom_id, style=item.get('style', 1))\n" +
-            "                    await _ar.invoke(cb, self, interaction, btn)\n" +
+            "                    await _ar.invoke(cb, interaction, btn)\n" +
             "                else:\n" +
             "                    sel = Select(custom_id=custom_id, options=[])\n" +
-            "                    await _ar.invoke(cb, self, interaction, sel)\n" +
+            "                    await _ar.invoke(cb, interaction, sel)\n" +
             "                return interaction._responses\n" +
             "        return []\n" +
             "\n" +
@@ -253,7 +291,13 @@
             "    return deco\n",
 
         "src/lib/discord/app_commands.py":
-            "from discord.ext.commands import CommandTree\n",
+            "from discord.ext.commands import CommandTree\n" +
+            "CommandTree = CommandTree\n" +
+            "\n" +
+            "def describe(**kwargs):\n" +
+            "    def deco(func):\n" +
+            "        return func\n" +
+            "    return deco\n",
 
         "src/lib/discord/ext/__init__.py": "",
 
@@ -336,7 +380,8 @@
             "        self.data = {'values': values or []}\n" +
             "        self.user = User('User')\n" +
             "        self.channel = Channel('general')\n" +
-            "        self.guild = None\n" +
+            "        self.guild_id = 'guild_1'\n" +
+            "        self.guild = {'id': self.guild_id}\n" +
             "        self.response = InteractionResponse(self)\n" +
             "        self.followup = InteractionFollowup(self)\n" +
             "        self._responses = []\n" +
@@ -348,6 +393,10 @@
             "        self.id = uid\n" +
             "        self.bot = False\n" +
             "        self.mention = '@' + name\n" +
+            "    def __str__(self):\n" +
+            "        return self.name\n" +
+            "    def __repr__(self):\n" +
+            "        return self.name\n" +
             "\n" +
             "class Member(User):\n" +
             "    pass\n" +
@@ -402,6 +451,7 @@
             "        def deco(func):\n" +
             "            cmd = name if name else func.__name__\n" +
             "            self._bot._slash[cmd] = {'description': description, 'func': func}\n" +
+            "            self._bot._slash[str(cmd).lower()] = {'description': description, 'func': func}\n" +
             "            return func\n" +
             "        return deco\n" +
             "\n" +
@@ -433,9 +483,11 @@
             "        def deco(func):\n" +
             "            cmd = name if name else func.__name__\n" +
             "            self._commands[cmd] = func\n" +
+            "            self._commands[str(cmd).lower()] = func\n" +
             "            if aliases:\n" +
             "                for a in aliases:\n" +
             "                    self._commands[a] = func\n" +
+            "                    self._commands[str(a).lower()] = func\n" +
             "            return func\n" +
             "        return deco\n" +
             "\n" +
@@ -454,10 +506,15 @@
             "    async def dispatch_slash(self, name):\n" +
             "        return await client_dispatch_slash(self, name)\n" +
             "\n" +
+            "    def dispatch_slash_sync(self, name):\n" +
+            "        return client_dispatch_slash_sync(self, name)\n" +
+            "\n" +
             "    def run(self, token):\n" +
             "        global __ACTIVE_BOT\n" +
             "        __ACTIVE_BOT = self\n" +
             "        self._token = token\n" +
+            "        if getattr(self, 'tree', None) is None:\n" +
+            "            self.tree = CommandTree(self)\n" +
             "        async def _startup():\n" +
             "            if 'on_ready' in self._events:\n" +
             "                await _ar.invoke(self._events['on_ready'])\n" +
@@ -477,6 +534,20 @@
             "    async def close(self):\n" +
             "        return None\n" +
             "\n" +
+            "    def _resolve_prefix_handler(self, cmd_name):\n" +
+            "        if not cmd_name:\n" +
+            "            return None\n" +
+            "        cmds = self._commands or {}\n" +
+            "        if cmd_name in cmds:\n" +
+            "            return cmds[cmd_name]\n" +
+            "        low = cmd_name.lower()\n" +
+            "        if low in cmds:\n" +
+            "            return cmds[low]\n" +
+            "        for k in cmds:\n" +
+            "            if str(k).lower() == low:\n" +
+            "                return cmds[k]\n" +
+            "        return None\n" +
+            "\n" +
             "    async def dispatch_prefix(self, text):\n" +
             "        prefix = self.command_prefix\n" +
             "        if not text.startswith(prefix):\n" +
@@ -485,10 +556,25 @@
             "        if not rest:\n" +
             "            return []\n" +
             "        parts = rest.split(' ')\n" +
-            "        cmd = parts[0].lower()\n" +
-            "        if cmd in self._commands:\n" +
+            "        handler = self._resolve_prefix_handler(parts[0])\n" +
+            "        if handler:\n" +
             "            ctx = Context(text, prefix, bot=self)\n" +
-            "            await _ar.invoke(self._commands[cmd], ctx)\n" +
+            "            await _ar.invoke(handler, ctx)\n" +
+            "            return ctx._responses\n" +
+            "        return []\n" +
+            "\n" +
+            "    def dispatch_prefix_sync(self, text):\n" +
+            "        prefix = self.command_prefix\n" +
+            "        if not text.startswith(prefix):\n" +
+            "            return []\n" +
+            "        rest = text[len(prefix):].strip()\n" +
+            "        if not rest:\n" +
+            "            return []\n" +
+            "        parts = rest.split(' ')\n" +
+            "        handler = self._resolve_prefix_handler(parts[0])\n" +
+            "        if handler:\n" +
+            "            ctx = Context(text, prefix, bot=self)\n" +
+            "            _ar.run(_ar.invoke(handler, ctx))\n" +
             "            return ctx._responses\n" +
             "        return []\n" +
             "\n" +
@@ -518,6 +604,8 @@
             "        client._commands = {}\n" +
             "    if not hasattr(client, '_events') or client._events is None:\n" +
             "        client._events = {}\n" +
+            "    if getattr(client, 'tree', None) is None:\n" +
+            "        client.tree = CommandTree(client)\n" +
             "    async def _startup():\n" +
             "        fn = getattr(client, 'on_ready', None)\n" +
             "        if fn is not None:\n" +
@@ -529,10 +617,15 @@
             "\n" +
             "def client_list_slash(client):\n" +
             "    out = []\n" +
+            "    seen = {}\n" +
             "    slash = getattr(client, '_slash', {})\n" +
             "    if slash is None:\n" +
             "        slash = {}\n" +
             "    for k in list(slash.keys()):\n" +
+            "        key = str(k).lower()\n" +
+            "        if key in seen:\n" +
+            "            continue\n" +
+            "        seen[key] = True\n" +
             "        entry = slash[k]\n" +
             "        desc = ''\n" +
             "        if entry is not None and 'description' in entry:\n" +
@@ -540,12 +633,48 @@
             "        out.append({'name': k, 'description': desc})\n" +
             "    return out\n" +
             "\n" +
-            "async def client_dispatch_slash(client, name):\n" +
+            "def _resolve_slash_entry(slash, name):\n" +
+            "    if not name:\n" +
+            "        return None\n" +
+            "    if slash is None:\n" +
+            "        slash = {}\n" +
+            "    if name in slash:\n" +
+            "        return slash[name]\n" +
+            "    low = name.lower()\n" +
+            "    if low in slash:\n" +
+            "        return slash[low]\n" +
+            "    for k in slash:\n" +
+            "        if str(k).lower() == low:\n" +
+            "            return slash[k]\n" +
+            "    return None\n" +
+            "\n" +
+            "def _parse_slash_payload(payload):\n" +
+            "    if isinstance(payload, dict):\n" +
+            "        name = payload.get('name', '')\n" +
+            "        args = payload.get('args', [])\n" +
+            "        if args is None:\n" +
+            "            args = []\n" +
+            "        return str(name), list(args)\n" +
+            "    return str(payload), []\n" +
+            "\n" +
+            "async def client_dispatch_slash(client, payload):\n" +
+            "    name, args = _parse_slash_payload(payload)\n" +
             "    slash = getattr(client, '_slash', {})\n" +
-            "    if name not in slash:\n" +
+            "    entry = _resolve_slash_entry(slash, name)\n" +
+            "    if entry is None:\n" +
             "        return []\n" +
             "    interaction = Interaction(name, is_slash=True)\n" +
-            "    await _ar.invoke(slash[name]['func'], interaction)\n" +
+            "    await _ar.invoke(entry['func'], interaction, *args)\n" +
+            "    return interaction._responses\n" +
+            "\n" +
+            "def client_dispatch_slash_sync(client, payload):\n" +
+            "    name, args = _parse_slash_payload(payload)\n" +
+            "    slash = getattr(client, '_slash', {})\n" +
+            "    entry = _resolve_slash_entry(slash, name)\n" +
+            "    if entry is None:\n" +
+            "        return []\n" +
+            "    interaction = Interaction(name, is_slash=True)\n" +
+            "    _ar.run(_ar.invoke(entry['func'], interaction, *args))\n" +
             "    return interaction._responses\n"
     };
 

@@ -15,40 +15,90 @@
     var EDITOR_FONT =
         '"JetBrains Mono", Consolas, "Courier New", monospace';
 
-    var KEYWORDS = [
+    var KEYWORDS = (global.PythonCompletions && global.PythonCompletions.KEYWORDS) || [
         "and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else",
         "except", "False", "finally", "for", "from", "global", "if", "import", "in", "is",
         "lambda", "None", "nonlocal", "not", "or", "pass", "raise", "return", "True", "try",
-        "while", "with", "yield"
+        "while", "with", "yield", "async", "await"
     ];
 
-    var BUILTINS = [
-        { label: "print", detail: "輸出到螢幕", insert: "print(${1})" },
-        { label: "input", detail: "讀取使用者輸入", insert: "input(${1:})" },
-        { label: "int", detail: "轉整數", insert: "int(${1})" },
-        { label: "str", detail: "轉字串", insert: "str(${1})" },
-        { label: "float", detail: "轉浮點數", insert: "float(${1})" },
-        { label: "len", detail: "長度", insert: "len(${1})" },
-        { label: "range", detail: "產生數列", insert: "range(${1:start}, ${2:stop})" },
-        { label: "sum", detail: "加總", insert: "sum(${1})" },
-        { label: "min", detail: "最小值", insert: "min(${1})" },
-        { label: "max", detail: "最大值", insert: "max(${1})" },
-        { label: "abs", detail: "絕對值", insert: "abs(${1})" },
-        { label: "round", detail: "四捨五入", insert: "round(${1})" },
-        { label: "list", detail: "建立串列", insert: "list(${1})" },
-        { label: "sorted", detail: "排序", insert: "sorted(${1})" },
-        { label: "enumerate", detail: "索引迭代", insert: "enumerate(${1})" },
-        { label: "type", detail: "型別", insert: "type(${1})" }
-    ];
+    function monacoKind(monaco, kind) {
+        var map = {
+            keyword: monaco.languages.CompletionItemKind.Keyword,
+            function: monaco.languages.CompletionItemKind.Function,
+            snippet: monaco.languages.CompletionItemKind.Snippet,
+            method: monaco.languages.CompletionItemKind.Method,
+            module: monaco.languages.CompletionItemKind.Module
+        };
+        return map[kind] || monaco.languages.CompletionItemKind.Text;
+    }
 
-    var SNIPPETS = [
-        { label: "if", detail: "條件骨架（需自行填條件）", insert: "if ${1:條件}:\n    ${2:pass}" },
-        { label: "elif", detail: "否則若骨架", insert: "elif ${1:條件}:\n    ${2:pass}" },
-        { label: "else", detail: "否則骨架", insert: "else:\n    ${1:pass}" },
-        { label: "for", detail: "for 骨架（需自行填寫）", insert: "for ${1:i} in range(${2:n}):\n    ${3:pass}" },
-        { label: "while", detail: "while 骨架", insert: "while ${1:條件}:\n    ${2:pass}" },
-        { label: "def", detail: "函式骨架", insert: "def ${1:函式名稱}(${2:參數}):\n    ${3:pass}" }
-    ];
+    function registerCompletions(monaco) {
+        monaco.languages.registerCompletionItemProvider("python", {
+            triggerCharacters: [".", "@"],
+            provideCompletionItems: function (model, position) {
+                var word = model.getWordUntilPosition(position);
+                var range = {
+                    startLineNumber: position.lineNumber,
+                    endLineNumber: position.lineNumber,
+                    startColumn: word.startColumn,
+                    endColumn: word.endColumn
+                };
+                var prefix = (word.word || "").replace(/^@/, "");
+                var code = model.getValue();
+                var suggestions = [];
+                var comp = global.PythonCompletions;
+                var lineBefore = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
+
+                if (comp) {
+                    var member = comp.getMemberBeforeDot(model, position);
+                    if (member) {
+                        comp.getMemberItems(member, prefix).forEach(function (item) {
+                            suggestions.push({
+                                label: item.label,
+                                kind: monacoKind(monaco, item.kind),
+                                detail: item.detail,
+                                insertText: item.insert,
+                                insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                range: range,
+                                sortText: item.sort
+                            });
+                        });
+                        return { suggestions: suggestions };
+                    }
+
+                    comp.collectItems(prefix, code, !!global.__DORATCH_FORCE_BOT_ASSIST__, { lineBefore: lineBefore }).forEach(function (item) {
+                        suggestions.push({
+                            label: item.label,
+                            kind: monacoKind(monaco, item.kind),
+                            detail: item.detail,
+                            insertText: item.insert,
+                            insertTextRules: item.kind === "keyword"
+                                ? monaco.languages.CompletionItemInsertTextRule.None
+                                : monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                            range: range,
+                            sortText: item.sort
+                        });
+                    });
+                    return { suggestions: suggestions };
+                }
+
+                KEYWORDS.forEach(function (kw) {
+                    if (!prefix || kw.toLowerCase().indexOf(prefix) === 0) {
+                        suggestions.push({
+                            label: kw,
+                            kind: monaco.languages.CompletionItemKind.Keyword,
+                            insertText: kw,
+                            range: range,
+                            sortText: "3_" + kw
+                        });
+                    }
+                });
+
+                return { suggestions: suggestions };
+            }
+        });
+    }
 
     function loadScript(src) {
         return new Promise(function (resolve, reject) {
@@ -70,65 +120,6 @@
             document.fonts.load(EDITOR_FONT_SIZE + "px Consolas").catch(function () {}),
             document.fonts.ready
         ]).then(function () {});
-    }
-
-    function registerCompletions(monaco) {
-        monaco.languages.registerCompletionItemProvider("python", {
-            triggerCharacters: ["."],
-            provideCompletionItems: function (model, position) {
-                var word = model.getWordUntilPosition(position);
-                var range = {
-                    startLineNumber: position.lineNumber,
-                    endLineNumber: position.lineNumber,
-                    startColumn: word.startColumn,
-                    endColumn: word.endColumn
-                };
-                var prefix = (word.word || "").toLowerCase();
-                var suggestions = [];
-
-                KEYWORDS.forEach(function (kw) {
-                    if (!prefix || kw.toLowerCase().indexOf(prefix) === 0) {
-                        suggestions.push({
-                            label: kw,
-                            kind: monaco.languages.CompletionItemKind.Keyword,
-                            insertText: kw,
-                            range: range,
-                            sortText: "1_" + kw
-                        });
-                    }
-                });
-
-                BUILTINS.forEach(function (b) {
-                    if (!prefix || b.label.toLowerCase().indexOf(prefix) === 0) {
-                        suggestions.push({
-                            label: b.label,
-                            kind: monaco.languages.CompletionItemKind.Function,
-                            detail: b.detail,
-                            insertText: b.insert,
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                            range: range,
-                            sortText: "0_" + b.label
-                        });
-                    }
-                });
-
-                SNIPPETS.forEach(function (sn) {
-                    if (!prefix || sn.label.toLowerCase().indexOf(prefix) === 0) {
-                        suggestions.push({
-                            label: sn.label,
-                            kind: monaco.languages.CompletionItemKind.Snippet,
-                            detail: sn.detail,
-                            insertText: sn.insert,
-                            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                            range: range,
-                            sortText: "2_" + sn.label
-                        });
-                    }
-                });
-
-                return { suggestions: suggestions };
-            }
-        });
     }
 
     function setupMonacoEnvironment(base) {
@@ -166,7 +157,7 @@
             wordBasedSuggestions: "off",
             quickSuggestions: { other: true, comments: false, strings: false },
             suggestOnTriggerCharacters: true,
-            snippetSuggestions: "none",
+            snippetSuggestions: "top",
             formatOnPaste: true,
             autoClosingBrackets: "always",
             autoClosingQuotes: "always",
@@ -184,6 +175,10 @@
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.Enter, function () {
             var btn = document.getElementById("btn-test");
             if (btn && !btn.disabled) btn.click();
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space, function () {
+            editor.trigger("manual", "editor.action.triggerSuggest", {});
         });
 
         waitForEditorFonts().then(function () {
@@ -272,6 +267,46 @@
         return initPromise;
     }
 
+    function insertSnippet(text) {
+        if (!editor || !global.monaco || !text) return false;
+        var monaco = global.monaco;
+        var pos = editor.getPosition();
+        if (!pos) return false;
+
+        var line = editor.getModel().getLineContent(pos.lineNumber);
+        var before = line.slice(0, pos.column - 1);
+        var needsSep = before.trim().length > 0 && !/\s$/.test(before);
+        var range = new monaco.Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
+
+        if (needsSep) {
+            editor.executeEdits("assist", [{
+                range: range,
+                text: "\n",
+                forceMoveMarkers: true
+            }]);
+            pos = editor.getPosition();
+            if (!pos) return false;
+            range = new monaco.Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
+        }
+
+        if (/\$\{/.test(text)) {
+            var snippetController = editor.getContribution("snippetController2");
+            if (snippetController && typeof snippetController.insert === "function") {
+                snippetController.insert(text);
+                editor.focus();
+                return true;
+            }
+        }
+
+        editor.executeEdits("assist", [{
+            range: range,
+            text: text,
+            forceMoveMarkers: true
+        }]);
+        editor.focus();
+        return true;
+    }
+
     global.PythonMonaco = {
         init: init,
         isReady: function () { return ready; },
@@ -285,6 +320,7 @@
                 editor.focus();
             }
         },
+        insertSnippet: insertSnippet,
         layout: function () {
             if (editor) {
                 editor.layout();
