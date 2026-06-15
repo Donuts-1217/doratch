@@ -2,11 +2,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 輔助函式：檢查是否為管理員
+    function currentRole() {
+      return request.auth != null
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : null;
+    }
+
+    // Developer：最高權限
+    function isDeveloper() {
+      return request.auth != null && (
+        currentRole() == 'developer' ||
+        request.auth.token.email == 'chianghansen0302@gmail.com'
+      );
+    }
+
+    // Admin：次高權限（可管理多數功能）
     function isAdmin() {
       return request.auth != null && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        request.auth.token.email == 'chianghansen0302@gmail.com'
+        isDeveloper() ||
+        currentRole() == 'admin'
       );
     }
 
@@ -23,7 +37,14 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if request.auth != null && (
-        isAdmin() ||
+        isDeveloper() ||
+        (
+          isAdmin() &&
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
+            request.resource.data.role in ['student', 'teacher', 'admin']
+          )
+        ) ||
         (
           request.auth.uid == userId &&
           (

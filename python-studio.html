@@ -217,7 +217,7 @@ print("Hello, Doratch!")
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
-        getFirestore, doc, getDoc, addDoc, updateDoc, setDoc, collection, serverTimestamp
+        getFirestore, doc, getDoc, addDoc, updateDoc, setDoc, collection, serverTimestamp, runTransaction
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const DEFAULT_CODE = `# Python 自由創作
@@ -702,10 +702,48 @@ print("Hello, Doratch!")
         });
     }
 
+    function dayKey() {
+        const d = new Date();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    async function consumeCloudSaveQuota(user) {
+        const userRef = doc(db, "users", user.uid);
+        const today = dayKey();
+        await runTransaction(db, async function (tx) {
+            const snap = await tx.get(userRef);
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            const limit = Number.isFinite(data.cloudSaveDailyLimit) ? data.cloudSaveDailyLimit : 20;
+            const bonus = Number.isFinite(data.cloudSaveBonusToday) ? data.cloudSaveBonusToday : 0;
+            const allowed = Math.max(0, limit + bonus);
+            const usedDay = String(data.cloudSaveUsedDay || "");
+            const used = usedDay === today ? (Number.isFinite(data.cloudSaveUsedCount) ? data.cloudSaveUsedCount : 0) : 0;
+            if (used >= allowed) {
+                throw new Error("CLOUD_SAVE_LIMIT");
+            }
+            tx.set(userRef, {
+                cloudSaveUsedDay: today,
+                cloudSaveUsedCount: used + 1
+            }, { merge: true });
+        });
+    }
+
 
     document.getElementById("btn-save").onclick = async () => {
         const user = auth.currentUser;
         if (!user) { location.href = "login.html"; return; }
+        try {
+            await consumeCloudSaveQuota(user);
+        } catch (quotaErr) {
+            if (String(quotaErr && quotaErr.message) === "CLOUD_SAVE_LIMIT") {
+                alert("今日雲端儲存次數已用完，請聯絡管理員增加今日次數或等待明天。");
+                return;
+            }
+            alert("儲存配額檢查失敗：" + (quotaErr.message || quotaErr));
+            return;
+        }
         const mode = currentMode();
         const projectType = projectTypeForMode(mode);
         if (document.getElementById("is-bot-check").checked) {

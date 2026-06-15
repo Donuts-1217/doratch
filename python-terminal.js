@@ -1,4 +1,4 @@
-/** VS Code 風格終端：輸出與 input() 游標同一行接續 */
+/** Python 終端：每次 print / input 完成後都換行 */
 (function (global) {
     "use strict";
 
@@ -53,11 +53,20 @@
 
         function appendChunk(text, className) {
             hidePlaceholder();
-            if (!text) return;
-            var node = document.createElement("span");
-            node.className = className || "py-term-out";
-            node.textContent = text;
-            scroll.appendChild(node);
+            if (text == null) return;
+            var raw = String(text).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+            var lines = raw.split("\n");
+            var endedWithNl = /\n$/.test(raw);
+            if (endedWithNl && lines.length && lines[lines.length - 1] === "") {
+                lines.pop();
+            }
+            if (!lines.length) lines = [""];
+            for (var i = 0; i < lines.length; i++) {
+                var node = document.createElement("div");
+                node.className = "py-term-line " + (className || "py-term-out");
+                node.textContent = lines[i];
+                scroll.appendChild(node);
+            }
             scrollToBottom();
         }
 
@@ -73,8 +82,8 @@
         function commitInputLine(prompt, value) {
             hidePlaceholder();
             removeActiveInputLine();
-            var echo = document.createElement("span");
-            echo.className = "py-term-out py-term-echo";
+            var echo = document.createElement("div");
+            echo.className = "py-term-line py-term-out py-term-echo";
             echo.textContent = (prompt || "") + value;
             scroll.appendChild(echo);
             scrollToBottom();
@@ -118,7 +127,7 @@
                 return new Promise(function (resolve) {
                     pendingResolve = resolve;
 
-                    var line = document.createElement("span");
+                    var line = document.createElement("div");
                     line.className = "py-term-input-line";
                     line.setAttribute("role", "group");
 

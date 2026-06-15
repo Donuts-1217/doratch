@@ -299,6 +299,36 @@
         return m ? m[1] : null;
     }
 
+    function getMemberContext(lineBefore) {
+        var s = String(lineBefore || "");
+        var m = s.match(/([a-zA-Z_][\w]*)\.\s*([a-zA-Z_][\w]*)?$/);
+        if (!m) return null;
+        return { member: m[1], prefix: m[2] || "" };
+    }
+
+    function escapeRegExp(str) {
+        return String(str || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function inferVariableType(name, code) {
+        if (!name || !code) return null;
+        var safe = escapeRegExp(name);
+        var src = String(code || "");
+        var assign = src.match(new RegExp("\\b" + safe + "\\s*=\\s*(.+)$", "m"));
+        var rhs = assign ? String(assign[1] || "").trim() : "";
+        if (!rhs) return null;
+
+        if (/^\[/.test(rhs) || /^list\s*\(/.test(rhs)) return "list";
+        if (/^\{/.test(rhs)) {
+            return /:/.test(rhs) ? "dict" : "set";
+        }
+        if (/^dict\s*\(/.test(rhs)) return "dict";
+        if (/^set\s*\(/.test(rhs)) return "set";
+        if (/^tuple\s*\(/.test(rhs) || /^\(/.test(rhs)) return "tuple";
+        if (/^["']/.test(rhs) || /^str\s*\(/.test(rhs)) return "str";
+        return null;
+    }
+
     function collectItems(prefix, code, forceBot, context) {
         var bot = forceBot || isBotCode(code);
         var discordPy = isDiscordPyCode(code);
@@ -356,12 +386,25 @@
         return items;
     }
 
-    function getMemberItems(member, prefix) {
+    function getMemberItems(member, prefix, code) {
         var list = DISCORD_MEMBERS[member];
-        if (!list) return [];
+        var inferredType = null;
+        if (!list) {
+            inferredType = inferVariableType(member, code);
+            if (inferredType && DISCORD_MEMBERS[inferredType]) {
+                list = DISCORD_MEMBERS[inferredType];
+            }
+        }
+        if (!list) {
+            list = []
+                .concat(DISCORD_MEMBERS.list || [])
+                .concat(DISCORD_MEMBERS.dict || [])
+                .concat(DISCORD_MEMBERS.str || []);
+        }
         var isBot = /^(ctx|bot|client|interaction|discord|ui|commands)$/.test(member);
         return list.filter(function (m) { return matchPrefix(m.label, prefix); }).map(function (m) {
             var detail = m.detail || ((isBot ? "🤖 " : "") + member + "." + m.label);
+            if (!isBot && inferredType) detail = "[" + inferredType + "] " + detail;
             return { kind: "method", label: m.label, insert: m.insert, sort: (isBot ? "0_" : "1_") + m.label, detail: detail };
         });
     }
@@ -378,6 +421,7 @@
         isDiscordPyCode: isDiscordPyCode,
         isLegacyBotCode: isLegacyBotCode,
         getMemberBeforeDot: getMemberBeforeDot,
+        getMemberContext: getMemberContext,
         collectItems: collectItems,
         getMemberItems: getMemberItems
     };

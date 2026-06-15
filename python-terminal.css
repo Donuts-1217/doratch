@@ -1,4 +1,4 @@
-/* VS Code 風格 Python 終端 — 輸入框接在 print 同一行 */
+/* Python 終端：每次動作後固定換行 */
 .py-terminal-root {
     display: flex;
     flex-direction: column;
@@ -52,9 +52,8 @@
     pointer-events: none;
 }
 
-/* 接在輸出末尾同一行（print end="" 後 input 用） */
 .py-term-input-line {
-    display: inline;
+    display: block;
     white-space: pre-wrap;
     vertical-align: baseline;
     font-family: inherit;

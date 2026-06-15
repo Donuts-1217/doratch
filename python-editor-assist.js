@@ -82,23 +82,22 @@
         var prefix = forcedPrefix != null ? forcedPrefix : w.word;
         if (prefix.charAt(0) === "@") prefix = prefix.slice(1);
 
-        var member = null;
         var beforeCursor = el.value.slice(0, el.selectionStart);
-        var dotMatch = beforeCursor.match(/([a-zA-Z_][\w]*)\.\s*$/);
-        if (dotMatch) {
-            member = dotMatch[1];
-            prefix = "";
-        }
+        var currentLineBefore = beforeCursor.split("\n").pop();
+        var memberCtx = global.PythonCompletions.getMemberContext
+            ? global.PythonCompletions.getMemberContext(currentLineBefore)
+            : null;
+        var member = memberCtx && memberCtx.member ? memberCtx.member : null;
+        if (member) prefix = memberCtx.prefix || "";
 
         var items;
         if (member) {
-            items = global.PythonCompletions.getMemberItems(member, prefix);
+            items = global.PythonCompletions.getMemberItems(member, prefix, code);
         } else {
-            var currentLineBefore = beforeCursor.split("\n").pop();
             items = global.PythonCompletions.collectItems(prefix, code, forceBot, { lineBefore: currentLineBefore });
         }
 
-        var start = dotMatch ? el.selectionStart : w.start;
+        var start = member ? (el.selectionStart - prefix.length) : w.start;
         var end = el.selectionStart;
         showSuggestions(el, items, start, end);
     }

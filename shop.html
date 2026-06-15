@@ -179,7 +179,10 @@
             <option value="blockly">積木方塊作品</option>
             <option value="other">其他作品</option>
         </select>
-        <input id="review-project-url" type="text" placeholder="作品連結（例如 project.html?id=...）">
+        <select id="review-project-id" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
+            <option value="">請先載入線上作品清單...</option>
+        </select>
+        <input id="review-file-path" type="text" placeholder="專案路徑（自動填入，可自行補充）">
         <textarea id="review-note" rows="3" placeholder="補充：這次完成了什麼功能、難度、測試結果"></textarea>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn-light" onclick="saveCoinReviewDraft()">暫存內容</button>
@@ -198,7 +201,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -211,14 +214,19 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const REVIEW_DRAFT_KEY = "doratch_coin_review_draft_v1";
+    let onlineProjects = [];
 
     const itemsBank = [
-        { id: 'theme_dark', category: 'style', name: '深淵黑主題', desc: '為你的編輯器換上酷炫的深色模式', price: 1000, icon: '🌑' },
-        { id: 'title_pro', category: 'style', name: '【資深開發者】稱號', desc: '在排行榜與聊天室顯示你的尊貴稱號', price: 500, icon: '🎖️' },
-        { id: 'avatar_robot', category: 'style', name: '機械戰警頭像', desc: '解鎖專屬機器人頭像框', price: 300, icon: '🤖' },
-        { id: 'boost_xp', category: 'utility', name: 'XP 加倍卡 (1次)', desc: '下一項任務獲得雙倍經驗值', price: 200, icon: '⚡' },
-        { id: 'hint_ticket', category: 'utility', name: '任務提示券', desc: '直接解鎖任務的所有進階提示', price: 150, icon: '🎫' },
-        { id: 'fireworks', category: 'utility', name: '舞台煙火效果', desc: '在執行成功時噴發華麗煙火', price: 600, icon: '🎆' }
+        { id: 'frame_neon', category: 'style', slot: 'frame', name: '霓虹脈衝頭像框', desc: '可在個人資料頁套用，展現科技感發光邊框。', price: 260, icon: '🟦' },
+        { id: 'frame_gold', category: 'style', slot: 'frame', name: '王者金邊頭像框', desc: '可在個人資料頁套用，亮金框線顯示高級感。', price: 420, icon: '👑' },
+        { id: 'frame_sakura', category: 'style', slot: 'frame', name: '櫻花柔光頭像框', desc: '可在個人資料頁套用，粉色柔光與陰影。', price: 320, icon: '🌸' },
+        { id: 'title_architect', category: 'style', slot: 'title', name: '稱號：程式建築師', desc: '可在個人資料頁套用專屬稱號。', price: 280, icon: '🏗️' },
+        { id: 'title_bug_hunter', category: 'style', slot: 'title', name: '稱號：Bug 獵人', desc: '可在個人資料頁套用專屬稱號。', price: 300, icon: '🛡️' },
+        { id: 'title_pro', category: 'style', slot: 'title', name: '稱號：資深開發者', desc: '經典稱號，可在個人資料頁套用。', price: 500, icon: '🎖️' },
+        { id: 'badge_mentor', category: 'utility', slot: 'badge', name: '徽章：班級導師', desc: '可在個人資料頁套用徽章，顯示在名稱旁。', price: 240, icon: '🧠' },
+        { id: 'badge_speedrunner', category: 'utility', slot: 'badge', name: '徽章：速通玩家', desc: '可在個人資料頁套用徽章，顯示在名稱旁。', price: 220, icon: '⚡' },
+        { id: 'namecolor_cyan', category: 'utility', slot: 'nameColor', name: '名稱顏色：霓虹青', desc: '可在個人資料頁套用名稱字色。', price: 180, icon: '🩵' },
+        { id: 'namecolor_sunset', category: 'utility', slot: 'nameColor', name: '名稱顏色：夕陽橘', desc: '可在個人資料頁套用名稱字色。', price: 180, icon: '🧡' }
     ];
 
     let currentUserData = null;
@@ -304,11 +312,50 @@
         const sideCoinsEl = document.getElementById('side-coins');
         if (sideCoinsEl) sideCoinsEl.innerText = coins;
         const reviewStatus = document.getElementById('review-status');
-        if (reviewStatus) reviewStatus.innerText = '每日最多上傳 1 件給管理員審核。';
+        if (reviewStatus) {
+            const lim = Number.isFinite(currentUserData.reviewUploadDailyLimit) ? currentUserData.reviewUploadDailyLimit : 1;
+            const bonus = Number.isFinite(currentUserData.reviewUploadBonusToday) ? currentUserData.reviewUploadBonusToday : 0;
+            reviewStatus.innerText = `今日審核上傳上限：${Math.max(0, lim + bonus)} 次（含管理員加次）`;
+        }
+        await loadOnlineProjects(user);
         restoreCoinReviewDraft();
 
         renderItems();
     };
+
+    async function loadOnlineProjects(user) {
+        const select = document.getElementById('review-project-id');
+        if (!select) return;
+        select.innerHTML = '<option value="">載入線上作品中...</option>';
+        try {
+            const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc"));
+            const snap = await getDocs(q);
+            onlineProjects = snap.docs.map(function (d) {
+                const data = d.data() || {};
+                return {
+                    id: d.id,
+                    name: data.name || "未命名作品",
+                    projectType: data.projectType || (data.isBot ? "python-bot" : "python"),
+                    pythonCode: typeof data.pythonCode === "string" ? data.pythonCode : (typeof data.code === "string" ? data.code : "")
+                };
+            });
+            if (!onlineProjects.length) {
+                select.innerHTML = '<option value="">沒有可送審的線上作品（請先儲存作品）</option>';
+                return;
+            }
+            select.innerHTML = '<option value="">請選擇線上作品</option>';
+            onlineProjects.forEach(function (p) {
+                var tag = p.projectType === "python-bot" ? "Bot" : "Python";
+                var opt = document.createElement("option");
+                opt.value = p.id;
+                opt.textContent = "[" + tag + "] " + p.name;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error(e);
+            select.innerHTML = '<option value="">載入作品失敗</option>';
+        }
+    }
 
     function todayKey() {
         const d = new Date();
@@ -323,10 +370,12 @@
             if (!raw) return;
             const data = JSON.parse(raw) || {};
             const typeEl = document.getElementById('review-work-type');
-            const urlEl = document.getElementById('review-project-url');
+            const pidEl = document.getElementById('review-project-id');
+            const pathEl = document.getElementById('review-file-path');
             const noteEl = document.getElementById('review-note');
             if (typeEl && data.workType) typeEl.value = data.workType;
-            if (urlEl && data.projectUrl) urlEl.value = data.projectUrl;
+            if (pidEl && data.projectId) pidEl.value = data.projectId;
+            if (pathEl && data.filePathHint) pathEl.value = data.filePathHint;
             if (noteEl && data.note) noteEl.value = data.note;
         } catch (_) {}
     }
@@ -334,7 +383,8 @@
     window.saveCoinReviewDraft = () => {
         const payload = {
             workType: (document.getElementById('review-work-type').value || 'python'),
-            projectUrl: (document.getElementById('review-project-url').value || '').trim(),
+            projectId: (document.getElementById('review-project-id').value || '').trim(),
+            filePathHint: (document.getElementById('review-file-path').value || '').trim(),
             note: (document.getElementById('review-note').value || '').trim()
         };
         localStorage.setItem(REVIEW_DRAFT_KEY, JSON.stringify(payload));
@@ -409,27 +459,49 @@
             return;
         }
         const workType = (document.getElementById('review-work-type').value || 'python').trim();
-        const projectUrl = (document.getElementById('review-project-url').value || '').trim();
+        const projectSelect = document.getElementById('review-project-id');
+        const selectedProjectId = (projectSelect && projectSelect.value ? projectSelect.value : "").trim();
+        const selectedProject = onlineProjects.find(function (p) { return p.id === selectedProjectId; }) || null;
+        const filePathInput = document.getElementById('review-file-path');
+        const manualPath = (filePathInput && filePathInput.value ? filePathInput.value : "").trim();
         const note = (document.getElementById('review-note').value || '').trim();
-        if (!projectUrl && !note) {
-            alert("請至少填寫作品連結或說明。");
+        if (!selectedProject) {
+            alert("請先選擇線上作品。");
             return;
         }
         try {
+            var trimmedContent = String(selectedProject.pythonCode || "");
+            if (trimmedContent.length > 120000) {
+                trimmedContent = trimmedContent.slice(0, 120000);
+            }
+            const selectedPath = "users/" + currentUser.uid + "/projects/" + selectedProject.id;
+            const pathHint = manualPath || selectedPath;
             const userRef = doc(db, "users", currentUser.uid);
             const reqRef = doc(collection(db, "coin_review_requests"));
             const day = todayKey();
             await runTransaction(db, async (tx) => {
                 const userSnap = await tx.get(userRef);
                 const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-                if (String(userData.lastCoinReviewDay || "") === day) {
+                const limit = Number.isFinite(userData.reviewUploadDailyLimit) ? userData.reviewUploadDailyLimit : 1;
+                const bonus = Number.isFinite(userData.reviewUploadBonusToday) ? userData.reviewUploadBonusToday : 0;
+                const allowed = Math.max(0, limit + bonus);
+                const usedDay = String(userData.reviewUploadUsedDay || "");
+                const used = usedDay === day ? (Number.isFinite(userData.reviewUploadUsedCount) ? userData.reviewUploadUsedCount : 0) : 0;
+                if (used >= allowed) {
                     throw new Error("DAILY_LIMIT");
                 }
                 tx.set(reqRef, {
                     userId: currentUser.uid,
                     userEmail: currentUser.email || "",
                     workType: workType,
-                    projectUrl: projectUrl || "",
+                    projectId: selectedProject.id,
+                    projectName: selectedProject.name || "",
+                    projectType: selectedProject.projectType || "",
+                    fileName: (selectedProject.name || "project") + ".py",
+                    filePathHint: pathHint || "",
+                    fileSize: trimmedContent.length,
+                    fileMimeType: "text/plain",
+                    fileContent: trimmedContent,
                     note: note || "",
                     status: "pending",
                     suggestedCoins: 50,
@@ -437,13 +509,15 @@
                     createdAt: serverTimestamp()
                 });
                 tx.set(userRef, {
-                    lastCoinReviewDay: day,
+                    reviewUploadUsedDay: day,
+                    reviewUploadUsedCount: used + 1,
                     lastCoinReviewAt: serverTimestamp()
                 }, { merge: true });
             });
             localStorage.removeItem(REVIEW_DRAFT_KEY);
             document.getElementById('review-work-type').value = 'python';
-            document.getElementById('review-project-url').value = '';
+            if (projectSelect) projectSelect.value = '';
+            if (filePathInput) filePathInput.value = '';
             document.getElementById('review-note').value = '';
             const reviewStatus = document.getElementById('review-status');
             if (reviewStatus) reviewStatus.innerText = '已送出審核申請，請等待管理員核發金幣。';
@@ -451,12 +525,23 @@
         } catch (e) {
             console.error(e);
             if (String(e && e.message) === "DAILY_LIMIT") {
-                alert("你今天已經上傳過 1 件作品，明天再上傳。");
+                alert("你今天的審核上傳次數已用完，請聯絡管理員增加今日次數或等待明天。");
                 return;
             }
             alert("送審失敗：" + (e.message || e));
         }
     };
+
+    (function bindReviewFilePath() {
+        const projectEl = document.getElementById('review-project-id');
+        const pathEl = document.getElementById('review-file-path');
+        if (!projectEl || !pathEl) return;
+        projectEl.addEventListener('change', function () {
+            if (!pathEl.value.trim() && projectEl.value) {
+                pathEl.value = "users/" + (currentUser ? currentUser.uid : "{uid}") + "/projects/" + projectEl.value;
+            }
+        });
+    })();
 </script>
 
 </main>

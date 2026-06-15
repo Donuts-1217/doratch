@@ -51,9 +51,10 @@
                 var lineBefore = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
 
                 if (comp) {
-                    var member = comp.getMemberBeforeDot(model, position);
-                    if (member) {
-                        comp.getMemberItems(member, prefix).forEach(function (item) {
+                    var memberCtx = comp.getMemberContext ? comp.getMemberContext(lineBefore) : null;
+                    if (memberCtx && memberCtx.member) {
+                        var memberPrefix = memberCtx.prefix || "";
+                        comp.getMemberItems(memberCtx.member, memberPrefix, code).forEach(function (item) {
                             suggestions.push({
                                 label: item.label,
                                 kind: monacoKind(monaco, item.kind),
