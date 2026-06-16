@@ -111,6 +111,12 @@
                 <button class="btn btn-primary" onclick="saveSystemStorageSettings()">儲存預設</button>
                 <span id="default-cloud-storage-status" style="font-size:12px; color:#94A3B8;"></span>
             </div>
+            <div style="display:grid; grid-template-columns:repeat(2, minmax(220px, 1fr)); gap:8px 16px; margin-top:12px; font-size:12px; color:#94A3B8;">
+                <div>目前預設值：<strong id="default-cloud-current" style="color:#E2E8F0;">1 MB</strong></div>
+                <div>上次預設值：<strong id="default-cloud-previous" style="color:#E2E8F0;">1 MB</strong></div>
+                <div>最後更新者：<strong id="default-cloud-updated-by" style="color:#E2E8F0;">—</strong></div>
+                <div>最後更新時間：<strong id="default-cloud-updated-at" style="color:#E2E8F0;">—</strong></div>
+            </div>
             <p style="margin:12px 0 0; font-size:12px; color:#64748B;">只影響「未個別設定 cloudStorageLimitMB」的使用者。若調降後導致超量，系統會給原本未超量者 1 個月寬限期。</p>
         </div>
     </div>
@@ -134,6 +140,7 @@
                         <th>金幣 / 等級</th>
                         <th>角色</th>
                         <th>狀態</th>
+                        <th>寬限期</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -423,17 +430,30 @@
     async function loadSystemStorageSettings() {
         const input = document.getElementById('default-cloud-storage-mb');
         const status = document.getElementById('default-cloud-storage-status');
+        const currentEl = document.getElementById('default-cloud-current');
+        const prevEl = document.getElementById('default-cloud-previous');
+        const byEl = document.getElementById('default-cloud-updated-by');
+        const atEl = document.getElementById('default-cloud-updated-at');
         if (!input) return;
         try {
             const snap = await getDoc(doc(db, "system_config", "storage"));
             const data = snap.exists() ? (snap.data() || {}) : {};
             defaultCloudStorageMB = Number.isFinite(data.defaultCloudStorageLimitMB) ? data.defaultCloudStorageLimitMB : 1;
+            const prevDefaultMB = Number.isFinite(data.previousDefaultCloudStorageLimitMB) ? data.previousDefaultCloudStorageLimitMB : defaultCloudStorageMB;
             input.value = defaultCloudStorageMB;
+            if (currentEl) currentEl.textContent = `${defaultCloudStorageMB} MB`;
+            if (prevEl) prevEl.textContent = `${prevDefaultMB} MB`;
+            if (byEl) byEl.textContent = data.updatedBy || '—';
+            if (atEl) atEl.textContent = formatTime(data.updatedAt);
             if (status) status.textContent = "已載入";
         } catch (e) {
             console.error(e);
             defaultCloudStorageMB = 1;
             input.value = 1;
+            if (currentEl) currentEl.textContent = '1 MB';
+            if (prevEl) prevEl.textContent = '1 MB';
+            if (byEl) byEl.textContent = '—';
+            if (atEl) atEl.textContent = '—';
             if (status) status.textContent = "讀取失敗，使用 1MB";
         }
     }
@@ -456,6 +476,14 @@
                 updatedBy: auth.currentUser?.email || ""
             }, { merge: true });
             defaultCloudStorageMB = v;
+            const currentEl = document.getElementById('default-cloud-current');
+            const prevEl = document.getElementById('default-cloud-previous');
+            const byEl = document.getElementById('default-cloud-updated-by');
+            const atEl = document.getElementById('default-cloud-updated-at');
+            if (currentEl) currentEl.textContent = `${v} MB`;
+            if (prevEl) prevEl.textContent = `${oldDefault} MB`;
+            if (byEl) byEl.textContent = auth.currentUser?.email || '—';
+            if (atEl) atEl.textContent = new Date().toLocaleString('zh-TW');
             if (status) status.textContent = "已儲存";
             await logAction("更新預設容量", "defaultCloudStorageLimitMB=" + v + "MB");
             showToast("預設容量已更新");
@@ -482,6 +510,23 @@
 
     function escapeHtml(str) {
         return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function getMillis(v) {
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (v && typeof v.toMillis === 'function') return v.toMillis();
+        if (v && typeof v.seconds === 'number') return v.seconds * 1000;
+        return 0;
+    }
+
+    function formatTime(v) {
+        const ms = getMillis(v);
+        if (!ms) return '—';
+        try {
+            return new Date(ms).toLocaleString('zh-TW');
+        } catch (_) {
+            return '—';
+        }
     }
 
     function matchUserQuery(u, key) {
@@ -553,6 +598,12 @@
             const email = escapeHtml(u.email || '—');
             const uidShort = escapeHtml((u.id || '').slice(0, 10) + '…');
             const role = u.role || 'student';
+            const nowMs = Date.now();
+            const graceMs = getMillis(u.cloudStorageGraceUntilMs);
+            const graceActive = graceMs > nowMs;
+            const graceStatus = graceActive
+                ? `<span style="color:#F59E0B; font-weight:bold;">寬限中</span><div class="user-meta">到期：${escapeHtml(formatTime(graceMs))}</div>`
+                : `<span style="color:#64748B;">未啟用</span>`;
             tr.innerHTML = `
                 <td>
                     <div style="font-weight:bold;">${label}</div>
@@ -566,6 +617,7 @@
                 </td>
                 <td><span class="badge badge-${role}">${role}</span></td>
                 <td>${isBanned ? '<span style="color:#EF4444; font-weight:bold;">已封鎖</span>' : '<span style="color:#10B981;">正常</span>'}</td>
+                <td>${graceStatus}</td>
                 <td>
                     <button class="btn btn-primary user-settings-btn" style="padding:5px 10px; font-size:11px;">⚙️ 設定</button>
                 </td>
