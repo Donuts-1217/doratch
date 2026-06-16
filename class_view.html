@@ -793,7 +793,18 @@
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+        let defaultLimitMB = 1;
+        let previousDefaultMB = 1;
+        try {
+            const cfg = await getDoc(doc(db, "system_config", "storage"));
+            const c = cfg.exists() ? (cfg.data() || {}) : {};
+            const v = Number(c.defaultCloudStorageLimitMB);
+            const pv = Number(c.previousDefaultCloudStorageLimitMB);
+            if (Number.isFinite(v) && v >= 1) defaultLimitMB = v;
+            if (Number.isFinite(pv) && pv >= 1) previousDefaultMB = pv;
+            else previousDefaultMB = defaultLimitMB;
+        } catch (_) {}
+        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : defaultLimitMB;
         const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
         const pSnap = await getDocs(collection(db, "users", user.uid, "projects"));
         let totalBytes = 0;
@@ -802,9 +813,36 @@
             totalBytes += projectBytesFromData(d.data() || {});
         });
         totalBytes += byteSizeOf(newContent);
+        const now = Date.now();
+        const graceUntil = Number(userData.cloudStorageGraceUntilMs || 0);
         if (totalBytes > limitBytes) {
+            if (graceUntil > now) {
+                await setDoc(userRef, {
+                    cloudStorageLastMeasuredBytes: totalBytes,
+                    cloudStorageLastEffectiveLimitMB: limitMB
+                }, { merge: true });
+                return;
+            }
+            const lastLimit = Number(userData.cloudStorageLastEffectiveLimitMB || 0);
+            const lastBytes = Number(userData.cloudStorageLastMeasuredBytes || 0);
+            const wasWithinLast = lastLimit > 0 && lastBytes >= 0 && lastBytes <= (lastLimit * 1024 * 1024);
+            const usesDefaultLimit = !Number.isFinite(userData.cloudStorageLimitMB);
+            const wasWithinPreviousDefault = usesDefaultLimit && previousDefaultMB > limitMB && totalBytes <= (previousDefaultMB * 1024 * 1024);
+            if ((wasWithinLast && limitMB < lastLimit) || wasWithinPreviousDefault) {
+                const newGrace = now + 30 * 24 * 60 * 60 * 1000;
+                await setDoc(userRef, {
+                    cloudStorageGraceUntilMs: newGrace,
+                    cloudStorageLastMeasuredBytes: totalBytes,
+                    cloudStorageLastEffectiveLimitMB: limitMB
+                }, { merge: true });
+                return;
+            }
             throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
         }
+        await setDoc(userRef, {
+            cloudStorageLastMeasuredBytes: totalBytes,
+            cloudStorageLastEffectiveLimitMB: limitMB
+        }, { merge: true });
     }
 
     const apcsBank = [

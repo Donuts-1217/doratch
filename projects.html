@@ -194,7 +194,14 @@
         try {
             const userSnap = await getDoc(doc(db, "users", user.uid));
             const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-            const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+            let defaultLimitMB = 1;
+            try {
+                const cfg = await getDoc(doc(db, "system_config", "storage"));
+                const c = cfg.exists() ? (cfg.data() || {}) : {};
+                const v = Number(c.defaultCloudStorageLimitMB);
+                if (Number.isFinite(v) && v >= 1) defaultLimitMB = v;
+            } catch (_) {}
+            const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : defaultLimitMB;
             const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
             const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc"));
             const snapshot = await getDocs(q);
