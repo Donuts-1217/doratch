@@ -217,7 +217,7 @@ print("Hello, Doratch!")
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
-        getFirestore, doc, getDoc, addDoc, updateDoc, setDoc, collection, serverTimestamp, runTransaction
+        getFirestore, doc, getDoc, getDocs, addDoc, updateDoc, setDoc, collection, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const DEFAULT_CODE = `# Python 自由創作
@@ -702,48 +702,50 @@ print("Hello, Doratch!")
         });
     }
 
-    function dayKey() {
-        const d = new Date();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        return `${d.getFullYear()}-${m}-${day}`;
+    function byteSizeOf(text) {
+        try {
+            return new TextEncoder().encode(String(text || "")).length;
+        } catch (_) {
+            return new Blob([String(text || "")]).size;
+        }
     }
 
-    async function consumeCloudSaveQuota(user) {
+    function projectBytesFromData(p) {
+        if (!p || typeof p !== "object") return 0;
+        let total = 0;
+        if (typeof p.pythonCode === "string") total += byteSizeOf(p.pythonCode);
+        if (typeof p.code === "string") total += byteSizeOf(p.code);
+        if (typeof p.data === "string") total += byteSizeOf(p.data);
+        if (p.spriteScripts && typeof p.spriteScripts === "object") {
+            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
+        }
+        return total;
+    }
+
+    async function enforceCloudStorageLimit(user, targetPid, nextCode) {
         const userRef = doc(db, "users", user.uid);
-        const today = dayKey();
-        await runTransaction(db, async function (tx) {
-            const snap = await tx.get(userRef);
-            const data = snap.exists() ? (snap.data() || {}) : {};
-            const limit = Number.isFinite(data.cloudSaveDailyLimit) ? data.cloudSaveDailyLimit : 20;
-            const bonus = Number.isFinite(data.cloudSaveBonusToday) ? data.cloudSaveBonusToday : 0;
-            const allowed = Math.max(0, limit + bonus);
-            const usedDay = String(data.cloudSaveUsedDay || "");
-            const used = usedDay === today ? (Number.isFinite(data.cloudSaveUsedCount) ? data.cloudSaveUsedCount : 0) : 0;
-            if (used >= allowed) {
-                throw new Error("CLOUD_SAVE_LIMIT");
-            }
-            tx.set(userRef, {
-                cloudSaveUsedDay: today,
-                cloudSaveUsedCount: used + 1
-            }, { merge: true });
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+        const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
+
+        const projectsSnap = await getDocs(collection(db, "users", user.uid, "projects"));
+        let totalBytes = 0;
+        projectsSnap.forEach(function (d) {
+            const p = d.data() || {};
+            if (targetPid && d.id === targetPid) return;
+            totalBytes += projectBytesFromData(p);
         });
+        totalBytes += byteSizeOf(nextCode);
+        if (totalBytes > limitBytes) {
+            throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
+        }
     }
 
 
     document.getElementById("btn-save").onclick = async () => {
         const user = auth.currentUser;
         if (!user) { location.href = "login.html"; return; }
-        try {
-            await consumeCloudSaveQuota(user);
-        } catch (quotaErr) {
-            if (String(quotaErr && quotaErr.message) === "CLOUD_SAVE_LIMIT") {
-                alert("今日雲端儲存次數已用完，請聯絡管理員增加今日次數或等待明天。");
-                return;
-            }
-            alert("儲存配額檢查失敗：" + (quotaErr.message || quotaErr));
-            return;
-        }
         const mode = currentMode();
         const projectType = projectTypeForMode(mode);
         if (document.getElementById("is-bot-check").checked) {
@@ -754,6 +756,18 @@ print("Hello, Doratch!")
         const pythonCode = getCode();
         const isPublic = document.getElementById("is-public-check").checked;
         const targetPid = modeProjectIds[mode] || (isOwner ? currentPid : null);
+        try {
+            await enforceCloudStorageLimit(user, targetPid, pythonCode);
+        } catch (quotaErr) {
+            const msg = String(quotaErr && quotaErr.message ? quotaErr.message : quotaErr);
+            if (msg.indexOf("CLOUD_STORAGE_MB_LIMIT:") === 0) {
+                const lim = msg.split(":")[1] || "?";
+                alert("雲端儲存空間不足。你的永久上限是 " + lim + " MB，請刪除舊作品或請管理員調高容量。");
+                return;
+            }
+            alert("儲存容量檢查失敗：" + msg);
+            return;
+        }
         try {
             if (isOwner && targetPid) {
                 await updateDoc(doc(db, "users", user.uid, "projects", targetPid), {

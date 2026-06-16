@@ -19,6 +19,16 @@
 
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         h1 { color: white; margin: 0; font-size: 2rem; font-weight: 900; }
+        .storage-badge {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #cbd5e1;
+            min-width: 220px;
+            text-align: right;
+        }
 
         /* 作品網格 */
         .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
@@ -36,6 +46,7 @@
         .card-body { padding: 20px; flex: 1; }
         .card-title { font-size: 1.1rem; font-weight: 900; margin-bottom: 8px; color: white; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .card-meta { font-size: 12px; color: #64748B; }
+        .card-size { margin-top: 6px; font-size: 12px; color: #93c5fd; font-weight: 700; }
 
         /* 標籤 */
         .status-tag { 
@@ -112,6 +123,7 @@
         <div class="header">
             <h1>📂 我的作品集</h1>
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div id="storage-badge" class="storage-badge">容量計算中...</div>
                 <a href="create.html" class="new-btn">+ 創作新作品</a>
             </div>
         </div>
@@ -133,6 +145,33 @@
 
     window.handleLogout = () => signOut(auth).then(() => location.href = 'index.html');
 
+    function byteSizeOf(text) {
+        try {
+            return new TextEncoder().encode(String(text || "")).length;
+        } catch (_) {
+            return new Blob([String(text || "")]).size;
+        }
+    }
+
+    function projectBytesFromData(p) {
+        if (!p || typeof p !== "object") return 0;
+        let total = 0;
+        if (typeof p.pythonCode === "string") total += byteSizeOf(p.pythonCode);
+        if (typeof p.code === "string") total += byteSizeOf(p.code);
+        if (typeof p.data === "string") total += byteSizeOf(p.data);
+        if (p.spriteScripts && typeof p.spriteScripts === "object") {
+            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
+        }
+        return total;
+    }
+
+    function formatBytes(bytes) {
+        const b = Number(bytes) || 0;
+        if (b < 1024) return b + " B";
+        if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+        return (b / (1024 * 1024)).toFixed(2) + " MB";
+    }
+
     async function fetchSidebarData(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
@@ -151,17 +190,29 @@
 
     async function loadUserProjects(user) {
         const listDiv = document.getElementById('project-list');
+        const storageBadge = document.getElementById('storage-badge');
         try {
+            const userSnap = await getDoc(doc(db, "users", user.uid));
+            const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+            const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+            const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
             const q = query(collection(db, "users", user.uid, "projects"), orderBy("updatedAt", "desc"));
             const snapshot = await getDocs(q);
             listDiv.innerHTML = "";
+            let usedBytes = 0;
             if (snapshot.empty) {
+                if (storageBadge) {
+                    const remaining = Math.max(0, limitBytes);
+                    storageBadge.textContent = `已用 0 B / 上限 ${limitMB} MB · 剩餘 ${formatBytes(remaining)}`;
+                }
                 listDiv.innerHTML = `<div class="empty-msg"><p>你目前還沒有任何作品喔！</p><a href="create.html">立刻去創作空間開始吧！</a></div>`;
                 return;
             }
             snapshot.forEach((projectDoc) => {
                 const project = projectDoc.data();
                 const pid = projectDoc.id;
+                const sizeBytes = projectBytesFromData(project);
+                usedBytes += sizeBytes;
                 const date = project.updatedAt?.toDate().toLocaleDateString() || "未知時間";
                 const remixBadge = project.originalPid ? `<span style="background:var(--accent); color:white; font-size:10px; padding:2px 6px; border-radius:10px;">♻️ Remix</span>` : "";
                 const isPython = project.projectType === "python";
@@ -181,6 +232,7 @@
                             ${remixBadge}
                         </div>
                         <div class="card-meta">${typeLabel} · 最後更新：${date}</div>
+                        <div class="card-size">容量：${formatBytes(sizeBytes)}</div>
                     </div>
                     <div class="actions">
                         <a href="${editHref}" class="btn-act btn-edit">開啟編輯</a>
@@ -189,8 +241,13 @@
                 `;
                 listDiv.appendChild(card);
             });
+            if (storageBadge) {
+                const remaining = Math.max(0, limitBytes - usedBytes);
+                storageBadge.textContent = `已用 ${formatBytes(usedBytes)} / 上限 ${limitMB} MB · 剩餘 ${formatBytes(remaining)}`;
+            }
         } catch (e) {
             console.error(e);
+            if (storageBadge) storageBadge.textContent = "容量資訊讀取失敗";
             listDiv.innerHTML = `<div class="empty-msg" style="color:#EF4444;">讀取失敗：${e.message}</div>`;
         }
     }

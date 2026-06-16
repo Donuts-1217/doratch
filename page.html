@@ -1145,7 +1145,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, setDoc, arrayUnion, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, getDocs, updateDoc, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, setDoc, arrayUnion, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // Firebase 配置
     const firebaseConfig = {
@@ -3835,6 +3835,42 @@
         iframe.srcdoc = htmlTemplate;
     };
 
+    function byteSizeOf(text) {
+        try {
+            return new TextEncoder().encode(String(text || "")).length;
+        } catch (_) {
+            return new Blob([String(text || "")]).size;
+        }
+    }
+
+    function projectBytesFromData(p) {
+        if (!p || typeof p !== 'object') return 0;
+        let total = 0;
+        if (typeof p.pythonCode === 'string') total += byteSizeOf(p.pythonCode);
+        if (typeof p.code === 'string') total += byteSizeOf(p.code);
+        if (typeof p.data === 'string') total += byteSizeOf(p.data);
+        if (p.spriteScripts && typeof p.spriteScripts === 'object') {
+            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
+        }
+        return total;
+    }
+
+    async function ensureCloudStorageMB(user, savePayload, targetPid) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+        const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
+        const pSnap = await getDocs(collection(db, "users", user.uid, "projects"));
+        let totalBytes = 0;
+        pSnap.forEach(function (d) {
+            if (targetPid && d.id === targetPid) return;
+            totalBytes += projectBytesFromData(d.data() || {});
+        });
+        totalBytes += projectBytesFromData(savePayload || {});
+        if (totalBytes > limitBytes) throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
+    }
+
     // 雲端儲存
     window.handleSave = async (silent = false) => {
         const user = auth.currentUser;
@@ -3854,8 +3890,18 @@
         const legacyDataXml = (stageXml.trim() ? stageXml : (currentXml.trim() ? currentXml : (firstNonEmptyXml || xmlText)));
         const title = document.getElementById('project-title-input').value;
         const isPublic = document.getElementById('is-public-check').checked;
+        const savePayload = {
+            name: title,
+            data: legacyDataXml,
+            spriteScripts: allScripts,
+            authorEmail: user ? user.email : "",
+            isPublic: isOwner ? isPublic : false,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
 
         try {
+            await ensureCloudStorageMB(user, savePayload, (isOwner && currentPid) ? currentPid : null);
             if (isOwner && currentPid) {
                 await updateDoc(doc(db, "users", user.uid, "projects", currentPid), {
                     name: title, data: legacyDataXml, spriteScripts: allScripts, isPublic: isPublic, updatedAt: serverTimestamp()
@@ -3863,11 +3909,7 @@
                 if(!silent) alert("儲存成功！");
                 markEditorSavedBaseline();
             } else {
-                const savePayload = {
-                    name: title,
-                    data: legacyDataXml, spriteScripts: allScripts, authorEmail: user.email, isPublic: isOwner ? isPublic : false,
-                    createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-                };
+                savePayload.authorEmail = user.email;
                 
                 if (!isOwner && currentPid && originalProjectData) {
                     savePayload.originalPid = originalProjectData.originalPid || currentPid;
@@ -3908,7 +3950,15 @@
                     location.href = `${location.pathname}?${qs.toString()}`;
                 }
             }
-        } catch (e) { if(!silent) alert("儲存失敗: " + e.message); }
+        } catch (e) {
+            const msg = String(e && e.message ? e.message : e);
+            if (msg.indexOf("CLOUD_STORAGE_MB_LIMIT:") === 0) {
+                const lim = msg.split(":")[1] || "?";
+                if(!silent) alert("雲端空間不足（上限 " + lim + " MB）。請刪除舊作品或請管理員調高容量。");
+                return;
+            }
+            if(!silent) alert("儲存失敗: " + msg);
+        }
     };
 
     // 下載

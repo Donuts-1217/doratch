@@ -240,16 +240,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>雲端儲存 每日上限</label>
-                <input type="number" id="u-cloud-daily-limit" min="0" step="1" placeholder="預設 20">
+                <label>雲端儲存上限 (MB)</label>
+                <input type="number" id="u-cloud-storage-limit-mb" min="1" step="1" placeholder="例如 1">
             </div>
             <div class="form-group">
                 <label>審核上傳 每日上限</label>
                 <input type="number" id="u-review-daily-limit" min="0" step="1" placeholder="預設 1">
-            </div>
-            <div class="form-group">
-                <label>今日加次：雲端儲存</label>
-                <input type="number" id="u-cloud-today-bonus" min="0" step="1" placeholder="例如 2">
             </div>
             <div class="form-group">
                 <label>今日加次：審核上傳</label>
@@ -558,9 +554,8 @@
         document.getElementById('u-xp').value = u.xp ?? 0;
         document.getElementById('u-role').value = u.role || 'student';
         document.getElementById('u-banned').value = u.isBanned ? 'true' : 'false';
-        document.getElementById('u-cloud-daily-limit').value = Number.isFinite(u.cloudSaveDailyLimit) ? u.cloudSaveDailyLimit : 20;
+        document.getElementById('u-cloud-storage-limit-mb').value = Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : 1;
         document.getElementById('u-review-daily-limit').value = Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1;
-        document.getElementById('u-cloud-today-bonus').value = Number.isFinite(u.cloudSaveBonusToday) ? u.cloudSaveBonusToday : 0;
         document.getElementById('u-review-today-bonus').value = Number.isFinite(u.reviewUploadBonusToday) ? u.reviewUploadBonusToday : 0;
         const roleSel = document.getElementById('u-role');
         if (roleSel) {
@@ -591,17 +586,15 @@
         const xp = parseInt(document.getElementById('u-xp').value, 10);
         const role = document.getElementById('u-role').value;
         const isBanned = document.getElementById('u-banned').value === 'true';
-        const cloudDailyLimit = parseInt(document.getElementById('u-cloud-daily-limit').value, 10);
+        const cloudStorageLimitMB = parseInt(document.getElementById('u-cloud-storage-limit-mb').value, 10);
         const reviewDailyLimit = parseInt(document.getElementById('u-review-daily-limit').value, 10);
-        const cloudTodayBonus = parseInt(document.getElementById('u-cloud-today-bonus').value, 10);
         const reviewTodayBonus = parseInt(document.getElementById('u-review-today-bonus').value, 10);
 
         if (isNaN(coins) || coins < 0) return showToast('金幣必須為 0 以上的整數', 'error');
         if (isNaN(lv) || lv < 1) return showToast('等級必須為 1 以上的整數', 'error');
         if (isNaN(xp) || xp < 0) return showToast('經驗值必須為 0 以上的整數', 'error');
-        if (isNaN(cloudDailyLimit) || cloudDailyLimit < 0) return showToast('雲端儲存每日上限必須為 0 以上', 'error');
+        if (isNaN(cloudStorageLimitMB) || cloudStorageLimitMB < 1) return showToast('雲端儲存上限(MB)必須為 1 以上', 'error');
         if (isNaN(reviewDailyLimit) || reviewDailyLimit < 0) return showToast('審核上傳每日上限必須為 0 以上', 'error');
-        if (isNaN(cloudTodayBonus) || cloudTodayBonus < 0) return showToast('今日雲端加次必須為 0 以上', 'error');
         if (isNaN(reviewTodayBonus) || reviewTodayBonus < 0) return showToast('今日審核加次必須為 0 以上', 'error');
         if (role === 'developer' && myRole !== 'developer') return showToast('只有開發者可以指派 Developer', 'error');
 
@@ -613,9 +606,8 @@
         if (xp !== (u.xp ?? 0)) changes.push(`XP → ${xp}`);
         if (role !== (u.role || 'student')) changes.push(`角色 → ${role}`);
         if (isBanned !== !!(u.isBanned)) changes.push(isBanned ? '封鎖帳號' : '解除封鎖');
-        if (cloudDailyLimit !== (Number.isFinite(u.cloudSaveDailyLimit) ? u.cloudSaveDailyLimit : 20)) changes.push(`雲端每日上限 → ${cloudDailyLimit}`);
+        if (cloudStorageLimitMB !== (Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : 1)) changes.push(`雲端儲存上限(MB) → ${cloudStorageLimitMB}`);
         if (reviewDailyLimit !== (Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1)) changes.push(`審核每日上限 → ${reviewDailyLimit}`);
-        if (cloudTodayBonus !== (Number.isFinite(u.cloudSaveBonusToday) ? u.cloudSaveBonusToday : 0)) changes.push(`今日雲端加次 → ${cloudTodayBonus}`);
         if (reviewTodayBonus !== (Number.isFinite(u.reviewUploadBonusToday) ? u.reviewUploadBonusToday : 0)) changes.push(`今日審核加次 → ${reviewTodayBonus}`);
 
         if (!changes.length) {
@@ -634,9 +626,8 @@
                 xp,
                 role,
                 isBanned,
-                cloudSaveDailyLimit: cloudDailyLimit,
+                cloudStorageLimitMB: cloudStorageLimitMB,
                 reviewUploadDailyLimit: reviewDailyLimit,
-                cloudSaveBonusToday: cloudTodayBonus,
                 reviewUploadBonusToday: reviewTodayBonus
             });
             await logAction("編輯使用者", `${u.email || editingUserId}：${changes.join('、')}`);
@@ -646,9 +637,8 @@
                     ...allUsers[idx],
                     displayName: nameCheck.name,
                     coins, lv, xp, role, isBanned,
-                    cloudSaveDailyLimit: cloudDailyLimit,
+                    cloudStorageLimitMB: cloudStorageLimitMB,
                     reviewUploadDailyLimit: reviewDailyLimit,
-                    cloudSaveBonusToday: cloudTodayBonus,
                     reviewUploadBonusToday: reviewTodayBonus
                 };
             }

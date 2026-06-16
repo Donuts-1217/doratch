@@ -769,6 +769,44 @@
         return "剛才";
     }
 
+    function byteSizeOf(text) {
+        try {
+            return new TextEncoder().encode(String(text || "")).length;
+        } catch (_) {
+            return new Blob([String(text || "")]).size;
+        }
+    }
+
+    function projectBytesFromData(p) {
+        if (!p || typeof p !== "object") return 0;
+        let total = 0;
+        if (typeof p.pythonCode === "string") total += byteSizeOf(p.pythonCode);
+        if (typeof p.code === "string") total += byteSizeOf(p.code);
+        if (typeof p.data === "string") total += byteSizeOf(p.data);
+        if (p.spriteScripts && typeof p.spriteScripts === "object") {
+            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
+        }
+        return total;
+    }
+
+    async function ensureCloudStorageMB(user, newContent, targetPid) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : 1;
+        const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
+        const pSnap = await getDocs(collection(db, "users", user.uid, "projects"));
+        let totalBytes = 0;
+        pSnap.forEach(function (d) {
+            if (targetPid && d.id === targetPid) return;
+            totalBytes += projectBytesFromData(d.data() || {});
+        });
+        totalBytes += byteSizeOf(newContent);
+        if (totalBytes > limitBytes) {
+            throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
+        }
+    }
+
     const apcsBank = [
         {
             title: "【一般題庫】成績等第判斷",
@@ -1992,6 +2030,7 @@
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
+                await ensureCloudStorageMB(currentUser, e.target.result || "", null);
                 const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
                 const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
                 const sSnap = await getDoc(subRef);
@@ -2008,6 +2047,12 @@
                 await loadMySub();
                 alert("已上傳附件。完成後請到作答頁按「✅ 繳交作業」正式繳交。");
             } catch (err) {
+                const msg = String(err && err.message ? err.message : err);
+                if (msg.indexOf("CLOUD_STORAGE_MB_LIMIT:") === 0) {
+                    const lim = msg.split(":")[1] || "?";
+                    alert("雲端空間不足（上限 " + lim + " MB）。請刪除舊作品或請管理員調高容量。");
+                    return;
+                }
                 alert("上傳失敗：" + (err.message || err));
             }
         };
