@@ -202,6 +202,89 @@
         .modal-content { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 400px; color: white; border: 1px solid rgba(255,255,255,0.1); }
         .modal-content input { width: 100%; padding: 15px; margin: 20px 0; background: var(--bg); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; outline: none; }
         .btn-modal { padding: 12px 25px; border: none; border-radius: 12px; cursor: pointer; font-weight: 900; }
+        .message-menu {
+            position: fixed;
+            min-width: 160px;
+            background: #111827;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
+            z-index: 1200;
+            overflow: hidden;
+        }
+        .message-menu button {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: #e5e7eb;
+            text-align: left;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .message-menu button:hover { background: rgba(88,101,242,0.2); color: #fff; }
+        .message-menu button.danger:hover { background: rgba(237,66,69,0.22); color: #fecaca; }
+        .reply-quote {
+            margin-bottom: 6px;
+            border-left: 3px solid rgba(88,101,242,0.8);
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: rgba(88,101,242,0.08);
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+        .reply-bar {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            background: rgba(88,101,242,0.14);
+            border: 1px solid rgba(88,101,242,0.35);
+            color: #dbeafe;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .reply-bar button {
+            border: none;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            border-radius: 8px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .profile-pop {
+            position: fixed;
+            width: 280px;
+            max-width: calc(100vw - 20px);
+            background: #1f2937;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            box-shadow: 0 14px 32px rgba(0,0,0,0.45);
+            z-index: 1250;
+            padding: 14px;
+        }
+        .profile-pop-head { display: flex; gap: 10px; align-items: center; }
+        .profile-pop-avatar { width: 52px; height: 52px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.16); }
+        .profile-pop-name { font-weight: 900; font-size: 15px; color: #fff; }
+        .profile-pop-email { font-size: 12px; color: #94a3b8; margin-top: 2px; word-break: break-all; }
+        .profile-pop-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .profile-pop-tag {
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 800;
+            background: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+        }
         
         .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); background: var(--bg); }
         .empty-state i { font-size: 60px; margin-bottom: 20px; opacity: 0.2; }
@@ -345,6 +428,9 @@
     </div>
 </div>
 
+<div id="message-menu" class="message-menu" style="display:none;"></div>
+<div id="profile-pop" class="profile-pop" style="display:none;"></div>
+
     </div>
 </div>
 
@@ -393,6 +479,7 @@
     let friendLinks = [];
     let typingPulseTimer = null;
     let currentUserData = {};
+    let replyToMessage = null;
 
     const COSMETIC_ITEMS = [
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
@@ -1080,6 +1167,10 @@
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
+                <div class="reply-bar" id="reply-bar">
+                    <span id="reply-bar-text"></span>
+                    <button type="button" onclick="clearReplyTarget()">取消</button>
+                </div>
                 <div class="typing-indicator" id="typing-indicator"></div>
                 <div class="slash-picker" id="slash-picker" style="display:none;"></div>
                 <div class="input-wrapper">
@@ -1152,6 +1243,9 @@
             const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="user-cosmetic-badge">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
             const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? ` style="color:${escHtml(senderCosmetics.nameColor)}"` : '';
             const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
+            const replyHtml = msg.replyTo
+                ? `<div class="reply-quote">回覆 ${escHtml(msg.replyTo.senderName || "使用者")}：${escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90))}</div>`
+                : "";
             
             let contentHtml = '';
             if (msg.type === 'file') {
@@ -1173,19 +1267,19 @@
                 html += `
                     <div class="${rowClass} consecutive">
                         <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}</span></div>
-                        <div class="msg-content">${contentHtml}</div>
+                        <div class="msg-content" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${replyHtml}${contentHtml}</div>
                     </div>
                 `;
             } else {
                 html += `
-                    <div class="${rowClass}">
-                        <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}"></div>
+                    <div class="${rowClass}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
+                        <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
                         <div class="msg-content">
                             <div class="msg-header">
                                 <span class="msg-author"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}</span>
                             </div>
-                            ${contentHtml}
+                            ${replyHtml}${contentHtml}
                         </div>
                     </div>
                 `;
@@ -1196,6 +1290,7 @@
         });
         msgArea.innerHTML = html;
         msgArea.scrollTop = msgArea.scrollHeight;
+        setReplyBar();
     });
         
         setTimeout(() => {
@@ -1375,6 +1470,138 @@
     function escHtml(s) {
         return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
+
+    function hideMessageMenu() {
+        const el = document.getElementById("message-menu");
+        if (el) el.style.display = "none";
+    }
+
+    function hideProfilePop() {
+        const el = document.getElementById("profile-pop");
+        if (el) el.style.display = "none";
+    }
+
+    function setReplyBar() {
+        const bar = document.getElementById("reply-bar");
+        const text = document.getElementById("reply-bar-text");
+        if (!bar || !text) return;
+        if (!replyToMessage) {
+            bar.style.display = "none";
+            text.textContent = "";
+            return;
+        }
+        const sender = replyToMessage.senderName || "使用者";
+        const body = replyToMessage.type === "file"
+            ? ("📁 " + (replyToMessage.fileName || "檔案"))
+            : (replyToMessage.text || "").slice(0, 90);
+        text.textContent = `回覆 ${sender}：${body}`;
+        bar.style.display = "flex";
+    }
+
+    window.clearReplyTarget = () => {
+        replyToMessage = null;
+        setReplyBar();
+    };
+
+    window.replyMessageById = (msgId) => {
+        const msg = window.currentMessages && window.currentMessages[msgId];
+        if (!msg) return;
+        const senderName = msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0];
+        replyToMessage = {
+            id: msgId,
+            senderName: senderName,
+            senderId: msg.senderId || "",
+            text: msg.text || "",
+            type: msg.type || "text",
+            fileName: msg.fileName || ""
+        };
+        setReplyBar();
+        const input = document.getElementById("msg-input");
+        if (input) input.focus();
+    };
+
+    window.editMessageById = async (msgId) => {
+        const msg = window.currentMessages && window.currentMessages[msgId];
+        if (!msg || msg.senderId !== currentUser.uid || msg.type !== "text") return;
+        const next = prompt("編輯訊息：", msg.text || "");
+        if (next == null) return;
+        const text = String(next).trim();
+        if (!text) return alert("訊息不能是空白");
+        try {
+            await updateDoc(doc(db, "chats", currentChatId, "messages", msgId), {
+                text: text,
+                editedAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "chats", currentChatId), {
+                lastMessage: text,
+                updatedAt: serverTimestamp(),
+                lastSenderId: currentUser.uid
+            });
+        } catch (e) {
+            alert("編輯失敗：" + (e.message || e));
+        }
+    };
+
+    window.deleteMessageById = async (msgId) => {
+        const msg = window.currentMessages && window.currentMessages[msgId];
+        if (!msg || msg.senderId !== currentUser.uid) return;
+        if (!confirm("確定刪除此訊息？")) return;
+        try {
+            await deleteDoc(doc(db, "chats", currentChatId, "messages", msgId));
+        } catch (e) {
+            alert("刪除失敗：" + (e.message || e));
+        }
+    };
+
+    window.openMessageMenu = (ev, msgId) => {
+        ev.preventDefault();
+        hideProfilePop();
+        const menu = document.getElementById("message-menu");
+        if (!menu) return;
+        const msg = window.currentMessages && window.currentMessages[msgId];
+        if (!msg) return;
+        const mine = msg.senderId === currentUser.uid;
+        let html = `<button onclick="replyMessageById('${msgId}');hideMessageMenu()">↩ 回覆</button>`;
+        if (mine && msg.type === "text") html += `<button onclick="editMessageById('${msgId}');hideMessageMenu()">✏️ 編輯</button>`;
+        if (mine) html += `<button class="danger" onclick="deleteMessageById('${msgId}');hideMessageMenu()">🗑️ 刪除</button>`;
+        menu.innerHTML = html;
+        menu.style.left = Math.min(ev.clientX, window.innerWidth - 190) + "px";
+        menu.style.top = Math.min(ev.clientY, window.innerHeight - 160) + "px";
+        menu.style.display = "block";
+    };
+
+    window.openProfileByMessage = (ev, msgId) => {
+        ev.preventDefault();
+        hideMessageMenu();
+        const msg = window.currentMessages && window.currentMessages[msgId];
+        if (!msg) return;
+        const pop = document.getElementById("profile-pop");
+        if (!pop) return;
+        const isBot = msg.type === "bot" || msg.senderType === "bot";
+        const name = isBot ? (msg.botName || "Bot") : (msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0]);
+        const email = isBot ? ("bot@" + String(msg.botToken || "local").slice(0, 8)) : (msg.senderEmail || "");
+        const c = (!isBot && msg.senderCosmetics && typeof msg.senderCosmetics === "object") ? msg.senderCosmetics : {};
+        const tags = [];
+        if (c.title) tags.push(`<span class="profile-pop-tag">🏷️ ${escHtml(c.title)}</span>`);
+        if (c.badge) tags.push(`<span class="profile-pop-tag">✨ ${escHtml(c.badge)}</span>`);
+        if (isBot) tags.push('<span class="profile-pop-tag">🤖 BOT</span>');
+        const avatarUrl = isBot
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=23a559&color=fff`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(email || name)}&background=random`;
+        pop.innerHTML = `
+            <div class="profile-pop-head">
+                <img src="${avatarUrl}" class="profile-pop-avatar ${frameClass(c.frame || "")}">
+                <div>
+                    <div class="profile-pop-name"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
+                    <div class="profile-pop-email">${escHtml(email)}</div>
+                </div>
+            </div>
+            <div class="profile-pop-tags">${tags.join("") || '<span class="profile-pop-tag">一般使用者</span>'}</div>
+        `;
+        pop.style.left = Math.min(ev.clientX + 8, window.innerWidth - 300) + "px";
+        pop.style.top = Math.min(ev.clientY + 8, window.innerHeight - 220) + "px";
+        pop.style.display = "block";
+    };
 
     function renderBotComponentsHtml(view, botToken) {
         if (!view || !view.items || !view.items.length) return "";
@@ -1677,6 +1904,14 @@
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
         if (!text) return;
+        const replyPayload = replyToMessage ? {
+            id: replyToMessage.id,
+            senderName: replyToMessage.senderName || "",
+            senderId: replyToMessage.senderId || "",
+            text: (replyToMessage.text || "").slice(0, 200),
+            type: replyToMessage.type || "text",
+            fileName: replyToMessage.fileName || ""
+        } : null;
 
         input.value = '';
         input.disabled = true;
@@ -1690,6 +1925,7 @@
                 senderDisplayName: displayNameFromUser(currentUserData),
                 senderCosmetics: cosmetic,
                 text: text,
+                replyTo: replyPayload,
                 type: "text",
                 createdAt: serverTimestamp()
             });
@@ -1704,6 +1940,8 @@
             
             trimPrivateMessages(currentChatId);
             await processAttachedBots(text);
+            replyToMessage = null;
+            setReplyBar();
         } catch (e) {
             alert("傳送失敗: " + e.message);
         } finally {
@@ -1816,8 +2054,13 @@
 
     window.closeModal = () => document.getElementById('modal').style.display = 'none';
     window.addEventListener("click", (e) => {
-        if (e.target && e.target.id === "modal") closeModal();
-        if (e.target && e.target.id === "cosmetic-modal") closeCosmeticModal();
+        const t = e.target;
+        if (t && t.id === "modal") closeModal();
+        if (t && t.id === "cosmetic-modal") closeCosmeticModal();
+        const menu = document.getElementById("message-menu");
+        if (menu && t && !menu.contains(t)) hideMessageMenu();
+        const pop = document.getElementById("profile-pop");
+        if (pop && t && !pop.contains(t) && !String(t.className || "").includes("msg-avatar")) hideProfilePop();
     });
 
     window.submitModal = async () => {
