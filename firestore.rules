@@ -208,6 +208,36 @@ service cloud.firestore {
       }
     }
 
+    // 3.1 好友請求 / 好友關係
+    match /friend_requests/{requestId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.fromUid ||
+        request.auth.uid == resource.data.toUid ||
+        isAdmin()
+      );
+
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.fromUid &&
+        request.resource.data.toUid is string &&
+        request.resource.data.fromUid != request.resource.data.toUid;
+
+      allow update: if request.auth != null && (
+        isAdmin() ||
+        (
+          request.auth.uid == resource.data.toUid &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'acceptedAt', 'updatedAt']) &&
+          request.resource.data.status in ['accepted']
+        )
+      );
+
+      allow delete: if request.auth != null && (
+        isAdmin() ||
+        request.auth.uid == resource.data.fromUid ||
+        request.auth.uid == resource.data.toUid
+      );
+    }
+
     // 4. 全域資源 (Global Assets)
     
     // 題庫 (questions)

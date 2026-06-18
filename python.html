@@ -187,6 +187,91 @@
         .teach-tips { margin: 0; padding-left: 18px; color: #b45309; }
         .teach-run { background: #f0fdf4; margin: 0 -4px; padding: 12px; border-radius: 10px; border: 1px solid #bbf7d0 !important; }
         .teach-empty { color: #94a3b8; font-size: 13px; }
+        .assist-system {
+            border: 1px solid #cbd5e1;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        }
+        .assist-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .assist-head h3 {
+            margin: 0;
+            color: #1e40af;
+            font-size: 1.05rem;
+        }
+        .assist-desc {
+            margin: 0 0 10px;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+        .assist-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .assist-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            min-height: 96px;
+        }
+        .assist-box h4 {
+            margin: 0 0 6px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 900;
+        }
+        .assist-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: #475569;
+        }
+        .assist-list li.pass { color: #15803d; }
+        .assist-list li.warn { color: #b45309; }
+        .assist-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .assist-chip {
+            border: none;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+        .assist-chip:hover { background: #c7d2fe; }
+        .assist-status {
+            margin-top: 10px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 13px;
+            line-height: 1.65;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e3a8a;
+        }
+        .assist-status.ok {
+            background: #ecfdf5;
+            border-color: #86efac;
+            color: #166534;
+        }
+        @media (max-width: 900px) {
+            .assist-grid { grid-template-columns: 1fr; }
+        }
     </style>
     <script src="doratch-base.js"></script>
     <script src="skulpt.min.js"></script>
@@ -224,7 +309,7 @@
     <main class="main-content">
         <div class="py-hero">
             <h1>🐍 Doratch Python 學習</h1>
-            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 完成關卡賺金幣</p>
+            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 每關含分段教學、示範程式、學習助教分析與通關檢查</p>
         </div>
 
         <div id="file-warn" class="file-warn">
@@ -296,6 +381,28 @@
                         🤖 Bot 輔助：<kbd>@</kbd> 或 <kbd>bot.</kbd>、<kbd>ctx.</kbd>、<kbd>interaction.</kbd> 自動提示 ·
                         快插按鈕可插入骨架 · discord.py 關卡用右側模擬器測 <kbd>!</kbd> / <kbd>/</kbd> 指令
                     </p>
+                </div>
+                <div class="card assist-system">
+                    <div class="assist-head">
+                        <h3>🧠 學習輔助系統</h3>
+                        <button type="button" class="btn btn-test" id="btn-analyze" style="padding:8px 12px;">分析目前程式</button>
+                    </div>
+                    <p class="assist-desc">逐項檢查本關要求、提醒常見錯誤，並提供下一步建議。此工具不會直接給答案。</p>
+                    <div class="assist-grid">
+                        <div class="assist-box">
+                            <h4>通關條件檢查</h4>
+                            <ul id="assist-goals" class="assist-list"></ul>
+                        </div>
+                        <div class="assist-box">
+                            <h4>下一步建議</h4>
+                            <ul id="assist-next" class="assist-list"></ul>
+                        </div>
+                    </div>
+                    <div class="assist-actions">
+                        <button type="button" class="assist-chip" id="assist-template">載入本關骨架</button>
+                        <button type="button" class="assist-chip" id="assist-run-guide">執行測試前檢查</button>
+                    </div>
+                    <div id="assist-status" class="assist-status">尚未分析：先寫幾行程式，再按「分析目前程式」。</div>
                 </div>
                 <div class="card" style="padding:0;border:none;background:transparent;">
                     <div class="terminal-panel">
@@ -525,6 +632,137 @@
         el.textContent = `進度：${completed.size} / ${PYTHON_LESSONS.length} 關完成`;
     }
 
+    function countEffectiveLines(code) {
+        return String(code || "")
+            .split("\n")
+            .map((s) => s.trim())
+            .filter((s) => s && !s.startsWith("#")).length;
+    }
+
+    function getLessonScaffold(lesson) {
+        const lines = [];
+        if ((lesson.rules?.mustUse || []).includes("def")) {
+            lines.push("def solve():");
+            lines.push("    # TODO: 先完成邏輯");
+            lines.push("    pass");
+            lines.push("");
+            lines.push("# TODO: 讀取輸入並呼叫 solve()");
+            return lines.join("\n");
+        }
+        if (lesson.rules?.requireLoop && (lesson.rules?.mustUse || []).includes("while")) {
+            lines.push("total = 0");
+            lines.push("while True:");
+            lines.push("    x = int(input())");
+            lines.push("    if x == 0:");
+            lines.push("        break");
+            lines.push("    # TODO: 更新 total");
+            lines.push("print(total)");
+            return lines.join("\n");
+        }
+        if (lesson.rules?.requireLoop) {
+            lines.push("n = int(input())");
+            lines.push("for i in range(n):");
+            lines.push("    # TODO: 補上邏輯");
+            lines.push("    pass");
+            lines.push("print()");
+            return lines.join("\n");
+        }
+        if (lesson.rules?.requireBranch) {
+            lines.push("x = input()");
+            lines.push("if ...:");
+            lines.push("    print(...)");
+            lines.push("elif ...:");
+            lines.push("    print(...)");
+            lines.push("else:");
+            lines.push("    print(...)");
+            return lines.join("\n");
+        }
+        lines.push("# TODO: 依題目補上程式");
+        if ((lesson.rules?.mustUse || []).includes("input")) lines.push("x = input()");
+        if ((lesson.rules?.mustUse || []).includes("print")) lines.push("print(x)");
+        return lines.join("\n");
+    }
+
+    function analyzeCodeForLesson(code, lesson) {
+        const rules = lesson.rules || {};
+        const mustUse = rules.mustUse || [];
+        const checks = [];
+        const next = [];
+        const src = String(code || "");
+        const effectiveLines = countEffectiveLines(src);
+        const lower = src.toLowerCase();
+
+        if (!effectiveLines) {
+            checks.push({ pass: false, text: "尚未撰寫可執行程式碼（目前只有空白或註解）" });
+            next.push("先完成最小可執行版本：至少讀 input / print 一次");
+            return { checks, next, ok: false };
+        }
+
+        if (rules.minLines) {
+            const pass = effectiveLines >= rules.minLines;
+            checks.push({ pass, text: `有效程式碼行數 ${effectiveLines}/${rules.minLines}` });
+            if (!pass) next.push(`至少補到 ${rules.minLines} 行可執行程式碼`);
+        }
+
+        mustUse.forEach((kw) => {
+            const pass = lower.includes(String(kw).toLowerCase());
+            checks.push({ pass, text: `需使用 \`${kw}\`` });
+            if (!pass) next.push(`加入 \`${kw}\`（本關必要語法）`);
+        });
+
+        if (rules.requireLoop) {
+            const pass = /\bfor\b|\bwhile\b/.test(lower);
+            checks.push({ pass, text: "需要迴圈邏輯（for 或 while）" });
+            if (!pass) next.push("先用 for/while 建立可重複處理輸入的骨架");
+        }
+        if (rules.requireBranch) {
+            const pass = /\bif\b/.test(lower);
+            checks.push({ pass, text: "需要條件分支（if / elif / else）" });
+            if (!pass) next.push("加入 if / elif / else 處理不同情況");
+        }
+        if (rules.requireDef) {
+            const pass = /\bdef\s+[a-zA-Z_]\w*\s*\(/.test(src);
+            checks.push({ pass, text: "需要函式定義（def）" });
+            if (!pass) next.push("先定義函式，再由主程式呼叫");
+        }
+
+        const hasInput = /\binput\s*\(/.test(src);
+        if ((mustUse.includes("input") || lesson.id === "io") && !hasInput) {
+            next.push("本關是動態輸入題，請勿把答案寫死在 print 裡");
+        }
+        if (/print\(\s*["'][^"']*alice|bob|hello doratch/i.test(src) && hasInput) {
+            next.push("偵測到可能寫死測資，請改為使用 input 讀入值");
+        }
+
+        if (!next.length) next.push("很接近完成：先按「▶ 執行」手測，再按「✅ 跑測試」");
+        return { checks, next, ok: checks.every((c) => c.pass) };
+    }
+
+    function renderAssistResult(analysis) {
+        const goalEl = document.getElementById("assist-goals");
+        const nextEl = document.getElementById("assist-next");
+        const statusEl = document.getElementById("assist-status");
+        if (!goalEl || !nextEl || !statusEl) return;
+        goalEl.innerHTML = analysis.checks.map((c) =>
+            `<li class="${c.pass ? "pass" : "warn"}">${c.pass ? "✓" : "•"} ${c.text}</li>`
+        ).join("");
+        nextEl.innerHTML = analysis.next.map((s) => `<li>${s}</li>`).join("");
+        if (analysis.ok) {
+            statusEl.classList.add("ok");
+            statusEl.textContent = "助教判定：核心條件大致完整，可以進入測試驗證。";
+        } else {
+            statusEl.classList.remove("ok");
+            statusEl.textContent = "助教判定：還有條件未滿足，先補上「下一步建議」再測試。";
+        }
+    }
+
+    function runAssistAnalysis() {
+        const lesson = getLesson(currentId);
+        const analysis = analyzeCodeForLesson(getCode(), lesson);
+        renderAssistResult(analysis);
+        return analysis;
+    }
+
     function selectLesson(id) {
         currentId = id;
         const lesson = getLesson(id);
@@ -557,6 +795,7 @@
         renderLessonList();
         updateDiscordLayout();
         if (botSim) botSim.clearMessages();
+        runAssistAnalysis();
     }
 
     async function awardCoins(amount) {
@@ -611,9 +850,14 @@
     document.getElementById("btn-test").onclick = async () => {
         const lesson = getLesson(currentId);
         const code = getCode();
+        const assist = runAssistAnalysis();
         const box = document.getElementById("test-results");
         if (!isEngineReady()) {
             alert("Python 引擎尚未就緒，請稍候或按「重新載入引擎」。");
+            return;
+        }
+        if (!assist.ok) {
+            alert("🧠 學習助教提醒：目前仍有核心條件未滿足，建議先依「下一步建議」修改再測試。");
             return;
         }
         const term = getPyTerm();
@@ -675,7 +919,40 @@
     document.getElementById("btn-reset").onclick = () => {
         if (!confirm("確定清空？將還原為題目說明（不含解答）。")) return;
         setCode(getLesson(currentId).starter);
+        runAssistAnalysis();
     };
+
+    document.getElementById("btn-analyze").onclick = () => {
+        runAssistAnalysis();
+        alert("分析完成：請看「學習輔助系統」中的通關條件與下一步建議。");
+    };
+
+    document.getElementById("assist-template").onclick = () => {
+        const lesson = getLesson(currentId);
+        if (!confirm("載入本關骨架？\n\n這只會放入結構提示，不包含答案。")) return;
+        setCode(getLessonScaffold(lesson));
+        runAssistAnalysis();
+    };
+
+    document.getElementById("assist-run-guide").onclick = () => {
+        const lesson = getLesson(currentId);
+        const analysis = runAssistAnalysis();
+        const lines = [];
+        lines.push(`【${lesson.title}】測試前檢查`);
+        analysis.checks.forEach((c) => lines.push(`${c.pass ? "✓" : "•"} ${c.text}`));
+        lines.push("");
+        lines.push("下一步：");
+        analysis.next.forEach((n, i) => lines.push(`${i + 1}. ${n}`));
+        alert(lines.join("\n"));
+    };
+
+    const fallbackEditorEl = document.getElementById("editor-fallback");
+    if (fallbackEditorEl) {
+        fallbackEditorEl.addEventListener("input", function () {
+            clearTimeout(window.__assistTimer);
+            window.__assistTimer = setTimeout(runAssistAnalysis, 220);
+        });
+    }
 
     function enableEngineUi() {
         engineReady = true;

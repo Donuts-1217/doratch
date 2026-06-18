@@ -94,7 +94,7 @@
         if (member) {
             items = global.PythonCompletions.getMemberItems(member, prefix, code);
         } else {
-            items = global.PythonCompletions.collectItems(prefix, code, forceBot, { lineBefore: currentLineBefore });
+            items = global.PythonCompletions.collectItems(prefix, code, forceBot, { lineBefore: currentLineBefore, codeBefore: beforeCursor });
         }
 
         var start = member ? (el.selectionStart - prefix.length) : w.start;

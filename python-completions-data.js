@@ -314,8 +314,12 @@
         if (!name || !code) return null;
         var safe = escapeRegExp(name);
         var src = String(code || "");
-        var assign = src.match(new RegExp("\\b" + safe + "\\s*=\\s*(.+)$", "m"));
-        var rhs = assign ? String(assign[1] || "").trim() : "";
+        var re = new RegExp("\\b" + safe + "\\s*=\\s*(.+)$", "gm");
+        var match;
+        var rhs = "";
+        while ((match = re.exec(src))) {
+            rhs = String(match[1] || "").trim();
+        }
         if (!rhs) return null;
 
         if (/^\[/.test(rhs) || /^list\s*\(/.test(rhs)) return "list";
@@ -329,13 +333,83 @@
         return null;
     }
 
+    function addVarName(map, name, detail) {
+        if (!name) return;
+        if (!/^[a-zA-Z_]\w*$/.test(name)) return;
+        if (KEYWORDS.indexOf(name) >= 0) return;
+        if (!map[name]) map[name] = detail || "變數";
+    }
+
+    function parseParams(paramText, map) {
+        String(paramText || "").split(",").forEach(function (part) {
+            var p = String(part || "").trim();
+            if (!p) return;
+            p = p.replace(/^\*+/, "");
+            p = p.split("=")[0].trim();
+            p = p.split(":")[0].trim();
+            addVarName(map, p, "函式參數");
+        });
+    }
+
+    function collectVariableItems(prefix, sourceCode) {
+        var src = String(sourceCode || "");
+        var vars = Object.create(null);
+        var m;
+
+        var reAssign = /(?:^|[^\.\w])([a-zA-Z_]\w*)\s*=\s*[^\n]*/gm;
+        while ((m = reAssign.exec(src))) addVarName(vars, m[1], "已定義變數");
+
+        var reUnpack = /(?:^|[^\.\w])([a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w+)+)\s*=\s*[^\n]*/gm;
+        while ((m = reUnpack.exec(src))) {
+            String(m[1]).split(",").forEach(function (name) {
+                addVarName(vars, String(name || "").trim(), "解包變數");
+            });
+        }
+
+        var reFor = /\bfor\s+([a-zA-Z_]\w*(?:\s*,\s*[a-zA-Z_]\w+)*)\s+in\b/gm;
+        while ((m = reFor.exec(src))) {
+            String(m[1]).split(",").forEach(function (name) {
+                addVarName(vars, String(name || "").trim(), "迴圈變數");
+            });
+        }
+
+        var reDef = /\bdef\s+[a-zA-Z_]\w*\s*\(([^)]*)\)/gm;
+        while ((m = reDef.exec(src))) parseParams(m[1], vars);
+
+        var reWithAs = /\bwith\b[^\n]*\bas\s+([a-zA-Z_]\w*)/gm;
+        while ((m = reWithAs.exec(src))) addVarName(vars, m[1], "with 變數");
+
+        var reExceptAs = /\bexcept\b[^\n]*\bas\s+([a-zA-Z_]\w*)/gm;
+        while ((m = reExceptAs.exec(src))) addVarName(vars, m[1], "例外變數");
+
+        var reImportAlias = /\bimport\b[^\n]*\bas\s+([a-zA-Z_]\w*)/gm;
+        while ((m = reImportAlias.exec(src))) addVarName(vars, m[1], "模組別名");
+
+        return Object.keys(vars)
+            .filter(function (name) { return matchPrefix(name, prefix); })
+            .map(function (name) {
+                return {
+                    kind: "variable",
+                    label: name,
+                    insert: name,
+                    sort: "0v_" + name,
+                    detail: vars[name]
+                };
+            });
+    }
+
     function collectItems(prefix, code, forceBot, context) {
         var bot = forceBot || isBotCode(code);
         var discordPy = isDiscordPyCode(code);
         var legacy = isLegacyBotCode(code);
         var items = [];
         var lineBefore = (context && context.lineBefore) ? String(context.lineBefore) : "";
+        var codeBefore = (context && context.codeBefore) ? String(context.codeBefore) : String(code || "");
         var importCtx = /\bimport\s+[a-zA-Z0-9_.,\s]*$/.test(lineBefore) || /\bfrom\s+[a-zA-Z0-9_.]*$/.test(lineBefore);
+
+        collectVariableItems(prefix, codeBefore).forEach(function (it) {
+            items.push(it);
+        });
 
         KEYWORDS.forEach(function (kw) {
             if (matchPrefix(kw, prefix)) {

@@ -28,6 +28,7 @@
             function: monaco.languages.CompletionItemKind.Function,
             snippet: monaco.languages.CompletionItemKind.Snippet,
             method: monaco.languages.CompletionItemKind.Method,
+            variable: monaco.languages.CompletionItemKind.Variable,
             module: monaco.languages.CompletionItemKind.Module
         };
         return map[kind] || monaco.languages.CompletionItemKind.Text;
@@ -46,6 +47,8 @@
                 };
                 var prefix = (word.word || "").replace(/^@/, "");
                 var code = model.getValue();
+                var offset = model.getOffsetAt(position);
+                var codeBefore = code.slice(0, offset);
                 var suggestions = [];
                 var comp = global.PythonCompletions;
                 var lineBefore = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
@@ -68,7 +71,7 @@
                         return { suggestions: suggestions };
                     }
 
-                    comp.collectItems(prefix, code, !!global.__DORATCH_FORCE_BOT_ASSIST__, { lineBefore: lineBefore }).forEach(function (item) {
+                    comp.collectItems(prefix, code, !!global.__DORATCH_FORCE_BOT_ASSIST__, { lineBefore: lineBefore, codeBefore: codeBefore }).forEach(function (item) {
                         suggestions.push({
                             label: item.label,
                             kind: monacoKind(monaco, item.kind),

@@ -67,7 +67,133 @@
         .modal-overlay.open { display: flex; }
         .empty-state { text-align: center; padding: 40px; color: #64748B; }
         @media (max-width: 1024px) {
-            .main { padding: 20px; }
+            body {
+                display: block;
+                height: auto;
+                overflow: auto;
+            }
+
+            .sidebar[data-doratch-admin-nav] {
+                width: 100%;
+                padding: 0;
+                flex-direction: row;
+                align-items: stretch;
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            .sidebar[data-doratch-admin-nav] > div[onclick*="index.html"] {
+                display: none;
+            }
+
+            .sidebar[data-doratch-admin-nav] .nav-item {
+                width: auto;
+                flex-shrink: 0;
+                padding: 12px 16px;
+                border-left: none !important;
+                border-bottom: 2px solid transparent;
+                font-size: 14px;
+            }
+
+            .sidebar[data-doratch-admin-nav] .nav-item.active {
+                border-left: none !important;
+                border-bottom: 2px solid var(--primary);
+            }
+
+            .sidebar[data-doratch-admin-nav] .sidebar-footer {
+                margin-top: 0;
+                padding: 6px 10px;
+                border-top: none;
+                border-left: 1px solid rgba(255,255,255,0.08);
+                flex-shrink: 0;
+            }
+
+            .sidebar[data-doratch-admin-nav] .user-mini-card {
+                min-width: 148px;
+            }
+
+            .main {
+                padding: 16px;
+                overflow: visible;
+            }
+
+            .header {
+                margin-bottom: 18px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .header h1 {
+                margin: 0;
+                font-size: 1.35rem;
+            }
+
+            .card {
+                padding: 16px;
+                border-radius: 16px;
+                margin-bottom: 16px;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+
+            .search-bar input {
+                width: 100%;
+                min-width: 220px;
+                flex: 1 1 100%;
+            }
+
+            #tab-users .card {
+                overflow-x: auto;
+            }
+
+            #tab-users table {
+                min-width: 860px;
+            }
+
+            .settings-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .modal-overlay .card {
+                width: min(680px, 95vw) !important;
+                max-height: 88vh;
+                border-radius: 14px;
+                padding: 16px;
+            }
+
+            .toast {
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .sidebar[data-doratch-admin-nav] .nav-item {
+                padding: 11px 13px;
+                font-size: 13px;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            #tab-dashboard > div[style*="grid-template-columns:repeat(3, 1fr)"] {
+                grid-template-columns: 1fr !important;
+                margin-bottom: 16px !important;
+            }
+
+            #tab-dashboard > .card > div[style*="grid-template-columns:repeat(2, minmax(220px, 1fr))"] {
+                grid-template-columns: 1fr !important;
+            }
         }
 
     </style>
@@ -128,6 +254,8 @@
                 <input type="text" id="user-search" placeholder="搜尋 Email、暱稱或 UID…" autocomplete="off">
                 <button class="btn btn-primary" onclick="runUserSearch()">🔍 搜尋</button>
                 <button class="btn" style="background:#334155; color:white;" onclick="clearUserSearch()">清除</button>
+                <button class="btn" style="background:#6D28D9; color:white;" onclick="extendGraceForFiltered(30)">篩選結果 +30天寬限</button>
+                <button class="btn" style="background:#7F1D1D; color:white;" onclick="clearExpiredGraceForFiltered()">清除已過期寬限</button>
             </div>
         </div>
         <div class="card">
@@ -267,6 +395,14 @@
             <div class="form-group">
                 <label>今日加次：審核上傳</label>
                 <input type="number" id="u-review-today-bonus" min="0" step="1" placeholder="例如 1">
+            </div>
+            <div class="form-group full">
+                <label>雲端容量寬限期</label>
+                <div id="u-grace-status" style="font-size:12px; color:#94A3B8; margin-bottom:8px;">未啟用</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button class="btn" style="background:#334155; color:white;" onclick="extendUserGracePeriod(30)">+30 天寬限</button>
+                    <button class="btn" style="background:#7F1D1D; color:white;" onclick="clearUserGracePeriod()">清除寬限</button>
+                </div>
             </div>
         </div>
         <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
@@ -673,12 +809,109 @@
             const devOpt = roleSel.querySelector('option[value="developer"]');
             if (devOpt) devOpt.style.display = (myRole === 'developer') ? '' : 'none';
         }
+        const graceMs = getMillis(u.cloudStorageGraceUntilMs);
+        const isGraceActive = graceMs > Date.now();
+        document.getElementById('u-grace-status').innerHTML = isGraceActive
+            ? `<span style="color:#F59E0B; font-weight:bold;">寬限中</span>，到期：${escapeHtml(formatTime(graceMs))}`
+            : '<span style="color:#64748B;">未啟用</span>';
         document.getElementById('user-modal').classList.add('open');
     };
 
     window.closeUserModal = () => {
         editingUserId = null;
         document.getElementById('user-modal').classList.remove('open');
+    };
+
+    window.extendUserGracePeriod = async (days = 30) => {
+        if (!editingUserId) return;
+        const u = allUsers.find(x => x.id === editingUserId);
+        if (!u) return;
+        const addMs = Math.max(1, Number(days) || 30) * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        const base = Math.max(now, getMillis(u.cloudStorageGraceUntilMs));
+        const nextGrace = base + addMs;
+        try {
+            await updateDoc(doc(db, "users", editingUserId), { cloudStorageGraceUntilMs: nextGrace });
+            await logAction("延長寬限期", `${u.email || editingUserId}：延長 ${days} 天，至 ${new Date(nextGrace).toLocaleString('zh-TW')}`);
+            const idx = allUsers.findIndex(x => x.id === editingUserId);
+            if (idx >= 0) allUsers[idx] = { ...allUsers[idx], cloudStorageGraceUntilMs: nextGrace };
+            openUserModal(editingUserId);
+            runUserSearch();
+            showToast(`已延長寬限期 ${days} 天`);
+        } catch (e) {
+            console.error(e);
+            showToast('延長寬限期失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.clearUserGracePeriod = async () => {
+        if (!editingUserId) return;
+        const u = allUsers.find(x => x.id === editingUserId);
+        if (!u) return;
+        if (!confirm(`確定清除 ${u.email || editingUserId} 的寬限期？`)) return;
+        try {
+            await updateDoc(doc(db, "users", editingUserId), { cloudStorageGraceUntilMs: 0 });
+            await logAction("清除寬限期", `${u.email || editingUserId}：手動清除`);
+            const idx = allUsers.findIndex(x => x.id === editingUserId);
+            if (idx >= 0) allUsers[idx] = { ...allUsers[idx], cloudStorageGraceUntilMs: 0 };
+            openUserModal(editingUserId);
+            runUserSearch();
+            showToast('已清除寬限期');
+        } catch (e) {
+            console.error(e);
+            showToast('清除寬限期失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.extendGraceForFiltered = async (days) => {
+        const addDays = Math.max(1, Number(days) || 30);
+        const key = document.getElementById('user-search').value.trim();
+        const targets = filterUsersList(key);
+        if (!targets.length) return showToast('目前沒有符合篩選的使用者', 'error');
+        if (!confirm(`確定要對 ${targets.length} 位使用者延長 ${addDays} 天寬限期？`)) return;
+        const now = Date.now();
+        const addMs = addDays * 24 * 60 * 60 * 1000;
+        try {
+            await Promise.all(targets.map(async (u) => {
+                const base = Math.max(now, getMillis(u.cloudStorageGraceUntilMs));
+                const nextGrace = base + addMs;
+                await updateDoc(doc(db, "users", u.id), { cloudStorageGraceUntilMs: nextGrace });
+                const idx = allUsers.findIndex(x => x.id === u.id);
+                if (idx >= 0) allUsers[idx] = { ...allUsers[idx], cloudStorageGraceUntilMs: nextGrace };
+            }));
+            await logAction("批次延長寬限期", `對 ${targets.length} 位使用者延長 ${addDays} 天`);
+            if (editingUserId) openUserModal(editingUserId);
+            runUserSearch();
+            showToast(`已對 ${targets.length} 位使用者延長寬限期`);
+        } catch (e) {
+            console.error(e);
+            showToast('批次延長失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.clearExpiredGraceForFiltered = async () => {
+        const key = document.getElementById('user-search').value.trim();
+        const now = Date.now();
+        const targets = filterUsersList(key).filter(u => {
+            const ms = getMillis(u.cloudStorageGraceUntilMs);
+            return ms > 0 && ms <= now;
+        });
+        if (!targets.length) return showToast('沒有可清除的「已過期寬限」使用者', 'error');
+        if (!confirm(`確定清除 ${targets.length} 位使用者的已過期寬限期？`)) return;
+        try {
+            await Promise.all(targets.map(async (u) => {
+                await updateDoc(doc(db, "users", u.id), { cloudStorageGraceUntilMs: 0 });
+                const idx = allUsers.findIndex(x => x.id === u.id);
+                if (idx >= 0) allUsers[idx] = { ...allUsers[idx], cloudStorageGraceUntilMs: 0 };
+            }));
+            await logAction("批次清除已過期寬限期", `共 ${targets.length} 位`);
+            if (editingUserId) openUserModal(editingUserId);
+            runUserSearch();
+            showToast(`已清除 ${targets.length} 位的已過期寬限`);
+        } catch (e) {
+            console.error(e);
+            showToast('批次清除失敗：' + (e.message || e), 'error');
+        }
     };
 
     window.saveUserSettings = async () => {

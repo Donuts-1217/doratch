@@ -49,6 +49,51 @@
         .chat-name { font-weight: bold; color: var(--text-muted); font-size: 15px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
         .chat-item:hover .chat-name, .chat-item.active .chat-name { color: white; }
         .chat-preview { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 25px; }
+        .user-presence-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+        .user-presence-dot.online { background: #23a559; box-shadow: 0 0 8px rgba(35,165,89,0.7); }
+        .user-presence-dot.offline { background: #6b7280; }
+        .chat-unread-badge {
+            margin-left: auto;
+            padding: 1px 6px;
+            border-radius: 999px;
+            font-size: 10px;
+            background: #5865f2;
+            color: #fff;
+            font-weight: 900;
+        }
+        .chat-item.friend-request {
+            border: 1px solid rgba(244,127,36,0.3);
+            background: rgba(244,127,36,0.07);
+        }
+        .chat-item.friend-item {
+            border: 1px solid rgba(76,151,255,0.2);
+            background: rgba(76,151,255,0.06);
+        }
+        .mini-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .mini-btn {
+            flex: 1;
+            border: none;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            color: #fff;
+        }
+        .mini-btn.accept { background: #23a559; }
+        .mini-btn.reject { background: #ed4245; }
+        .mini-btn.cancel { background: #4e5058; }
+        .mini-btn.dm { background: #5865f2; }
         
         /* 右側對話區 */
         .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
@@ -63,6 +108,18 @@
         .message-row.consecutive { margin-top: 2px; }
         .msg-avatar-container { width: 50px; margin-right: 20px; flex-shrink: 0; display: flex; justify-content: center; }
         .msg-avatar { width: 50px; height: 50px; border-radius: 16px; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); }
+        .avatar-frame-neon {
+            border-color: #22d3ee !important;
+            box-shadow: 0 0 0 4px rgba(34,211,238,0.2), 0 0 18px rgba(34,211,238,0.45);
+        }
+        .avatar-frame-gold {
+            border-color: #fbbf24 !important;
+            box-shadow: 0 0 0 4px rgba(251,191,36,0.2), 0 0 18px rgba(251,191,36,0.45);
+        }
+        .avatar-frame-sakura {
+            border-color: #f9a8d4 !important;
+            box-shadow: 0 0 0 4px rgba(249,168,212,0.22), 0 0 18px rgba(244,114,182,0.4);
+        }
         .msg-time-hover { font-size: 11px; color: #475569; opacity: 0; text-align: center; width: 50px; }
         .message-row.consecutive:hover .msg-time-hover { opacity: 1; }
         
@@ -74,6 +131,8 @@
         .message-row.bot-msg .msg-author { color: #23a559; }
         .message-row.bot-msg .msg-avatar { border-color: rgba(35,165,89,0.4); }
         .bot-badge { background: #23a559; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+        .user-title-badge { background: rgba(88,101,242,0.2); color: #c7d2fe; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+        .user-cosmetic-badge { background: rgba(250,204,21,0.2); color: #fde68a; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
         .msg-embed {
             margin-top: 6px; padding: 10px 12px; border-left: 3px solid #5865f2;
             background: rgba(88,101,242,0.08); border-radius: 6px; font-size: 14px; line-height: 1.5;
@@ -103,6 +162,13 @@
 
         /* 輸入區 */
         .input-area { padding: 0 30px 30px 30px; flex-shrink: 0; position: relative; }
+        .typing-indicator {
+            min-height: 18px;
+            font-size: 12px;
+            color: #94a3b8;
+            margin: 0 0 8px 2px;
+            font-weight: 700;
+        }
         .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; padding: 12px 20px; transition: 0.3s; gap: 12px; }
         .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(76, 151, 255, 0.1); }
         .btn-attach { background: rgba(255,255,255,0.1); color: white; border: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; flex-shrink: 0; }
@@ -181,6 +247,7 @@
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
                 <div style="flex:1; overflow:hidden;">
                     <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
+                    <div id="side-cosmetic-badge" style="display:none; font-size:10px; color:#fde68a; margin-top:2px;"></div>
                     <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
                 </div>
                 <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
@@ -196,12 +263,27 @@
             <h3>💬 聊天室</h3>
             <div class="action-btns">
                 <button class="btn-icon" onclick="openModal('private')">➕ 私訊</button>
+                <button class="btn-icon" style="background:#f47f24;" onclick="openModal('friendRequest')">💌 好友請求</button>
+                <button class="btn-icon" style="background:#334155;" onclick="openCosmeticModal()">🎨 外觀設定</button>
                 <button class="btn-icon" style="background:#5865F2;" onclick="openModal('group')">👥 群聊</button>
                 <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 建立伺服器</button>
                 <button class="btn-icon" style="background:#f47f24; margin-top:5px;" onclick="openModal('joinServer')">🔑 加入伺服器</button>
             </div>
         </div>
         <div class="chat-list" id="chat-list">
+            <div class="category-title">❤️ 好友</div>
+            <div id="list-friends"></div>
+
+            <div id="category-friend-requests" style="display:none;">
+                <div class="category-title" style="color:#f47f24;">💌 好友請求</div>
+                <div id="list-friend-requests"></div>
+            </div>
+
+            <div id="category-friend-outgoing" style="display:none;">
+                <div class="category-title" style="color:#94a3b8;">🕒 已送出請求</div>
+                <div id="list-friend-outgoing"></div>
+            </div>
+
             <div id="category-invite" style="display:none;">
                 <div class="category-title" style="color:#f47f24;">🔔 待確認邀請</div>
                 <div id="list-invites"></div>
@@ -243,6 +325,26 @@
     </div>
 </div>
 
+<div id="cosmetic-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>🎨 聊天外觀設定</h3>
+        <div style="display:grid; gap:10px; margin-top:12px;">
+            <label style="font-size:12px;color:#94a3b8;">頭像框</label>
+            <select id="chat-equip-frame" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <label style="font-size:12px;color:#94a3b8;">稱號</label>
+            <select id="chat-equip-title" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <label style="font-size:12px;color:#94a3b8;">徽章</label>
+            <select id="chat-equip-badge" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <label style="font-size:12px;color:#94a3b8;">名稱顏色</label>
+            <select id="chat-equip-name-color" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeCosmeticModal()">取消</button>
+            <button class="btn-modal" style="background:#5865F2; color:white;" onclick="saveChatCosmetics()">儲存</button>
+        </div>
+    </div>
+</div>
+
     </div>
 </div>
 
@@ -260,7 +362,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -279,11 +381,416 @@
     let currentChatAttachedBots = [];
     let currentChatBotsMeta = [];
     const botSessionCache = {};
+    const userCache = {};
     let unsubscribeMessages = null;
     let unsubscribeChatDoc = null;
+    let unsubscribeFriendIncoming = null;
+    let unsubscribeFriendOutgoing = null;
+    let unsubscribeFriendLinks = null;
     let modalMode = ''; // 'private' or 'group'
+    let friendIncoming = [];
+    let friendOutgoing = [];
+    let friendLinks = [];
+    let typingPulseTimer = null;
+    let currentUserData = {};
+
+    const COSMETIC_ITEMS = [
+        { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
+        { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
+        { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
+        { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
+        { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
+        { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
+        { id: "title_pro", slot: "title", label: "資深開發者", value: "資深開發者" },
+        { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
+        { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
+        { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
+        { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" }
+    ];
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+
+    function toMillis(v) {
+        if (!v) return 0;
+        if (typeof v === "number") return v;
+        if (typeof v.toMillis === "function") return v.toMillis();
+        if (typeof v.seconds === "number") return v.seconds * 1000;
+        return 0;
+    }
+
+    function isOnlineUser(userData) {
+        const ms = toMillis(userData && userData.lastSeen);
+        if (!ms) return false;
+        return (Date.now() - ms) <= 5 * 60 * 1000;
+    }
+
+    async function fetchUserByUid(uid) {
+        if (userCache[uid]) return userCache[uid];
+        const s = await getDoc(doc(db, "users", uid));
+        if (!s.exists()) return null;
+        const u = { uid: uid, ...s.data() };
+        userCache[uid] = u;
+        return u;
+    }
+
+    async function fetchUserByEmail(email) {
+        const q = query(collection(db, "users"), where("email", "==", String(email || "").toLowerCase()));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        return { uid: snap.docs[0].id, ...snap.docs[0].data() };
+    }
+
+    function displayNameFromUser(userData) {
+        const e = String(userData?.email || "");
+        const n = String(userData?.displayName || "").trim();
+        if (n) return n;
+        return e.includes("@") ? e.split("@")[0] : (e || "未知");
+    }
+
+    function ownedItemsBySlot(data, slot) {
+        const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
+        const ids = new Set(inv);
+        return COSMETIC_ITEMS.filter((it) => it.slot === slot && ids.has(it.id));
+    }
+
+    function pickOwnedEquipped(data, slot) {
+        const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+        const ownedValues = ownedItemsBySlot(data, slot).map((i) => i.value);
+        const v = String(eq[slot] || "");
+        return ownedValues.includes(v) ? v : "";
+    }
+
+    function frameClass(frameType) {
+        if (frameType === "neon") return "avatar-frame-neon";
+        if (frameType === "gold") return "avatar-frame-gold";
+        if (frameType === "sakura") return "avatar-frame-sakura";
+        return "";
+    }
+
+    function applyAvatarFrameToElement(el, frameType) {
+        if (!el) return;
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura");
+        const cls = frameClass(frameType);
+        if (cls) el.classList.add(cls);
+    }
+
+    function currentCosmeticSnapshot() {
+        return {
+            frame: pickOwnedEquipped(currentUserData, "frame"),
+            title: pickOwnedEquipped(currentUserData, "title"),
+            badge: pickOwnedEquipped(currentUserData, "badge"),
+            nameColor: pickOwnedEquipped(currentUserData, "nameColor")
+        };
+    }
+
+    function applySidebarCosmetics(data) {
+        const sideAvatar = document.getElementById("side-avatar");
+        const sideName = document.getElementById("side-username");
+        const sideBadge = document.getElementById("side-cosmetic-badge");
+        const c = currentCosmeticSnapshot();
+        applyAvatarFrameToElement(sideAvatar, c.frame);
+        if (sideName) sideName.style.color = c.nameColor || "";
+        const badgeText = c.title || c.badge;
+        if (sideBadge) {
+            sideBadge.style.display = badgeText ? "block" : "none";
+            sideBadge.textContent = badgeText ? ("✨ " + badgeText) : "";
+        }
+    }
+
+    function fillCosmeticSelect(id, items, selectedValue, emptyLabel) {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = "";
+        const base = document.createElement("option");
+        base.value = "";
+        base.textContent = emptyLabel;
+        sel.appendChild(base);
+        items.forEach((it) => {
+            const opt = document.createElement("option");
+            opt.value = it.value;
+            opt.textContent = it.label;
+            sel.appendChild(opt);
+        });
+        sel.value = selectedValue || "";
+    }
+
+    window.openCosmeticModal = () => {
+        const data = currentUserData || {};
+        fillCosmeticSelect("chat-equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
+        fillCosmeticSelect("chat-equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
+        fillCosmeticSelect("chat-equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
+        fillCosmeticSelect("chat-equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
+        document.getElementById("cosmetic-modal").style.display = "flex";
+    };
+
+    window.closeCosmeticModal = () => {
+        document.getElementById("cosmetic-modal").style.display = "none";
+    };
+
+    window.saveChatCosmetics = async () => {
+        if (!currentUser) return;
+        const equipped = {
+            frame: (document.getElementById("chat-equip-frame").value || "").trim(),
+            title: (document.getElementById("chat-equip-title").value || "").trim(),
+            badge: (document.getElementById("chat-equip-badge").value || "").trim(),
+            nameColor: (document.getElementById("chat-equip-name-color").value || "").trim()
+        };
+        try {
+            await updateDoc(doc(db, "users", currentUser.uid), { equippedCosmetics: equipped });
+            currentUserData = { ...currentUserData, equippedCosmetics: equipped };
+            applySidebarCosmetics(currentUserData);
+            closeCosmeticModal();
+        } catch (e) {
+            alert("儲存外觀失敗：" + (e.message || e));
+        }
+    };
+
+    async function findExistingPrivateChat(targetUid) {
+        const chatQuery = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+        const chatSnap = await getDocs(chatQuery);
+        let existingChatId = null;
+        chatSnap.forEach(docSnap => {
+            const data = docSnap.data();
+            if (data.type === 'private' && data.participants.includes(targetUid)) {
+                existingChatId = docSnap.id;
+            }
+        });
+        return existingChatId;
+    }
+
+    async function openOrCreatePrivateChat(targetUid, targetEmail) {
+        const existingChatId = await findExistingPrivateChat(targetUid);
+        const label = String(targetEmail || "").split('@')[0] || "私訊";
+        if (existingChatId) {
+            openChat(existingChatId, label, '👤', 'private', null);
+            return;
+        }
+        const newChat = await addDoc(collection(db, "chats"), {
+            type: 'private',
+            participants: [currentUser.uid, targetUid],
+            participantEmails: [currentUser.email, targetEmail],
+            name: '',
+            lastMessage: '新對話',
+            updatedAt: serverTimestamp()
+        });
+        openChat(newChat.id, label, '👤', 'private', null);
+    }
+
+    function friendDocId(fromUid, toUid) {
+        return String(fromUid) + "__" + String(toUid);
+    }
+
+    function isFriendWithUid(uid) {
+        return friendLinks.some((r) => {
+            if ((r.status || "pending") !== "accepted") return false;
+            return (r.fromUid === currentUser.uid && r.toUid === uid) ||
+                   (r.toUid === currentUser.uid && r.fromUid === uid);
+        });
+    }
+
+    async function sendFriendRequestByEmail(targetEmailRaw) {
+        const targetEmail = String(targetEmailRaw || "").trim().toLowerCase();
+        const currentEmail = String(currentUser?.email || "").toLowerCase();
+        if (!targetEmail) throw new Error("EMPTY_EMAIL");
+        if (targetEmail === currentEmail) throw new Error("SELF_REQUEST");
+
+        const target = await fetchUserByEmail(targetEmail);
+        if (!target || !target.uid) throw new Error("USER_NOT_FOUND");
+        const targetUid = target.uid;
+        if (isFriendWithUid(targetUid)) throw new Error("ALREADY_FRIEND");
+
+        const reqId = friendDocId(currentUser.uid, targetUid);
+        const reverseId = friendDocId(targetUid, currentUser.uid);
+        const reqRef = doc(db, "friend_requests", reqId);
+        const revRef = doc(db, "friend_requests", reverseId);
+        const [reqSnap, revSnap] = await Promise.all([getDoc(reqRef), getDoc(revRef)]);
+
+        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") throw new Error("REQUEST_ALREADY_SENT");
+        if (revSnap.exists()) {
+            const status = revSnap.data().status || "pending";
+            if (status === "pending") throw new Error("REQUEST_ALREADY_SENT_REVERSE");
+            if (status === "accepted") throw new Error("ALREADY_FRIEND");
+        }
+
+        await setDoc(reqRef, {
+            fromUid: currentUser.uid,
+            toUid: targetUid,
+            fromEmail: currentUser.email || "",
+            toEmail: targetEmail,
+            participants: [currentUser.uid, targetUid],
+            status: "pending",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }
+
+    window.acceptFriendRequest = async (requestId) => {
+        try {
+            const ref = doc(db, "friend_requests", requestId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const data = snap.data() || {};
+            if (data.toUid !== currentUser.uid) throw new Error("NOT_RECEIVER");
+            await updateDoc(ref, {
+                status: "accepted",
+                acceptedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            alert("✅ 已成為好友");
+        } catch (e) {
+            alert("接受好友失敗：" + (e.message || e));
+        }
+    };
+
+    window.rejectFriendRequest = async (requestId) => {
+        try {
+            await deleteDoc(doc(db, "friend_requests", requestId));
+        } catch (e) {
+            alert("拒絕失敗：" + (e.message || e));
+        }
+    };
+
+    window.cancelFriendRequest = async (requestId) => {
+        try {
+            await deleteDoc(doc(db, "friend_requests", requestId));
+        } catch (e) {
+            alert("取消請求失敗：" + (e.message || e));
+        }
+    };
+
+    window.startPrivateWithFriend = async (uid) => {
+        try {
+            if (!isFriendWithUid(uid)) {
+                alert("你們尚未成為好友。");
+                return;
+            }
+            const target = await fetchUserByUid(uid);
+            if (!target) return;
+            await openOrCreatePrivateChat(uid, target.email || "");
+        } catch (e) {
+            alert("開啟私訊失敗：" + (e.message || e));
+        }
+    };
+
+    window.removeFriend = async (uid) => {
+        const rec = friendLinks.find((r) => {
+            const okPair = (r.fromUid === currentUser.uid && r.toUid === uid) || (r.toUid === currentUser.uid && r.fromUid === uid);
+            return okPair && (r.status || "pending") === "accepted";
+        });
+        if (!rec) return;
+        if (!confirm("確定要移除這位好友嗎？")) return;
+        try {
+            await deleteDoc(doc(db, "friend_requests", rec.id));
+        } catch (e) {
+            alert("移除好友失敗：" + (e.message || e));
+        }
+    };
+
+    async function renderFriendPanels() {
+        const listFriends = document.getElementById("list-friends");
+        const listReq = document.getElementById("list-friend-requests");
+        const listOut = document.getElementById("list-friend-outgoing");
+        const catReq = document.getElementById("category-friend-requests");
+        const catOut = document.getElementById("category-friend-outgoing");
+        listFriends.innerHTML = "";
+        listReq.innerHTML = "";
+        listOut.innerHTML = "";
+
+        const friendUids = [];
+        friendLinks.forEach((r) => {
+            if ((r.status || "pending") !== "accepted") return;
+            if (r.fromUid === currentUser.uid) friendUids.push(r.toUid);
+            if (r.toUid === currentUser.uid) friendUids.push(r.fromUid);
+        });
+
+        if (!friendUids.length) {
+            listFriends.innerHTML = '<div style="padding:10px 20px;color:#64748b;font-size:12px;">尚無好友，可先送出好友請求</div>';
+        } else {
+            for (const uid of friendUids) {
+                const u = await fetchUserByUid(uid);
+                if (!u) continue;
+                const n = displayNameFromUser(u);
+                const online = isOnlineUser(u);
+                const item = document.createElement("div");
+                item.className = "chat-item friend-item";
+                item.innerHTML = `
+                    <div class="chat-name"><span class="user-presence-dot ${online ? "online" : "offline"}"></span> ❤️ ${n}</div>
+                    <div class="chat-preview">${u.email || ""} · ${online ? "在線" : "離線"}</div>
+                    <div class="mini-actions">
+                        <button class="mini-btn dm" onclick="startPrivateWithFriend('${uid}')">私訊</button>
+                        <button class="mini-btn cancel" onclick="removeFriend('${uid}')">移除</button>
+                    </div>
+                `;
+                listFriends.appendChild(item);
+            }
+        }
+
+        catReq.style.display = friendIncoming.length ? "block" : "none";
+        for (const req of friendIncoming) {
+            const fromUid = req.fromUid;
+            const u = await fetchUserByUid(fromUid);
+            const n = u ? displayNameFromUser(u) : (req.fromEmail || "未知");
+            const item = document.createElement("div");
+            item.className = "chat-item friend-request";
+            item.innerHTML = `
+                <div class="chat-name">💌 ${n}</div>
+                <div class="chat-preview">${(u && u.email) || req.fromEmail || ""}</div>
+                <div class="mini-actions">
+                    <button class="mini-btn accept" onclick="acceptFriendRequest('${req.id}')">接受</button>
+                    <button class="mini-btn reject" onclick="rejectFriendRequest('${req.id}')">拒絕</button>
+                </div>
+            `;
+            listReq.appendChild(item);
+        }
+
+        catOut.style.display = friendOutgoing.length ? "block" : "none";
+        for (const req of friendOutgoing) {
+            const toUid = req.toUid;
+            const u = await fetchUserByUid(toUid);
+            const n = u ? displayNameFromUser(u) : (req.toEmail || "未知");
+            const item = document.createElement("div");
+            item.className = "chat-item";
+            item.innerHTML = `
+                <div class="chat-name">🕒 ${n}</div>
+                <div class="chat-preview">${(u && u.email) || req.toEmail || ""}</div>
+                <div class="mini-actions">
+                    <button class="mini-btn cancel" onclick="cancelFriendRequest('${req.id}')">取消請求</button>
+                </div>
+            `;
+            listOut.appendChild(item);
+        }
+    }
+
+    function subscribeFriendPanels() {
+        if (unsubscribeFriendIncoming) unsubscribeFriendIncoming();
+        if (unsubscribeFriendOutgoing) unsubscribeFriendOutgoing();
+        if (unsubscribeFriendLinks) unsubscribeFriendLinks();
+
+        const qIncoming = query(collection(db, "friend_requests"), where("toUid", "==", currentUser.uid));
+        const qOutgoing = query(collection(db, "friend_requests"), where("fromUid", "==", currentUser.uid));
+        const qLinks = query(collection(db, "friend_requests"), where("participants", "array-contains", currentUser.uid));
+
+        unsubscribeFriendIncoming = onSnapshot(qIncoming, async (snap) => {
+            friendIncoming = [];
+            snap.forEach((d) => {
+                const data = d.data() || {};
+                if ((data.status || "pending") === "pending") friendIncoming.push({ id: d.id, ...data });
+            });
+            await renderFriendPanels();
+        });
+        unsubscribeFriendOutgoing = onSnapshot(qOutgoing, async (snap) => {
+            friendOutgoing = [];
+            snap.forEach((d) => {
+                const data = d.data() || {};
+                if ((data.status || "pending") === "pending") friendOutgoing.push({ id: d.id, ...data });
+            });
+            await renderFriendPanels();
+        });
+        unsubscribeFriendLinks = onSnapshot(qLinks, async (snap) => {
+            friendLinks = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            await renderFriendPanels();
+        });
+    }
 
     onAuthStateChanged(auth, async user => {
         if (!user) return location.href = "login.html";
@@ -293,9 +800,11 @@
         const snap = await getDoc(userRef);
         if (snap.exists()) {
             const data = snap.data();
+            currentUserData = { uid: user.uid, ...data };
             document.getElementById('side-coins').innerText = data.coins || 0;
-            document.getElementById('side-username').innerText = user.email.split('@')[0];
+            document.getElementById('side-username').innerText = displayNameFromUser({ email: user.email, displayName: data.displayName });
             document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            applySidebarCosmetics(currentUserData);
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
@@ -306,6 +815,8 @@
                     adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
                 }
             }
+        } else {
+            currentUserData = { uid: user.uid, email: user.email || "" };
         }
 
         try {
@@ -315,6 +826,7 @@
                 lastSeen: serverTimestamp()
             }, { merge: true });
         } catch (e) {}
+        subscribeFriendPanels();
 
         loadChats();
 
@@ -388,9 +900,14 @@
                 item.onclick = () => openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
                 
                 const timeStr = chat.updatedAt ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                const readMap = chat.lastReadBy || {};
+                const myReadAt = toMillis(readMap[currentUser.uid]);
+                const updatedAtMs = toMillis(chat.updatedAt);
+                const unread = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
+                const unreadHtml = unread ? '<span class="chat-unread-badge">NEW</span>' : '';
 
                 item.innerHTML = `
-                    <div class="chat-name">${icon} ${displayName} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
+                    <div class="chat-name">${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
                     <div class="chat-preview">${chat.lastMessage || '開始聊天吧！'}</div>
                 `;
                 
@@ -469,11 +986,66 @@
     let currentChatTeacherId = null;
     let currentChatType = null;
 
+    async function renderTypingIndicator(typingUsersMap) {
+        const el = document.getElementById("typing-indicator");
+        if (!el || !currentChatId) return;
+        const map = typingUsersMap || {};
+        const now = Date.now();
+        const activeUids = Object.keys(map).filter((uid) => {
+            if (uid === currentUser.uid) return false;
+            const ms = toMillis(map[uid]);
+            return ms && (now - ms) < 8000;
+        });
+        if (!activeUids.length) {
+            el.textContent = "";
+            return;
+        }
+        const names = [];
+        for (const uid of activeUids.slice(0, 2)) {
+            const u = await fetchUserByUid(uid);
+            if (u) names.push(displayNameFromUser(u));
+        }
+        if (!names.length) {
+            el.textContent = "有人正在輸入...";
+            return;
+        }
+        el.textContent = names.join("、") + (activeUids.length > 2 ? " 等人" : "") + " 正在輸入...";
+    }
+
+    function clearMyTypingIndicator() {
+        if (!currentChatId || !currentUser) return;
+        updateDoc(doc(db, "chats", currentChatId), {
+            [`typingUsers.${currentUser.uid}`]: deleteField()
+        }).catch(function () {});
+    }
+
+    function scheduleTypingPulse() {
+        if (!currentChatId || !currentUser) return;
+        updateDoc(doc(db, "chats", currentChatId), {
+            [`typingUsers.${currentUser.uid}`]: serverTimestamp()
+        }).catch(function () {});
+        if (typingPulseTimer) clearTimeout(typingPulseTimer);
+        typingPulseTimer = setTimeout(function () {
+            clearMyTypingIndicator();
+            typingPulseTimer = null;
+        }, 7000);
+    }
+
     // 3. 開啟特定聊天室
     window.openChat = (chatId, chatName, icon, chatType, teacherId) => {
+        const prevChatId = currentChatId;
+        if (prevChatId && prevChatId !== chatId && currentUser) {
+            updateDoc(doc(db, "chats", prevChatId), {
+                [`typingUsers.${currentUser.uid}`]: deleteField()
+            }).catch(function () {});
+        }
         currentChatId = chatId;
         currentChatTeacherId = teacherId;
         currentChatType = chatType;
+        if (typingPulseTimer) {
+            clearTimeout(typingPulseTimer);
+            typingPulseTimer = null;
+        }
         Object.keys(botSessionCache).forEach(k => delete botSessionCache[k]);
         
         // 更新樣式
@@ -508,6 +1080,7 @@
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
+                <div class="typing-indicator" id="typing-indicator"></div>
                 <div class="slash-picker" id="slash-picker" style="display:none;"></div>
                 <div class="input-wrapper">
                     <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上傳 .xml 專案檔">➕</button>
@@ -521,6 +1094,10 @@
         if (unsubscribeMessages) unsubscribeMessages();
         if (unsubscribeChatDoc) unsubscribeChatDoc();
 
+        updateDoc(doc(db, "chats", chatId), {
+            [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
+        }).catch(function () {});
+
         // 監聽聊天室文件（用於更新成員名單等）
         unsubscribeChatDoc = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
             if (docSnap.exists()) {
@@ -528,6 +1105,7 @@
                 currentChatParticipants = data.participants || [];
                 currentChatAttachedBots = data.attachedBots || [];
                 refreshChatBotsMeta();
+                renderTypingIndicator(data.typingUsers || {});
             }
         });
 
@@ -551,21 +1129,28 @@
             window.currentMessages[docSnap.id] = msg;
             
             const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
+            const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
+                ? msg.senderCosmetics
+                : { frame: "", title: "", badge: "", nameColor: "" };
             const senderName = isBotMsg
                 ? (msg.botName || "Bot")
-                : (msg.senderEmail || "未知").split('@')[0];
+                : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
             const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
             const timeStr = timeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const fullTimeStr = timeObj.toLocaleDateString() + ' ' + timeStr;
             const avatarUrl = isBotMsg
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
                 : `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
+            const avatarFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
             
             const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
             const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
             const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
             const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
+            const titleBadge = (!isBotMsg && senderCosmetics.title) ? `<span class="user-title-badge">🏷️ ${escHtml(senderCosmetics.title)}</span>` : '';
+            const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="user-cosmetic-badge">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
+            const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? ` style="color:${escHtml(senderCosmetics.nameColor)}"` : '';
             const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
             
             let contentHtml = '';
@@ -594,10 +1179,10 @@
             } else {
                 html += `
                     <div class="${rowClass}">
-                        <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar"></div>
+                        <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}"></div>
                         <div class="msg-content">
                             <div class="msg-header">
-                                <span class="msg-author">${senderName}${teacherBadge}${botBadge}</span>
+                                <span class="msg-author"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}</span>
                             </div>
                             ${contentHtml}
@@ -622,6 +1207,10 @@
                     document.getElementById('slash-picker'),
                     document.getElementById('btn-slash-chip')
                 );
+            }
+            if (input) {
+                input.addEventListener("input", scheduleTypingPulse);
+                input.addEventListener("blur", clearMyTypingIndicator);
             }
             refreshChatBotsMeta();
             const memberSidebar = document.getElementById('member-sidebar');
@@ -847,7 +1436,8 @@
         const preview = responses[0]?.content || (window.DiscordBotRuntime && responses[0]?.embed ? window.DiscordBotRuntime.formatEmbedText(responses[0].embed) : "") || "…";
         await updateDoc(doc(db, "chats", currentChatId), {
             lastMessage: "🤖 " + botName + ": " + String(preview).slice(0, 40),
-            updatedAt: serverTimestamp()
+            updatedAt: serverTimestamp(),
+            lastSenderId: botSenderId
         });
     }
 
@@ -1093,9 +1683,12 @@
         if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
 
         try {
+            const cosmetic = currentCosmeticSnapshot();
             await addDoc(collection(db, "chats", currentChatId, "messages"), {
                 senderId: currentUser.uid,
                 senderEmail: currentUser.email,
+                senderDisplayName: displayNameFromUser(currentUserData),
+                senderCosmetics: cosmetic,
                 text: text,
                 type: "text",
                 createdAt: serverTimestamp()
@@ -1103,7 +1696,10 @@
 
             await updateDoc(doc(db, "chats", currentChatId), {
                 lastMessage: text,
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                lastSenderId: currentUser.uid,
+                [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
+                [`typingUsers.${currentUser.uid}`]: deleteField()
             });
             
             trimPrivateMessages(currentChatId);
@@ -1130,9 +1726,12 @@
         reader.onload = async (e) => {
             const content = e.target.result;
             try {
+                const cosmetic = currentCosmeticSnapshot();
                 await addDoc(collection(db, "chats", currentChatId, "messages"), {
                     senderId: currentUser.uid,
                     senderEmail: currentUser.email,
+                    senderDisplayName: displayNameFromUser(currentUserData),
+                    senderCosmetics: cosmetic,
                     text: `傳送了檔案：${file.name}`,
                     type: "file",
                     fileName: file.name,
@@ -1141,7 +1740,9 @@
                 });
                 await updateDoc(doc(db, "chats", currentChatId), {
                     lastMessage: "📁 傳送了檔案",
-                    updatedAt: serverTimestamp()
+                    updatedAt: serverTimestamp(),
+                    lastSenderId: currentUser.uid,
+                    [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
                 });
                 
                 trimPrivateMessages(currentChatId);
@@ -1187,6 +1788,9 @@
         
         if (mode === 'private') {
             title.innerText = '發起私訊';
+            input.placeholder = '請輸入好友的註冊 Email';
+        } else if (mode === 'friendRequest') {
+            title.innerText = '送出好友請求';
             input.placeholder = '請輸入對方的註冊 Email';
         } else if (mode === 'group') {
             title.innerText = '建立群聊';
@@ -1211,6 +1815,10 @@
     };
 
     window.closeModal = () => document.getElementById('modal').style.display = 'none';
+    window.addEventListener("click", (e) => {
+        if (e.target && e.target.id === "modal") closeModal();
+        if (e.target && e.target.id === "cosmetic-modal") closeCosmeticModal();
+    });
 
     window.submitModal = async () => {
         const inputVal = document.getElementById('modal-input').value.trim();
@@ -1239,40 +1847,28 @@
                 }
 
                 // 透過 Email 尋找使用者 UID
-                const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
-                const userSnap = await getDocs(userQuery);
-                
-                if (userSnap.empty) {
+                const target = await fetchUserByEmail(targetEmail);
+                if (!target || !target.uid) {
                     alert("找不到此 Email 的聯絡人！對方可能尚未登入過聊天室。");
                     throw new Error("User not found");
                 }
-                const targetUid = userSnap.docs[0].id;
-
-                // 檢查是否已有現存對話
-                const chatQuery = query(collection(db, "chats"), 
-                    where("participants", "array-contains", currentUser.uid)
-                );
-                const chatSnap = await getDocs(chatQuery);
-                let existingChatId = null;
-                chatSnap.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.type === 'private' && data.participants.includes(targetUid)) {
-                        existingChatId = docSnap.id;
-                    }
-                });
-
-                if (existingChatId) {
-                    openChat(existingChatId, targetEmail.split('@')[0], '👤', 'private', null);
-                } else {
-                    const newChat = await addDoc(collection(db, "chats"), {
-                        type: 'private',
-                        participants: [currentUser.uid, targetUid],
-                        participantEmails: [currentUser.email, targetEmail],
-                        name: '',
-                        lastMessage: '新對話',
-                        updatedAt: serverTimestamp()
-                    });
-                    openChat(newChat.id, targetEmail.split('@')[0], '👤', 'private', null);
+                if (!isFriendWithUid(target.uid)) {
+                    alert("此使用者尚未與你成為好友。\n請先送出好友請求並等待對方接受。");
+                    throw new Error("Not friend");
+                }
+                await openOrCreatePrivateChat(target.uid, targetEmail);
+            } else if (modalMode === 'friendRequest') {
+                try {
+                    await sendFriendRequestByEmail(inputVal);
+                    alert("好友請求已送出！");
+                } catch (e) {
+                    if (e.message === "SELF_REQUEST") alert("不能送好友請求給自己。");
+                    else if (e.message === "USER_NOT_FOUND") alert("找不到此 Email 使用者。");
+                    else if (e.message === "ALREADY_FRIEND") alert("你們已經是好友。");
+                    else if (e.message === "REQUEST_ALREADY_SENT_REVERSE") alert("對方已送出好友請求給你，請直接在「好友請求」中接受。");
+                    else if (e.message === "REQUEST_ALREADY_SENT") alert("你已送出請求，或對方已向你發出請求。");
+                    else alert("送出好友請求失敗：" + (e.message || e));
+                    throw e;
                 }
                 
             } else if (modalMode === 'group' || modalMode === 'server') {
@@ -1373,7 +1969,10 @@
             console.error(e);
             if (e && e.message !== "User not found" && e.message !== "Self chat" &&
                 e.message !== "Invalid token" && e.message !== "Token not found" &&
-                e.message !== "Bot inactive" && e.message !== "Already connected") {
+                e.message !== "Bot inactive" && e.message !== "Already connected" &&
+                e.message !== "Not friend" && e.message !== "SELF_REQUEST" &&
+                e.message !== "USER_NOT_FOUND" && e.message !== "ALREADY_FRIEND" &&
+                e.message !== "REQUEST_ALREADY_SENT" && e.message !== "REQUEST_ALREADY_SENT_REVERSE") {
                 alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
             }
         } finally {
