@@ -286,6 +286,28 @@
         });
     }
 
+    function bindProfileEntryShortcut() {
+        document.querySelectorAll(".sidebar-footer .user-mini-card").forEach(function (card) {
+            if (!card || card.dataset.profileShortcutBound === "1") return;
+            card.dataset.profileShortcutBound = "1";
+            card.setAttribute("role", "button");
+            card.setAttribute("tabindex", "0");
+            card.title = "前往個人設定";
+            card.addEventListener("click", function (e) {
+                const target = e.target;
+                if (target && typeof target.closest === "function" && target.closest("button")) return;
+                location.href = "profile.html";
+            });
+            card.addEventListener("keydown", function (e) {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                const target = e.target;
+                if (target && typeof target.closest === "function" && target.closest("button")) return;
+                e.preventDefault();
+                location.href = "profile.html";
+            });
+        });
+    }
+
     function rebrandDocument() {
         document.title = document.title.replace(/Creative Blocks(\s*Pro)?/gi, "Doratch");
         document.querySelectorAll('meta[name="description"]').forEach(function (m) {
@@ -298,6 +320,7 @@
         mountAppSidebars();
         mountAdminQuickNav();
         mountTopNav();
+        bindProfileEntryShortcut();
     }
 
     if (document.readyState === "loading") {

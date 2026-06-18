@@ -148,7 +148,7 @@
 
     </style>
 </head>
-<body class="page-suspended">
+<body>
 
 <div class="app-container">
     <aside class="sidebar-main" data-doratch-active="game">
@@ -165,15 +165,15 @@
     </aside>
 
     <main class="main-content">
-<div class="suspend-notice">
-    <strong>🎮 遊戲功能暫時不開放</strong>
-    <div style="margin-top:6px; color:#cbd5e1;">目前進行維護與平衡調整，已先關閉遊玩與獎勵發放，完成後會重新開放。</div>
+<div class="suspend-notice" style="border-color:#f59e0b;background:rgba(245,158,11,0.08);">
+    <strong>🧪 遊戲已重新開放（測試階段）</strong>
+    <div style="margin-top:6px; color:#cbd5e1;">目前採本機遊玩 + 結束後上傳存檔，<strong style="color:#fbbf24;">金幣發放暫停</strong>。</div>
 </div>
 
 <div class="container">
     <div class="hero">
         <h1>Doratch 遊戲中心</h1>
-        <p>邏輯競技 × 異界生存 × 放置養成 — 玩遊戲賺金幣，班級排行榜同步。</p>
+        <p>邏輯競技 × 異界生存 × 放置養成 — 本機即時遊玩，結束後同步成績到雲端。</p>
     </div>
 
     <div class="featured-survival" onclick="location.href='game-survival.html'">
@@ -271,7 +271,7 @@
         <div id="game-content" style="width:100%; text-align:center;"></div>
         <div class="reward-info">
             <span>得分：<span id="score">0</span></span>
-            <span style="color:var(--secondary);">金幣：+<span id="earned">0</span></span>
+            <span style="color:var(--secondary);">測試點數：<span id="earned">0</span></span>
         </div>
     </div>
 </div>
@@ -314,11 +314,10 @@
         }
         if (snap.exists()) {
             const data = snap.data();
-            const coins = data.coins || 0;
             const sideCoins = document.getElementById('side-coins');
             const userCoins = document.getElementById('user-coins');
-            if(sideCoins) sideCoins.innerText = coins;
-            if(userCoins) userCoins.innerText = coins;
+            if(sideCoins) sideCoins.innerText = "暫停發放";
+            if(userCoins) userCoins.innerText = "暫停發放";
             
             document.getElementById('side-username').innerText = user.email.split('@')[0];
             document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
@@ -351,9 +350,20 @@
         ]
     };
 
+    async function saveClientGameResult(mode, result) {
+        if (!auth.currentUser || !result) return;
+        try {
+            await setDoc(doc(db, "users", auth.currentUser.uid, "gameSessions", mode), {
+                ...result,
+                rewardPolicy: "paused",
+                uploadedAt: serverTimestamp()
+            }, { merge: true });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     window.startGame = (mode, level = 1) => {
-        alert("遊戲功能暫時不開放，維護完成後再開放。");
-        return;
         currentGameMode = mode;
         document.getElementById('game-overlay').style.display = 'block';
         const content = document.getElementById('game-content');
@@ -432,7 +442,7 @@
             if (raidConfig.hp <= 0) {
                 earned = raidConfig.currentLevel * 100;
                 document.getElementById('earned').innerText = earned;
-                alert(`🎊 擊敗了 ${raidConfig.bosses[raidConfig.currentLevel - 1].name}！獲得 ${earned} 金幣`);
+                alert(`🎊 擊敗了 ${raidConfig.bosses[raidConfig.currentLevel - 1].name}！測試點數 ${earned}`);
                 exitGame();
             } else {
                 showRaidQuestion();
@@ -463,19 +473,11 @@
         if(gameInterval) clearInterval(gameInterval);
         window.onkeydown = null;
         gameInterval = null;
-        if(earned > 0 && auth.currentUser) {
-            try {
-                const uRef = doc(db, "users", auth.currentUser.uid);
-                const uSnap = await getDoc(uRef);
-                const updates = { coins: increment(Math.floor(earned)) };
-                if(window.currentMaxStage > userMaxStage) updates.maxStage = window.currentMaxStage;
-                if(!uSnap.exists()) {
-                    await setDoc(uRef, { email: auth.currentUser.email || "", coins: Math.floor(earned), xp: 0, lv: 1, ...updates }, { merge: true });
-                } else {
-                    await updateDoc(uRef, updates);
-                }
-            } catch (e) { console.error(e); }
-        }
+        await saveClientGameResult(currentGameMode || "misc", {
+            score: score,
+            points: Math.floor(earned),
+            endedAt: Date.now()
+        });
         document.getElementById('game-overlay').style.display = 'none';
         document.getElementById('game-content').innerHTML = '';
         score = 0; earned = 0;
@@ -488,7 +490,7 @@
     // --- 2048 ---
     function init2048() {
         const container = document.getElementById('game-content');
-        container.innerHTML = `<p style="color:#94a3b8;margin-bottom:12px;">方向鍵移動 · 合成數字賺金幣</p><div class="grid-2048" id="grid2048"></div><p id="g2048-msg" style="color:#94a3b8;margin-top:12px;"></p>`;
+        container.innerHTML = `<p style="color:#94a3b8;margin-bottom:12px;">方向鍵移動 · 合成數字拿分數（本場測試點數）</p><div class="grid-2048" id="grid2048"></div><p id="g2048-msg" style="color:#94a3b8;margin-top:12px;"></p>`;
         let grid = Array(16).fill(0);
         let over = false;
         let won2048 = false;
@@ -560,7 +562,7 @@
                 if (!won2048 && grid.includes(2048)) {
                     won2048 = true;
                     earned += 50;
-                    document.getElementById('g2048-msg').textContent = '🎉 達成 2048！+50 金幣';
+                    document.getElementById('g2048-msg').textContent = '🎉 達成 2048！測試點數 +50';
                 }
                 if (!canMove()) {
                     over = true;
@@ -612,7 +614,7 @@
             if (hit) {
                 alive = false;
                 earned += Math.floor(score / 10);
-                alert(`撞到了！得分 ${score}，獲得 ${Math.floor(score / 10)} 金幣`);
+                alert(`撞到了！得分 ${score}，本場測試點數 ${Math.floor(score / 10)}`);
                 exitGame();
                 return;
             }
@@ -667,8 +669,10 @@
     }
 
     // --- Code War PvP ---
-    window.openDuelLobby = () => {
-        alert("1v1 決鬥暫時不開放，維護完成後再開放。");
+        window.openDuelLobby = () => {
+        const room = prompt("輸入決鬥房代碼（留空使用預設 TEST-ROOM）", "TEST-ROOM");
+        if (room === null) return;
+        initDuel((room || "TEST-ROOM").trim().toUpperCase());
     };
     async function initDuel(roomId) {
         document.getElementById('game-overlay').style.display = 'block';
@@ -885,7 +889,7 @@
                 document.getElementById('cw-msg').innerText = "關卡完成！下一波敵軍更強了！";
                 earned += 100;
             }
-            if(homeHp <= 0) { clearInterval(gameInterval); alert(`戰敗！你在 STAGE ${currentStage} 被擊敗了。共獲得 ${earned} 金幣。`); exitGame(); }
+            if(homeHp <= 0) { clearInterval(gameInterval); alert(`戰敗！你在 STAGE ${currentStage} 被擊敗了。本場測試點數 ${earned}。`); exitGame(); }
         }, 33);
 
         function renderUnit(u, side) {

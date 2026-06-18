@@ -72,15 +72,19 @@ function stripForFirestore(obj) {
 
 export async function saveGameDoc(uid, collectionName, patch, coinReward = 0) {
     const ref = doc(db, "users", uid, collectionName, "profile");
-    const clean = stripForFirestore({ ...patch, updatedAt: serverTimestamp() });
+    const clean = stripForFirestore({
+        ...patch,
+        rewardCoinsPending: Math.max(0, Math.floor(Number(coinReward || 0))),
+        rewardPolicy: "paused",
+        updatedAt: serverTimestamp()
+    });
     await setDoc(ref, clean, { merge: true });
-    if (coinReward > 0) await awardCoins(uid, coinReward);
+    // 金幣發放暫停：先記錄 pending，不直接入帳。
 }
 
 export async function awardCoins(uid, amount) {
-    if (!amount || amount <= 0) return;
-    await ensureUserDoc(uid, auth.currentUser?.email || "");
-    await updateDoc(doc(db, "users", uid), { coins: increment(Math.floor(amount)) });
+    // 暫停發放（保留函式避免舊頁面報錯）
+    return 0;
 }
 
 export async function getUserCoins(uid) {

@@ -235,6 +235,25 @@ body:has(> .sidebar[data-doratch-admin-nav]) {
     background: rgba(255, 255, 255, 0.03);
 }
 
+.sidebar-main .sidebar-footer .user-mini-card[role="button"],
+.sidebar[data-doratch-admin-nav] .sidebar-footer .user-mini-card[role="button"] {
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sidebar-main .sidebar-footer .user-mini-card[role="button"]:hover,
+.sidebar[data-doratch-admin-nav] .sidebar-footer .user-mini-card[role="button"]:hover {
+    background: rgba(76, 151, 255, 0.12);
+    box-shadow: 0 0 0 1px rgba(76, 151, 255, 0.3) inset;
+    transform: translateY(-1px);
+}
+
+.sidebar-main .sidebar-footer .user-mini-card[role="button"]:focus-visible,
+.sidebar[data-doratch-admin-nav] .sidebar-footer .user-mini-card[role="button"]:focus-visible {
+    outline: 2px solid #4c97ff;
+    outline-offset: 2px;
+}
+
 .doratch-admin-quick-nav {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 4px;

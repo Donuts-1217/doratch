@@ -53,15 +53,7 @@ export async function connectCloud(onReady, onFail) {
 
 export async function refreshPlatformCoins(uid, elId, getUserCoins) {
     const el = document.getElementById(elId);
-    if (!el || !uid || !getUserCoins) {
-        if (el) el.textContent = "💰 本機";
-        return;
-    }
-    try {
-        el.textContent = "💰 " + (await getUserCoins(uid));
-    } catch {
-        el.textContent = "💰 —";
-    }
+    if (el) el.textContent = "💰 暫停發放";
 }
 
 export function setSyncHint(text) {
