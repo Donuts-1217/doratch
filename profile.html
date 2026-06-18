@@ -296,14 +296,22 @@
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
+        { id: "frame_holo", slot: "frame", label: "全像幻彩頭像框", value: "holo" },
+        { id: "frame_obsidian", slot: "frame", label: "曜石暗影頭像框", value: "obsidian" },
         { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
         { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
         { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
         { id: "title_pro", slot: "title", label: "資深開發者", value: "資深開發者" },
+        { id: "title_algo_king", slot: "title", label: "演算法王者", value: "演算法王者" },
+        { id: "title_night_owl", slot: "title", label: "夜貓工程師", value: "夜貓工程師" },
         { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
         { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
+        { id: "badge_alpha", slot: "badge", label: "內測先鋒", value: "內測先鋒" },
+        { id: "badge_guardian", slot: "badge", label: "社群守護者", value: "社群守護者" },
         { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
-        { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" }
+        { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" },
+        { id: "namecolor_violet", slot: "nameColor", label: "星雲紫", value: "#a78bfa" },
+        { id: "namecolor_lime", slot: "nameColor", label: "螢光萊姆", value: "#84cc16" }
     ];
 
     function ownedItemsBySlot(data, slot) {
@@ -330,6 +338,12 @@
         } else if (frameType === "sakura") {
             avatarEl.style.border = "4px solid #f9a8d4";
             avatarEl.style.boxShadow = "0 0 0 5px rgba(249,168,212,0.25), 0 0 28px rgba(244,114,182,0.45)";
+        } else if (frameType === "holo") {
+            avatarEl.style.border = "4px solid #a78bfa";
+            avatarEl.style.boxShadow = "0 0 0 5px rgba(167,139,250,0.22), 0 0 28px rgba(99,102,241,0.48)";
+        } else if (frameType === "obsidian") {
+            avatarEl.style.border = "4px solid #94a3b8";
+            avatarEl.style.boxShadow = "0 0 0 5px rgba(71,85,105,0.28), 0 0 28px rgba(15,23,42,0.7)";
         }
     }
 

@@ -75,6 +75,10 @@
             border: 1px solid rgba(76,151,255,0.2);
             background: rgba(76,151,255,0.06);
         }
+        .chat-item.message-request {
+            border: 1px solid rgba(245,158,11,0.3);
+            background: rgba(245,158,11,0.08);
+        }
         .mini-actions {
             display: flex;
             gap: 6px;
@@ -103,7 +107,7 @@
         .messages-area::-webkit-scrollbar { width: 6px; }
         .messages-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
-        .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; }
+        .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; position: relative; }
         .message-row:hover { background: rgba(255,255,255,0.02); }
         .message-row.consecutive { margin-top: 2px; }
         .msg-avatar-container { width: 50px; margin-right: 20px; flex-shrink: 0; display: flex; justify-content: center; }
@@ -120,13 +124,65 @@
             border-color: #f9a8d4 !important;
             box-shadow: 0 0 0 4px rgba(249,168,212,0.22), 0 0 18px rgba(244,114,182,0.4);
         }
+        .avatar-frame-holo {
+            border-color: #a78bfa !important;
+            box-shadow: 0 0 0 4px rgba(167,139,250,0.22), 0 0 18px rgba(99,102,241,0.45);
+        }
+        .avatar-frame-obsidian {
+            border-color: #94a3b8 !important;
+            box-shadow: 0 0 0 4px rgba(71,85,105,0.28), 0 0 18px rgba(15,23,42,0.72);
+        }
+        .avatar-frame-cyberfire {
+            border-color: #fb7185 !important;
+            box-shadow: 0 0 0 4px rgba(251,113,133,0.2), 0 0 18px rgba(249,115,22,0.52);
+        }
+        .avatar-frame-aurora {
+            border-color: #34d399 !important;
+            box-shadow: 0 0 0 4px rgba(52,211,153,0.2), 0 0 18px rgba(59,130,246,0.45);
+        }
         .msg-time-hover { font-size: 11px; color: #475569; opacity: 0; text-align: center; width: 50px; }
         .message-row.consecutive:hover .msg-time-hover { opacity: 1; }
         
-        .msg-content { display: flex; flex-direction: column; flex: 1; }
+        .msg-content { display: flex; flex-direction: column; flex: 1; position: relative; padding-right: 120px; }
         .msg-header { display: flex; align-items: baseline; margin-bottom: 6px; }
         .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; }
         .msg-time { font-size: 12px; color: var(--text-muted); }
+        .msg-edited { margin-left: 6px; color: #94a3b8; font-size: 11px; font-style: italic; }
+        .msg-quick-actions {
+            position: absolute;
+            top: 4px;
+            right: 0;
+            display: inline-flex;
+            gap: 6px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+            background: rgba(15,23,42,0.92);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 4px;
+            z-index: 3;
+        }
+        .message-row:hover .msg-quick-actions,
+        .message-row:focus-within .msg-quick-actions {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .msg-quick-btn {
+            border: none;
+            background: rgba(255,255,255,0.08);
+            color: #e2e8f0;
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 900;
+            line-height: 1;
+            font-family: inherit;
+        }
+        .msg-quick-btn:hover { background: rgba(88,101,242,0.25); color: #fff; }
+        .msg-quick-btn.danger:hover { background: rgba(237,66,69,0.25); color: #fecaca; }
         .msg-text { font-size: 15px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
         .message-row.bot-msg .msg-author { color: #23a559; }
         .message-row.bot-msg .msg-avatar { border-color: rgba(35,165,89,0.4); }
@@ -169,6 +225,21 @@
             margin: 0 0 8px 2px;
             font-weight: 700;
         }
+        .request-banner {
+            margin: 0 0 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(245,158,11,0.35);
+            background: rgba(245,158,11,0.08);
+            color: #fef3c7;
+            font-size: 12px;
+            line-height: 1.55;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .request-banner .mini-actions { margin-top: 0; }
         .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; padding: 12px 20px; transition: 0.3s; gap: 12px; }
         .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(76, 151, 255, 0.1); }
         .btn-attach { background: rgba(255,255,255,0.1); color: white; border: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; flex-shrink: 0; }
@@ -179,6 +250,20 @@
         }
         .btn-slash-chip:hover { background: #5865f2; color: #fff; }
         .input-box { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; min-width: 0; }
+        .btn-send {
+            border: none;
+            border-radius: 10px;
+            background: #5865f2;
+            color: #fff;
+            font-weight: 900;
+            font-size: 12px;
+            padding: 8px 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-family: inherit;
+        }
+        .btn-send:hover { background: #4f46e5; }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* 斜線指令選單 */
         .slash-picker {
@@ -285,6 +370,66 @@
             background: rgba(255,255,255,0.1);
             color: #e2e8f0;
         }
+        .chat-pref-grid { display: grid; gap: 10px; margin-top: 12px; }
+        .chat-pref-row { display: grid; gap: 6px; }
+        .chat-pref-row label { font-size: 12px; color: #94a3b8; font-weight: 700; }
+        .chat-pref-row select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: #0F172A;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            font-family: inherit;
+        }
+        .pretty-select {
+            width: 100%;
+            padding: 12px 38px 12px 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(30,41,59,0.92), rgba(15,23,42,0.96));
+            color: #fff;
+            border: 1px solid rgba(148,163,184,0.35);
+            font-family: inherit;
+            font-weight: 800;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .pretty-select:hover { border-color: rgba(99,102,241,0.65); }
+        .pretty-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
+        }
+        .select-wrap {
+            position: relative;
+        }
+        .select-wrap::after {
+            content: "▾";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #93c5fd;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        body.chat-density-compact .messages-area { padding-top: 14px; padding-bottom: 14px; }
+        body.chat-density-compact .message-row { margin-top: 10px; padding-top: 4px; padding-bottom: 4px; }
+        body.chat-density-compact .message-row.consecutive { margin-top: 0; }
+        body.chat-density-compact .msg-avatar { width: 40px; height: 40px; border-radius: 12px; }
+        body.chat-density-compact .msg-avatar-container { width: 40px; margin-right: 14px; }
+        body.chat-density-compact .msg-author { font-size: 1rem; }
+        body.chat-density-compact .msg-text { font-size: 14px; line-height: 1.45; }
+        body.chat-density-compact .msg-content { padding-right: 112px; }
+
+        body.chat-density-comfortable .messages-area { padding-top: 34px; padding-bottom: 34px; }
+        body.chat-density-comfortable .message-row { margin-top: 24px; }
+        body.chat-density-comfortable .msg-author { font-size: 1.18rem; }
+        body.chat-density-comfortable .msg-text { font-size: 16px; line-height: 1.72; }
         
         .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); background: var(--bg); }
         .empty-state i { font-size: 60px; margin-bottom: 20px; opacity: 0.2; }
@@ -348,6 +493,7 @@
                 <button class="btn-icon" onclick="openModal('private')">➕ 私訊</button>
                 <button class="btn-icon" style="background:#f47f24;" onclick="openModal('friendRequest')">💌 好友請求</button>
                 <button class="btn-icon" style="background:#334155;" onclick="openCosmeticModal()">🎨 外觀設定</button>
+                <button class="btn-icon" style="background:#1f2937;" onclick="openChatPrefsModal()">⚙️ 聊天設定</button>
                 <button class="btn-icon" style="background:#5865F2;" onclick="openModal('group')">👥 群聊</button>
                 <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 建立伺服器</button>
                 <button class="btn-icon" style="background:#f47f24; margin-top:5px;" onclick="openModal('joinServer')">🔑 加入伺服器</button>
@@ -370,6 +516,11 @@
             <div id="category-invite" style="display:none;">
                 <div class="category-title" style="color:#f47f24;">🔔 待確認邀請</div>
                 <div id="list-invites"></div>
+            </div>
+
+            <div id="category-message-requests" style="display:none;">
+                <div class="category-title" style="color:#f59e0b;">📨 訊息請求</div>
+                <div id="list-message-requests"></div>
             </div>
 
             <div class="category-title">🏫 伺服器 (班級)</div>
@@ -413,17 +564,86 @@
         <h3>🎨 聊天外觀設定</h3>
         <div style="display:grid; gap:10px; margin-top:12px;">
             <label style="font-size:12px;color:#94a3b8;">頭像框</label>
-            <select id="chat-equip-frame" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <div class="select-wrap"><select id="chat-equip-frame" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">稱號</label>
-            <select id="chat-equip-title" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <div class="select-wrap"><select id="chat-equip-title" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">徽章</label>
-            <select id="chat-equip-badge" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <div class="select-wrap"><select id="chat-equip-badge" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">名稱顏色</label>
-            <select id="chat-equip-name-color" style="width:100%; padding:12px; border-radius:10px; background:#0F172A; color:#fff; border:1px solid rgba(255,255,255,0.1);"></select>
+            <div class="select-wrap"><select id="chat-equip-name-color" class="pretty-select"></select></div>
         </div>
         <div class="modal-actions">
             <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeCosmeticModal()">取消</button>
             <button class="btn-modal" style="background:#5865F2; color:white;" onclick="saveChatCosmetics()">儲存</button>
+        </div>
+    </div>
+</div>
+
+<div id="chat-prefs-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>⚙️ 聊天個人設定</h3>
+        <div class="chat-pref-grid">
+            <div class="chat-pref-row">
+                <label for="chat-pref-enter">Enter 送出</label>
+                <div class="select-wrap"><select id="chat-pref-enter" class="pretty-select">
+                    <option value="on">開啟（Enter 直接送出）</option>
+                    <option value="off">關閉（改用按鈕或 Ctrl+Enter）</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-density">字體密度</label>
+                <div class="select-wrap"><select id="chat-pref-density" class="pretty-select">
+                    <option value="normal">標準</option>
+                    <option value="compact">緊湊</option>
+                    <option value="comfortable">寬鬆</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-seconds">顯示秒數</label>
+                <div class="select-wrap"><select id="chat-pref-seconds" class="pretty-select">
+                    <option value="off">關閉（HH:mm）</option>
+                    <option value="on">開啟（HH:mm:ss）</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-require-request">陌生私訊需要訊息請求</label>
+                <div class="select-wrap"><select id="chat-pref-require-request" class="pretty-select">
+                    <option value="on">開啟（建議）</option>
+                    <option value="off">關閉（可直接開私訊）</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-notify-message">新訊息通知</label>
+                <div class="select-wrap"><select id="chat-pref-notify-message" class="pretty-select">
+                    <option value="on">開啟</option>
+                    <option value="off">關閉</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-notify-friend">好友請求通知</label>
+                <div class="select-wrap"><select id="chat-pref-notify-friend" class="pretty-select">
+                    <option value="on">開啟</option>
+                    <option value="off">關閉</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-notify-request">訊息請求通知</label>
+                <div class="select-wrap"><select id="chat-pref-notify-request" class="pretty-select">
+                    <option value="on">開啟</option>
+                    <option value="off">關閉</option>
+                </select></div>
+            </div>
+            <div class="chat-pref-row">
+                <label for="chat-pref-desktop">桌面通知（瀏覽器）</label>
+                <div class="select-wrap"><select id="chat-pref-desktop" class="pretty-select">
+                    <option value="off">關閉</option>
+                    <option value="on">開啟</option>
+                </select></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeChatPrefsModal()">取消</button>
+            <button class="btn-modal" style="background:#5865F2; color:white;" onclick="saveChatPrefs()">儲存</button>
         </div>
     </div>
 </div>
@@ -480,19 +700,48 @@
     let typingPulseTimer = null;
     let currentUserData = {};
     let replyToMessage = null;
+    let incomingMessageRequestCount = -1;
+    let incomingFriendRequestCount = -1;
+    const chatUpdatedAtCache = {};
+    let chatPrefs = {
+        enterToSend: true,
+        density: "normal",
+        showSeconds: false,
+        requireMessageRequest: true,
+        notifyMessage: true,
+        notifyFriendRequest: true,
+        notifyMessageRequest: true,
+        desktopNotification: false
+    };
 
     const COSMETIC_ITEMS = [
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
+        { id: "frame_holo", slot: "frame", label: "全像幻彩頭像框", value: "holo" },
+        { id: "frame_obsidian", slot: "frame", label: "曜石暗影頭像框", value: "obsidian" },
+        { id: "frame_cyberfire", slot: "frame", label: "電馭烈焰頭像框", value: "cyberfire" },
+        { id: "frame_aurora", slot: "frame", label: "極光流彩頭像框", value: "aurora" },
         { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
         { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
         { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
         { id: "title_pro", slot: "title", label: "資深開發者", value: "資深開發者" },
+        { id: "title_algo_king", slot: "title", label: "演算法王者", value: "演算法王者" },
+        { id: "title_night_owl", slot: "title", label: "夜貓工程師", value: "夜貓工程師" },
+        { id: "title_quantum", slot: "title", label: "量子駭客", value: "量子駭客" },
+        { id: "title_void_walker", slot: "title", label: "虛空行者", value: "虛空行者" },
         { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
         { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
+        { id: "badge_alpha", slot: "badge", label: "內測先鋒", value: "內測先鋒" },
+        { id: "badge_guardian", slot: "badge", label: "社群守護者", value: "社群守護者" },
+        { id: "badge_dragon", slot: "badge", label: "龍焰核心", value: "龍焰核心" },
+        { id: "badge_cosmos", slot: "badge", label: "星穹航行者", value: "星穹航行者" },
         { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
-        { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" }
+        { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" },
+        { id: "namecolor_violet", slot: "nameColor", label: "星雲紫", value: "#a78bfa" },
+        { id: "namecolor_lime", slot: "nameColor", label: "螢光萊姆", value: "#84cc16" },
+        { id: "namecolor_crimson", slot: "nameColor", label: "赤焰紅", value: "#ef4444" },
+        { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" }
     ];
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
@@ -534,6 +783,53 @@
         return e.includes("@") ? e.split("@")[0] : (e || "未知");
     }
 
+    function sanitizeChatPrefs(raw) {
+        const p = (raw && typeof raw === "object") ? raw : {};
+        const density = ["normal", "compact", "comfortable"].includes(p.density) ? p.density : "normal";
+        return {
+            enterToSend: p.enterToSend !== false,
+            density: density,
+            showSeconds: p.showSeconds === true,
+            requireMessageRequest: p.requireMessageRequest !== false,
+            notifyMessage: p.notifyMessage !== false,
+            notifyFriendRequest: p.notifyFriendRequest !== false,
+            notifyMessageRequest: p.notifyMessageRequest !== false,
+            desktopNotification: p.desktopNotification === true
+        };
+    }
+
+    function applyChatPrefsUI() {
+        document.body.classList.remove("chat-density-compact", "chat-density-comfortable");
+        if (chatPrefs.density === "compact") document.body.classList.add("chat-density-compact");
+        if (chatPrefs.density === "comfortable") document.body.classList.add("chat-density-comfortable");
+    }
+
+    function timeOptions(showSeconds) {
+        return showSeconds
+            ? { hour: "2-digit", minute: "2-digit", second: "2-digit" }
+            : { hour: "2-digit", minute: "2-digit" };
+    }
+
+    function formatMsgTime(dateObj) {
+        const d = dateObj instanceof Date ? dateObj : new Date(dateObj || Date.now());
+        return d.toLocaleTimeString([], timeOptions(chatPrefs.showSeconds));
+    }
+
+    function formatMsgFullTime(dateObj) {
+        const d = dateObj instanceof Date ? dateObj : new Date(dateObj || Date.now());
+        return d.toLocaleDateString() + " " + d.toLocaleTimeString([], timeOptions(chatPrefs.showSeconds));
+    }
+
+    async function maybeDesktopNotify(title, body) {
+        if (!chatPrefs.desktopNotification || typeof Notification === "undefined") return;
+        if (document.hasFocus()) return;
+        let permission = Notification.permission;
+        if (permission === "default") {
+            try { permission = await Notification.requestPermission(); } catch { permission = "denied"; }
+        }
+        if (permission === "granted") new Notification(title, { body: body || "" });
+    }
+
     function ownedItemsBySlot(data, slot) {
         const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
         const ids = new Set(inv);
@@ -551,12 +847,16 @@
         if (frameType === "neon") return "avatar-frame-neon";
         if (frameType === "gold") return "avatar-frame-gold";
         if (frameType === "sakura") return "avatar-frame-sakura";
+        if (frameType === "holo") return "avatar-frame-holo";
+        if (frameType === "obsidian") return "avatar-frame-obsidian";
+        if (frameType === "cyberfire") return "avatar-frame-cyberfire";
+        if (frameType === "aurora") return "avatar-frame-aurora";
         return "";
     }
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
@@ -632,6 +932,59 @@
         }
     };
 
+    window.openChatPrefsModal = () => {
+        const p = sanitizeChatPrefs(chatPrefs);
+        const enterSel = document.getElementById("chat-pref-enter");
+        const densitySel = document.getElementById("chat-pref-density");
+        const secondsSel = document.getElementById("chat-pref-seconds");
+        const requireSel = document.getElementById("chat-pref-require-request");
+        const notifyMsgSel = document.getElementById("chat-pref-notify-message");
+        const notifyFriendSel = document.getElementById("chat-pref-notify-friend");
+        const notifyReqSel = document.getElementById("chat-pref-notify-request");
+        const desktopSel = document.getElementById("chat-pref-desktop");
+        if (enterSel) enterSel.value = p.enterToSend ? "on" : "off";
+        if (densitySel) densitySel.value = p.density;
+        if (secondsSel) secondsSel.value = p.showSeconds ? "on" : "off";
+        if (requireSel) requireSel.value = p.requireMessageRequest ? "on" : "off";
+        if (notifyMsgSel) notifyMsgSel.value = p.notifyMessage ? "on" : "off";
+        if (notifyFriendSel) notifyFriendSel.value = p.notifyFriendRequest ? "on" : "off";
+        if (notifyReqSel) notifyReqSel.value = p.notifyMessageRequest ? "on" : "off";
+        if (desktopSel) desktopSel.value = p.desktopNotification ? "on" : "off";
+        const modal = document.getElementById("chat-prefs-modal");
+        if (modal) modal.style.display = "flex";
+    };
+
+    window.closeChatPrefsModal = () => {
+        const modal = document.getElementById("chat-prefs-modal");
+        if (modal) modal.style.display = "none";
+    };
+
+    window.saveChatPrefs = async () => {
+        if (!currentUser) return;
+        const nextPrefs = sanitizeChatPrefs({
+            enterToSend: (document.getElementById("chat-pref-enter")?.value || "on") === "on",
+            density: document.getElementById("chat-pref-density")?.value || "normal",
+            showSeconds: (document.getElementById("chat-pref-seconds")?.value || "off") === "on",
+            requireMessageRequest: (document.getElementById("chat-pref-require-request")?.value || "on") === "on",
+            notifyMessage: (document.getElementById("chat-pref-notify-message")?.value || "on") === "on",
+            notifyFriendRequest: (document.getElementById("chat-pref-notify-friend")?.value || "on") === "on",
+            notifyMessageRequest: (document.getElementById("chat-pref-notify-request")?.value || "on") === "on",
+            desktopNotification: (document.getElementById("chat-pref-desktop")?.value || "off") === "on"
+        });
+        try {
+            if (nextPrefs.desktopNotification && typeof Notification !== "undefined" && Notification.permission === "default") {
+                try { await Notification.requestPermission(); } catch {}
+            }
+            await updateDoc(doc(db, "users", currentUser.uid), { chatPrefs: nextPrefs });
+            chatPrefs = nextPrefs;
+            currentUserData = { ...currentUserData, chatPrefs: nextPrefs };
+            applyChatPrefsUI();
+            closeChatPrefsModal();
+        } catch (e) {
+            alert("儲存聊天設定失敗：" + (e.message || e));
+        }
+    };
+
     async function findExistingPrivateChat(targetUid) {
         const chatQuery = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
         const chatSnap = await getDocs(chatQuery);
@@ -652,16 +1005,61 @@
             openChat(existingChatId, label, '👤', 'private', null);
             return;
         }
+        const targetUser = await fetchUserByUid(targetUid);
+        const targetPrefs = sanitizeChatPrefs(targetUser && targetUser.chatPrefs);
+        const needRequest = !isFriendWithUid(targetUid) && targetPrefs.requireMessageRequest;
         const newChat = await addDoc(collection(db, "chats"), {
             type: 'private',
             participants: [currentUser.uid, targetUid],
             participantEmails: [currentUser.email, targetEmail],
             name: '',
-            lastMessage: '新對話',
+            requestStatus: needRequest ? "pending" : "accepted",
+            requestFrom: needRequest ? currentUser.uid : "",
+            requestTo: needRequest ? targetUid : "",
+            lastMessage: needRequest ? '📨 訊息請求待回應' : '新對話',
             updatedAt: serverTimestamp()
         });
+        if (needRequest) {
+            alert("已送出訊息請求，等待對方接受後才能開始傳訊。");
+        }
         openChat(newChat.id, label, '👤', 'private', null);
     }
+
+    window.acceptMessageRequest = async (chatId) => {
+        try {
+            const ref = doc(db, "chats", chatId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const d = snap.data() || {};
+            if (d.type !== "private" || d.requestStatus !== "pending" || d.requestTo !== currentUser.uid) return;
+            await updateDoc(ref, {
+                requestStatus: "accepted",
+                acceptedAt: serverTimestamp(),
+                lastMessage: "✅ 已接受訊息請求",
+                updatedAt: serverTimestamp()
+            });
+        } catch (e) {
+            alert("接受訊息請求失敗：" + (e.message || e));
+        }
+    };
+
+    window.rejectMessageRequest = async (chatId) => {
+        try {
+            if (!confirm("確定要拒絕這則訊息請求？")) return;
+            await deleteDoc(doc(db, "chats", chatId));
+        } catch (e) {
+            alert("拒絕訊息請求失敗：" + (e.message || e));
+        }
+    };
+
+    window.cancelMessageRequest = async (chatId) => {
+        try {
+            if (!confirm("確定要取消你送出的訊息請求？")) return;
+            await deleteDoc(doc(db, "chats", chatId));
+        } catch (e) {
+            alert("取消訊息請求失敗：" + (e.message || e));
+        }
+    };
 
     function friendDocId(fromUid, toUid) {
         return String(fromUid) + "__" + String(toUid);
@@ -863,6 +1261,10 @@
                 const data = d.data() || {};
                 if ((data.status || "pending") === "pending") friendIncoming.push({ id: d.id, ...data });
             });
+            if (chatPrefs.notifyFriendRequest && incomingFriendRequestCount >= 0 && friendIncoming.length > incomingFriendRequestCount) {
+                maybeDesktopNotify("Doratch 好友請求", "你收到新的好友請求");
+            }
+            incomingFriendRequestCount = friendIncoming.length;
             await renderFriendPanels();
         });
         unsubscribeFriendOutgoing = onSnapshot(qOutgoing, async (snap) => {
@@ -888,6 +1290,8 @@
         if (snap.exists()) {
             const data = snap.data();
             currentUserData = { uid: user.uid, ...data };
+            chatPrefs = sanitizeChatPrefs(data.chatPrefs);
+            applyChatPrefsUI();
             document.getElementById('side-coins').innerText = data.coins || 0;
             document.getElementById('side-username').innerText = displayNameFromUser({ email: user.email, displayName: data.displayName });
             document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
@@ -904,6 +1308,8 @@
             }
         } else {
             currentUserData = { uid: user.uid, email: user.email || "" };
+            chatPrefs = sanitizeChatPrefs(null);
+            applyChatPrefsUI();
         }
 
         try {
@@ -951,9 +1357,13 @@
             document.getElementById('list-server').innerHTML = '';
             document.getElementById('list-group').innerHTML = '';
             document.getElementById('list-private').innerHTML = '';
+            const msgReqList = document.getElementById('list-message-requests');
+            const msgReqCategory = document.getElementById('category-message-requests');
+            if (msgReqList) msgReqList.innerHTML = '';
             
             if (snapshot.empty) {
                 document.getElementById('list-private').innerHTML = '<div style="padding:20px; text-align:center; color:#949ba4; font-size:13px;">目前還沒有對話紀錄</div>';
+                if (msgReqCategory) msgReqCategory.style.display = 'none';
                 return;
             }
 
@@ -966,6 +1376,7 @@
                 return t2 - t1;
             });
 
+            let incomingReqCount = 0;
             chats.forEach(chat => {
                 let displayName = chat.name || "未命名";
                 let rawName = displayName;
@@ -986,16 +1397,45 @@
                 item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
                 item.onclick = () => openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
                 
-                const timeStr = chat.updatedAt ? new Date(chat.updatedAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+                const timeStr = chat.updatedAt ? formatMsgTime(chat.updatedAt.toDate()) : '';
                 const readMap = chat.lastReadBy || {};
                 const myReadAt = toMillis(readMap[currentUser.uid]);
                 const updatedAtMs = toMillis(chat.updatedAt);
                 const unread = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
                 const unreadHtml = unread ? '<span class="chat-unread-badge">NEW</span>' : '';
+                const requestPending = chat.type === 'private' && chat.requestStatus === 'pending';
+                const isIncomingReq = requestPending && chat.requestTo === currentUser.uid;
+                const isOutgoingReq = requestPending && chat.requestFrom === currentUser.uid;
+
+                const seenBefore = Object.prototype.hasOwnProperty.call(chatUpdatedAtCache, chat.id);
+                if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0)) {
+                    maybeDesktopNotify(`Doratch 新訊息：${rawName}`, chat.lastMessage || "你有一則新訊息");
+                }
+                chatUpdatedAtCache[chat.id] = Math.max(chatUpdatedAtCache[chat.id] || 0, updatedAtMs);
+
+                if (isIncomingReq) {
+                    incomingReqCount += 1;
+                    if (msgReqList) {
+                        const reqItem = document.createElement("div");
+                        reqItem.className = "chat-item message-request";
+                        reqItem.innerHTML = `
+                            <div class="chat-name">📨 ${rawName}</div>
+                            <div class="chat-preview">等待你接受後才能開始聊天</div>
+                            <div class="mini-actions">
+                                <button class="mini-btn accept" onclick="acceptMessageRequest('${chat.id}')">接受</button>
+                                <button class="mini-btn reject" onclick="rejectMessageRequest('${chat.id}')">拒絕</button>
+                            </div>
+                        `;
+                        msgReqList.appendChild(reqItem);
+                    }
+                }
+                if (isOutgoingReq) {
+                    item.classList.add("message-request");
+                }
 
                 item.innerHTML = `
                     <div class="chat-name">${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
-                    <div class="chat-preview">${chat.lastMessage || '開始聊天吧！'}</div>
+                    <div class="chat-preview">${isOutgoingReq ? '你已送出訊息請求，等待對方回應' : (chat.lastMessage || '開始聊天吧！')}</div>
                 `;
                 
                 if (chat.type === 'server') {
@@ -1006,6 +1446,11 @@
                     document.getElementById('list-group').appendChild(item);
                 }
             });
+            if (msgReqCategory) msgReqCategory.style.display = incomingReqCount ? "block" : "none";
+            if (chatPrefs.notifyMessageRequest && incomingMessageRequestCount >= 0 && incomingReqCount > incomingMessageRequestCount) {
+                maybeDesktopNotify("Doratch 訊息請求", "你收到新的訊息請求");
+            }
+            incomingMessageRequestCount = incomingReqCount;
         });
 
         // 監聽待審批邀請
@@ -1072,6 +1517,8 @@
 
     let currentChatTeacherId = null;
     let currentChatType = null;
+    let currentChatName = "";
+    let currentChatIcon = "💬";
 
     async function renderTypingIndicator(typingUsersMap) {
         const el = document.getElementById("typing-indicator");
@@ -1118,6 +1565,54 @@
         }, 7000);
     }
 
+    function applyPrivateRequestState(chatData) {
+        const banner = document.getElementById("private-request-banner");
+        const hint = document.getElementById("private-request-text");
+        const actions = document.getElementById("private-request-actions");
+        const input = document.getElementById("msg-input");
+        const sendBtn = document.getElementById("btn-send-msg");
+        if (!banner || !hint || !actions || !input || !sendBtn) return;
+        if (currentChatType !== "private") {
+            banner.style.display = "none";
+            input.disabled = false;
+            sendBtn.disabled = false;
+            return;
+        }
+        const status = (chatData && chatData.requestStatus) ? chatData.requestStatus : "accepted";
+        if (status !== "pending") {
+            banner.style.display = "none";
+            input.disabled = false;
+            sendBtn.disabled = false;
+            return;
+        }
+        banner.style.display = "flex";
+        input.disabled = true;
+        sendBtn.disabled = true;
+        if (chatData.requestTo === currentUser.uid) {
+            hint.textContent = "此私訊正在等待你回應。";
+            actions.innerHTML = `
+                <button class="mini-btn accept" onclick="acceptMessageRequest('${currentChatId}')">接受</button>
+                <button class="mini-btn reject" onclick="rejectMessageRequest('${currentChatId}')">拒絕</button>
+            `;
+        } else {
+            hint.textContent = "你已送出訊息請求，請等待對方接受。";
+            actions.innerHTML = `<button class="mini-btn cancel" onclick="cancelMessageRequest('${currentChatId}')">取消請求</button>`;
+        }
+    }
+
+    function handleChatInputKeydown(ev) {
+        if (ev.key !== "Enter") return;
+        if (chatPrefs.enterToSend) {
+            ev.preventDefault();
+            window.sendMessage();
+            return;
+        }
+        if (ev.ctrlKey || ev.metaKey) {
+            ev.preventDefault();
+            window.sendMessage();
+        }
+    }
+
     // 3. 開啟特定聊天室
     window.openChat = (chatId, chatName, icon, chatType, teacherId) => {
         const prevChatId = currentChatId;
@@ -1129,6 +1624,8 @@
         currentChatId = chatId;
         currentChatTeacherId = teacherId;
         currentChatType = chatType;
+        currentChatName = chatName;
+        currentChatIcon = icon || "💬";
         if (typingPulseTimer) {
             clearTimeout(typingPulseTimer);
             typingPulseTimer = null;
@@ -1167,6 +1664,10 @@
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="input-area">
+                <div class="request-banner" id="private-request-banner">
+                    <span id="private-request-text"></span>
+                    <div class="mini-actions" id="private-request-actions"></div>
+                </div>
                 <div class="reply-bar" id="reply-bar">
                     <span id="reply-bar-text"></span>
                     <button type="button" onclick="clearReplyTarget()">取消</button>
@@ -1178,6 +1679,7 @@
                     <input type="file" id="file-input" accept=".xml" style="display:none" onchange="sendFile(this)">
                     <button type="button" class="btn-slash-chip" id="btn-slash-chip" title="斜線指令">/</button>
                     <input type="text" id="msg-input" class="input-box" placeholder="傳送訊息，或輸入 / 使用斜線指令…">
+                    <button type="button" class="btn-send" id="btn-send-msg">送出</button>
                 </div>
             </div>
         `;
@@ -1197,6 +1699,7 @@
                 currentChatAttachedBots = data.attachedBots || [];
                 refreshChatBotsMeta();
                 renderTypingIndicator(data.typingUsers || {});
+                applyPrivateRequestState(data);
             }
         });
 
@@ -1227,12 +1730,18 @@
                 ? (msg.botName || "Bot")
                 : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
             const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
-            const timeStr = timeObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const fullTimeStr = timeObj.toLocaleDateString() + ' ' + timeStr;
+            const timeStr = formatMsgTime(timeObj);
+            const fullTimeStr = formatMsgFullTime(timeObj);
             const avatarUrl = isBotMsg
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
                 : `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
             const avatarFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
+            const editedMark = msg.editedAt ? `<span class="msg-edited">(edited)</span>` : "";
+            const mine = msg.senderId === currentUser.uid;
+            let quickActionsHtml = `<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById('${docSnap.id}')">↩</button>`;
+            if (mine && msg.type === "text") quickActionsHtml += `<button class="msg-quick-btn" title="編輯" onclick="editMessageById('${docSnap.id}')">✏️</button>`;
+            if (mine) quickActionsHtml += `<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById('${docSnap.id}')">🗑️</button>`;
+            quickActionsHtml += `</div>`;
             
             const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
             const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
@@ -1266,8 +1775,8 @@
             if (isConsecutive) {
                 html += `
                     <div class="${rowClass} consecutive">
-                        <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}</span></div>
-                        <div class="msg-content" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${replyHtml}${contentHtml}</div>
+                        <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}${msg.editedAt ? " (edited)" : ""}</span></div>
+                        <div class="msg-content" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${quickActionsHtml}${replyHtml}${contentHtml}</div>
                     </div>
                 `;
             } else {
@@ -1275,9 +1784,10 @@
                     <div class="${rowClass}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
                         <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
                         <div class="msg-content">
+                            ${quickActionsHtml}
                             <div class="msg-header">
                                 <span class="msg-author"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
-                                <span class="msg-time">${fullTimeStr}</span>
+                                <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
                         </div>
@@ -1304,15 +1814,23 @@
                 );
             }
             if (input) {
-                input.addEventListener("input", scheduleTypingPulse);
-                input.addEventListener("blur", clearMyTypingIndicator);
+                input.oninput = scheduleTypingPulse;
+                input.onblur = clearMyTypingIndicator;
+                input.onkeydown = handleChatInputKeydown;
             }
+            const sendBtn = document.getElementById("btn-send-msg");
+            if (sendBtn) sendBtn.onclick = () => window.sendMessage();
             refreshChatBotsMeta();
             const memberSidebar = document.getElementById('member-sidebar');
             if (chatType === 'group' || chatType === 'server') {
                 memberSidebar.classList.add('active');
             } else {
                 memberSidebar.classList.remove('active');
+            }
+            if (chatType === "private") {
+                getDoc(doc(db, "chats", chatId)).then((s) => applyPrivateRequestState(s.exists() ? s.data() : null)).catch(() => {});
+            } else {
+                applyPrivateRequestState(null);
             }
             input && input.focus();
         }, 100);
@@ -1901,6 +2419,16 @@
     // 4. 傳送文字訊息
     window.sendMessage = async () => {
         if (!currentChatId) return;
+        if (currentChatType === "private") {
+            try {
+                const chatSnap = await getDoc(doc(db, "chats", currentChatId));
+                const chatData = chatSnap.exists() ? chatSnap.data() : null;
+                if (chatData && chatData.requestStatus === "pending") {
+                    applyPrivateRequestState(chatData);
+                    return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
+                }
+            } catch {}
+        }
         const input = document.getElementById('msg-input');
         const text = input.value.trim();
         if (!text) return;
@@ -1951,8 +2479,20 @@
     };
 
     // 傳送檔案
-    window.sendFile = (inputElem) => {
+    window.sendFile = async (inputElem) => {
         if (!currentChatId || !inputElem.files || inputElem.files.length === 0) return;
+        if (currentChatType === "private") {
+            try {
+                const chatSnap = await getDoc(doc(db, "chats", currentChatId));
+                const d = chatSnap.exists() ? chatSnap.data() : null;
+                if (d && d.requestStatus === "pending") {
+                    applyPrivateRequestState(d);
+                    alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
+                    inputElem.value = "";
+                    return;
+                }
+            } catch {}
+        }
         const file = inputElem.files[0];
         if (!file.name.endsWith('.xml')) {
             alert("目前僅支援分享 .xml 積木專案檔喔！");
@@ -2026,7 +2566,7 @@
         
         if (mode === 'private') {
             title.innerText = '發起私訊';
-            input.placeholder = '請輸入好友的註冊 Email';
+            input.placeholder = '請輸入對方註冊 Email（可能需要先訊息請求）';
         } else if (mode === 'friendRequest') {
             title.innerText = '送出好友請求';
             input.placeholder = '請輸入對方的註冊 Email';
@@ -2053,10 +2593,19 @@
     };
 
     window.closeModal = () => document.getElementById('modal').style.display = 'none';
+    (function bindModalClickGuards() {
+        ["modal", "cosmetic-modal", "chat-prefs-modal"].forEach((id) => {
+            const root = document.getElementById(id);
+            if (!root) return;
+            const card = root.querySelector(".modal-content");
+            if (card) card.addEventListener("click", (ev) => ev.stopPropagation());
+        });
+    })();
     window.addEventListener("click", (e) => {
         const t = e.target;
         if (t && t.id === "modal") closeModal();
         if (t && t.id === "cosmetic-modal") closeCosmeticModal();
+        if (t && t.id === "chat-prefs-modal") closeChatPrefsModal();
         const menu = document.getElementById("message-menu");
         if (menu && t && !menu.contains(t)) hideMessageMenu();
         const pop = document.getElementById("profile-pop");
@@ -2094,10 +2643,6 @@
                 if (!target || !target.uid) {
                     alert("找不到此 Email 的聯絡人！對方可能尚未登入過聊天室。");
                     throw new Error("User not found");
-                }
-                if (!isFriendWithUid(target.uid)) {
-                    alert("此使用者尚未與你成為好友。\n請先送出好友請求並等待對方接受。");
-                    throw new Error("Not friend");
                 }
                 await openOrCreatePrivateChat(target.uid, targetEmail);
             } else if (modalMode === 'friendRequest') {
