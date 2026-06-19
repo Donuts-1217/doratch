@@ -4,7 +4,6 @@
 (function () {
     const PAGE_KEYS = {
         "app.html": "home",
-        "index.html": "home",
         "chat.html": "chat",
         "shop.html": "shop",
         "game.html": "game",
@@ -39,20 +38,47 @@
         return window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
     }
 
+    function clearAppModeState() {
+        try { localStorage.removeItem("doratchAppMode"); } catch (_) {}
+        document.body.classList.remove("doratch-app-mode", "doratch-app-force", "chat-app");
+        var bar = document.getElementById("doratch-mobile-tabbar");
+        if (bar) bar.remove();
+    }
+
     function isAppMode() {
         const qs = new URLSearchParams(location.search);
+        const file = currentFile();
+
+        // 明確離開 App：完整網站
+        if (qs.get("site") === "1" || qs.get("app") === "0" || file === "index.html") {
+            clearAppModeState();
+            return false;
+        }
+
         if (qs.get("app") === "1") {
             try { localStorage.setItem("doratchAppMode", "1"); } catch (_) {}
             return true;
         }
-        if (pageKey()) {
-            try {
-                if (localStorage.getItem("doratchAppMode") === "1") return true;
-            } catch (_) {}
-        }
-        if (isStandalone()) return true;
-        if (window.innerWidth <= 900 && pageKey()) return true;
+        if (isStandalone()) return !!pageKey();
+        try {
+            if (localStorage.getItem("doratchAppMode") === "1" && pageKey()) return true;
+        } catch (_) {}
         return false;
+    }
+
+    function siteHref(href) {
+        if (!href || href.indexOf("#") === 0) return href;
+        if (/^https?:\/\//i.test(href)) return href;
+        try {
+            const url = new URL(href, location.href);
+            const file = url.pathname.split("/").pop() || "";
+            if (file === "index.html" || href === "index.html" || href.startsWith("index.html")) {
+                url.searchParams.set("site", "1");
+                url.searchParams.delete("app");
+                return url.pathname.split("/").pop() + url.search + url.hash;
+            }
+        } catch (_) {}
+        return href;
     }
 
     function withApp(href) {
@@ -75,6 +101,10 @@
             const href = a.getAttribute("href");
             if (!href || href.startsWith("#") || /^https?:\/\//i.test(href)) return;
             const file = href.split("?")[0].split("/").pop();
+            if (file === "index.html") {
+                a.setAttribute("href", siteHref(href));
+                return;
+            }
             if (PAGE_KEYS[file]) a.setAttribute("href", withApp(href));
         });
     }
@@ -169,6 +199,12 @@
     }
 
     function init() {
+        const file = currentFile();
+        if (file === "index.html") {
+            clearAppModeState();
+            return;
+        }
+
         const key = pageKey();
         if (!key && !isAppMode()) return;
 
@@ -197,7 +233,10 @@
     window.DoratchMobile = {
         isAppMode: isAppMode,
         withApp: withApp,
-        go: function (href) { location.href = withApp(href); }
+        siteHref: siteHref,
+        clearAppMode: clearAppModeState,
+        go: function (href) { location.href = withApp(href); },
+        goSite: function (href) { location.href = siteHref(href || "index.html"); }
     };
 
     if (document.readyState === "loading") {

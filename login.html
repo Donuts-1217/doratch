@@ -3,18 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
     <link rel="stylesheet" href="responsive-global.css">
-    <title>會員系統 - Creative Blocks</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>會員登入 - Doratch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --scratch-blue: #4C97FF; --scratch-purple: #855CD6; 
-            --glass-bg: rgba(255, 255, 255, 0.95);
+        :root {
+            --primary: #4C97FF;
+            --accent: #855CD6;
+            --bg: #0F172A;
+            --card-bg: #1E293B;
+            --text: #F8FAFC;
         }
-        body { 
-            font-family: "Noto Sans TC", sans-serif; 
-            background: linear-gradient(135deg, #4C97FF 0%, #855CD6 100%); 
-            display: flex; justify-content: center; align-items: center; margin: 0; 
+        body {
+            font-family: "Outfit", "Noto Sans TC", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex; justify-content: center; align-items: center; margin: 0;
             min-height: 100vh;
             min-height: 100dvh;
             overflow: hidden;
@@ -22,67 +28,78 @@
             box-sizing: border-box;
             position: relative;
         }
-        
-        /* 動態背景球 */
-        .bg-circle {
-            position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1);
-            z-index: -1; animation: float 20s infinite linear;
-            pointer-events: none;
-            will-change: transform;
-        }
-        @keyframes float {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            100% { transform: translate(100px, 100px) rotate(360deg); }
-        }
 
-        .auth-card { 
-            background: var(--glass-bg); padding: 50px 40px; border-radius: 24px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); width: 100%; max-width: 360px; 
-            text-align: center; backdrop-filter: blur(10px);
-            transition: 0.3s transform;
+        .bg-glow {
+            position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+            filter: blur(80px); opacity: 0.35;
+        }
+        .bg-glow-a { width: 320px; height: 320px; top: -80px; left: -80px; background: var(--primary); }
+        .bg-glow-b { width: 260px; height: 260px; bottom: -60px; right: -60px; background: var(--accent); }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: 44px 36px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+            width: 100%; max-width: 360px;
+            text-align: center;
+            position: relative; z-index: 1;
             max-height: calc(100dvh - 40px);
             overflow-y: auto;
         }
-        .auth-card:hover { transform: translateY(-5px); }
-        
-        .logo { font-size: 28px; font-weight: 900; color: var(--scratch-blue); margin-bottom: 8px; cursor: pointer; letter-spacing: -1px; }
-        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; letter-spacing: 1px; }
-        
-        #auth-title { font-size: 24px; font-weight: 900; color: #333; margin-bottom: 20px; }
+
+        .logo-wrap {
+            display: inline-flex; align-items: center; gap: 12px;
+            margin-bottom: 8px; cursor: pointer; text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .logo-wrap:hover { opacity: 0.85; }
+        .logo-icon { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; }
+        .logo-text {
+            font-size: 1.75rem; font-weight: 900; color: var(--primary);
+            letter-spacing: 0.06em; text-transform: lowercase; line-height: 1;
+        }
+        .subtitle { color: #94A3B8; font-size: 13px; margin-bottom: 28px; letter-spacing: 0.08em; }
+
+        #auth-title { font-size: 22px; font-weight: 900; color: var(--text); margin-bottom: 20px; }
 
         .input-group { position: relative; margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 12px; font-weight: bold; color: #888; margin-bottom: 5px; margin-left: 5px; }
-        
-        input { 
-            width: 100%; padding: 14px 18px; 
-            border: 2px solid #F0F0F0; border-radius: 12px; box-sizing: border-box; 
-            outline: none; transition: 0.3s; font-size: 16px; background: #FAFAFA;
+        .input-group label { display: block; font-size: 12px; font-weight: bold; color: #94A3B8; margin-bottom: 5px; margin-left: 5px; }
+
+        input {
+            width: 100%; padding: 14px 18px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; box-sizing: border-box;
+            outline: none; transition: 0.3s; font-size: 16px;
+            background: rgba(15,23,42,0.6); color: var(--text);
         }
-        input:focus { border-color: var(--scratch-blue); background: white; box-shadow: 0 0 0 4px rgba(76, 151, 255, 0.1); }
-        
-        .btn { 
-            width: 100%; padding: 14px; border: none; border-radius: 12px; 
+        input::placeholder { color: #64748B; }
+        input:focus { border-color: var(--primary); background: rgba(15,23,42,0.9); box-shadow: 0 0 0 4px rgba(76, 151, 255, 0.15); }
+
+        .btn {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
             font-weight: 900; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 15px;
             box-shadow: 0 4px 15px rgba(76, 151, 255, 0.3);
         }
-        .btn-primary { background: var(--scratch-blue); color: white; }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: #357ABD; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(76, 151, 255, 0.4); }
         .btn-primary:active { transform: translateY(0); }
-        
-        .toggle-link { margin-top: 25px; font-size: 14px; color: #777; }
-        .toggle-link span { color: var(--scratch-blue); cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .toggle-link { margin-top: 25px; font-size: 14px; color: #94A3B8; }
+        .toggle-link span { color: var(--primary); cursor: pointer; font-weight: bold; transition: 0.2s; }
         .toggle-link span:hover { text-decoration: underline; }
-        
-        #message-box { 
-            margin-bottom: 20px; font-size: 13px; padding: 12px 15px; border-radius: 12px; 
+
+        #message-box {
+            margin-bottom: 20px; font-size: 13px; padding: 12px 15px; border-radius: 12px;
             display: none; animation: fadeIn 0.3s ease; line-height: 1.5;
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .msg-error { background: #FFF0F0; color: #E53935; border: 1px solid #FFCDD2; }
-        .msg-success { background: #F0FFF4; color: #2E7D32; border: 1px solid #C8E6C9; }
-        
-        .spam-notice { font-size: 11px; color: #FF8F00; font-weight: bold; margin-top: 8px; display: block; }
+
+        .msg-error { background: rgba(229,57,53,0.12); color: #FCA5A5; border: 1px solid rgba(229,57,53,0.35); }
+        .msg-success { background: rgba(46,125,50,0.12); color: #86EFAC; border: 1px solid rgba(46,125,50,0.35); }
+
+        .spam-notice { font-size: 11px; color: #FBBF24; font-weight: bold; margin-top: 8px; display: block; }
     
         
         /* 響應式縮放與排版 */
@@ -134,12 +151,15 @@
 </head>
 <body>
 
-<div class="bg-circle" style="width: 300px; height: 300px; top: -100px; left: -100px;"></div>
-<div class="bg-circle" style="width: 200px; height: 200px; bottom: -50px; right: -50px; animation-delay: -5s;"></div>
+<div class="bg-glow bg-glow-a"></div>
+<div class="bg-glow bg-glow-b"></div>
 
 <div class="auth-card">
-    <div class="logo" onclick="location.href='index.html'">🧩 Creative Blocks</div>
-    <div class="subtitle">啟發你的程式邏輯</div>
+    <a class="logo-wrap" href="index.html" aria-label="Doratch 首頁">
+        <img class="logo-icon" src="icons/icon.svg" alt="">
+        <span class="logo-text">doratch</span>
+    </a>
+    <div class="subtitle">程式學習與創作平台</div>
     
     <h2 id="auth-title">會員登入</h2>
     
