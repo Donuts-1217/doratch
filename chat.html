@@ -159,6 +159,62 @@
             border-color: #60a5fa !important;
             animation: particlePulse 1.7s ease-in-out infinite reverse;
         }
+        .avatar-frame-glitch-legend {
+            border-color: #22d3ee !important;
+            animation: particlePulse 1.5s ease-in-out infinite;
+        }
+        .avatar-frame-celestial-particle {
+            border-color: #fbbf24 !important;
+            animation: particlePulse 2s ease-in-out infinite;
+        }
+        .avatar-frame-eclipse-particle {
+            border-color: #7c3aed !important;
+            animation: particlePulse 1.8s ease-in-out infinite reverse;
+        }
+        .avatar-frame-stardust-particle {
+            border-color: #a78bfa !important;
+            animation: particlePulse 2.1s ease-in-out infinite;
+        }
+        .avatar-frame-bamboo {
+            border-color: #4ade80 !important;
+            box-shadow: 0 0 0 4px rgba(74,222,128,0.22), 0 0 18px rgba(21,128,61,0.4);
+        }
+        .avatar-frame-matrix {
+            border-color: #4ade80 !important;
+            box-shadow: 0 0 0 4px rgba(74,222,128,0.18), 0 0 18px rgba(22,163,74,0.45);
+        }
+        .avatar-frame-snowflake {
+            border-color: #bae6fd !important;
+            box-shadow: 0 0 0 4px rgba(186,230,253,0.25), 0 0 18px rgba(56,189,248,0.4);
+        }
+        .avatar-frame-amethyst {
+            border-color: #c084fc !important;
+            box-shadow: 0 0 0 4px rgba(192,132,252,0.22), 0 0 18px rgba(168,85,247,0.45);
+        }
+        .avatar-frame-thunder {
+            border-color: #facc15 !important;
+            box-shadow: 0 0 0 4px rgba(250,204,21,0.22), 0 0 18px rgba(59,130,246,0.48);
+        }
+        .avatar-frame-dragon-jade {
+            border-color: #34d399 !important;
+            box-shadow: 0 0 0 4px rgba(52,211,153,0.22), 0 0 18px rgba(5,150,105,0.48);
+        }
+        .avatar-frame-sunset-glow {
+            border-color: #fb923c !important;
+            box-shadow: 0 0 0 4px rgba(251,146,60,0.22), 0 0 18px rgba(244,63,94,0.4);
+        }
+        .avatar-frame-ocean-deep {
+            border-color: #0891b2 !important;
+            box-shadow: 0 0 0 4px rgba(8,145,178,0.22), 0 0 18px rgba(37,99,235,0.42);
+        }
+        .avatar-frame-stadium-spotlight {
+            border-color: #facc15 !important;
+            box-shadow: 0 0 0 4px rgba(250,204,21,0.22), 0 0 18px rgba(234,179,8,0.45);
+        }
+        .avatar-frame-moonlit-legend {
+            border-color: #c4b5fd !important;
+            animation: particlePulse 2.2s ease-in-out infinite;
+        }
         @keyframes legendGlowPulse {
             0%, 100% { box-shadow: 0 0 0 4px rgba(167,139,250,0.2), 0 0 16px rgba(99,102,241,0.42); }
             50% { box-shadow: 0 0 0 6px rgba(244,114,182,0.26), 0 0 28px rgba(251,191,36,0.55); }
@@ -199,6 +255,23 @@
             -webkit-background-clip: text;
             background-clip: text;
             animation: namePrism 2.6s linear infinite;
+            font-weight: 900;
+        }
+        .name-effect-stardust {
+            text-shadow: 0 0 8px rgba(251,191,36,0.45), 0 0 14px rgba(167,139,250,0.35);
+            animation: nameWave 2.1s ease-in-out infinite;
+        }
+        .name-effect-pulse-core {
+            animation: badgeGlowBurst 1.6s ease-in-out infinite;
+            text-shadow: 0 0 10px rgba(244,114,182,0.42);
+        }
+        .name-effect-aurora-pulse {
+            color: transparent !important;
+            background: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
+            background-size: 220% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: namePrism 2.4s linear infinite;
             font-weight: 900;
         }
         .msg-time { font-size: 12px; color: var(--text-muted); }
@@ -501,11 +574,125 @@
             color: #fef08a;
             animation: badgeGlowBurst 1.9s ease-in-out infinite;
         }
+        @keyframes pfxShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes pfxGlitch {
+            0%, 88%, 100% { filter: none; transform: none; }
+            90% { filter: hue-rotate(90deg) saturate(1.4); transform: translateX(2px); }
+            92% { filter: hue-rotate(-70deg); transform: translateX(-2px); }
+            94% { filter: none; transform: translateX(1px); }
+        }
+        @keyframes pfxMatrixScroll {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 0 120px, 0 0; }
+        }
+        @keyframes pfxHaloPulse {
+            0%, 100% { box-shadow: inset 0 -20px 40px rgba(251,191,36,0.25); }
+            50% { box-shadow: inset 0 -28px 52px rgba(250,204,21,0.45); }
+        }
+        @keyframes pfxRipple {
+            0%, 100% { box-shadow: inset 0 0 0 0 rgba(139,92,246,0.2); }
+            50% { box-shadow: inset 0 0 0 18px rgba(139,92,246,0.08); }
+        }
+        @keyframes pfxStarStreak {
+            0% { background-position: 0% 0%, 0% 0%; }
+            100% { background-position: 100% 100%, 200% 200%; }
+        }
+        @keyframes pfxGridPulse {
+            0%, 100% { opacity: 0.55; }
+            50% { opacity: 0.9; }
+        }
         .profile-pop.fx-royal .profile-pop-banner {
             background: linear-gradient(120deg, rgba(245,158,11,0.38), rgba(251,191,36,0.18), rgba(217,119,6,0.25));
         }
         .profile-pop.fx-nebula .profile-pop-banner {
             background: linear-gradient(120deg, rgba(59,130,246,0.32), rgba(168,85,247,0.28), rgba(244,114,182,0.22));
+            background-size: 200% 200%;
+            animation: pfxShift 7s ease infinite;
+        }
+        .profile-pop.fx-sakura .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(251,207,232,0.5), rgba(244,114,182,0.3), rgba(253,186,216,0.38));
+            background-size: 220% 220%;
+            animation: pfxShift 9s ease infinite;
+        }
+        .profile-pop.fx-starfall .profile-pop-banner {
+            background:
+                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%),
+                linear-gradient(120deg, rgba(15,23,42,0.95), rgba(30,58,138,0.75), rgba(67,56,202,0.55));
+            background-size: 200% 200%, 100% 100%;
+            animation: pfxStarStreak 5s linear infinite;
+        }
+        .profile-pop.fx-cosmic-aurora .profile-pop-banner {
+            background: linear-gradient(120deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4, #1e3a8a);
+            background-size: 300% 300%;
+            animation: pfxShift 8s ease infinite;
+        }
+        .profile-pop.fx-void-rift .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(15,10,26,0.95), rgba(76,29,149,0.55), rgba(30,27,75,0.9));
+            animation: pfxRipple 3.5s ease-in-out infinite;
+        }
+        .profile-pop.fx-glitch .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(236,72,153,0.38), rgba(34,211,238,0.32), rgba(250,204,21,0.28));
+            animation: pfxGlitch 2.8s infinite;
+        }
+        .profile-pop.fx-matrix-rain .profile-pop-banner {
+            background:
+                repeating-linear-gradient(0deg, rgba(34,197,94,0.12) 0 2px, transparent 2px 14px),
+                linear-gradient(180deg, rgba(5,46,22,0.92), rgba(15,23,42,0.88));
+            animation: pfxMatrixScroll 2.2s linear infinite;
+        }
+        .profile-pop.fx-golden-halo .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(251,191,36,0.45), rgba(245,158,11,0.28), rgba(217,119,6,0.35));
+            animation: pfxHaloPulse 3s ease-in-out infinite;
+        }
+        .profile-pop.fx-void-ripple .profile-pop-banner {
+            background: radial-gradient(circle at 50% 120%, rgba(88,28,135,0.55), rgba(15,23,42,0.92) 65%);
+            animation: pfxRipple 2.6s ease-in-out infinite;
+        }
+        .profile-pop.fx-cherry-bloom .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(253,164,175,0.45), rgba(251,113,133,0.32), rgba(244,63,94,0.22));
+            background-size: 240% 240%;
+            animation: pfxShift 10s ease infinite;
+        }
+        .profile-pop.fx-cyber-grid .profile-pop-banner {
+            background:
+                linear-gradient(rgba(34,211,238,0.14) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,211,238,0.14) 1px, transparent 1px),
+                linear-gradient(120deg, rgba(15,23,42,0.95), rgba(30,64,175,0.55));
+            background-size: 18px 18px, 18px 18px, 100% 100%;
+            animation: pfxGridPulse 2.4s ease-in-out infinite;
+        }
+        .profile-pop.fx-aurora-wave .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(34,211,238,0.38), rgba(52,211,153,0.32), rgba(168,85,247,0.35), rgba(59,130,246,0.3));
+            background-size: 280% 280%;
+            animation: pfxShift 6.5s ease infinite;
+        }
+        .profile-pop.fx-crystal-frost .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(186,230,253,0.42), rgba(125,211,252,0.28), rgba(224,242,254,0.35));
+            background-size: 200% 200%;
+            animation: pfxShift 11s ease infinite;
+        }
+        .profile-pop.fx-plasma-storm .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(168,85,247,0.42), rgba(236,72,153,0.35), rgba(59,130,246,0.38));
+            background-size: 260% 260%;
+            animation: pfxShift 4.5s ease infinite;
+        }
+        .profile-pop.fx-inferno-glow .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(239,68,68,0.38), rgba(249,115,22,0.35), rgba(234,88,12,0.28));
+            background-size: 220% 220%;
+            animation: pfxShift 5.5s ease infinite;
+        }
+        .profile-pop.fx-ocean-breeze .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(14,165,233,0.42), rgba(6,182,212,0.32), rgba(2,132,199,0.35));
+            background-size: 220% 220%;
+            animation: pfxRipple 4s ease-in-out infinite;
+        }
+        .profile-pop.fx-golden-aura .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(253,230,138,0.45), rgba(251,191,36,0.35), rgba(245,158,11,0.3));
+            background-size: 200% 200%;
+            animation: pfxHaloPulse 3.2s ease-in-out infinite;
         }
         .chat-pref-grid { display: grid; gap: 10px; margin-top: 12px; }
         .chat-pref-row { display: grid; gap: 6px; }
@@ -866,6 +1053,31 @@
         { id: "avatar_cat_neon", slot: "avatar", label: "霓虹貓頭像", value: "cat_neon" },
         { id: "avatar_fox_shadow", slot: "avatar", label: "影狐頭像", value: "fox_shadow" },
         { id: "avatar_astronaut", slot: "avatar", label: "太空員頭像", value: "astronaut" },
+        { id: "avatar_panda_cute", slot: "avatar", label: "竹熊貓頭像", value: "panda_cute" },
+        { id: "avatar_cyber_wolf", slot: "avatar", label: "電馭战狼頭像", value: "cyber_wolf" },
+        { id: "avatar_code_snake", slot: "avatar", label: "Python 小蛇頭像", value: "code_snake" },
+        { id: "avatar_cherry_blossom", slot: "avatar", label: "櫻花學妹頭像", value: "cherry_blossom" },
+        { id: "avatar_stardust_lord", slot: "avatar", label: "星塵領主頭像", value: "stardust_lord" },
+        { id: "avatar_void_emperor", slot: "avatar", label: "虛空帝皇頭像", value: "void_emperor" },
+        { id: "avatar_phoenix_flame", slot: "avatar", label: "鳳凰焰心頭像", value: "phoenix_flame" },
+        { id: "avatar_koala_soft", slot: "avatar", label: "樹懶無尾熊頭像", value: "koala_soft" },
+        { id: "avatar_unicorn_dream", slot: "avatar", label: "夢幻獨角獸頭像", value: "unicorn_dream" },
+        { id: "avatar_robot_gold", slot: "avatar", label: "黃金機器人頭像", value: "robot_gold" },
+        { id: "avatar_dolphin_wave", slot: "avatar", label: "海豚浪花頭像", value: "dolphin_wave" },
+        { id: "avatar_eagle_sky", slot: "avatar", label: "天空之鷹頭像", value: "eagle_sky" },
+        { id: "avatar_owl_wise", slot: "avatar", label: "智慧貓頭鷹頭像", value: "owl_wise" },
+        { id: "avatar_dragon_cute", slot: "avatar", label: "萌龍寶寶頭像", value: "dragon_cute" },
+        { id: "avatar_java_bean", slot: "avatar", label: "Java 咖啡豆頭像", value: "java_bean" },
+        { id: "avatar_scratch_cat", slot: "avatar", label: "Scratch 小貓頭像", value: "scratch_cat" },
+        { id: "avatar_bubble_tea", slot: "avatar", label: "珍珠奶茶頭像", value: "bubble_tea" },
+        { id: "avatar_ramen_bowl", slot: "avatar", label: "拉麵達人頭像", value: "ramen_bowl" },
+        { id: "avatar_pumpkin_autumn", slot: "avatar", label: "秋收南瓜頭像", value: "pumpkin_autumn" },
+        { id: "avatar_snowman_winter", slot: "avatar", label: "雪人夥伴頭像", value: "snowman_winter" },
+        { id: "avatar_soccer_star", slot: "avatar", label: "足球之星頭像", value: "soccer_star" },
+        { id: "avatar_basket_ace", slot: "avatar", label: "籃球高手頭像", value: "basket_ace" },
+        { id: "avatar_kitsune_spirit", slot: "avatar", label: "妖狐精靈頭像", value: "kitsune_spirit" },
+        { id: "avatar_docoin_golden", slot: "avatar", label: "傳奇金鑽頭像", value: "docoin_golden" },
+        { id: "avatar_docoin_crystal", slot: "avatar", label: "傳奇晶核頭像", value: "docoin_crystal" },
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
@@ -875,6 +1087,20 @@
         { id: "frame_aurora", slot: "frame", label: "極光流彩頭像框", value: "aurora" },
         { id: "frame_phoenix_particle", slot: "frame", label: "傳奇框：鳳凰粒子", value: "phoenix_particle" },
         { id: "frame_quantum_particle", slot: "frame", label: "傳奇框：量子星塵", value: "quantum_particle" },
+        { id: "frame_glitch_legend", slot: "frame", label: "傳奇框：故障閃爍", value: "glitch_legend" },
+        { id: "frame_celestial_particle", slot: "frame", label: "傳奇框：天界星環", value: "celestial_particle" },
+        { id: "frame_eclipse_particle", slot: "frame", label: "傳奇框：日蝕光環", value: "eclipse_particle" },
+        { id: "frame_stardust_particle", slot: "frame", label: "傳奇框：星塵旋渦", value: "stardust_particle" },
+        { id: "frame_bamboo", slot: "frame", label: "竹林清風頭像框", value: "bamboo" },
+        { id: "frame_matrix", slot: "frame", label: "駭客矩陣頭像框", value: "matrix" },
+        { id: "frame_snowflake", slot: "frame", label: "冬日雪花頭像框", value: "snowflake" },
+        { id: "frame_amethyst", slot: "frame", label: "紫水晶光暈頭像框", value: "amethyst" },
+        { id: "frame_thunder", slot: "frame", label: "雷電風暴頭像框", value: "thunder" },
+        { id: "frame_dragon_jade", slot: "frame", label: "龍紋翡翠頭像框", value: "dragon_jade" },
+        { id: "frame_sunset_glow", slot: "frame", label: "暮光暖陽頭像框", value: "sunset_glow" },
+        { id: "frame_ocean_deep", slot: "frame", label: "深海漸層頭像框", value: "ocean_deep" },
+        { id: "frame_stadium_spotlight", slot: "frame", label: "球場聚光頭像框", value: "stadium_spotlight" },
+        { id: "frame_moonlit_legend", slot: "frame", label: "傳奇框：月輝星環", value: "moonlit_legend" },
         { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
         { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
         { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
@@ -885,6 +1111,18 @@
         { id: "title_void_walker", slot: "title", label: "虛空行者", value: "虛空行者" },
         { id: "title_overclock", slot: "title", label: "超頻核心", value: "超頻核心" },
         { id: "title_starlord", slot: "title", label: "星際領主", value: "星際領主" },
+        { id: "title_code_master", slot: "title", label: "程式碼大師", value: "程式碼大師" },
+        { id: "title_spring_breeze", slot: "title", label: "春風編程師", value: "春風編程師" },
+        { id: "title_cyber_ninja", slot: "title", label: "賽博忍者", value: "賽博忍者" },
+        { id: "title_forest_guardian", slot: "title", label: "森林守護者", value: "森林守護者" },
+        { id: "title_data_sage", slot: "title", label: "數據賢者", value: "數據賢者" },
+        { id: "title_pixel_pioneer", slot: "title", label: "像素先驅", value: "像素先驅" },
+        { id: "title_cloud_mage", slot: "title", label: "雲端法師", value: "雲端法師" },
+        { id: "title_mechanic_master", slot: "title", label: "機械大師", value: "機械大師" },
+        { id: "title_lightning_coder", slot: "title", label: "閃電編碼者", value: "閃電編碼者" },
+        { id: "title_foodie_coder", slot: "title", label: "美食程式師", value: "美食程式師" },
+        { id: "title_sports_champ", slot: "title", label: "運動冠軍", value: "運動冠軍" },
+        { id: "title_myth_keeper", slot: "title", label: "神話守護者", value: "神話守護者" },
         { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
         { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
         { id: "badge_alpha", slot: "badge", label: "內測先鋒", value: "內測先鋒" },
@@ -895,10 +1133,42 @@
         { id: "badge_titan", slot: "badge", label: "鈦晶守衛", value: "鈦晶守衛" },
         { id: "badge_supernova", slot: "badge", label: "超新星之眼", value: "超新星之眼" },
         { id: "badge_reactor", slot: "badge", label: "反應爐核心", value: "反應爐核心" },
+        { id: "badge_void_rift", slot: "badge", label: "虛無裂隙", value: "虛無裂隙" },
+        { id: "badge_homework_hero", slot: "badge", label: "作業達人", value: "作業達人" },
+        { id: "badge_debug_pro", slot: "badge", label: "除錯專家", value: "除錯專家" },
+        { id: "badge_moonlight", slot: "badge", label: "月光旅人", value: "月光旅人" },
+        { id: "badge_event_horizon", slot: "badge", label: "事件視界", value: "事件視界" },
+        { id: "badge_singularity", slot: "badge", label: "奇點核心", value: "奇點核心" },
+        { id: "badge_ether_crown", slot: "badge", label: "以太王冠", value: "以太王冠" },
+        { id: "badge_ocean_explorer", slot: "badge", label: "海洋探險家", value: "海洋探險家" },
+        { id: "badge_meal_master", slot: "badge", label: "美食大師", value: "美食大師" },
+        { id: "badge_sports_mvp", slot: "badge", label: "運動 MVP", value: "運動 MVP" },
+        { id: "badge_ancient_rune", slot: "badge", label: "遠古符文", value: "遠古符文" },
         { id: "namefx_wave", slot: "nameEffect", label: "流光波紋", value: "wave" },
         { id: "namefx_prism", slot: "nameEffect", label: "稜鏡閃耀", value: "prism" },
+        { id: "namefx_glitch", slot: "nameEffect", label: "故障閃爍", value: "glitch" },
+        { id: "namefx_aurora_pulse", slot: "nameEffect", label: "極光脈衝", value: "aurora_pulse" },
+        { id: "namefx_stardust", slot: "nameEffect", label: "星塵閃爍", value: "stardust" },
+        { id: "namefx_pulse_core", slot: "nameEffect", label: "脈衝核心", value: "pulse_core" },
+        { id: "namefx_sparkle", slot: "nameEffect", label: "星光閃爍", value: "sparkle" },
         { id: "profilefx_royal", slot: "profileEffect", label: "皇家光暈", value: "royal" },
         { id: "profilefx_nebula", slot: "profileEffect", label: "星雲脈衝", value: "nebula" },
+        { id: "profilefx_sakura", slot: "profileEffect", label: "櫻花飄落", value: "sakura" },
+        { id: "profilefx_starfall", slot: "profileEffect", label: "流星雨夜", value: "starfall" },
+        { id: "profilefx_cosmic_aurora", slot: "profileEffect", label: "宇宙極光", value: "cosmic_aurora" },
+        { id: "profilefx_void_rift", slot: "profileEffect", label: "虛空裂隙", value: "void_rift" },
+        { id: "profilefx_glitch", slot: "profileEffect", label: "故障閃爍", value: "glitch" },
+        { id: "profilefx_matrix_rain", slot: "profileEffect", label: "矩陣代碼雨", value: "matrix_rain" },
+        { id: "profilefx_golden_halo", slot: "profileEffect", label: "聖金光環", value: "golden_halo" },
+        { id: "profilefx_void_ripple", slot: "profileEffect", label: "虛空漣漪", value: "void_ripple" },
+        { id: "profilefx_cherry_bloom", slot: "profileEffect", label: "彼岸櫻雨", value: "cherry_bloom" },
+        { id: "profilefx_cyber_grid", slot: "profileEffect", label: "賽博網格", value: "cyber_grid" },
+        { id: "profilefx_aurora_wave", slot: "profileEffect", label: "極光波動", value: "aurora_wave" },
+        { id: "profilefx_crystal_frost", slot: "profileEffect", label: "水晶霜華", value: "crystal_frost" },
+        { id: "profilefx_plasma_storm", slot: "profileEffect", label: "等離子風暴", value: "plasma_storm" },
+        { id: "profilefx_inferno_glow", slot: "profileEffect", label: "業火餘燼", value: "inferno_glow" },
+        { id: "profilefx_ocean_breeze", slot: "profileEffect", label: "海風漣漪", value: "ocean_breeze" },
+        { id: "profilefx_golden_aura", slot: "profileEffect", label: "黃金光環", value: "golden_aura" },
         { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
         { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" },
         { id: "namecolor_violet", slot: "nameColor", label: "星雲紫", value: "#a78bfa" },
@@ -906,7 +1176,12 @@
         { id: "namecolor_crimson", slot: "nameColor", label: "赤焰紅", value: "#ef4444" },
         { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" },
         { id: "namecolor_ember", slot: "nameColor", label: "熾焰橘紅", value: "#f97316" },
-        { id: "namecolor_mint", slot: "nameColor", label: "薄荷青綠", value: "#2dd4bf" }
+        { id: "namecolor_mint", slot: "nameColor", label: "薄荷青綠", value: "#2dd4bf" },
+        { id: "namecolor_sakura", slot: "nameColor", label: "櫻花粉", value: "#f9a8d4" },
+        { id: "namecolor_matrix", slot: "nameColor", label: "矩陣綠", value: "#4ade80" },
+        { id: "namecolor_ocean", slot: "nameColor", label: "海洋藍", value: "#0ea5e9" },
+        { id: "namecolor_gold_medal", slot: "nameColor", label: "金牌金", value: "#eab308" },
+        { id: "namecolor_pumpkin", slot: "nameColor", label: "南瓜橙", value: "#ea580c" }
     ];
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
@@ -963,6 +1238,31 @@
         if (avatarType === "cat_neon") return `https://ui-avatars.com/api/?name=CAT&background=7c3aed&color=fff&bold=true`;
         if (avatarType === "fox_shadow") return `https://ui-avatars.com/api/?name=FOX&background=334155&color=fb7185&bold=true`;
         if (avatarType === "astronaut") return `https://ui-avatars.com/api/?name=AST&background=0f172a&color=38bdf8&bold=true`;
+        if (avatarType === "panda_cute") return `https://ui-avatars.com/api/?name=PND&background=86efac&color=166534&bold=true`;
+        if (avatarType === "cyber_wolf") return `https://ui-avatars.com/api/?name=WLF&background=1e1b4b&color=22d3ee&bold=true`;
+        if (avatarType === "code_snake") return `https://ui-avatars.com/api/?name=PY&background=15803d&color=fef08a&bold=true`;
+        if (avatarType === "cherry_blossom") return `https://ui-avatars.com/api/?name=SAK&background=fbcfe8&color=be185d&bold=true`;
+        if (avatarType === "stardust_lord") return `https://ui-avatars.com/api/?name=STL&background=1e1b4b&color=fbbf24&bold=true`;
+        if (avatarType === "void_emperor") return `https://ui-avatars.com/api/?name=VEM&background=0f0a1a&color=a78bfa&bold=true`;
+        if (avatarType === "phoenix_flame") return `https://ui-avatars.com/api/?name=PHX&background=7f1d1d&color=fbbf24&bold=true`;
+        if (avatarType === "koala_soft") return `https://ui-avatars.com/api/?name=KOA&background=d6d3d1&color=57534e&bold=true`;
+        if (avatarType === "unicorn_dream") return `https://ui-avatars.com/api/?name=UNI&background=f0abfc&color=86198f&bold=true`;
+        if (avatarType === "robot_gold") return `https://ui-avatars.com/api/?name=GLD&background=ca8a04&color=fffbeb&bold=true`;
+        if (avatarType === "dolphin_wave") return `https://ui-avatars.com/api/?name=DLP&background=0284c7&color=e0f2fe&bold=true`;
+        if (avatarType === "eagle_sky") return `https://ui-avatars.com/api/?name=EAG&background=1e3a8a&color=fbbf24&bold=true`;
+        if (avatarType === "owl_wise") return `https://ui-avatars.com/api/?name=OWL&background=78350f&color=fde68a&bold=true`;
+        if (avatarType === "dragon_cute") return `https://ui-avatars.com/api/?name=DRG&background=dc2626&color=fef08a&bold=true`;
+        if (avatarType === "java_bean") return `https://ui-avatars.com/api/?name=JAV&background=78350f&color=fbbf24&bold=true`;
+        if (avatarType === "scratch_cat") return `https://ui-avatars.com/api/?name=SCT&background=FFAB19&color=1e293b&bold=true`;
+        if (avatarType === "bubble_tea") return `https://ui-avatars.com/api/?name=TEA&background=fda4af&color=881337&bold=true`;
+        if (avatarType === "ramen_bowl") return `https://ui-avatars.com/api/?name=RAM&background=f97316&color=fff7ed&bold=true`;
+        if (avatarType === "pumpkin_autumn") return `https://ui-avatars.com/api/?name=PKN&background=ea580c&color=fef3c7&bold=true`;
+        if (avatarType === "snowman_winter") return `https://ui-avatars.com/api/?name=SNW&background=e0f2fe&color=0369a1&bold=true`;
+        if (avatarType === "soccer_star") return `https://ui-avatars.com/api/?name=SOC&background=16a34a&color=fff&bold=true`;
+        if (avatarType === "basket_ace") return `https://ui-avatars.com/api/?name=BKB&background=f97316&color=1e293b&bold=true`;
+        if (avatarType === "kitsune_spirit") return `https://ui-avatars.com/api/?name=KTS&background=f97316&color=fef3c7&bold=true`;
+        if (avatarType === "docoin_golden") return `https://ui-avatars.com/api/?name=DCN&background=fbbf24&color=451a03&bold=true`;
+        if (avatarType === "docoin_crystal") return `https://ui-avatars.com/api/?name=CRY&background=6366f1&color=e0e7ff&bold=true`;
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
@@ -1036,40 +1336,77 @@
         if (frameType === "aurora") return "avatar-frame-aurora";
         if (frameType === "phoenix_particle") return "avatar-frame-phoenix-particle";
         if (frameType === "quantum_particle") return "avatar-frame-quantum-particle";
+        if (frameType === "glitch_legend") return "avatar-frame-glitch-legend";
+        if (frameType === "celestial_particle") return "avatar-frame-celestial-particle";
+        if (frameType === "eclipse_particle") return "avatar-frame-eclipse-particle";
+        if (frameType === "stardust_particle") return "avatar-frame-stardust-particle";
+        if (frameType === "bamboo") return "avatar-frame-bamboo";
+        if (frameType === "matrix") return "avatar-frame-matrix";
+        if (frameType === "snowflake") return "avatar-frame-snowflake";
+        if (frameType === "amethyst") return "avatar-frame-amethyst";
+        if (frameType === "thunder") return "avatar-frame-thunder";
+        if (frameType === "dragon_jade") return "avatar-frame-dragon-jade";
+        if (frameType === "sunset_glow") return "avatar-frame-sunset-glow";
+        if (frameType === "ocean_deep") return "avatar-frame-ocean-deep";
+        if (frameType === "stadium_spotlight") return "avatar-frame-stadium-spotlight";
+        if (frameType === "moonlit_legend") return "avatar-frame-moonlit-legend";
         return "";
     }
 
     function isLegendaryFrame(frameType) {
-        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle"].includes(String(frameType || ""));
+        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend"].includes(String(frameType || ""));
     }
 
     function isLegendaryTitle(title) {
-        return ["量子駭客", "虛空行者", "超頻核心", "星際領主"].includes(String(title || ""));
+        return ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者"].includes(String(title || ""));
     }
 
     function isLegendaryBadge(badge) {
-        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心"].includes(String(badge || ""));
+        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文"].includes(String(badge || ""));
     }
 
     function isMythicBadge(badge) {
-        return ["超新星之眼", "反應爐核心"].includes(String(badge || ""));
+        return ["超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "遠古符文"].includes(String(badge || ""));
     }
 
     function nameEffectClass(effectType) {
         if (effectType === "wave") return "name-effect-wave";
         if (effectType === "prism") return "name-effect-prism";
+        if (effectType === "stardust") return "name-effect-stardust";
+        if (effectType === "pulse_core") return "name-effect-pulse-core";
+        if (effectType === "aurora_pulse") return "name-effect-aurora-pulse";
         return "";
     }
 
+    const PROFILE_EFFECT_CLASS_MAP = {
+        royal: "fx-royal",
+        nebula: "fx-nebula",
+        sakura: "fx-sakura",
+        starfall: "fx-starfall",
+        cosmic_aurora: "fx-cosmic-aurora",
+        void_rift: "fx-void-rift",
+        glitch: "fx-glitch",
+        matrix_rain: "fx-matrix-rain",
+        golden_halo: "fx-golden-halo",
+        void_ripple: "fx-void-ripple",
+        cherry_bloom: "fx-cherry-bloom",
+        cyber_grid: "fx-cyber-grid",
+        aurora_wave: "fx-aurora-wave",
+        crystal_frost: "fx-crystal-frost",
+        plasma_storm: "fx-plasma-storm",
+        inferno_glow: "fx-inferno-glow",
+        ocean_breeze: "fx-ocean-breeze",
+        golden_aura: "fx-golden-aura"
+    };
+    const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
+
     function profileEffectClass(effectType) {
-        if (effectType === "royal") return "fx-royal";
-        if (effectType === "nebula") return "fx-nebula";
-        return "";
+        return PROFILE_EFFECT_CLASS_MAP[effectType] || "";
     }
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
@@ -2432,7 +2769,7 @@
                 <div class="profile-pop-badge-grid">${badgeShelf.join("") || '<span class="profile-pop-badge-chip">尚未裝備徽章</span>'}</div>
             </div>
         `;
-        pop.classList.remove("fx-royal", "fx-nebula");
+        pop.classList.remove(...PROFILE_FX_CLASSES);
         if (profileFxCls) pop.classList.add(profileFxCls);
         pop.style.left = Math.min(ev.clientX + 8, window.innerWidth - 380) + "px";
         pop.style.top = Math.min(ev.clientY + 8, window.innerHeight - 330) + "px";
