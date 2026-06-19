@@ -29,6 +29,65 @@
         .profile-meta-line { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin-bottom: 6px; }
         .profile-chip { padding:4px 10px; border-radius: 999px; font-size:12px; font-weight:900; background: rgba(255,255,255,0.2); color:#fff; }
         .profile-chip.badge { background: rgba(15,23,42,0.35); border:1px solid rgba(255,255,255,0.2); }
+        @keyframes profileGlowPulse {
+            0%, 100% { box-shadow: 0 0 0 5px rgba(99,102,241,0.18), 0 0 24px rgba(147,51,234,0.35); }
+            50% { box-shadow: 0 0 0 7px rgba(244,114,182,0.2), 0 0 32px rgba(245,158,11,0.5); }
+        }
+        @keyframes profileShimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        @keyframes profileNameWave {
+            0%, 100% { text-shadow: 0 0 0 rgba(56,189,248,0.25); }
+            50% { text-shadow: 0 0 12px rgba(56,189,248,0.5); }
+        }
+        @keyframes profileParticlePulse {
+            0%, 100% { box-shadow: 0 0 0 5px rgba(251,113,133,0.2), 0 0 28px rgba(249,115,22,0.48); }
+            50% { box-shadow: 0 0 0 7px rgba(251,191,36,0.24), 0 0 36px rgba(99,102,241,0.45); }
+        }
+        @keyframes profileBadgeGlow {
+            0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.25); }
+            50% { box-shadow: 0 0 22px rgba(244,114,182,0.42), 0 0 30px rgba(250,204,21,0.35); }
+        }
+        .avatar-legendary {
+            animation: profileGlowPulse 2.2s ease-in-out infinite;
+        }
+        .avatar-particle {
+            animation: profileParticlePulse 1.85s ease-in-out infinite;
+        }
+        .profile-name.name-effect-wave {
+            animation: profileNameWave 2.3s ease-in-out infinite;
+        }
+        .profile-name.name-effect-prism {
+            color: transparent !important;
+            background: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
+            background-size: 220% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: profileShimmer 2.6s linear infinite;
+        }
+        .profile-chip.legendary-title {
+            color: transparent;
+            background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: profileShimmer 2.6s linear infinite;
+        }
+        .profile-chip.badge.legendary-badge {
+            border-color: rgba(255,255,255,0.45);
+            box-shadow: 0 0 12px rgba(245,158,11,0.25);
+        }
+        .profile-chip.badge.legendary-badge-mythic {
+            animation: profileBadgeGlow 1.8s ease-in-out infinite;
+            border-color: rgba(250,204,21,0.55);
+        }
+        .profile-hero.profile-fx-royal {
+            background: linear-gradient(135deg, #d97706, #855CD6);
+        }
+        .profile-hero.profile-fx-nebula {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+        }
 
         /* 數據統計區 */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
@@ -154,7 +213,7 @@
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
                 <div style="flex:1; overflow:hidden;">
                     <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
-                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                    <div style="font-size:10px; color:#64748B;">💳 <span id="side-coins">Doord 0 · Docoin 0</span></div>
                 </div>
                 <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
             </div>
@@ -166,7 +225,7 @@
             請先設定顯示名稱，讓同學與老師在排行榜、聊天室能認出你。
         </div>
 
-        <div class="profile-hero">
+        <div id="profile-hero-card" class="profile-hero">
             <img id="profile-avatar" class="avatar-large" src="">
             <div id="profile-display-name" class="profile-name">載入中...</div>
             <div class="profile-meta-line">
@@ -188,7 +247,7 @@
             </div>
             <div class="stat-box">
                 <span id="count-coins" class="stat-value">0</span>
-                <span class="stat-label">💰 金幣</span>
+                <span class="stat-label">🪙 Doord</span>
             </div>
             <div class="stat-box">
                 <span id="count-lv" class="stat-value">1</span>
@@ -207,6 +266,10 @@
             <h3>🎒 已擁有道具設定（商城購買後可套用）</h3>
             <div class="cosmetic-grid">
                 <div>
+                    <label for="equip-avatar">頭像樣式</label>
+                    <select id="equip-avatar"></select>
+                </div>
+                <div>
                     <label for="equip-frame">頭像框</label>
                     <select id="equip-frame"></select>
                 </div>
@@ -221,6 +284,14 @@
                 <div>
                     <label for="equip-name-color">名稱顏色</label>
                     <select id="equip-name-color"></select>
+                </div>
+                <div>
+                    <label for="equip-name-effect">名稱特效</label>
+                    <select id="equip-name-effect"></select>
+                </div>
+                <div>
+                    <label for="equip-profile-effect">個人面板特效</label>
+                    <select id="equip-profile-effect"></select>
                 </div>
             </div>
             <button type="button" class="btn-save-cosmetic" id="btn-save-cosmetic">儲存外觀設定</button>
@@ -268,6 +339,21 @@
         const label = getDisplayLabel(userData, email);
         return "https://ui-avatars.com/api/?name=" + encodeURIComponent(label) + "&size=" + (size || 128) + "&background=random";
     }
+    function avatarFromType(type, fallbackLabel) {
+        const t = String(type || "");
+        if (t === "robot_blue") return "https://ui-avatars.com/api/?name=RBT&background=1d4ed8&color=fff&bold=true&size=128";
+        if (t === "cat_neon") return "https://ui-avatars.com/api/?name=CAT&background=7c3aed&color=fff&bold=true&size=128";
+        if (t === "fox_shadow") return "https://ui-avatars.com/api/?name=FOX&background=334155&color=fb7185&bold=true&size=128";
+        if (t === "astronaut") return "https://ui-avatars.com/api/?name=AST&background=0f172a&color=38bdf8&bold=true&size=128";
+        return "https://ui-avatars.com/api/?name=" + encodeURIComponent(fallbackLabel || "User") + "&size=128&background=random";
+    }
+    function getDoordValue(data) {
+        if (Number.isFinite(data && data.doord)) return Number(data.doord);
+        return Number.isFinite(data && data.coins) ? Number(data.coins) : 0;
+    }
+    function getDocoinValue(data) {
+        return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
     function needsDisplayName(userData) {
         return normalizeDisplayName(userData && userData.displayName).length < DISPLAY_NAME_MIN;
     }
@@ -293,6 +379,10 @@
     let userData = {};
     let currentUser = null;
     const COSMETIC_ITEMS = [
+        { id: "avatar_robot_blue", slot: "avatar", label: "機甲藍芯頭像", value: "robot_blue" },
+        { id: "avatar_cat_neon", slot: "avatar", label: "霓虹貓頭像", value: "cat_neon" },
+        { id: "avatar_fox_shadow", slot: "avatar", label: "影狐頭像", value: "fox_shadow" },
+        { id: "avatar_astronaut", slot: "avatar", label: "太空員頭像", value: "astronaut" },
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
@@ -300,6 +390,8 @@
         { id: "frame_obsidian", slot: "frame", label: "曜石暗影頭像框", value: "obsidian" },
         { id: "frame_cyberfire", slot: "frame", label: "電馭烈焰頭像框", value: "cyberfire" },
         { id: "frame_aurora", slot: "frame", label: "極光流彩頭像框", value: "aurora" },
+        { id: "frame_phoenix_particle", slot: "frame", label: "傳奇框：鳳凰粒子", value: "phoenix_particle" },
+        { id: "frame_quantum_particle", slot: "frame", label: "傳奇框：量子星塵", value: "quantum_particle" },
         { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
         { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
         { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
@@ -308,18 +400,30 @@
         { id: "title_night_owl", slot: "title", label: "夜貓工程師", value: "夜貓工程師" },
         { id: "title_quantum", slot: "title", label: "量子駭客", value: "量子駭客" },
         { id: "title_void_walker", slot: "title", label: "虛空行者", value: "虛空行者" },
+        { id: "title_overclock", slot: "title", label: "超頻核心", value: "超頻核心" },
+        { id: "title_starlord", slot: "title", label: "星際領主", value: "星際領主" },
         { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
         { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
         { id: "badge_alpha", slot: "badge", label: "內測先鋒", value: "內測先鋒" },
         { id: "badge_guardian", slot: "badge", label: "社群守護者", value: "社群守護者" },
         { id: "badge_dragon", slot: "badge", label: "龍焰核心", value: "龍焰核心" },
         { id: "badge_cosmos", slot: "badge", label: "星穹航行者", value: "星穹航行者" },
+        { id: "badge_phantom", slot: "badge", label: "幻影駭客", value: "幻影駭客" },
+        { id: "badge_titan", slot: "badge", label: "鈦晶守衛", value: "鈦晶守衛" },
+        { id: "badge_supernova", slot: "badge", label: "超新星之眼", value: "超新星之眼" },
+        { id: "badge_reactor", slot: "badge", label: "反應爐核心", value: "反應爐核心" },
+        { id: "namefx_wave", slot: "nameEffect", label: "流光波紋", value: "wave" },
+        { id: "namefx_prism", slot: "nameEffect", label: "稜鏡閃耀", value: "prism" },
+        { id: "profilefx_royal", slot: "profileEffect", label: "皇家光暈", value: "royal" },
+        { id: "profilefx_nebula", slot: "profileEffect", label: "星雲脈衝", value: "nebula" },
         { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
         { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" },
         { id: "namecolor_violet", slot: "nameColor", label: "星雲紫", value: "#a78bfa" },
         { id: "namecolor_lime", slot: "nameColor", label: "螢光萊姆", value: "#84cc16" },
         { id: "namecolor_crimson", slot: "nameColor", label: "赤焰紅", value: "#ef4444" },
-        { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" }
+        { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" },
+        { id: "namecolor_ember", slot: "nameColor", label: "熾焰橘紅", value: "#f97316" },
+        { id: "namecolor_mint", slot: "nameColor", label: "薄荷青綠", value: "#2dd4bf" }
     ];
 
     function ownedItemsBySlot(data, slot) {
@@ -332,11 +436,35 @@
         return (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
     }
 
+    function isLegendaryFrame(frameType) {
+        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle"].includes(String(frameType || ""));
+    }
+    function isLegendaryTitle(title) {
+        return ["量子駭客", "虛空行者", "超頻核心", "星際領主"].includes(String(title || ""));
+    }
+    function isLegendaryBadge(badge) {
+        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心"].includes(String(badge || ""));
+    }
+    function isMythicBadge(badge) {
+        return ["超新星之眼", "反應爐核心"].includes(String(badge || ""));
+    }
+    function nameEffectClass(effectType) {
+        if (effectType === "wave") return "name-effect-wave";
+        if (effectType === "prism") return "name-effect-prism";
+        return "";
+    }
+    function profileEffectClass(effectType) {
+        if (effectType === "royal") return "profile-fx-royal";
+        if (effectType === "nebula") return "profile-fx-nebula";
+        return "";
+    }
+
     function applyAvatarFrame(frameType) {
         const avatarEl = document.getElementById("profile-avatar");
         if (!avatarEl) return;
         avatarEl.style.border = "4px solid rgba(255,255,255,0.4)";
         avatarEl.style.boxShadow = "none";
+        avatarEl.classList.remove("avatar-particle");
         if (frameType === "neon") {
             avatarEl.style.border = "4px solid #22d3ee";
             avatarEl.style.boxShadow = "0 0 0 5px rgba(34,211,238,0.25), 0 0 28px rgba(34,211,238,0.55)";
@@ -358,37 +486,72 @@
         } else if (frameType === "aurora") {
             avatarEl.style.border = "4px solid #34d399";
             avatarEl.style.boxShadow = "0 0 0 5px rgba(52,211,153,0.2), 0 0 28px rgba(59,130,246,0.45)";
+        } else if (frameType === "phoenix_particle") {
+            avatarEl.style.border = "4px solid #fb7185";
+            avatarEl.style.boxShadow = "0 0 0 5px rgba(251,113,133,0.22), 0 0 30px rgba(249,115,22,0.52)";
+            avatarEl.classList.add("avatar-particle");
+        } else if (frameType === "quantum_particle") {
+            avatarEl.style.border = "4px solid #60a5fa";
+            avatarEl.style.boxShadow = "0 0 0 5px rgba(96,165,250,0.22), 0 0 30px rgba(167,139,250,0.48)";
+            avatarEl.classList.add("avatar-particle");
         }
     }
 
     function applyCosmetics(data) {
         const eq = getEquipped(data);
+        const ownedAvatars = ownedItemsBySlot(data, "avatar").map(i => i.value);
         const ownedFrames = ownedItemsBySlot(data, "frame").map(i => i.value);
         const ownedTitles = ownedItemsBySlot(data, "title").map(i => i.value);
         const ownedBadges = ownedItemsBySlot(data, "badge").map(i => i.value);
         const ownedNameColors = ownedItemsBySlot(data, "nameColor").map(i => i.value);
+        const ownedNameEffects = ownedItemsBySlot(data, "nameEffect").map(i => i.value);
+        const ownedProfileEffects = ownedItemsBySlot(data, "profileEffect").map(i => i.value);
 
+        const avatar = ownedAvatars.includes(eq.avatar) ? eq.avatar : "";
         const frame = ownedFrames.includes(eq.frame) ? eq.frame : "";
         const title = ownedTitles.includes(eq.title) ? eq.title : "";
         const badge = ownedBadges.includes(eq.badge) ? eq.badge : "";
         const nameColor = ownedNameColors.includes(eq.nameColor) ? eq.nameColor : "";
+        const nameEffect = ownedNameEffects.includes(eq.nameEffect) ? eq.nameEffect : "";
+        const profileEffect = ownedProfileEffects.includes(eq.profileEffect) ? eq.profileEffect : "";
 
         applyAvatarFrame(frame);
+        const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
+        const avatarUrl = avatarFromType(avatar, label);
+        const profileAvatar = document.getElementById("profile-avatar");
+        const sideAvatar = document.getElementById("side-avatar");
+        if (profileAvatar) profileAvatar.src = avatarUrl;
+        if (sideAvatar) sideAvatar.src = avatarUrl;
+        if (profileAvatar) profileAvatar.classList.toggle("avatar-legendary", isLegendaryFrame(frame));
 
         const nameEl = document.getElementById("profile-display-name");
-        if (nameEl) nameEl.style.color = nameColor || "#ffffff";
+        if (nameEl) {
+            nameEl.style.color = nameColor || "#ffffff";
+            nameEl.classList.remove("name-effect-wave", "name-effect-prism");
+            const cls = nameEffectClass(nameEffect);
+            if (cls) nameEl.classList.add(cls);
+        }
         const sideNameEl = document.getElementById("side-username");
         if (sideNameEl) sideNameEl.style.color = nameColor || "";
+        const heroEl = document.getElementById("profile-hero-card");
+        if (heroEl) {
+            heroEl.classList.remove("profile-fx-royal", "profile-fx-nebula");
+            const fx = profileEffectClass(profileEffect);
+            if (fx) heroEl.classList.add(fx);
+        }
 
         const titleEl = document.getElementById("profile-title-chip");
         const badgeEl = document.getElementById("profile-badge-chip");
         if (titleEl) {
             titleEl.style.display = title ? "inline-flex" : "none";
             titleEl.textContent = title ? ("🏷️ " + title) : "";
+            titleEl.classList.toggle("legendary-title", isLegendaryTitle(title));
         }
         if (badgeEl) {
             badgeEl.style.display = badge ? "inline-flex" : "none";
             badgeEl.textContent = badge ? ("✨ " + badge) : "";
+            badgeEl.classList.toggle("legendary-badge", isLegendaryBadge(badge));
+            badgeEl.classList.toggle("legendary-badge-mythic", isMythicBadge(badge));
         }
     }
 
@@ -411,10 +574,13 @@
 
     function renderCosmeticPanel(data) {
         const eq = getEquipped(data);
+        fillSelect("equip-avatar", ownedItemsBySlot(data, "avatar"), eq.avatar, "預設頭像");
         fillSelect("equip-frame", ownedItemsBySlot(data, "frame"), eq.frame, "不使用頭像框");
         fillSelect("equip-title", ownedItemsBySlot(data, "title"), eq.title, "不使用稱號");
         fillSelect("equip-badge", ownedItemsBySlot(data, "badge"), eq.badge, "不使用徽章");
         fillSelect("equip-name-color", ownedItemsBySlot(data, "nameColor"), eq.nameColor, "預設名稱顏色");
+        fillSelect("equip-name-effect", ownedItemsBySlot(data, "nameEffect"), eq.nameEffect, "不使用名稱特效");
+        fillSelect("equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), eq.profileEffect, "不使用個人面板特效");
     }
 
     function applyDisplayUI(user, data) {
@@ -425,6 +591,7 @@
         document.getElementById("profile-avatar").src = avatar;
         document.getElementById("side-avatar").src = avatarUrlFor(data, user.email, 32);
         document.getElementById("side-username").innerText = label;
+        document.getElementById("side-coins").innerText = `Doord ${Math.floor(getDoordValue(data))} · Docoin ${Math.floor(getDocoinValue(data))}`;
         const missing = needsDisplayName(data);
         if (setupBanner) setupBanner.classList.toggle("visible", missing);
         applyCosmetics(data);
@@ -488,10 +655,13 @@
     document.getElementById("btn-save-cosmetic").addEventListener("click", async () => {
         if (!userRef || !currentUser) return;
         const equipped = {
+            avatar: (document.getElementById("equip-avatar").value || "").trim(),
             frame: (document.getElementById("equip-frame").value || "").trim(),
             title: (document.getElementById("equip-title").value || "").trim(),
             badge: (document.getElementById("equip-badge").value || "").trim(),
-            nameColor: (document.getElementById("equip-name-color").value || "").trim()
+            nameColor: (document.getElementById("equip-name-color").value || "").trim(),
+            nameEffect: (document.getElementById("equip-name-effect").value || "").trim(),
+            profileEffect: (document.getElementById("equip-profile-effect").value || "").trim()
         };
         const msg = document.getElementById("cosmetic-msg");
         const btn = document.getElementById("btn-save-cosmetic");
@@ -521,15 +691,15 @@
         try {
             let userSnap = await getDoc(userRef);
             if (!userSnap.exists()) {
-                await setDoc(userRef, { email: user.email, uid: user.uid, xp: 0, lv: 1, coins: 0, role: "student" }, { merge: true });
+                await setDoc(userRef, { email: user.email, uid: user.uid, xp: 0, lv: 1, coins: 0, doord: 0, docoin: 0, role: "student" }, { merge: true });
                 userSnap = await getDoc(userRef);
             }
             userData = userSnap.exists() ? userSnap.data() : {};
             applyDisplayUI(user, userData);
 
-            document.getElementById("count-coins").innerText = userData.coins || 0;
+            document.getElementById("count-coins").innerText = Math.floor(getDoordValue(userData));
             document.getElementById("count-lv").innerText = userData.lv || 1;
-            document.getElementById("side-coins").innerText = userData.coins || 0;
+            document.getElementById("side-coins").innerText = `Doord ${Math.floor(getDoordValue(userData))} · Docoin ${Math.floor(getDocoinValue(userData))}`;
 
             let role = userData.role || "student";
             if (user.email === "chianghansen0302@gmail.com") role = "admin";
@@ -556,11 +726,11 @@
         } catch (e) {
             console.error("資料載入失敗", e);
             if (user) {
-                const fallbackData = { displayName: "", coins: 0, lv: 1 };
+                const fallbackData = { displayName: "", coins: 0, doord: 0, docoin: 0, lv: 1 };
                 applyDisplayUI(user, fallbackData);
                 document.getElementById("count-coins").innerText = 0;
                 document.getElementById("count-lv").innerText = 1;
-                document.getElementById("side-coins").innerText = 0;
+                document.getElementById("side-coins").innerText = "Doord 0 · Docoin 0";
             }
         }
     });

@@ -205,7 +205,8 @@
     <div id="menu-dashboard" class="nav-item active" onclick="showTab('dashboard')">📊 系統概況</div>
     <div id="menu-users" class="nav-item" onclick="showTab('users')">👥 使用者管理</div>
     <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
-    <div id="menu-coin-reviews" class="nav-item" onclick="showTab('coin-reviews')">💰 金幣審核</div>
+    <div id="menu-coin-reviews" class="nav-item" onclick="showTab('coin-reviews')">🪙 Doord 審核</div>
+    <div id="menu-server-requests" class="nav-item" onclick="showTab('server-requests')">🖥️ 伺服器申請</div>
     <div id="menu-announcements" class="nav-item" onclick="showTab('announcements')">📢 公告管理</div>
     <div id="menu-logs" class="nav-item" onclick="showTab('logs')">📜 管理日誌</div>
 
@@ -214,7 +215,7 @@
             <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
             <div style="flex:1; overflow:hidden;">
                 <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
-                <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                <div style="font-size:10px; color:#64748B;">💳 <span id="side-coins">Doord 0 · Docoin 0</span></div>
             </div>
             <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
         </div>
@@ -245,6 +246,16 @@
             </div>
             <p style="margin:12px 0 0; font-size:12px; color:#64748B;">只影響「未個別設定 cloudStorageLimitMB」的使用者。若調降後導致超量，系統會給原本未超量者 1 個月寬限期。</p>
         </div>
+        <div class="card">
+            <h3 style="margin-top:0;">聊天室訊息上限</h3>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <label for="chat-max-messages" style="font-size:13px; color:#94A3B8;">每個聊天室保留訊息數</label>
+                <input type="number" id="chat-max-messages" min="50" step="1" style="width:140px;">
+                <button class="btn btn-primary" onclick="saveChatSettings()">儲存聊天設定</button>
+                <span id="chat-settings-status" style="font-size:12px; color:#94A3B8;"></span>
+            </div>
+            <p style="margin:12px 0 0; font-size:12px; color:#64748B;">超過上限時，系統會自動刪除最舊訊息（私訊、群組、伺服器皆適用）。預設 300 則。</p>
+        </div>
     </div>
 
     <div id="tab-users" style="display:none;">
@@ -265,7 +276,7 @@
                 <thead>
                     <tr>
                         <th>使用者</th>
-                        <th>金幣 / 等級</th>
+                        <th>貨幣 / 等級</th>
                         <th>角色</th>
                         <th>狀態</th>
                         <th>寬限期</th>
@@ -294,11 +305,21 @@
 
     <div id="tab-coin-reviews" style="display:none;">
         <div class="header">
-            <h1>金幣審核</h1>
+            <h1>Doord 審核</h1>
         </div>
         <div class="card">
-            <p style="margin-top:0; color:#94A3B8; font-size:13px;">學生需先提交程式作品，管理員審核後在此核發金幣。</p>
+            <p style="margin-top:0; color:#94A3B8; font-size:13px;">學生提交程式作品後，管理員在此僅核發 Doord。Docoin 請於「使用者設定」手動發放。</p>
             <div id="coin-review-list"></div>
+        </div>
+    </div>
+
+    <div id="tab-server-requests" style="display:none;">
+        <div class="header">
+            <h1>伺服器申請審核</h1>
+        </div>
+        <div class="card">
+            <p style="margin-top:0; color:#94A3B8; font-size:13px;">使用者申請建立伺服器後，管理員在此核准或駁回。核准後會自動建立伺服器並給申請者房主權限。</p>
+            <div id="server-request-list"></div>
         </div>
     </div>
 
@@ -357,8 +378,12 @@
                 <input type="text" id="u-displayName" maxlength="20" placeholder="2～20 字">
             </div>
             <div class="form-group">
-                <label>金幣 (coins)</label>
-                <input type="number" id="u-coins" min="0" step="1">
+                <label>Doord（審核/兌換後可消費）</label>
+                <input type="number" id="u-doord" min="0" step="1">
+            </div>
+            <div class="form-group">
+                <label>Docoin（僅管理員發放）</label>
+                <input type="number" id="u-docoin" min="0" step="1">
             </div>
             <div class="form-group">
                 <label>等級 (lv)</label>
@@ -477,8 +502,17 @@
         return { ok: true, name, error: "" };
     }
 
+    function getDoordValue(data) {
+        if (Number.isFinite(data && data.doord)) return Number(data.doord);
+        return Number.isFinite(data && data.coins) ? Number(data.coins) : 0;
+    }
+    function getDocoinValue(data) {
+        return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
+
     let myRole = 'student';
     let defaultCloudStorageMB = 1;
+    let defaultChatMaxMessages = 300;
 
     onAuthStateChanged(auth, async u => {
         if(!u) return location.href="login.html";
@@ -491,11 +525,11 @@
             
             window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
             
-            document.getElementById('side-coins').innerText = '∞';
+            document.getElementById('side-coins').innerText = 'Doord ∞ · Docoin ∞';
             document.getElementById('side-username').innerText = "ROOT / " + u.email.split('@')[0];
             document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=ROOT&background=FF4D4D&color=fff`;
 
-            loadUsers(); loadQuestions(); loadAnnouncements(); loadLogs(); loadSystemStorageSettings();
+            loadUsers(); loadQuestions(); loadAnnouncements(); loadLogs(); loadSystemStorageSettings(); loadChatSettings(); loadServerRequests();
             showTab('dashboard');
             return;
         }
@@ -506,7 +540,7 @@
         const userData = snap.data();
         myRole = userData?.role || 'student';
         
-        document.getElementById('side-coins').innerText = userData?.coins || 0;
+        document.getElementById('side-coins').innerText = `Doord ${Math.floor(getDoordValue(userData))} · Docoin ${Math.floor(getDocoinValue(userData))}`;
         document.getElementById('side-username').innerText = u.email.split('@')[0];
         document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${u.email}&background=random`;
         
@@ -521,6 +555,7 @@
             document.getElementById('menu-users').style.display = 'none';
             document.getElementById('menu-announcements').style.display = 'none';
             document.getElementById('menu-coin-reviews').style.display = 'none';
+            document.getElementById('menu-server-requests').style.display = 'none';
             document.getElementById('menu-logs').style.display = 'none';
             showTab('questions');
             loadQuestions();
@@ -528,9 +563,11 @@
             loadUsers();
             loadQuestions();
             loadCoinReviews();
+            loadServerRequests();
             loadAnnouncements();
             loadLogs();
             loadSystemStorageSettings();
+            loadChatSettings();
             showTab('dashboard');
         }
     });
@@ -548,6 +585,7 @@
         document.getElementById('tab-users').style.display = tab === 'users' ? 'block' : 'none';
         document.getElementById('tab-questions').style.display = tab === 'questions' ? 'block' : 'none';
         document.getElementById('tab-coin-reviews').style.display = tab === 'coin-reviews' ? 'block' : 'none';
+        document.getElementById('tab-server-requests').style.display = tab === 'server-requests' ? 'block' : 'none';
         document.getElementById('tab-announcements').style.display = tab === 'announcements' ? 'block' : 'none';
         document.getElementById('tab-logs').style.display = tab === 'logs' ? 'block' : 'none';
         
@@ -558,9 +596,53 @@
         if(tab === 'users') loadUsers();
         if(tab === 'questions') loadQuestions();
         if(tab === 'coin-reviews') loadCoinReviews();
+        if(tab === 'server-requests') loadServerRequests();
         if(tab === 'announcements') loadAnnouncements();
         if(tab === 'logs') loadLogs();
-        if(tab === 'dashboard') loadSystemStorageSettings();
+        if(tab === 'dashboard') {
+            loadSystemStorageSettings();
+            loadChatSettings();
+        }
+    };
+
+    async function loadChatSettings() {
+        const input = document.getElementById('chat-max-messages');
+        const status = document.getElementById('chat-settings-status');
+        if (!input) return;
+        try {
+            const snap = await getDoc(doc(db, "system_config", "chat"));
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            defaultChatMaxMessages = Number.isFinite(data.maxMessagesPerChat) ? data.maxMessagesPerChat : 300;
+            input.value = defaultChatMaxMessages;
+            if (status) status.textContent = "已載入";
+        } catch (e) {
+            console.error(e);
+            defaultChatMaxMessages = 300;
+            input.value = 300;
+            if (status) status.textContent = "讀取失敗，使用 300";
+        }
+    }
+
+    window.saveChatSettings = async () => {
+        const input = document.getElementById('chat-max-messages');
+        const status = document.getElementById('chat-settings-status');
+        const v = parseInt((input && input.value) || "0", 10);
+        if (!Number.isFinite(v) || v < 50) return showToast('訊息上限需至少 50 則', 'error');
+        try {
+            await setDoc(doc(db, "system_config", "chat"), {
+                maxMessagesPerChat: v,
+                updatedAt: serverTimestamp(),
+                updatedBy: auth.currentUser?.email || ""
+            }, { merge: true });
+            defaultChatMaxMessages = v;
+            if (status) status.textContent = "已儲存";
+            await logAction("更新聊天訊息上限", "maxMessagesPerChat=" + v);
+            showToast("聊天訊息上限已更新");
+        } catch (e) {
+            console.error(e);
+            if (status) status.textContent = "儲存失敗";
+            showToast("儲存失敗：" + (e.message || e), 'error');
+        }
     };
 
     async function loadSystemStorageSettings() {
@@ -747,7 +829,8 @@
                     <div class="user-meta"><span class="uid-chip">${uidShort}</span></div>
                 </td>
                 <td>
-                    <span class="stat-pill">💰 ${u.coins ?? 0}</span>
+                    <span class="stat-pill">🪙 ${Math.floor(getDoordValue(u))} Doord</span>
+                    <span class="stat-pill">💎 ${Math.floor(getDocoinValue(u))} Docoin</span>
                     <span class="stat-pill">LV.${u.lv ?? 1}</span>
                     <span class="stat-pill" style="color:#64748B;">${u.xp ?? 0} XP</span>
                 </td>
@@ -796,7 +879,8 @@
         document.getElementById('u-uid').value = u.id;
         document.getElementById('u-email').value = u.email || '';
         document.getElementById('u-displayName').value = (u.displayName || '').trim() || getDisplayLabel(u, u.email);
-        document.getElementById('u-coins').value = u.coins ?? 0;
+        document.getElementById('u-doord').value = Math.floor(getDoordValue(u));
+        document.getElementById('u-docoin').value = Math.floor(getDocoinValue(u));
         document.getElementById('u-lv').value = u.lv ?? 1;
         document.getElementById('u-xp').value = u.xp ?? 0;
         document.getElementById('u-role').value = u.role || 'student';
@@ -925,7 +1009,8 @@
             return;
         }
 
-        const coins = parseInt(document.getElementById('u-coins').value, 10);
+        const doord = parseInt(document.getElementById('u-doord').value, 10);
+        const docoin = parseInt(document.getElementById('u-docoin').value, 10);
         const lv = parseInt(document.getElementById('u-lv').value, 10);
         const xp = parseInt(document.getElementById('u-xp').value, 10);
         const role = document.getElementById('u-role').value;
@@ -934,7 +1019,8 @@
         const reviewDailyLimit = parseInt(document.getElementById('u-review-daily-limit').value, 10);
         const reviewTodayBonus = parseInt(document.getElementById('u-review-today-bonus').value, 10);
 
-        if (isNaN(coins) || coins < 0) return showToast('金幣必須為 0 以上的整數', 'error');
+        if (isNaN(doord) || doord < 0) return showToast('Doord 必須為 0 以上的整數', 'error');
+        if (isNaN(docoin) || docoin < 0) return showToast('Docoin 必須為 0 以上的整數', 'error');
         if (isNaN(lv) || lv < 1) return showToast('等級必須為 1 以上的整數', 'error');
         if (isNaN(xp) || xp < 0) return showToast('經驗值必須為 0 以上的整數', 'error');
         if (isNaN(cloudStorageLimitMB) || cloudStorageLimitMB < 1) return showToast('雲端儲存上限(MB)必須為 1 以上', 'error');
@@ -945,7 +1031,8 @@
         const label = getDisplayLabel(u, u.email);
         const changes = [];
         if (nameCheck.name !== (u.displayName || '').trim()) changes.push(`暱稱 → ${nameCheck.name}`);
-        if (coins !== (u.coins ?? 0)) changes.push(`金幣 → ${coins}`);
+        if (doord !== Math.floor(getDoordValue(u))) changes.push(`Doord → ${doord}`);
+        if (docoin !== Math.floor(getDocoinValue(u))) changes.push(`Docoin → ${docoin}`);
         if (lv !== (u.lv ?? 1)) changes.push(`等級 → ${lv}`);
         if (xp !== (u.xp ?? 0)) changes.push(`XP → ${xp}`);
         if (role !== (u.role || 'student')) changes.push(`角色 → ${role}`);
@@ -965,7 +1052,9 @@
         try {
             await updateDoc(doc(db, "users", editingUserId), {
                 displayName: nameCheck.name,
-                coins,
+                doord,
+                coins: doord,
+                docoin,
                 lv,
                 xp,
                 role,
@@ -980,7 +1069,7 @@
                 allUsers[idx] = {
                     ...allUsers[idx],
                     displayName: nameCheck.name,
-                    coins, lv, xp, role, isBanned,
+                    doord, coins: doord, docoin, lv, xp, role, isBanned,
                     cloudStorageLimitMB: cloudStorageLimitMB,
                     reviewUploadDailyLimit: reviewDailyLimit,
                     reviewUploadBonusToday: reviewTodayBonus
@@ -1057,7 +1146,7 @@
                         檔案路徑：${escapeHtml(req.filePathHint || '（未提供）')}<br>
                         檔案大小：${Number.isFinite(req.fileSize) ? req.fileSize : 0} bytes<br>
                         說明：${escapeHtml(req.note || '（無）')}<br>
-                        已核發：${Number.isFinite(req.awardedCoins) ? req.awardedCoins : 0} 金幣<br>
+                        已核發：${Number.isFinite(req.awardedDoord) ? req.awardedDoord : (Number.isFinite(req.awardedCoins) ? req.awardedCoins : 0)} Doord<br>
                         審核者：${escapeHtml(req.reviewedBy || '-')}（${reviewed}）
                     </div>
                     <details style="margin-top:8px;">
@@ -1066,8 +1155,8 @@
                     </details>
                     ${canReview ? `
                         <div style="display:flex; gap:8px; margin-top:10px; align-items:center; flex-wrap:wrap;">
-                            <input id="award-${d.id}" type="number" min="1" step="1" value="${req.suggestedCoins && req.suggestedCoins > 0 ? req.suggestedCoins : 50}" style="width:120px;">
-                            <button class="btn btn-success" onclick="approveCoinRequest('${d.id}', '${req.userId || ''}')">核准發幣</button>
+                            <input id="award-doord-${d.id}" type="number" min="1" step="1" value="${req.suggestedDoord && req.suggestedDoord > 0 ? req.suggestedDoord : (req.suggestedCoins && req.suggestedCoins > 0 ? req.suggestedCoins : 50)}" style="width:140px;">
+                            <button class="btn btn-success" onclick="approveCoinRequest('${d.id}', '${req.userId || ''}')">核准發 Doord</button>
                             <button class="btn btn-danger" onclick="rejectCoinRequest('${d.id}')">駁回</button>
                         </div>
                     ` : ''}
@@ -1081,12 +1170,12 @@
     }
 
     window.approveCoinRequest = async (requestId, userId) => {
-        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員/開發者可以核准發幣', 'error');
-        const input = document.getElementById(`award-${requestId}`);
+        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員/開發者可以核准發 Doord', 'error');
+        const input = document.getElementById(`award-doord-${requestId}`);
         const amount = parseInt((input && input.value) || '0', 10);
-        if (!Number.isFinite(amount) || amount <= 0) return showToast('請輸入正確的核發金幣', 'error');
+        if (!Number.isFinite(amount) || amount <= 0) return showToast('請輸入正確的 Doord 核發數量', 'error');
         if (!userId) return showToast('此送件缺少 userId', 'error');
-        if (!confirm(`確定核發 ${amount} 金幣給此使用者？`)) return;
+        if (!confirm(`確定核發 ${amount} Doord 給此使用者？`)) return;
 
         try {
             const reqRef = doc(db, "coin_review_requests", requestId);
@@ -1099,18 +1188,20 @@
 
                 const userSnap = await tx.get(userRef);
                 const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-                const currentCoins = Number.isFinite(userData.coins) ? userData.coins : 0;
+                const currentDoord = getDoordValue(userData);
 
-                tx.set(userRef, { coins: currentCoins + amount }, { merge: true });
+                tx.set(userRef, { doord: currentDoord + amount, coins: currentDoord + amount }, { merge: true });
                 tx.update(reqRef, {
                     status: 'approved',
+                    awardedDoord: amount,
+                    awardedDocoin: 0,
                     awardedCoins: amount,
                     reviewedBy: auth.currentUser.email || 'admin',
                     reviewedAt: serverTimestamp()
                 });
             });
-            await logAction("核發金幣", `request=${requestId} user=${userId} +${amount}`);
-            showToast(`已核發 ${amount} 金幣`);
+            await logAction("核發 Doord", `request=${requestId} user=${userId} +${amount}`);
+            showToast(`已核發 ${amount} Doord`);
             loadCoinReviews();
             loadUsers(true);
         } catch (e) {
@@ -1125,6 +1216,8 @@
         try {
             await updateDoc(doc(db, "coin_review_requests", requestId), {
                 status: 'rejected',
+                awardedDoord: 0,
+                awardedDocoin: 0,
                 awardedCoins: 0,
                 reviewedBy: auth.currentUser.email || 'admin',
                 reviewedAt: serverTimestamp()
@@ -1132,6 +1225,118 @@
             await logAction("駁回送件", `request=${requestId}`);
             showToast('已駁回送件');
             loadCoinReviews();
+        } catch (e) {
+            console.error(e);
+            showToast('駁回失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    async function loadServerRequests() {
+        const host = document.getElementById('server-request-list');
+        if (!host) return;
+        host.innerHTML = '<div style="color:#94A3B8; font-size:13px;">載入中...</div>';
+        try {
+            const snap = await getDocs(query(collection(db, "server_create_requests"), orderBy("createdAt", "desc")));
+            if (snap.empty) {
+                host.innerHTML = '<div class="empty-state">目前沒有伺服器申請</div>';
+                return;
+            }
+            host.innerHTML = '';
+            snap.forEach(d => {
+                const req = d.data() || {};
+                const status = req.status || 'pending';
+                const created = req.createdAt && req.createdAt.toDate ? req.createdAt.toDate().toLocaleString('zh-TW') : '剛剛';
+                const reviewed = req.reviewedAt && req.reviewedAt.toDate ? req.reviewedAt.toDate().toLocaleString('zh-TW') : '-';
+                const canReview = status === 'pending' && (myRole === 'admin' || myRole === 'developer');
+                const item = document.createElement('div');
+                item.style.cssText = 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:12px; background:#111827;';
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px;">
+                        <div style="font-weight:900;">${escapeHtml(req.serverName || '未命名伺服器')}</div>
+                        <span class="badge badge-${status === 'approved' ? 'teacher' : status === 'rejected' ? 'admin' : 'student'}">${status}</span>
+                    </div>
+                    <div style="font-size:12px; color:#94A3B8; line-height:1.6;">
+                        申請者：${escapeHtml(req.userEmail || req.userId || '未知')}<br>
+                        申請時間：${created}<br>
+                        審核者：${escapeHtml(req.reviewedBy || '-')}（${reviewed}）<br>
+                        ${req.approvedServerId ? `伺服器代碼：<strong style="color:#E2E8F0;">${escapeHtml(req.approvedServerId)}</strong><br>` : ''}
+                    </div>
+                    ${canReview ? `
+                        <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+                            <button class="btn btn-success" onclick="approveServerRequest('${d.id}')">核准建立</button>
+                            <button class="btn btn-danger" onclick="rejectServerRequest('${d.id}')">駁回</button>
+                        </div>
+                    ` : ''}
+                `;
+                host.appendChild(item);
+            });
+        } catch (e) {
+            console.error(e);
+            host.innerHTML = `<div class="empty-state">載入失敗：${escapeHtml(e.message || e)}</div>`;
+        }
+    }
+
+    window.approveServerRequest = async (requestId) => {
+        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員/開發者可以核准', 'error');
+        if (!confirm('確定核准並建立此伺服器？')) return;
+        try {
+            const reqRef = doc(db, "server_create_requests", requestId);
+            const reqSnap = await getDoc(reqRef);
+            if (!reqSnap.exists()) return showToast('申請不存在', 'error');
+            const req = reqSnap.data() || {};
+            if ((req.status || 'pending') !== 'pending') return showToast('此申請已處理', 'error');
+            const userId = req.userId;
+            const serverName = String(req.serverName || '').trim();
+            if (!userId || !serverName) return showToast('申請資料不完整', 'error');
+
+            let chatId = "S" + Math.random().toString(36).substr(2, 5).toUpperCase();
+            let exists = true;
+            let tries = 0;
+            while (exists && tries < 8) {
+                const chatSnap = await getDoc(doc(db, "chats", chatId));
+                exists = chatSnap.exists();
+                if (exists) {
+                    chatId = "S" + Math.random().toString(36).substr(2, 5).toUpperCase();
+                    tries++;
+                }
+            }
+            if (exists) throw new Error('無法產生唯一伺服器代碼');
+
+            await setDoc(doc(db, "chats", chatId), {
+                type: 'server',
+                participants: [userId],
+                teacherId: userId,
+                name: serverName,
+                lastMessage: '伺服器已建立（管理員核准）',
+                updatedAt: serverTimestamp()
+            });
+            await updateDoc(reqRef, {
+                status: 'approved',
+                approvedServerId: chatId,
+                reviewedBy: auth.currentUser.email || 'admin',
+                reviewedAt: serverTimestamp()
+            });
+            await logAction("核准伺服器申請", `request=${requestId} server=${chatId} user=${userId}`);
+            showToast(`已建立伺服器，代碼：${chatId}`);
+            loadServerRequests();
+        } catch (e) {
+            console.error(e);
+            showToast('核准失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.rejectServerRequest = async (requestId) => {
+        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員/開發者可以駁回', 'error');
+        if (!confirm('確定要駁回這筆伺服器申請？')) return;
+        try {
+            await updateDoc(doc(db, "server_create_requests", requestId), {
+                status: 'rejected',
+                reviewedBy: auth.currentUser.email || 'admin',
+                reviewedAt: serverTimestamp()
+            });
+            await logAction("駁回伺服器申請", `request=${requestId}`);
+            showToast('已駁回申請');
+            loadServerRequests();
         } catch (e) {
             console.error(e);
             showToast('駁回失敗：' + (e.message || e), 'error');

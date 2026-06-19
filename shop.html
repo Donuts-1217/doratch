@@ -25,10 +25,43 @@
 
         .item-card { background: white; border-radius: 20px; padding: 20px; text-align: center; box-shadow: var(--card-shadow); transition: 0.3s; border: 2px solid transparent; }
         .item-card:hover { transform: translateY(-8px); border-color: var(--scratch-orange); }
+        @keyframes shopLegendaryGlow {
+            0%, 100% { box-shadow: 0 10px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,158,11,0.25) inset; }
+            50% { box-shadow: 0 10px 30px rgba(0,0,0,0.08), 0 0 0 1px rgba(244,114,182,0.35) inset, 0 0 18px rgba(245,158,11,0.28); }
+        }
+        .item-card.legendary {
+            border-color: rgba(245,158,11,0.45);
+            animation: shopLegendaryGlow 2.6s ease-in-out infinite;
+        }
+        .legend-tag {
+            display: inline-flex;
+            margin-bottom: 8px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            color: #7c2d12;
+            background: #fde68a;
+        }
+        .meta-tags { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .meta-tag {
+            display: inline-flex;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.03em;
+            color: #1e293b;
+            background: #e2e8f0;
+        }
+        .meta-tag.docoin { color: #312e81; background: #ddd6fe; }
+        .meta-tag.bundle { color: #78350f; background: #fde68a; }
         .item-icon { font-size: 50px; margin-bottom: 15px; display: block; }
         .item-name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; }
         .item-desc { font-size: 13px; color: #777; margin-bottom: 15px; min-height: 40px; }
         .item-price { font-weight: 900; color: #F57C00; font-size: 1.2rem; margin-bottom: 15px; }
+        .item-price.docoin { color: #6d28d9; }
         
         .btn-buy { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-buy.available { background: var(--scratch-orange); color: white; }
@@ -148,7 +181,7 @@
                 <img id="side-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
                 <div style="flex:1; overflow:hidden;">
                     <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
-                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                    <div style="font-size:10px; color:#64748B;">💳 <span id="side-coins">Doord 0 · Docoin 0</span></div>
                 </div>
                 <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
             </div>
@@ -156,23 +189,34 @@
     </aside>
 
     <main class="main-content">
-<div class="coin-policy">💡 金幣取得方式已改為「提交程式作品 → 由管理員審核核發」。抽獎功能已移除。</div>
+<div class="coin-policy">💡 貨幣說明：提交程式作品審核只會核發 Doord。Docoin 僅能由 Admin 面板直接發放，且只能 Docoin 單向兌換 Doord。</div>
 
 <div class="container">
     <div style="background:linear-gradient(135deg, #FFAB19, #FF8F00); color:white; padding:40px; border-radius:25px; margin-bottom:40px; display:flex; justify-content:space-between; align-items:center;">
         <div>
             <h1 style="margin:0; font-size:2.5rem;">創意商城</h1>
-            <p style="margin:10px 0 0; opacity:0.9;">使用審核核發的金幣，兌換你的專屬個性化道具！</p>
+            <p style="margin:10px 0 0; opacity:0.9;">使用 Doord 兌換個性道具；Docoin 可單向兌換成 Doord。</p>
             <div id="auth-cta" class="auth-cta"></div>
         </div>
         <div style="background:rgba(255,255,255,0.2); padding:12px 25px; border-radius:20px; text-align:center;">
-            <div style="font-size:11px; opacity:0.8;">我的金幣</div>
-            <div style="font-size:2rem; font-weight:900;">💰 <span id="user-coins">0</span></div>
+            <div style="font-size:11px; opacity:0.8;">我的貨幣</div>
+            <div style="font-size:1.2rem; font-weight:900;">🪙 Doord <span id="user-doord">0</span></div>
+            <div style="font-size:1.1rem; font-weight:900; margin-top:4px;">💎 Docoin <span id="user-docoin">0</span></div>
         </div>
     </div>
 
+    <div class="review-card" style="margin-top:-18px;">
+        <h3 style="margin:0 0 8px;">💱 Docoin 兌換 Doord</h3>
+        <p style="margin:0 0 12px; color:#64748B; font-size:13px;">匯率：1 Docoin = 100 Doord。只能 Docoin 兌換 Doord，不能反向。</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <input id="exchange-docoin-amount" type="number" min="1" step="1" placeholder="輸入要兌換的 Docoin 數量" style="max-width:260px;">
+            <button type="button" onclick="exchangeDocoinToDoord()">兌換成 Doord</button>
+        </div>
+        <div id="exchange-status" style="margin-top:10px; font-size:12px; color:#64748B;"></div>
+    </div>
+
     <div class="review-card">
-        <h3 style="margin:0 0 8px;">🧾 程式作品送審（管理員核發金幣）</h3>
+        <h3 style="margin:0 0 8px;">🧾 程式作品送審（只核發 Doord）</h3>
         <p style="margin:0 0 12px; color:#64748B; font-size:13px;">支援 Python / 積木方塊 / 其他作品。每位使用者每天限上傳 1 件，按「上傳給管理員審核」才會送出。</p>
         <select id="review-work-type" style="width:100%; box-sizing:border-box; border:1px solid #cbd5e1; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px;">
             <option value="python">Python 作品</option>
@@ -196,6 +240,9 @@
 
     <div class="category-title">🚀 實用道具</div>
     <div class="shop-grid" id="utility-items"></div>
+
+    <div class="category-title">🎁 組合包</div>
+    <div class="shop-grid" id="bundle-items"></div>
 </div>
 
 <script type="module">
@@ -217,6 +264,10 @@
     let onlineProjects = [];
 
     const itemsBank = [
+        { id: 'avatar_robot_blue', category: 'style', slot: 'avatar', name: '頭像：機甲藍芯', desc: '聊天與個人頁會使用機甲主題頭像。', price: 420, icon: '🤖' },
+        { id: 'avatar_cat_neon', category: 'style', slot: 'avatar', name: '頭像：霓虹貓', desc: '聊天與個人頁會使用霓虹貓主題頭像。', price: 390, icon: '🐱' },
+        { id: 'avatar_fox_shadow', category: 'style', slot: 'avatar', name: '頭像：影狐', desc: '聊天與個人頁會使用暗影狐狸主題頭像。', price: 430, icon: '🦊' },
+        { id: 'avatar_astronaut', category: 'style', slot: 'avatar', name: '頭像：太空員', desc: '聊天與個人頁會使用宇航員主題頭像。', price: 460, icon: '🧑‍🚀' },
         { id: 'frame_neon', category: 'style', slot: 'frame', name: '霓虹脈衝頭像框', desc: '可在個人資料頁套用，展現科技感發光邊框。', price: 260, icon: '🟦' },
         { id: 'frame_gold', category: 'style', slot: 'frame', name: '王者金邊頭像框', desc: '可在個人資料頁套用，亮金框線顯示高級感。', price: 420, icon: '👑' },
         { id: 'frame_sakura', category: 'style', slot: 'frame', name: '櫻花柔光頭像框', desc: '可在個人資料頁套用，粉色柔光與陰影。', price: 320, icon: '🌸' },
@@ -224,6 +275,8 @@
         { id: 'frame_obsidian', category: 'style', slot: 'frame', name: '曜石暗影頭像框', desc: '可在個人資料頁與聊天室套用暗黑系外框。', price: 460, icon: '🖤' },
         { id: 'frame_cyberfire', category: 'style', slot: 'frame', name: '電馭烈焰頭像框', desc: '可在個人資料頁與聊天室套用火焰能量風格。', price: 560, icon: '🔥' },
         { id: 'frame_aurora', category: 'style', slot: 'frame', name: '極光流彩頭像框', desc: '可在個人資料頁與聊天室套用多彩極光外框。', price: 620, icon: '🌈' },
+        { id: 'frame_phoenix_particle', category: 'style', slot: 'frame', name: '傳奇框：鳳凰粒子', desc: 'Docoin 傳奇框，頭像邊框帶有粒子爆閃效果。', price: 16, currency: 'docoin', icon: '🪽' },
+        { id: 'frame_quantum_particle', category: 'style', slot: 'frame', name: '傳奇框：量子星塵', desc: 'Docoin 傳奇框，顯示量子星塵循環粒子。', price: 18, currency: 'docoin', icon: '✨' },
         { id: 'title_architect', category: 'style', slot: 'title', name: '稱號：程式建築師', desc: '可在個人資料頁套用專屬稱號。', price: 280, icon: '🏗️' },
         { id: 'title_bug_hunter', category: 'style', slot: 'title', name: '稱號：Bug 獵人', desc: '可在個人資料頁套用專屬稱號。', price: 300, icon: '🛡️' },
         { id: 'title_pro', category: 'style', slot: 'title', name: '稱號：資深開發者', desc: '經典稱號，可在個人資料頁套用。', price: 500, icon: '🎖️' },
@@ -231,22 +284,85 @@
         { id: 'title_night_owl', category: 'style', slot: 'title', name: '稱號：夜貓工程師', desc: '夜間開發者限定稱號，聊天室也會顯示。', price: 360, icon: '🦉' },
         { id: 'title_quantum', category: 'style', slot: 'title', name: '稱號：量子駭客', desc: '頂級科技風稱號，適合高端玩家。', price: 720, icon: '⚛️' },
         { id: 'title_void_walker', category: 'style', slot: 'title', name: '稱號：虛空行者', desc: '神秘系稱號，聊天室辨識度超高。', price: 680, icon: '🌌' },
+        { id: 'title_overclock', category: 'style', slot: 'title', name: '稱號：超頻核心', desc: '速度與效能拉滿的開發者稱號。', price: 760, icon: '⚡' },
+        { id: 'title_starlord', category: 'style', slot: 'title', name: '稱號：星際領主', desc: '宇宙風格傳奇稱號，辨識度極高。', price: 820, icon: '🛰️' },
         { id: 'badge_mentor', category: 'utility', slot: 'badge', name: '徽章：班級導師', desc: '可在個人資料頁套用徽章，顯示在名稱旁。', price: 240, icon: '🧠' },
         { id: 'badge_speedrunner', category: 'utility', slot: 'badge', name: '徽章：速通玩家', desc: '可在個人資料頁套用徽章，顯示在名稱旁。', price: 220, icon: '⚡' },
         { id: 'badge_alpha', category: 'utility', slot: 'badge', name: '徽章：內測先鋒', desc: '顯示你是功能先行體驗者。', price: 260, icon: '🧪' },
         { id: 'badge_guardian', category: 'utility', slot: 'badge', name: '徽章：社群守護者', desc: '顯示你重視社群秩序與互助。', price: 260, icon: '🛡️' },
         { id: 'badge_dragon', category: 'utility', slot: 'badge', name: '徽章：龍焰核心', desc: '超稀有視覺徽章，聊天名稱旁高亮。', price: 740, icon: '🐉' },
         { id: 'badge_cosmos', category: 'utility', slot: 'badge', name: '徽章：星穹航行者', desc: '星際主題徽章，適合宇宙系造型。', price: 700, icon: '🪐' },
+        { id: 'badge_phantom', category: 'utility', slot: 'badge', name: '徽章：幻影駭客', desc: '暗影科技風格徽章，低調又高級。', price: 680, icon: '👻' },
+        { id: 'badge_titan', category: 'utility', slot: 'badge', name: '徽章：鈦晶守衛', desc: '重裝防禦系徽章，展現王者氣場。', price: 780, icon: '🛡️' },
+        { id: 'badge_supernova', category: 'utility', slot: 'badge', name: '徽章：超新星之眼', desc: 'Docoin 傳奇徽章，具強烈發光動畫。', price: 11, currency: 'docoin', icon: '🌟' },
+        { id: 'badge_reactor', category: 'utility', slot: 'badge', name: '徽章：反應爐核心', desc: 'Docoin 傳奇徽章，帶有核心脈衝光效。', price: 12, currency: 'docoin', icon: '☢️' },
+        { id: 'profilefx_royal', category: 'utility', slot: 'profileEffect', name: '個人面板特效：皇家光暈', desc: '聊天點頭像的個人面板帶有金色柔光背景。', price: 320, icon: '👑' },
+        { id: 'profilefx_nebula', category: 'utility', slot: 'profileEffect', name: '個人面板特效：星雲脈衝', desc: '聊天個人面板出現星雲漸層與流動光感。', price: 14, currency: 'docoin', icon: '🌌' },
+        { id: 'namefx_wave', category: 'utility', slot: 'nameEffect', name: '名稱特效：流光波紋', desc: '聊天名稱會出現微動態流光。', price: 260, icon: '〰️' },
+        { id: 'namefx_prism', category: 'utility', slot: 'nameEffect', name: '名稱特效：稜鏡閃耀', desc: '傳奇多彩名稱特效，支援個人面板與聊天。', price: 12, currency: 'docoin', icon: '💠' },
         { id: 'namecolor_cyan', category: 'utility', slot: 'nameColor', name: '名稱顏色：霓虹青', desc: '可在個人資料頁套用名稱字色。', price: 180, icon: '🩵' },
         { id: 'namecolor_sunset', category: 'utility', slot: 'nameColor', name: '名稱顏色：夕陽橘', desc: '可在個人資料頁套用名稱字色。', price: 180, icon: '🧡' },
         { id: 'namecolor_violet', category: 'utility', slot: 'nameColor', name: '名稱顏色：星雲紫', desc: '可在個人資料頁與聊天室套用名稱字色。', price: 210, icon: '💜' },
         { id: 'namecolor_lime', category: 'utility', slot: 'nameColor', name: '名稱顏色：螢光萊姆', desc: '可在個人資料頁與聊天室套用名稱字色。', price: 210, icon: '💚' },
         { id: 'namecolor_crimson', category: 'utility', slot: 'nameColor', name: '名稱顏色：赤焰紅', desc: '高飽和名稱字色，突顯戰鬥風格。', price: 260, icon: '❤️' },
-        { id: 'namecolor_glacier', category: 'utility', slot: 'nameColor', name: '名稱顏色：冰川藍', desc: '冷色調科技系名稱字色。', price: 260, icon: '🧊' }
+        { id: 'namecolor_glacier', category: 'utility', slot: 'nameColor', name: '名稱顏色：冰川藍', desc: '冷色調科技系名稱字色。', price: 260, icon: '🧊' },
+        { id: 'namecolor_ember', category: 'utility', slot: 'nameColor', name: '名稱顏色：熾焰橘紅', desc: '高能火系字色，適合戰鬥風稱號。', price: 300, icon: '🔥' },
+        { id: 'namecolor_mint', category: 'utility', slot: 'nameColor', name: '名稱顏色：薄荷青綠', desc: '清新亮眼字色，兼具科技與活力。', price: 300, icon: '🍃' },
+        { id: 'pack_starter_social', category: 'bundle', type: 'bundle', name: '組合包：社交新手包', desc: '一次拿到頭像、框、徽章、名稱色，適合剛入坑。', price: 760, icon: '🎒', unlocks: ['avatar_cat_neon', 'frame_neon', 'badge_speedrunner', 'namecolor_cyan'] },
+        { id: 'pack_shadow_hacker', category: 'bundle', type: 'bundle', name: '組合包：暗影駭客包', desc: '影狐頭像 + 曜石框 + 幻影徽章 + 流光名稱特效。', price: 1450, icon: '🕶️', unlocks: ['avatar_fox_shadow', 'frame_obsidian', 'badge_phantom', 'namefx_wave', 'namecolor_violet'] },
+        { id: 'pack_legendary_cosmos', category: 'bundle', type: 'bundle', currency: 'docoin', name: '組合包：傳奇星穹包', desc: '頂級傳奇外觀包，含星際稱號、徽章、名稱與面板特效。', price: 26, icon: '🌠', unlocks: ['avatar_astronaut', 'frame_aurora', 'title_starlord', 'badge_cosmos', 'namefx_prism', 'profilefx_nebula'] },
+        { id: 'pack_phoenix_overdrive', category: 'bundle', type: 'bundle', currency: 'docoin', name: '組合包：鳳凰超頻包', desc: '粒子鳳凰框 + 超頻稱號 + 超新星徽章 + 傳奇特效全套。', price: 32, icon: '🔥', unlocks: ['avatar_robot_blue', 'frame_phoenix_particle', 'title_overclock', 'badge_supernova', 'namefx_prism', 'profilefx_nebula'] },
+        { id: 'pack_quantum_emperor', category: 'bundle', type: 'bundle', currency: 'docoin', name: '組合包：量子帝皇包', desc: '量子粒子框 + 量子稱號 + 反應爐徽章 + 名稱/面板特效。', price: 36, icon: '👑', unlocks: ['avatar_astronaut', 'frame_quantum_particle', 'title_quantum', 'badge_reactor', 'namefx_prism', 'profilefx_nebula', 'namecolor_glacier'] }
     ];
 
     let currentUserData = null;
     let currentUser = null;
+    const DOCOIN_TO_DOORD_RATE = 100;
+
+    function getDoord(data) {
+        if (Number.isFinite(data && data.doord)) return Number(data.doord);
+        return Number.isFinite(data && data.coins) ? Number(data.coins) : 0;
+    }
+
+    function getDocoin(data) {
+        return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
+
+    function avatarFromType(type, fallbackEmail) {
+        const fb = encodeURIComponent(fallbackEmail || "User");
+        if (type === "robot_blue") return "https://ui-avatars.com/api/?name=RBT&background=1d4ed8&color=fff&bold=true";
+        if (type === "cat_neon") return "https://ui-avatars.com/api/?name=CAT&background=7c3aed&color=fff&bold=true";
+        if (type === "fox_shadow") return "https://ui-avatars.com/api/?name=FOX&background=334155&color=fb7185&bold=true";
+        if (type === "astronaut") return "https://ui-avatars.com/api/?name=AST&background=0f172a&color=38bdf8&bold=true";
+        return `https://ui-avatars.com/api/?name=${fb}&background=random`;
+    }
+
+    function applySidebarCosmeticsFromData(data, email) {
+        const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+        const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
+        const hasAvatar = inv.some((id) => {
+            if (eq.avatar === "robot_blue" && id === "avatar_robot_blue") return true;
+            if (eq.avatar === "cat_neon" && id === "avatar_cat_neon") return true;
+            if (eq.avatar === "fox_shadow" && id === "avatar_fox_shadow") return true;
+            if (eq.avatar === "astronaut" && id === "avatar_astronaut") return true;
+            return false;
+        });
+        const sideAvatar = document.getElementById("side-avatar");
+        const sideName = document.getElementById("side-username");
+        if (sideAvatar) sideAvatar.src = avatarFromType(hasAvatar ? eq.avatar : "", email || "");
+        if (sideName) sideName.style.color = (eq && eq.nameColor) ? eq.nameColor : "";
+    }
+
+    function updateWalletUi(data) {
+        const d = Math.floor(getDoord(data));
+        const dc = Math.floor(getDocoin(data));
+        const doordEl = document.getElementById('user-doord');
+        const docoinEl = document.getElementById('user-docoin');
+        const sideCoinsEl = document.getElementById('side-coins');
+        if (doordEl) doordEl.innerText = d;
+        if (docoinEl) docoinEl.innerText = dc;
+        if (sideCoinsEl) sideCoinsEl.innerText = `Doord ${d} · Docoin ${dc}`;
+    }
 
     window.handleLogout = () => {
         if (!auth.currentUser) return location.href = 'login.html';
@@ -272,13 +388,12 @@
             authCta.innerHTML = '<a class="auth-btn primary" href="login.html">登入帳號</a><a class="auth-btn ghost" href="create.html">前往寫程式</a>';
         }
         if (sideUser) sideUser.innerText = '訪客';
-        if (sideCoins) sideCoins.innerText = '0';
+        if (sideCoins) sideCoins.innerText = 'Doord 0 · Docoin 0';
         if (sideAvatar) sideAvatar.src = 'https://ui-avatars.com/api/?name=Guest&background=334155&color=fff';
-        const userCoinsEl = document.getElementById('user-coins');
-        if (userCoinsEl) userCoinsEl.innerText = '0';
+        updateWalletUi({ doord: 0, docoin: 0 });
         const reviewStatus = document.getElementById('review-status');
         if (reviewStatus) reviewStatus.innerText = '請先登入後送出審核。';
-        currentUserData = { coins: 0, inventory: [] };
+        currentUserData = { doord: 0, docoin: 0, coins: 0, inventory: [] };
         restoreCoinReviewDraft();
         renderItems();
     }
@@ -287,9 +402,9 @@
         const snap = await getDoc(doc(db, "users", user.uid));
         if (snap.exists()) {
             const data = snap.data();
-            document.getElementById('side-coins').innerText = data.coins || 0;
+            updateWalletUi(data || {});
             document.getElementById('side-username').innerText = user.email.split('@')[0];
-            document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            applySidebarCosmeticsFromData(data, user.email || "");
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
@@ -312,6 +427,8 @@
             await setDoc(userRef, {
                 email: user.email || "",
                 coins: 0,
+                doord: 0,
+                docoin: 0,
                 inventory: [],
                 xp: 0,
                 lv: 1,
@@ -320,13 +437,9 @@
             }, { merge: true });
         }
         const fresh = await getDoc(userRef);
-        currentUserData = fresh.data() || { coins: 0, inventory: [] };
-        const coins = currentUserData.coins || 0;
-        // 更新頁首與側邊欄的金幣顯示
-        const userCoinsEl = document.getElementById('user-coins');
-        if (userCoinsEl) userCoinsEl.innerText = coins;
-        const sideCoinsEl = document.getElementById('side-coins');
-        if (sideCoinsEl) sideCoinsEl.innerText = coins;
+        currentUserData = fresh.data() || { doord: 0, docoin: 0, coins: 0, inventory: [] };
+        updateWalletUi(currentUserData);
+        applySidebarCosmeticsFromData(currentUserData, user.email || "");
         const reviewStatus = document.getElementById('review-status');
         if (reviewStatus) {
             const lim = Number.isFinite(currentUserData.reviewUploadDailyLimit) ? currentUserData.reviewUploadDailyLimit : 1;
@@ -408,40 +521,76 @@
         if (reviewStatus) reviewStatus.innerText = '已暫存送審內容。';
     };
 
+    function getUnlockIds(item) {
+        if (item && item.type === 'bundle' && Array.isArray(item.unlocks) && item.unlocks.length) return item.unlocks.slice();
+        return item ? [item.id] : [];
+    }
+
+    function itemOwned(item, inventory) {
+        const inv = Array.isArray(inventory) ? inventory : [];
+        const unlockIds = getUnlockIds(item);
+        return unlockIds.every((x) => inv.includes(x));
+    }
+
     function renderItems() {
         const styleList = document.getElementById('style-items');
         const utilList = document.getElementById('utility-items');
-        styleList.innerHTML = ''; utilList.innerHTML = '';
+        const bundleList = document.getElementById('bundle-items');
+        styleList.innerHTML = ''; utilList.innerHTML = ''; if (bundleList) bundleList.innerHTML = '';
+        const legendaryIds = new Set([
+            "frame_holo", "frame_cyberfire", "frame_aurora",
+            "frame_phoenix_particle", "frame_quantum_particle",
+            "title_quantum", "title_void_walker", "title_overclock", "title_starlord",
+            "badge_dragon", "badge_cosmos", "badge_phantom", "badge_titan", "badge_supernova", "badge_reactor",
+            "namefx_prism", "profilefx_nebula", "pack_legendary_cosmos", "pack_phoenix_overdrive", "pack_quantum_emperor"
+        ]);
 
         itemsBank.forEach(item => {
-            const isOwned = (currentUserData.inventory || []).includes(item.id);
+            const currency = item.currency === 'docoin' ? 'docoin' : 'doord';
+            const currencyIcon = currency === 'docoin' ? '💎' : '🪙';
+            const currencyName = currency === 'docoin' ? 'Docoin' : 'Doord';
+            const isOwned = itemOwned(item, currentUserData.inventory || []);
             const canBuy = !!currentUser && !isOwned;
             const div = document.createElement('div');
-            div.className = 'item-card';
+            const isLegendary = legendaryIds.has(item.id);
+            div.className = `item-card${isLegendary ? ' legendary' : ''}`;
+            const metaTags = [];
+            if (item.type === 'bundle') metaTags.push('<span class="meta-tag bundle">組合包</span>');
+            metaTags.push(`<span class="meta-tag ${currency === 'docoin' ? 'docoin' : ''}">${currencyName}</span>`);
             div.innerHTML = `
+                ${isLegendary ? '<div class="legend-tag">LEGENDARY</div>' : ''}
+                <div class="meta-tags">${metaTags.join('')}</div>
                 <span class="item-icon">${item.icon}</span>
                 <div class="item-name">${item.name}</div>
                 <div class="item-desc">${item.desc}</div>
-                <div class="item-price">💰 ${item.price}</div>
-                <button class="btn-buy ${isOwned ? 'owned' : (canBuy ? 'available' : 'disabled')}" onclick="buyItem('${item.id}', ${item.price})">
+                <div class="item-price ${currency === 'docoin' ? 'docoin' : ''}">${currencyIcon} ${item.price} ${currencyName}</div>
+                <button class="btn-buy ${isOwned ? 'owned' : (canBuy ? 'available' : 'disabled')}" onclick="buyItem('${item.id}')">
                     ${isOwned ? '已擁有' : (canBuy ? '立即購買' : '請先登入')}
                 </button>
             `;
             if(item.category === 'style') styleList.appendChild(div);
+            else if (item.category === 'bundle' && bundleList) bundleList.appendChild(div);
             else utilList.appendChild(div);
         });
     }
 
-    window.buyItem = async (id, price) => {
+    window.buyItem = async (id) => {
         if (!currentUser) {
             alert("請先登入後再購買。");
             location.href = "login.html";
             return;
         }
-        if((currentUserData.inventory || []).includes(id)) return alert("此道具已擁有。");
-        if(currentUserData.coins < price) return alert("金幣不足！請先提交程式作品，等待管理員審核核發金幣。");
+        const item = itemsBank.find((x) => x.id === id);
+        if (!item) return alert("道具不存在。");
+        const price = Number(item.price) || 0;
+        const currency = item.currency === 'docoin' ? 'docoin' : 'doord';
+        const alreadyOwned = itemOwned(item, currentUserData.inventory || []);
+        if (alreadyOwned) return alert("此道具已擁有。");
+        if (currency === 'docoin' && getDocoin(currentUserData) < price) return alert("Docoin 不足！此道具只能使用 Docoin 購買。");
+        if (currency !== 'docoin' && getDoord(currentUserData) < price) return alert("Doord 不足！可提交作品等待核發，或先用 Docoin 兌換。");
 
-        if(!confirm(`確定要花費 💰 ${price} 購買此物品嗎？`)) return;
+        const spendLabel = currency === 'docoin' ? `💎 ${price} Docoin` : `🪙 ${price} Doord`;
+        if(!confirm(`確定要花費 ${spendLabel} 購買「${item.name}」嗎？`)) return;
 
         try {
             const ref = doc(db, "users", currentUser.uid);
@@ -449,22 +598,79 @@
                 const snap = await tx.get(ref);
                 const data = snap.exists() ? (snap.data() || {}) : {};
                 const inv = Array.isArray(data.inventory) ? data.inventory.slice() : [];
-                const currentCoins = Number.isFinite(data.coins) ? data.coins : 0;
-                if (inv.includes(id)) throw new Error("ALREADY_OWNED");
-                if (currentCoins < price) throw new Error("INSUFFICIENT_COINS");
-                inv.push(id);
-                tx.set(ref, {
-                    coins: currentCoins - price,
-                    inventory: inv,
-                    lastPurchaseAt: serverTimestamp()
-                }, { merge: true });
+                const currentDoord = getDoord(data);
+                const currentDocoin = getDocoin(data);
+                const unlockIds = getUnlockIds(item);
+                const nowOwned = unlockIds.every((x) => inv.includes(x));
+                if (nowOwned) throw new Error("ALREADY_OWNED");
+                unlockIds.forEach((x) => {
+                    if (!inv.includes(x)) inv.push(x);
+                });
+                if (currency === 'docoin') {
+                    if (currentDocoin < price) throw new Error("INSUFFICIENT_DOCOIN");
+                    tx.set(ref, {
+                        docoin: currentDocoin - price,
+                        inventory: inv,
+                        lastPurchaseAt: serverTimestamp()
+                    }, { merge: true });
+                } else {
+                    if (currentDoord < price) throw new Error("INSUFFICIENT_DOORD");
+                    tx.set(ref, {
+                        doord: currentDoord - price,
+                        coins: currentDoord - price,
+                        inventory: inv,
+                        lastPurchaseAt: serverTimestamp()
+                    }, { merge: true });
+                }
             });
             alert("購買成功！已儲存到 Firebase。");
             await loadMallData(currentUser);
         } catch(e) {
             if (String(e && e.message) === "ALREADY_OWNED") return alert("此道具已擁有。");
-            if (String(e && e.message) === "INSUFFICIENT_COINS") return alert("金幣不足，請先提交程式作品等待管理員核發。");
+            if (String(e && e.message) === "INSUFFICIENT_DOCOIN") return alert("Docoin 不足，無法購買此傳奇道具。");
+            if (String(e && e.message) === "INSUFFICIENT_DOORD") return alert("Doord 不足，請先提交作品或用 Docoin 兌換。");
             alert("購買失敗：" + (e.message || e));
+        }
+    };
+
+    window.exchangeDocoinToDoord = async () => {
+        if (!currentUser) {
+            alert("請先登入後再兌換。");
+            location.href = "login.html";
+            return;
+        }
+        const input = document.getElementById("exchange-docoin-amount");
+        const status = document.getElementById("exchange-status");
+        const amount = Math.floor(Number(input && input.value));
+        if (!Number.isFinite(amount) || amount <= 0) {
+            if (status) status.innerText = "請輸入有效的 Docoin 數量。";
+            return;
+        }
+        try {
+            const ref = doc(db, "users", currentUser.uid);
+            await runTransaction(db, async (tx) => {
+                const snap = await tx.get(ref);
+                const data = snap.exists() ? (snap.data() || {}) : {};
+                const dc = getDocoin(data);
+                const d = getDoord(data);
+                if (dc < amount) throw new Error("INSUFFICIENT_DOCOIN");
+                const addDoord = amount * DOCOIN_TO_DOORD_RATE;
+                tx.set(ref, {
+                    docoin: dc - amount,
+                    doord: d + addDoord,
+                    coins: d + addDoord,
+                    lastExchangeAt: serverTimestamp()
+                }, { merge: true });
+            });
+            if (status) status.innerText = `兌換成功：${amount} Docoin -> ${amount * DOCOIN_TO_DOORD_RATE} Doord`;
+            if (input) input.value = "";
+            await loadMallData(currentUser);
+        } catch (e) {
+            if (String(e && e.message) === "INSUFFICIENT_DOCOIN") {
+                if (status) status.innerText = "Docoin 不足，無法兌換。";
+                return;
+            }
+            if (status) status.innerText = "兌換失敗：" + (e.message || e);
         }
     };
 
@@ -520,6 +726,10 @@
                     fileContent: trimmedContent,
                     note: note || "",
                     status: "pending",
+                    suggestedDoord: 50,
+                    suggestedDocoin: 0,
+                    awardedDoord: 0,
+                    awardedDocoin: 0,
                     suggestedCoins: 50,
                     awardedCoins: 0,
                     createdAt: serverTimestamp()
@@ -536,7 +746,7 @@
             if (filePathInput) filePathInput.value = '';
             document.getElementById('review-note').value = '';
             const reviewStatus = document.getElementById('review-status');
-            if (reviewStatus) reviewStatus.innerText = '已送出審核申請，請等待管理員核發金幣。';
+            if (reviewStatus) reviewStatus.innerText = '已送出審核申請，請等待管理員核發 Doord。';
             alert("送審成功，請等待管理員審核。");
         } catch (e) {
             console.error(e);

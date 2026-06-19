@@ -140,12 +140,60 @@
             border-color: #34d399 !important;
             box-shadow: 0 0 0 4px rgba(52,211,153,0.2), 0 0 18px rgba(59,130,246,0.45);
         }
+        @keyframes particlePulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(251,113,133,0.2), 0 0 18px rgba(251,113,133,0.42), 0 0 28px rgba(245,158,11,0.32); }
+            50% { box-shadow: 0 0 0 6px rgba(251,191,36,0.24), 0 0 24px rgba(251,113,133,0.5), 0 0 36px rgba(99,102,241,0.38); }
+        }
+        .avatar-frame-phoenix-particle {
+            border-color: #fb7185 !important;
+            animation: particlePulse 1.9s ease-in-out infinite;
+        }
+        .avatar-frame-quantum-particle {
+            border-color: #60a5fa !important;
+            animation: particlePulse 1.7s ease-in-out infinite reverse;
+        }
+        @keyframes legendGlowPulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(167,139,250,0.2), 0 0 16px rgba(99,102,241,0.42); }
+            50% { box-shadow: 0 0 0 6px rgba(244,114,182,0.26), 0 0 28px rgba(251,191,36,0.55); }
+        }
+        @keyframes textShimmer {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        @keyframes nameWave {
+            0%, 100% { text-shadow: 0 0 0 rgba(56,189,248,0.2); }
+            50% { text-shadow: 0 0 10px rgba(56,189,248,0.45); }
+        }
+        @keyframes namePrism {
+            0% { background-position: 0% 50%; filter: drop-shadow(0 0 2px rgba(250,204,21,0.25)); }
+            100% { background-position: 200% 50%; filter: drop-shadow(0 0 6px rgba(244,114,182,0.45)); }
+        }
+        @keyframes badgeFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-1px); }
+        }
+        .avatar-frame-legendary {
+            animation: legendGlowPulse 2.2s ease-in-out infinite;
+        }
         .msg-time-hover { font-size: 11px; color: #475569; opacity: 0; text-align: center; width: 50px; }
         .message-row.consecutive:hover .msg-time-hover { opacity: 1; }
         
         .msg-content { display: flex; flex-direction: column; flex: 1; position: relative; padding-right: 120px; }
         .msg-header { display: flex; align-items: baseline; margin-bottom: 6px; }
         .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; }
+        .name-effect-wave {
+            text-shadow: 0 0 8px rgba(59,130,246,0.28);
+            animation: nameWave 2.4s ease-in-out infinite;
+        }
+        .name-effect-prism {
+            color: transparent !important;
+            background: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
+            background-size: 220% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: namePrism 2.6s linear infinite;
+            font-weight: 900;
+        }
         .msg-time { font-size: 12px; color: var(--text-muted); }
         .msg-edited { margin-left: 6px; color: #94a3b8; font-size: 11px; font-style: italic; }
         .msg-quick-actions {
@@ -189,6 +237,33 @@
         .bot-badge { background: #23a559; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
         .user-title-badge { background: rgba(88,101,242,0.2); color: #c7d2fe; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
         .user-cosmetic-badge { background: rgba(250,204,21,0.2); color: #fde68a; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+        .user-title-badge.legendary-title {
+            color: transparent;
+            background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 0 0 10px rgba(245,158,11,0.35);
+            animation: textShimmer 2.6s linear infinite;
+            font-weight: 900;
+        }
+        .user-cosmetic-badge.legendary-badge {
+            border: 1px solid rgba(255,255,255,0.35);
+            animation: badgeFloat 1.8s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(250,204,21,0.32);
+        }
+        @keyframes badgeGlowBurst {
+            0%, 100% { box-shadow: 0 0 10px rgba(250,204,21,0.3); }
+            50% { box-shadow: 0 0 18px rgba(244,114,182,0.45), 0 0 26px rgba(250,204,21,0.38); }
+        }
+        .user-cosmetic-badge.legendary-badge-mythic {
+            animation: badgeFloat 1.6s ease-in-out infinite, badgeGlowBurst 1.8s ease-in-out infinite;
+            border-color: rgba(250,204,21,0.56);
+        }
+        .msg-file-card.legendary-share {
+            border-color: rgba(245,158,11,0.5);
+            box-shadow: 0 0 0 1px rgba(245,158,11,0.3) inset;
+        }
         .msg-embed {
             margin-top: 6px; padding: 10px 12px; border-left: 3px solid #5865f2;
             background: rgba(88,101,242,0.08); border-radius: 6px; font-size: 14px; line-height: 1.5;
@@ -249,7 +324,21 @@
             border-radius: 10px; font-weight: 900; font-size: 16px; cursor: pointer; flex-shrink: 0;
         }
         .btn-slash-chip:hover { background: #5865f2; color: #fff; }
-        .input-box { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; min-width: 0; }
+        .input-box {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            min-width: 0;
+            min-height: 24px;
+            max-height: 160px;
+            line-height: 1.45;
+            resize: none;
+            overflow-y: auto;
+            font-family: inherit;
+        }
         .btn-send {
             border: none;
             border-radius: 10px;
@@ -348,19 +437,38 @@
         }
         .profile-pop {
             position: fixed;
-            width: 280px;
+            width: 360px;
             max-width: calc(100vw - 20px);
-            background: #1f2937;
+            background: linear-gradient(180deg, #1f2937, #111827);
             border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 14px;
+            border-radius: 16px;
             box-shadow: 0 14px 32px rgba(0,0,0,0.45);
             z-index: 1250;
-            padding: 14px;
+            padding: 0;
+            overflow: hidden;
         }
-        .profile-pop-head { display: flex; gap: 10px; align-items: center; }
-        .profile-pop-avatar { width: 52px; height: 52px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.16); }
-        .profile-pop-name { font-weight: 900; font-size: 15px; color: #fff; }
+        .profile-pop-banner {
+            height: 84px;
+            background: linear-gradient(120deg, rgba(99,102,241,0.35), rgba(37,99,235,0.2), rgba(168,85,247,0.28));
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .profile-pop-body { padding: 14px; margin-top: -26px; }
+        .profile-pop-head { display: flex; gap: 12px; align-items: center; }
+        .profile-pop-avatar { width: 64px; height: 64px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.18); background: #0f172a; }
+        .profile-pop-name { font-weight: 900; font-size: 17px; color: #fff; }
         .profile-pop-email { font-size: 12px; color: #94a3b8; margin-top: 2px; word-break: break-all; }
+        .profile-pop-role {
+            margin-top: 6px;
+            display: inline-flex;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            background: rgba(88,101,242,0.22);
+            color: #c7d2fe;
+        }
+        .profile-pop-section-title { font-size: 12px; color: #94a3b8; margin-top: 12px; margin-bottom: 6px; font-weight: 800; }
         .profile-pop-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
         .profile-pop-tag {
             border-radius: 999px;
@@ -369,6 +477,28 @@
             font-weight: 800;
             background: rgba(255,255,255,0.1);
             color: #e2e8f0;
+        }
+        .profile-pop-badge-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+        .profile-pop-badge-chip {
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 900;
+            background: rgba(148,163,184,0.16);
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .profile-pop-badge-chip.legend {
+            background: rgba(250,204,21,0.18);
+            border-color: rgba(250,204,21,0.38);
+            color: #fef08a;
+            animation: badgeGlowBurst 1.9s ease-in-out infinite;
+        }
+        .profile-pop.fx-royal .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(245,158,11,0.38), rgba(251,191,36,0.18), rgba(217,119,6,0.25));
+        }
+        .profile-pop.fx-nebula .profile-pop-banner {
+            background: linear-gradient(120deg, rgba(59,130,246,0.32), rgba(168,85,247,0.28), rgba(244,114,182,0.22));
         }
         .chat-pref-grid { display: grid; gap: 10px; margin-top: 12px; }
         .chat-pref-row { display: grid; gap: 6px; }
@@ -476,7 +606,7 @@
                 <div style="flex:1; overflow:hidden;">
                     <div id="side-username" style="font-size:12px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">載入中...</div>
                     <div id="side-cosmetic-badge" style="display:none; font-size:10px; color:#fde68a; margin-top:2px;"></div>
-                    <div style="font-size:10px; color:#64748B;">💰 <span id="side-coins">0</span></div>
+                    <div style="font-size:10px; color:#64748B;">💳 <span id="side-coins">Doord 0 · Docoin 0</span></div>
                 </div>
                 <button onclick="handleLogout()" style="background:none; border:none; color:#64748B; cursor:pointer;">🚪</button>
             </div>
@@ -495,7 +625,7 @@
                 <button class="btn-icon" style="background:#334155;" onclick="openCosmeticModal()">🎨 外觀設定</button>
                 <button class="btn-icon" style="background:#1f2937;" onclick="openChatPrefsModal()">⚙️ 聊天設定</button>
                 <button class="btn-icon" style="background:#5865F2;" onclick="openModal('group')">👥 群聊</button>
-                <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 建立伺服器</button>
+                <button class="btn-icon" style="background:#4CAF50;" onclick="openModal('server')">🖥️ 申請伺服器</button>
                 <button class="btn-icon" style="background:#f47f24; margin-top:5px;" onclick="openModal('joinServer')">🔑 加入伺服器</button>
             </div>
         </div>
@@ -563,6 +693,8 @@
     <div class="modal-content">
         <h3>🎨 聊天外觀設定</h3>
         <div style="display:grid; gap:10px; margin-top:12px;">
+            <label style="font-size:12px;color:#94a3b8;">頭像樣式</label>
+            <div class="select-wrap"><select id="chat-equip-avatar" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">頭像框</label>
             <div class="select-wrap"><select id="chat-equip-frame" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">稱號</label>
@@ -571,6 +703,10 @@
             <div class="select-wrap"><select id="chat-equip-badge" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">名稱顏色</label>
             <div class="select-wrap"><select id="chat-equip-name-color" class="pretty-select"></select></div>
+            <label style="font-size:12px;color:#94a3b8;">名稱特效</label>
+            <div class="select-wrap"><select id="chat-equip-name-effect" class="pretty-select"></select></div>
+            <label style="font-size:12px;color:#94a3b8;">個人面板特效</label>
+            <div class="select-wrap"><select id="chat-equip-profile-effect" class="pretty-select"></select></div>
         </div>
         <div class="modal-actions">
             <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeCosmeticModal()">取消</button>
@@ -698,11 +834,15 @@
     let friendOutgoing = [];
     let friendLinks = [];
     let typingPulseTimer = null;
+    let lastTypingSentAt = 0;
+    let isSendingMessage = false;
     let currentUserData = {};
     let replyToMessage = null;
     let incomingMessageRequestCount = -1;
     let incomingFriendRequestCount = -1;
     const chatUpdatedAtCache = {};
+    let chatMaxMessages = 300;
+
     let chatPrefs = {
         enterToSend: true,
         density: "normal",
@@ -715,6 +855,10 @@
     };
 
     const COSMETIC_ITEMS = [
+        { id: "avatar_robot_blue", slot: "avatar", label: "機甲藍芯頭像", value: "robot_blue" },
+        { id: "avatar_cat_neon", slot: "avatar", label: "霓虹貓頭像", value: "cat_neon" },
+        { id: "avatar_fox_shadow", slot: "avatar", label: "影狐頭像", value: "fox_shadow" },
+        { id: "avatar_astronaut", slot: "avatar", label: "太空員頭像", value: "astronaut" },
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
@@ -722,6 +866,8 @@
         { id: "frame_obsidian", slot: "frame", label: "曜石暗影頭像框", value: "obsidian" },
         { id: "frame_cyberfire", slot: "frame", label: "電馭烈焰頭像框", value: "cyberfire" },
         { id: "frame_aurora", slot: "frame", label: "極光流彩頭像框", value: "aurora" },
+        { id: "frame_phoenix_particle", slot: "frame", label: "傳奇框：鳳凰粒子", value: "phoenix_particle" },
+        { id: "frame_quantum_particle", slot: "frame", label: "傳奇框：量子星塵", value: "quantum_particle" },
         { id: "avatar_robot", slot: "frame", label: "機械戰警頭像框", value: "neon" },
         { id: "title_architect", slot: "title", label: "程式建築師", value: "程式建築師" },
         { id: "title_bug_hunter", slot: "title", label: "Bug 獵人", value: "Bug 獵人" },
@@ -730,18 +876,30 @@
         { id: "title_night_owl", slot: "title", label: "夜貓工程師", value: "夜貓工程師" },
         { id: "title_quantum", slot: "title", label: "量子駭客", value: "量子駭客" },
         { id: "title_void_walker", slot: "title", label: "虛空行者", value: "虛空行者" },
+        { id: "title_overclock", slot: "title", label: "超頻核心", value: "超頻核心" },
+        { id: "title_starlord", slot: "title", label: "星際領主", value: "星際領主" },
         { id: "badge_mentor", slot: "badge", label: "班級導師", value: "班級導師" },
         { id: "badge_speedrunner", slot: "badge", label: "速通玩家", value: "速通玩家" },
         { id: "badge_alpha", slot: "badge", label: "內測先鋒", value: "內測先鋒" },
         { id: "badge_guardian", slot: "badge", label: "社群守護者", value: "社群守護者" },
         { id: "badge_dragon", slot: "badge", label: "龍焰核心", value: "龍焰核心" },
         { id: "badge_cosmos", slot: "badge", label: "星穹航行者", value: "星穹航行者" },
+        { id: "badge_phantom", slot: "badge", label: "幻影駭客", value: "幻影駭客" },
+        { id: "badge_titan", slot: "badge", label: "鈦晶守衛", value: "鈦晶守衛" },
+        { id: "badge_supernova", slot: "badge", label: "超新星之眼", value: "超新星之眼" },
+        { id: "badge_reactor", slot: "badge", label: "反應爐核心", value: "反應爐核心" },
+        { id: "namefx_wave", slot: "nameEffect", label: "流光波紋", value: "wave" },
+        { id: "namefx_prism", slot: "nameEffect", label: "稜鏡閃耀", value: "prism" },
+        { id: "profilefx_royal", slot: "profileEffect", label: "皇家光暈", value: "royal" },
+        { id: "profilefx_nebula", slot: "profileEffect", label: "星雲脈衝", value: "nebula" },
         { id: "namecolor_cyan", slot: "nameColor", label: "霓虹青", value: "#22d3ee" },
         { id: "namecolor_sunset", slot: "nameColor", label: "夕陽橘", value: "#fb923c" },
         { id: "namecolor_violet", slot: "nameColor", label: "星雲紫", value: "#a78bfa" },
         { id: "namecolor_lime", slot: "nameColor", label: "螢光萊姆", value: "#84cc16" },
         { id: "namecolor_crimson", slot: "nameColor", label: "赤焰紅", value: "#ef4444" },
-        { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" }
+        { id: "namecolor_glacier", slot: "nameColor", label: "冰川藍", value: "#38bdf8" },
+        { id: "namecolor_ember", slot: "nameColor", label: "熾焰橘紅", value: "#f97316" },
+        { id: "namecolor_mint", slot: "nameColor", label: "薄荷青綠", value: "#2dd4bf" }
     ];
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
@@ -781,6 +939,24 @@
         const n = String(userData?.displayName || "").trim();
         if (n) return n;
         return e.includes("@") ? e.split("@")[0] : (e || "未知");
+    }
+
+    function getDoordValue(data) {
+        if (Number.isFinite(data && data.doord)) return Number(data.doord);
+        return Number.isFinite(data && data.coins) ? Number(data.coins) : 0;
+    }
+
+    function getDocoinValue(data) {
+        return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
+
+    function avatarFromCosmetics(emailOrName, avatarType) {
+        const base = encodeURIComponent(emailOrName || "User");
+        if (avatarType === "robot_blue") return `https://ui-avatars.com/api/?name=RBT&background=1d4ed8&color=fff&bold=true`;
+        if (avatarType === "cat_neon") return `https://ui-avatars.com/api/?name=CAT&background=7c3aed&color=fff&bold=true`;
+        if (avatarType === "fox_shadow") return `https://ui-avatars.com/api/?name=FOX&background=334155&color=fb7185&bold=true`;
+        if (avatarType === "astronaut") return `https://ui-avatars.com/api/?name=AST&background=0f172a&color=38bdf8&bold=true`;
+        return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
     function sanitizeChatPrefs(raw) {
@@ -851,22 +1027,55 @@
         if (frameType === "obsidian") return "avatar-frame-obsidian";
         if (frameType === "cyberfire") return "avatar-frame-cyberfire";
         if (frameType === "aurora") return "avatar-frame-aurora";
+        if (frameType === "phoenix_particle") return "avatar-frame-phoenix-particle";
+        if (frameType === "quantum_particle") return "avatar-frame-quantum-particle";
+        return "";
+    }
+
+    function isLegendaryFrame(frameType) {
+        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle"].includes(String(frameType || ""));
+    }
+
+    function isLegendaryTitle(title) {
+        return ["量子駭客", "虛空行者", "超頻核心", "星際領主"].includes(String(title || ""));
+    }
+
+    function isLegendaryBadge(badge) {
+        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心"].includes(String(badge || ""));
+    }
+
+    function isMythicBadge(badge) {
+        return ["超新星之眼", "反應爐核心"].includes(String(badge || ""));
+    }
+
+    function nameEffectClass(effectType) {
+        if (effectType === "wave") return "name-effect-wave";
+        if (effectType === "prism") return "name-effect-prism";
+        return "";
+    }
+
+    function profileEffectClass(effectType) {
+        if (effectType === "royal") return "fx-royal";
+        if (effectType === "nebula") return "fx-nebula";
         return "";
     }
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
 
     function currentCosmeticSnapshot() {
         return {
+            avatar: pickOwnedEquipped(currentUserData, "avatar"),
             frame: pickOwnedEquipped(currentUserData, "frame"),
             title: pickOwnedEquipped(currentUserData, "title"),
             badge: pickOwnedEquipped(currentUserData, "badge"),
-            nameColor: pickOwnedEquipped(currentUserData, "nameColor")
+            nameColor: pickOwnedEquipped(currentUserData, "nameColor"),
+            nameEffect: pickOwnedEquipped(currentUserData, "nameEffect"),
+            profileEffect: pickOwnedEquipped(currentUserData, "profileEffect")
         };
     }
 
@@ -874,7 +1083,9 @@
         const sideAvatar = document.getElementById("side-avatar");
         const sideName = document.getElementById("side-username");
         const sideBadge = document.getElementById("side-cosmetic-badge");
+        const sideCoins = document.getElementById("side-coins");
         const c = currentCosmeticSnapshot();
+        if (sideAvatar) sideAvatar.src = avatarFromCosmetics((currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
         applyAvatarFrameToElement(sideAvatar, c.frame);
         if (sideName) sideName.style.color = c.nameColor || "";
         const badgeText = c.title || c.badge;
@@ -882,6 +1093,7 @@
             sideBadge.style.display = badgeText ? "block" : "none";
             sideBadge.textContent = badgeText ? ("✨ " + badgeText) : "";
         }
+        if (sideCoins) sideCoins.textContent = `Doord ${Math.floor(getDoordValue(currentUserData))} · Docoin ${Math.floor(getDocoinValue(currentUserData))}`;
     }
 
     function fillCosmeticSelect(id, items, selectedValue, emptyLabel) {
@@ -903,10 +1115,13 @@
 
     window.openCosmeticModal = () => {
         const data = currentUserData || {};
+        fillCosmeticSelect("chat-equip-avatar", ownedItemsBySlot(data, "avatar"), pickOwnedEquipped(data, "avatar"), "預設頭像");
         fillCosmeticSelect("chat-equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
         fillCosmeticSelect("chat-equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
         fillCosmeticSelect("chat-equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
         fillCosmeticSelect("chat-equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
+        fillCosmeticSelect("chat-equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
+        fillCosmeticSelect("chat-equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
         document.getElementById("cosmetic-modal").style.display = "flex";
     };
 
@@ -917,10 +1132,13 @@
     window.saveChatCosmetics = async () => {
         if (!currentUser) return;
         const equipped = {
+            avatar: (document.getElementById("chat-equip-avatar").value || "").trim(),
             frame: (document.getElementById("chat-equip-frame").value || "").trim(),
             title: (document.getElementById("chat-equip-title").value || "").trim(),
             badge: (document.getElementById("chat-equip-badge").value || "").trim(),
-            nameColor: (document.getElementById("chat-equip-name-color").value || "").trim()
+            nameColor: (document.getElementById("chat-equip-name-color").value || "").trim(),
+            nameEffect: (document.getElementById("chat-equip-name-effect").value || "").trim(),
+            profileEffect: (document.getElementById("chat-equip-profile-effect").value || "").trim()
         };
         try {
             await updateDoc(doc(db, "users", currentUser.uid), { equippedCosmetics: equipped });
@@ -1281,9 +1499,22 @@
         });
     }
 
+    async function loadChatConfig() {
+        try {
+            const snap = await getDoc(doc(db, "system_config", "chat"));
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            const v = Number(data.maxMessagesPerChat);
+            chatMaxMessages = Number.isFinite(v) && v >= 50 ? Math.floor(v) : 300;
+        } catch (e) {
+            console.warn("讀取聊天設定失敗，使用預設 300", e);
+            chatMaxMessages = 300;
+        }
+    }
+
     onAuthStateChanged(auth, async user => {
         if (!user) return location.href = "login.html";
         currentUser = user;
+        await loadChatConfig();
 
         const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
@@ -1292,9 +1523,10 @@
             currentUserData = { uid: user.uid, ...data };
             chatPrefs = sanitizeChatPrefs(data.chatPrefs);
             applyChatPrefsUI();
-            document.getElementById('side-coins').innerText = data.coins || 0;
+            document.getElementById('side-coins').innerText = `Doord ${Math.floor(getDoordValue(currentUserData))} · Docoin ${Math.floor(getDocoinValue(currentUserData))}`;
             document.getElementById('side-username').innerText = displayNameFromUser({ email: user.email, displayName: data.displayName });
-            document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${user.email}&background=random`;
+            const c = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+            document.getElementById('side-avatar').src = avatarFromCosmetics(user.email, c.avatar || "");
             applySidebarCosmetics(currentUserData);
             
             let role = data.role || 'student';
@@ -1307,9 +1539,11 @@
                 }
             }
         } else {
-            currentUserData = { uid: user.uid, email: user.email || "" };
+            currentUserData = { uid: user.uid, email: user.email || "", doord: 0, docoin: 0 };
             chatPrefs = sanitizeChatPrefs(null);
             applyChatPrefsUI();
+            const sideCoins = document.getElementById('side-coins');
+            if (sideCoins) sideCoins.innerText = "Doord 0 · Docoin 0";
         }
 
         try {
@@ -1555,9 +1789,14 @@
 
     function scheduleTypingPulse() {
         if (!currentChatId || !currentUser) return;
-        updateDoc(doc(db, "chats", currentChatId), {
-            [`typingUsers.${currentUser.uid}`]: serverTimestamp()
-        }).catch(function () {});
+        const now = Date.now();
+        // 節流：避免每敲一個字就觸發一次雲端更新導致畫面抖動
+        if (now - lastTypingSentAt > 1200) {
+            lastTypingSentAt = now;
+            updateDoc(doc(db, "chats", currentChatId), {
+                [`typingUsers.${currentUser.uid}`]: serverTimestamp()
+            }).catch(function () {});
+        }
         if (typingPulseTimer) clearTimeout(typingPulseTimer);
         typingPulseTimer = setTimeout(function () {
             clearMyTypingIndicator();
@@ -1602,15 +1841,39 @@
 
     function handleChatInputKeydown(ev) {
         if (ev.key !== "Enter") return;
+        if (ev.shiftKey) {
+            ev.stopPropagation();
+            return;
+        }
         if (chatPrefs.enterToSend) {
             ev.preventDefault();
+            ev.stopPropagation();
             window.sendMessage();
             return;
         }
         if (ev.ctrlKey || ev.metaKey) {
             ev.preventDefault();
+            ev.stopPropagation();
             window.sendMessage();
+            return;
         }
+        // enterToSend 關閉：保留純 Enter 換行
+        ev.stopPropagation();
+    }
+
+    function autoGrowInput(input) {
+        if (!input) return;
+        input.style.height = "24px";
+        const next = Math.min(input.scrollHeight, 160);
+        input.style.height = next + "px";
+    }
+
+    function focusChatInput() {
+        const input = document.getElementById("msg-input");
+        if (!input || input.disabled) return;
+        input.focus();
+        const end = input.value.length;
+        if (typeof input.setSelectionRange === "function") input.setSelectionRange(end, end);
     }
 
     // 3. 開啟特定聊天室
@@ -1678,7 +1941,7 @@
                     <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上傳 .xml 專案檔">➕</button>
                     <input type="file" id="file-input" accept=".xml" style="display:none" onchange="sendFile(this)">
                     <button type="button" class="btn-slash-chip" id="btn-slash-chip" title="斜線指令">/</button>
-                    <input type="text" id="msg-input" class="input-box" placeholder="傳送訊息，或輸入 / 使用斜線指令…">
+                    <textarea id="msg-input" class="input-box" rows="1" placeholder="傳送訊息，Shift+Enter 換行，或輸入 / 使用斜線指令…"></textarea>
                     <button type="button" class="btn-send" id="btn-send-msg">送出</button>
                 </div>
             </div>
@@ -1699,7 +1962,9 @@
                 currentChatAttachedBots = data.attachedBots || [];
                 refreshChatBotsMeta();
                 renderTypingIndicator(data.typingUsers || {});
-                applyPrivateRequestState(data);
+                if (currentChatType === "private") {
+                    applyPrivateRequestState(data);
+                }
             }
         });
 
@@ -1725,7 +1990,7 @@
             const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
             const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
                 ? msg.senderCosmetics
-                : { frame: "", title: "", badge: "", nameColor: "" };
+                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "" };
             const senderName = isBotMsg
                 ? (msg.botName || "Bot")
                 : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
@@ -1734,8 +1999,11 @@
             const fullTimeStr = formatMsgFullTime(timeObj);
             const avatarUrl = isBotMsg
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
-                : `https://ui-avatars.com/api/?name=${msg.senderEmail}&background=random`;
-            const avatarFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
+                : avatarFromCosmetics(msg.senderEmail || senderName, senderCosmetics.avatar || "");
+            const baseFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
+            const avatarFrame = (!isBotMsg && isLegendaryFrame(senderCosmetics.frame || ""))
+                ? (baseFrame + " avatar-frame-legendary")
+                : baseFrame;
             const editedMark = msg.editedAt ? `<span class="msg-edited">(edited)</span>` : "";
             const mine = msg.senderId === currentUser.uid;
             let quickActionsHtml = `<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById('${docSnap.id}')">↩</button>`;
@@ -1748,9 +2016,14 @@
             const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
             const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
-            const titleBadge = (!isBotMsg && senderCosmetics.title) ? `<span class="user-title-badge">🏷️ ${escHtml(senderCosmetics.title)}</span>` : '';
-            const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="user-cosmetic-badge">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
+            const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || "")) ? "user-title-badge legendary-title" : "user-title-badge";
+            const badgeCls = (!isBotMsg && isLegendaryBadge(senderCosmetics.badge || ""))
+                ? ("user-cosmetic-badge legendary-badge" + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
+                : "user-cosmetic-badge";
+            const titleBadge = (!isBotMsg && senderCosmetics.title) ? `<span class="${titleCls}">🏷️ ${escHtml(senderCosmetics.title)}</span>` : '';
+            const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="${badgeCls}">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
             const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? ` style="color:${escHtml(senderCosmetics.nameColor)}"` : '';
+            const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect) ? nameEffectClass(senderCosmetics.nameEffect) : "";
             const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
             const replyHtml = msg.replyTo
                 ? `<div class="reply-quote">回覆 ${escHtml(msg.replyTo.senderName || "使用者")}：${escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90))}</div>`
@@ -1759,7 +2032,7 @@
             let contentHtml = '';
             if (msg.type === 'file') {
                 contentHtml = `
-                    <div class="msg-file-card" onclick="downloadXml('${docSnap.id}')">
+                    <div class="msg-file-card ${(!isBotMsg && (isLegendaryFrame(senderCosmetics.frame || "") || isLegendaryTitle(senderCosmetics.title || "") || isLegendaryBadge(senderCosmetics.badge || ""))) ? "legendary-share" : ""}" onclick="downloadXml('${docSnap.id}')">
                         <div class="file-icon">📄</div>
                         <div class="file-info">
                             <div class="file-name">${msg.fileName}</div>
@@ -1786,7 +2059,7 @@
                         <div class="msg-content">
                             ${quickActionsHtml}
                             <div class="msg-header">
-                                <span class="msg-author"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
+                                <span class="msg-author ${nameEffectCls}"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
@@ -1815,8 +2088,10 @@
             }
             if (input) {
                 input.oninput = scheduleTypingPulse;
+                input.addEventListener("input", () => autoGrowInput(input));
                 input.onblur = clearMyTypingIndicator;
                 input.onkeydown = handleChatInputKeydown;
+                autoGrowInput(input);
             }
             const sendBtn = document.getElementById("btn-send-msg");
             if (sendBtn) sendBtn.onclick = () => window.sendMessage();
@@ -1832,7 +2107,16 @@
             } else {
                 applyPrivateRequestState(null);
             }
-            input && input.focus();
+            if (mainDiv) {
+                const tryFocus = (ev) => {
+                    const t = ev.target;
+                    if (t && typeof t.closest === "function" && (t.closest("button") || t.closest("a") || t.closest("input[type='file']"))) return;
+                    focusChatInput();
+                };
+                const msgAreaEl = document.getElementById("messages-area");
+                if (msgAreaEl) msgAreaEl.addEventListener("click", tryFocus);
+            }
+            focusChatInput();
         }, 100);
     };
 
@@ -1960,14 +2244,15 @@
         }
     };
 
-    // 私訊滿 300 條清理機制
-    async function trimPrivateMessages(chatId) {
-        if (currentChatType !== 'private') return;
+    // 聊天室訊息上限清理（預設 300，可在 admin 設定）
+    async function trimChatMessages(chatId) {
+        if (!chatId) return;
+        const limit = Math.max(50, Math.floor(chatMaxMessages) || 300);
         try {
             const msgsQuery = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
             const msgsSnap = await getDocs(msgsQuery);
-            if (msgsSnap.size > 300) {
-                const deleteCount = msgsSnap.size - 300;
+            if (msgsSnap.size > limit) {
+                const deleteCount = msgsSnap.size - limit;
                 for (let i = 0; i < deleteCount; i++) {
                     await deleteDoc(msgsSnap.docs[i].ref);
                 }
@@ -2088,7 +2373,7 @@
         menu.style.display = "block";
     };
 
-    window.openProfileByMessage = (ev, msgId) => {
+    window.openProfileByMessage = async (ev, msgId) => {
         ev.preventDefault();
         hideMessageMenu();
         const msg = window.currentMessages && window.currentMessages[msgId];
@@ -2103,21 +2388,47 @@
         if (c.title) tags.push(`<span class="profile-pop-tag">🏷️ ${escHtml(c.title)}</span>`);
         if (c.badge) tags.push(`<span class="profile-pop-tag">✨ ${escHtml(c.badge)}</span>`);
         if (isBot) tags.push('<span class="profile-pop-tag">🤖 BOT</span>');
+        const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : "";
+        const profileFxCls = c.profileEffect ? profileEffectClass(c.profileEffect) : "";
+        const roleText = isBot ? "BOT" : (msg.senderId === currentUser.uid ? "你" : "成員");
+        let badgeShelf = [];
+        if (!isBot && msg.senderId) {
+            try {
+                const senderData = await fetchUserByUid(msg.senderId);
+                const ownedBadges = ownedItemsBySlot(senderData || {}, "badge");
+                badgeShelf = ownedBadges.slice(0, 8).map((b) => {
+                    const isLegend = isLegendaryBadge(b.value || "");
+                    return `<span class="profile-pop-badge-chip ${isLegend ? 'legend' : ''}">✨ ${escHtml(b.label || b.value)}</span>`;
+                });
+            } catch (_) {}
+        }
+        if (!badgeShelf.length && c.badge) {
+            badgeShelf = [`<span class="profile-pop-badge-chip ${isLegendaryBadge(c.badge) ? 'legend' : ''}">✨ ${escHtml(c.badge)}</span>`];
+        }
         const avatarUrl = isBot
             ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=23a559&color=fff`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(email || name)}&background=random`;
+            : avatarFromCosmetics(email || name, c.avatar || "");
         pop.innerHTML = `
-            <div class="profile-pop-head">
-                <img src="${avatarUrl}" class="profile-pop-avatar ${frameClass(c.frame || "")}">
-                <div>
-                    <div class="profile-pop-name"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
-                    <div class="profile-pop-email">${escHtml(email)}</div>
+            <div class="profile-pop-banner"></div>
+            <div class="profile-pop-body">
+                <div class="profile-pop-head">
+                    <img src="${avatarUrl}" class="profile-pop-avatar ${frameClass(c.frame || "")} ${isLegendaryFrame(c.frame || "") ? 'avatar-frame-legendary' : ''}">
+                    <div>
+                        <div class="profile-pop-name ${nameFxCls}"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
+                        <div class="profile-pop-email">${escHtml(email)}</div>
+                        <div class="profile-pop-role">${roleText}</div>
+                    </div>
                 </div>
+                <div class="profile-pop-section-title">裝備標籤</div>
+                <div class="profile-pop-tags">${tags.join("") || '<span class="profile-pop-tag">一般使用者</span>'}</div>
+                <div class="profile-pop-section-title">徽章展示</div>
+                <div class="profile-pop-badge-grid">${badgeShelf.join("") || '<span class="profile-pop-badge-chip">尚未裝備徽章</span>'}</div>
             </div>
-            <div class="profile-pop-tags">${tags.join("") || '<span class="profile-pop-tag">一般使用者</span>'}</div>
         `;
-        pop.style.left = Math.min(ev.clientX + 8, window.innerWidth - 300) + "px";
-        pop.style.top = Math.min(ev.clientY + 8, window.innerHeight - 220) + "px";
+        pop.classList.remove("fx-royal", "fx-nebula");
+        if (profileFxCls) pop.classList.add(profileFxCls);
+        pop.style.left = Math.min(ev.clientX + 8, window.innerWidth - 380) + "px";
+        pop.style.top = Math.min(ev.clientY + 8, window.innerHeight - 330) + "px";
         pop.style.display = "block";
     };
 
@@ -2184,6 +2495,7 @@
             updatedAt: serverTimestamp(),
             lastSenderId: botSenderId
         });
+        await trimChatMessages(currentChatId);
     }
 
     async function postBotError(entry, message) {
@@ -2203,6 +2515,7 @@
             type: "bot",
             createdAt: serverTimestamp()
         });
+        await trimChatMessages(currentChatId);
     }
 
     function findBotCommandBody(code, commandName, isSlash) {
@@ -2419,6 +2732,7 @@
     // 4. 傳送文字訊息
     window.sendMessage = async () => {
         if (!currentChatId) return;
+        if (isSendingMessage) return;
         if (currentChatType === "private") {
             try {
                 const chatSnap = await getDoc(doc(db, "chats", currentChatId));
@@ -2430,7 +2744,8 @@
             } catch {}
         }
         const input = document.getElementById('msg-input');
-        const text = input.value.trim();
+        const rawText = String(input.value || "").replace(/\r\n/g, "\n");
+        const text = rawText.trim();
         if (!text) return;
         const replyPayload = replyToMessage ? {
             id: replyToMessage.id,
@@ -2442,8 +2757,11 @@
         } : null;
 
         input.value = '';
-        input.disabled = true;
+        autoGrowInput(input);
         if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
+        const sendBtn = document.getElementById("btn-send-msg");
+        if (sendBtn) sendBtn.disabled = true;
+        isSendingMessage = true;
 
         try {
             const cosmetic = currentCosmeticSnapshot();
@@ -2466,15 +2784,16 @@
                 [`typingUsers.${currentUser.uid}`]: deleteField()
             });
             
-            trimPrivateMessages(currentChatId);
+            trimChatMessages(currentChatId);
             await processAttachedBots(text);
             replyToMessage = null;
             setReplyBar();
         } catch (e) {
             alert("傳送失敗: " + e.message);
         } finally {
-            input.disabled = false;
-            input.focus();
+            isSendingMessage = false;
+            if (sendBtn) sendBtn.disabled = false;
+            focusChatInput();
         }
     };
 
@@ -2523,7 +2842,7 @@
                     [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
                 });
                 
-                trimPrivateMessages(currentChatId);
+                trimChatMessages(currentChatId);
             } catch(err) {
                 alert("檔案傳送失敗：" + err.message);
             }
@@ -2574,8 +2893,8 @@
             title.innerText = '建立群聊';
             input.placeholder = '請為群組取個名稱';
         } else if (mode === 'server') {
-            title.innerText = '建立伺服器';
-            input.placeholder = '請為伺服器取個名稱';
+            title.innerText = '申請建立伺服器';
+            input.placeholder = '請輸入想要的伺服器名稱（需管理員審核）';
         } else if (mode === 'joinServer') {
             title.innerText = '加入伺服器';
             input.placeholder = '請輸入 6 碼伺服器代碼';
@@ -2601,6 +2920,18 @@
             if (card) card.addEventListener("click", (ev) => ev.stopPropagation());
         });
     })();
+    window.addEventListener("keydown", (e) => {
+        if (!currentChatId) return;
+        if (e.defaultPrevented) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const t = e.target;
+        const tag = (t && t.tagName) ? t.tagName.toLowerCase() : "";
+        if (tag === "input" || tag === "textarea" || tag === "select" || (t && t.isContentEditable)) return;
+        if (e.key.length !== 1) return;
+        const input = document.getElementById("msg-input");
+        if (!input || input.disabled) return;
+        focusChatInput();
+    });
     window.addEventListener("click", (e) => {
         const t = e.target;
         if (t && t.id === "modal") closeModal();
@@ -2621,10 +2952,18 @@
         btn.innerText = "請稍候...";
 
         try {
-            if (modalMode === 'group' || modalMode === 'server') {
+            if (modalMode === 'group') {
                 const groupCount = await checkGroupLimit();
                 if (groupCount >= 20) {
                     alert("您最多只能加入 20 個群組或伺服器！");
+                    closeModal();
+                    return;
+                }
+            }
+            if (modalMode === 'server') {
+                const name = inputVal.trim();
+                if (name.length < 2 || name.length > 40) {
+                    alert("伺服器名稱需為 2～40 字。");
                     closeModal();
                     return;
                 }
@@ -2659,30 +2998,36 @@
                     throw e;
                 }
                 
-            } else if (modalMode === 'group' || modalMode === 'server') {
-                let chatId;
-                if (modalMode === 'server') {
-                    chatId = "S" + Math.random().toString(36).substr(2, 5).toUpperCase();
-                    await setDoc(doc(db, "chats", chatId), {
-                        type: 'server',
-                        participants: [currentUser.uid],
-                        teacherId: currentUser.uid,
-                        name: inputVal,
-                        lastMessage: '伺服器已建立',
-                        updatedAt: serverTimestamp()
-                    });
-                } else {
-                    const newChat = await addDoc(collection(db, "chats"), {
-                        type: 'group',
-                        participants: [currentUser.uid],
-                        teacherId: currentUser.uid,
-                        name: inputVal,
-                        lastMessage: '群組已建立',
-                        updatedAt: serverTimestamp()
-                    });
-                    chatId = newChat.id;
+            } else if (modalMode === 'group') {
+                const newChat = await addDoc(collection(db, "chats"), {
+                    type: 'group',
+                    participants: [currentUser.uid],
+                    teacherId: currentUser.uid,
+                    name: inputVal,
+                    lastMessage: '群組已建立',
+                    updatedAt: serverTimestamp()
+                });
+                openChat(newChat.id, inputVal, '👥', 'group', currentUser.uid);
+            } else if (modalMode === 'server') {
+                const pendingQ = query(
+                    collection(db, "server_create_requests"),
+                    where("userId", "==", currentUser.uid),
+                    where("status", "==", "pending")
+                );
+                const pendingSnap = await getDocs(pendingQ);
+                if (!pendingSnap.empty) {
+                    alert("你已有待審核的伺服器申請，請等待管理員處理。");
+                    closeModal();
+                    return;
                 }
-                openChat(chatId, inputVal, modalMode === 'server' ? '🏫' : '👥', modalMode, currentUser.uid);
+                await addDoc(collection(db, "server_create_requests"), {
+                    userId: currentUser.uid,
+                    userEmail: currentUser.email || "",
+                    serverName: inputVal,
+                    status: "pending",
+                    createdAt: serverTimestamp()
+                });
+                alert("伺服器申請已送出！管理員審核通過後會建立，並可使用代碼加入。");
             } else if (modalMode === 'joinServer') {
                 const code = inputVal.toUpperCase();
                 const chatRef = doc(db, "chats", code);
