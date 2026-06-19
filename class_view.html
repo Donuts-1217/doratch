@@ -744,6 +744,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, addDoc, collection, query, where, getDocs, updateDoc, serverTimestamp, orderBy, onSnapshot, arrayUnion, arrayRemove, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { enforceCloudStorageLimit, cloudStorageErrorAlert } from "./doratch-cloud-storage.js";
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -769,81 +770,7 @@
         return "剛才";
     }
 
-    function byteSizeOf(text) {
-        try {
-            return new TextEncoder().encode(String(text || "")).length;
-        } catch (_) {
-            return new Blob([String(text || "")]).size;
-        }
-    }
-
-    function projectBytesFromData(p) {
-        if (!p || typeof p !== "object") return 0;
-        let total = 0;
-        if (typeof p.pythonCode === "string") total += byteSizeOf(p.pythonCode);
-        if (typeof p.code === "string") total += byteSizeOf(p.code);
-        if (typeof p.data === "string") total += byteSizeOf(p.data);
-        if (p.spriteScripts && typeof p.spriteScripts === "object") {
-            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
-        }
-        return total;
-    }
-
-    async function ensureCloudStorageMB(user, newContent, targetPid) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-        let defaultLimitMB = 1;
-        let previousDefaultMB = 1;
-        try {
-            const cfg = await getDoc(doc(db, "system_config", "storage"));
-            const c = cfg.exists() ? (cfg.data() || {}) : {};
-            const v = Number(c.defaultCloudStorageLimitMB);
-            const pv = Number(c.previousDefaultCloudStorageLimitMB);
-            if (Number.isFinite(v) && v >= 1) defaultLimitMB = v;
-            if (Number.isFinite(pv) && pv >= 1) previousDefaultMB = pv;
-            else previousDefaultMB = defaultLimitMB;
-        } catch (_) {}
-        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : defaultLimitMB;
-        const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
-        const pSnap = await getDocs(collection(db, "users", user.uid, "projects"));
-        let totalBytes = 0;
-        pSnap.forEach(function (d) {
-            if (targetPid && d.id === targetPid) return;
-            totalBytes += projectBytesFromData(d.data() || {});
-        });
-        totalBytes += byteSizeOf(newContent);
-        const now = Date.now();
-        const graceUntil = Number(userData.cloudStorageGraceUntilMs || 0);
-        if (totalBytes > limitBytes) {
-            if (graceUntil > now) {
-                await setDoc(userRef, {
-                    cloudStorageLastMeasuredBytes: totalBytes,
-                    cloudStorageLastEffectiveLimitMB: limitMB
-                }, { merge: true });
-                return;
-            }
-            const lastLimit = Number(userData.cloudStorageLastEffectiveLimitMB || 0);
-            const lastBytes = Number(userData.cloudStorageLastMeasuredBytes || 0);
-            const wasWithinLast = lastLimit > 0 && lastBytes >= 0 && lastBytes <= (lastLimit * 1024 * 1024);
-            const usesDefaultLimit = !Number.isFinite(userData.cloudStorageLimitMB);
-            const wasWithinPreviousDefault = usesDefaultLimit && previousDefaultMB > limitMB && totalBytes <= (previousDefaultMB * 1024 * 1024);
-            if ((wasWithinLast && limitMB < lastLimit) || wasWithinPreviousDefault) {
-                const newGrace = now + 30 * 24 * 60 * 60 * 1000;
-                await setDoc(userRef, {
-                    cloudStorageGraceUntilMs: newGrace,
-                    cloudStorageLastMeasuredBytes: totalBytes,
-                    cloudStorageLastEffectiveLimitMB: limitMB
-                }, { merge: true });
-                return;
-            }
-            throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
-        }
-        await setDoc(userRef, {
-            cloudStorageLastMeasuredBytes: totalBytes,
-            cloudStorageLastEffectiveLimitMB: limitMB
-        }, { merge: true });
-    }
+    const firebaseFns = { getDoc, getDocs, doc, setDoc, collection };
 
     const apcsBank = [
         {
@@ -2068,7 +1995,7 @@
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
-                await ensureCloudStorageMB(currentUser, e.target.result || "", null);
+                await enforceCloudStorageLimit(db, firebaseFns, currentUser, { targetPid: null, extraBytes: e.target.result || "" });
                 const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
                 const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
                 const sSnap = await getDoc(subRef);
@@ -2086,9 +2013,9 @@
                 alert("已上傳附件。完成後請到作答頁按「✅ 繳交作業」正式繳交。");
             } catch (err) {
                 const msg = String(err && err.message ? err.message : err);
-                if (msg.indexOf("CLOUD_STORAGE_MB_LIMIT:") === 0) {
-                    const lim = msg.split(":")[1] || "?";
-                    alert("雲端空間不足（上限 " + lim + " MB）。請刪除舊作品或請管理員調高容量。");
+                const alertMsg = cloudStorageErrorAlert(msg);
+                if (alertMsg) {
+                    alert(alertMsg);
                     return;
                 }
                 alert("上傳失敗：" + (err.message || err));

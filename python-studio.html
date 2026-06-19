@@ -219,6 +219,7 @@ print("Hello, Doratch!")
     import {
         getFirestore, doc, getDoc, getDocs, addDoc, updateDoc, setDoc, collection, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { enforceCloudStorageLimit, cloudStorageErrorAlert } from "./doratch-cloud-storage.js";
 
     const DEFAULT_CODE = `# Python 自由創作
 # 在此撰寫任意 Python 程式
@@ -702,90 +703,7 @@ print("Hello, Doratch!")
         });
     }
 
-    function byteSizeOf(text) {
-        try {
-            return new TextEncoder().encode(String(text || "")).length;
-        } catch (_) {
-            return new Blob([String(text || "")]).size;
-        }
-    }
-
-    function projectBytesFromData(p) {
-        if (!p || typeof p !== "object") return 0;
-        let total = 0;
-        if (typeof p.pythonCode === "string") total += byteSizeOf(p.pythonCode);
-        if (typeof p.code === "string") total += byteSizeOf(p.code);
-        if (typeof p.data === "string") total += byteSizeOf(p.data);
-        if (p.spriteScripts && typeof p.spriteScripts === "object") {
-            try { total += byteSizeOf(JSON.stringify(p.spriteScripts)); } catch (_) {}
-        }
-        return total;
-    }
-
-    async function getDefaultCloudSettings() {
-        try {
-            const snap = await getDoc(doc(db, "system_config", "storage"));
-            const data = snap.exists() ? (snap.data() || {}) : {};
-            const current = Number(data.defaultCloudStorageLimitMB);
-            const prev = Number(data.previousDefaultCloudStorageLimitMB);
-            const currentMB = Number.isFinite(current) && current >= 1 ? current : 1;
-            const previousMB = Number.isFinite(prev) && prev >= 1 ? prev : currentMB;
-            return { currentMB, previousMB };
-        } catch (_) {
-            return { currentMB: 1, previousMB: 1 };
-        }
-    }
-
-    async function enforceCloudStorageLimit(user, targetPid, nextCode) {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
-        const defaults = await getDefaultCloudSettings();
-        const defaultLimitMB = defaults.currentMB;
-        const previousDefaultMB = defaults.previousMB;
-        const limitMB = Number.isFinite(userData.cloudStorageLimitMB) ? userData.cloudStorageLimitMB : defaultLimitMB;
-        const limitBytes = Math.max(1, limitMB) * 1024 * 1024;
-
-        const projectsSnap = await getDocs(collection(db, "users", user.uid, "projects"));
-        let totalBytes = 0;
-        projectsSnap.forEach(function (d) {
-            const p = d.data() || {};
-            if (targetPid && d.id === targetPid) return;
-            totalBytes += projectBytesFromData(p);
-        });
-        totalBytes += byteSizeOf(nextCode);
-        const now = Date.now();
-        const graceUntil = Number(userData.cloudStorageGraceUntilMs || 0);
-        if (totalBytes > limitBytes) {
-            if (graceUntil > now) {
-                await setDoc(userRef, {
-                    cloudStorageLastMeasuredBytes: totalBytes,
-                    cloudStorageLastEffectiveLimitMB: limitMB
-                }, { merge: true });
-                return;
-            }
-            const lastLimit = Number(userData.cloudStorageLastEffectiveLimitMB || 0);
-            const lastBytes = Number(userData.cloudStorageLastMeasuredBytes || 0);
-            const wasWithinLast = lastLimit > 0 && lastBytes >= 0 && lastBytes <= (lastLimit * 1024 * 1024);
-            const usesDefaultLimit = !Number.isFinite(userData.cloudStorageLimitMB);
-            const wasWithinPreviousDefault = usesDefaultLimit && previousDefaultMB > limitMB && totalBytes <= (previousDefaultMB * 1024 * 1024);
-            if ((wasWithinLast && limitMB < lastLimit) || wasWithinPreviousDefault) {
-                const newGrace = now + 30 * 24 * 60 * 60 * 1000;
-                await setDoc(userRef, {
-                    cloudStorageGraceUntilMs: newGrace,
-                    cloudStorageLastMeasuredBytes: totalBytes,
-                    cloudStorageLastEffectiveLimitMB: limitMB
-                }, { merge: true });
-                return;
-            }
-            throw new Error("CLOUD_STORAGE_MB_LIMIT:" + limitMB);
-        }
-        await setDoc(userRef, {
-            cloudStorageLastMeasuredBytes: totalBytes,
-            cloudStorageLastEffectiveLimitMB: limitMB
-        }, { merge: true });
-    }
-
+    const firebaseFns = { getDoc, getDocs, doc, setDoc, collection };
 
     document.getElementById("btn-save").onclick = async () => {
         const user = auth.currentUser;
@@ -801,12 +719,12 @@ print("Hello, Doratch!")
         const isPublic = document.getElementById("is-public-check").checked;
         const targetPid = modeProjectIds[mode] || (isOwner ? currentPid : null);
         try {
-            await enforceCloudStorageLimit(user, targetPid, pythonCode);
+            await enforceCloudStorageLimit(db, firebaseFns, user, { targetPid, extraBytes: pythonCode });
         } catch (quotaErr) {
             const msg = String(quotaErr && quotaErr.message ? quotaErr.message : quotaErr);
-            if (msg.indexOf("CLOUD_STORAGE_MB_LIMIT:") === 0) {
-                const lim = msg.split(":")[1] || "?";
-                alert("雲端儲存空間不足。你的永久上限是 " + lim + " MB，請刪除舊作品或請管理員調高容量。");
+            const alertMsg = cloudStorageErrorAlert(msg);
+            if (alertMsg) {
+                alert(alertMsg);
                 return;
             }
             alert("儲存容量檢查失敗：" + msg);

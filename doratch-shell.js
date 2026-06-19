@@ -1,5 +1,5 @@
 /**
- * Doratch 全站導覽 — 側欄只顯示五大類別（班級 / 學習 / 挑戰 / 遊戲 / 管理）
+ * Doratch 全站導覽 — 側欄只顯示六大類別（班級 / 學習 / 挑戰 / 遊戲 / 其他 / 管理）
  */
 (function () {
     if (typeof window.handleLogout !== "function") {
@@ -41,7 +41,7 @@
         {
             key: "game",
             label: "🎮 遊戲",
-            pages: ["game", "game_survival", "game_clicker", "game_rpg", "game_cards", "game_pet", "game_mine", "shop", "chat"],
+            pages: ["game", "game_survival", "game_clicker", "game_rpg", "game_cards", "game_pet", "game_mine"],
             items: [
                 { href: "game.html", label: "遊戲中心", pages: ["game"] },
                 { href: "game-survival.html", label: "異界生存", pages: ["game_survival"] },
@@ -49,7 +49,14 @@
                 { href: "game-rpg.html", label: "RPG 探索", pages: ["game_rpg"] },
                 { href: "game-cards.html", label: "卡牌對戰", pages: ["game_cards"] },
                 { href: "game-pet.html", label: "寵物養成", pages: ["game_pet"] },
-                { href: "game-mine.html", label: "採礦經營", pages: ["game_mine"] },
+                { href: "game-mine.html", label: "採礦經營", pages: ["game_mine"] }
+            ]
+        },
+        {
+            key: "other",
+            label: "📦 其他",
+            pages: ["shop", "chat"],
+            items: [
                 { href: "shop.html", label: "創意商城", pages: ["shop"] },
                 { href: "chat.html", label: "交流大廳", pages: ["chat"] }
             ]
@@ -70,6 +77,7 @@
         { href: "python.html", label: "學習" },
         { href: "challenge_zone.html", label: "挑戰" },
         { href: "game.html", label: "遊戲" },
+        { href: "chat.html", label: "其他" },
         { href: "admin.html", label: "管理" }
     ];
 
