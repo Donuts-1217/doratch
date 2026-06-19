@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Doratch">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <title>Doratch - 程式學習與創作平台</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -216,6 +222,7 @@
             const hero = document.getElementById('hero-actions');
             if (user) {
                 nav.innerHTML = `
+                    <a href="app.html?app=1" style="color:var(--accent);">📱 手機 App</a>
                     <a href="main.html">探索中心</a>
                     <a href="projects.html">我的作品</a>
                     <a href="dashboard.html">我的班級</a>
@@ -229,7 +236,7 @@
                     <a href="dashboard.html" class="btn btn-outline">進入工作空間</a>
                 `;
             } else {
-                nav.innerHTML = `<a href="main.html">作品探索</a><a href="challenge_zone.html">🎯 挑戰區</a><a href="game.html" style="color:var(--primary);">🎮 進入競技場</a><a href="login.html" style="color:var(--secondary);">🔐 登入</a>`;
+                nav.innerHTML = `<a href="app.html?app=1" style="color:var(--accent);">📱 手機 App</a><a href="main.html">作品探索</a><a href="challenge_zone.html">🎯 挑戰區</a><a href="game.html" style="color:var(--primary);">🎮 進入競技場</a><a href="login.html" style="color:var(--secondary);">🔐 登入</a>`;
                 hero.innerHTML = `<a href="login.html" class="btn btn-primary">立即開始冒險</a><a href="main.html" class="btn btn-outline">看看大家的作品</a>`;
             }
         });
@@ -261,5 +268,6 @@
         loadPreview();
         window.logout = () => signOut(auth).then(() => location.reload());
     </script>
+    <script src="doratch-mobile-shell.js" defer></script>
 </body>
 </html>
