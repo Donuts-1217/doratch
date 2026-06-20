@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>個人檔案 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -19,9 +21,9 @@
             --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
             --bg: #0F172A; --card-bg: #1E293B; --text: #F8FAFC;
         }
-        body { font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        body { font-family: 'Outfit', 'Noto Sans TC', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; overflow-x: hidden; }
 
-        .main-content { padding: 40px; overflow-x: auto; box-sizing: border-box; }
+        .main-content { padding: 40px; overflow-x: hidden; box-sizing: border-box; }
 
         /* 個人資料卡 */
         .profile-hero { 
@@ -62,71 +64,68 @@
         .avatar-particle {
             animation: profileParticlePulse 1.85s ease-in-out infinite;
         }
-        .profile-name.name-effect-wave {
-            animation: profileNameWave 2.3s ease-in-out infinite;
-        }
-        .profile-name.name-effect-prism {
+        .profile-name.name-effect-prism > .name-fx-text,
+        .profile-name.name-effect-aurora-pulse > .name-fx-text,
+        .profile-name.name-effect-rainbow > .name-fx-text {
             color: transparent !important;
-            background: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
-            background-size: 220% auto;
+            -webkit-text-fill-color: transparent !important;
+            background-color: transparent;
+            background-repeat: no-repeat;
             -webkit-background-clip: text;
             background-clip: text;
+        }
+        .profile-name.name-effect-prism {
+            background: none;
+        }
+        .profile-name.name-effect-prism > .name-fx-text {
+            background-image: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
+            background-size: 220% 100%;
             animation: profileShimmer 2.6s linear infinite;
         }
-        .profile-name.name-effect-stardust {
+        .profile-name.name-effect-stardust > .name-fx-text {
             animation: profileNameWave 2.1s ease-in-out infinite;
             text-shadow: 0 0 8px rgba(251,191,36,0.45), 0 0 14px rgba(167,139,250,0.35);
         }
-        .profile-name.name-effect-pulse-core {
+        .profile-name.name-effect-pulse-core > .name-fx-text {
             animation: profileBadgeGlow 1.6s ease-in-out infinite;
             text-shadow: 0 0 10px rgba(244,114,182,0.42);
         }
         .profile-name.name-effect-aurora-pulse {
-            color: transparent !important;
-            background: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
-            background-size: 220% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
+            background: none;
+        }
+        .profile-name.name-effect-aurora-pulse > .name-fx-text {
+            background-image: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
+            background-size: 220% 100%;
             animation: profileShimmer 2.4s linear infinite;
         }
         .profile-name.name-effect-rainbow {
-            color: transparent !important;
-            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
-            background-size: 300% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
+            background: none;
+        }
+        .profile-name.name-effect-rainbow > .name-fx-text {
+            background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
+            background-size: 300% 100%;
             animation: profileShimmer 3s linear infinite;
         }
-        .profile-name.name-effect-neon-flicker {
+        .profile-name.name-effect-neon-flicker > .name-fx-text {
             animation: profileNameWave 1.4s ease-in-out infinite;
             text-shadow: 0 0 8px rgba(34,211,238,0.6), 0 0 16px rgba(244,114,182,0.4);
         }
-        .profile-name.name-effect-sparkle {
+        .profile-name.name-effect-sparkle > .name-fx-text {
             animation: profileBadgeGlow 1.2s ease-in-out infinite;
             text-shadow: 0 0 6px rgba(250,204,21,0.55), 0 0 12px rgba(251,191,36,0.35);
         }
-        .profile-name.name-effect-glitch {
-            animation: profileFxGlitch 2.2s infinite;
+        .profile-name.name-effect-glitch > .name-fx-text {
+            animation: dfxGlitch 2.2s infinite;
         }
+        .profile-name.name-effect-wave > .name-fx-text {
+            animation: profileNameWave 2.3s ease-in-out infinite;
+        }
+        .profile-name > .name-fx-text { display: inline; position: relative; }
         .dc-banner.banner-midnight { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%); }
         .dc-banner.banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed); }
         .dc-banner.banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46); }
-        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: profileFxShift 8s ease infinite; }
-        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: profileFxShift 6s ease infinite; }
-        .dc-banner.profile-fx-moonlight {
-            background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8);
-            animation: profileFxRipple 4s ease-in-out infinite;
-        }
-        .dc-banner.profile-fx-neon-city {
-            background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee);
-            background-size: 220% 220%;
-            animation: profileFxShift 5s ease infinite;
-        }
-        .dc-banner.profile-fx-sakura-night {
-            background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af);
-            background-size: 240% 240%;
-            animation: profileFxShift 8s ease infinite;
-        }
+        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: dfxShift 8s ease infinite; }
+        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: dfxShift 6s ease infinite; }
         .profile-chip.legendary-title {
             color: transparent;
             background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
@@ -142,143 +141,6 @@
         .profile-chip.badge.legendary-badge-mythic {
             animation: profileBadgeGlow 1.8s ease-in-out infinite;
             border-color: rgba(250,204,21,0.55);
-        }
-        .profile-hero.profile-fx-royal,
-        .dc-banner.profile-fx-royal {
-            background: linear-gradient(135deg, #d97706, #855CD6);
-        }
-        .profile-hero.profile-fx-nebula,
-        .dc-banner.profile-fx-nebula {
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            background-size: 200% 200%;
-            animation: profileFxShift 7s ease infinite;
-        }
-        @keyframes profileFxShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        @keyframes profileFxGlitch {
-            0%, 88%, 100% { filter: none; }
-            90% { filter: hue-rotate(90deg) saturate(1.3); }
-            92% { filter: hue-rotate(-70deg); }
-        }
-        @keyframes profileFxMatrixScroll {
-            0% { background-position: 0 0, 0 0; }
-            100% { background-position: 0 140px, 0 0; }
-        }
-        @keyframes profileFxHaloPulse {
-            0%, 100% { box-shadow: 0 0 40px rgba(251,191,36,0.25); }
-            50% { box-shadow: 0 0 60px rgba(250,204,21,0.45); }
-        }
-        @keyframes profileFxRipple {
-            0%, 100% { box-shadow: inset 0 0 0 0 rgba(139,92,246,0.15); }
-            50% { box-shadow: inset 0 0 0 24px rgba(139,92,246,0.06); }
-        }
-        @keyframes profileFxStarStreak {
-            0% { background-position: 0% 0%, 0% 0%; }
-            100% { background-position: 100% 100%, 200% 200%; }
-        }
-        @keyframes profileFxGridPulse {
-            0%, 100% { opacity: 0.7; }
-            50% { opacity: 1; }
-        }
-        .profile-hero.profile-fx-sakura,
-        .dc-banner.profile-fx-sakura {
-            background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af);
-            background-size: 220% 220%;
-            animation: profileFxShift 9s ease infinite;
-        }
-        .profile-hero.profile-fx-starfall,
-        .dc-banner.profile-fx-starfall {
-            background:
-                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%),
-                linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca);
-            background-size: 200% 200%, 100% 100%;
-            animation: profileFxStarStreak 5s linear infinite;
-        }
-        .profile-hero.profile-fx-cosmic-aurora,
-        .dc-banner.profile-fx-cosmic-aurora {
-            background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4);
-            background-size: 300% 300%;
-            animation: profileFxShift 8s ease infinite;
-        }
-        .profile-hero.profile-fx-void-rift,
-        .dc-banner.profile-fx-void-rift {
-            background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b);
-            animation: profileFxRipple 3.5s ease-in-out infinite;
-        }
-        .profile-hero.profile-fx-glitch,
-        .dc-banner.profile-fx-glitch {
-            background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15);
-            animation: profileFxGlitch 2.8s infinite;
-        }
-        .profile-hero.profile-fx-matrix-rain,
-        .dc-banner.profile-fx-matrix-rain {
-            background:
-                repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px),
-                linear-gradient(180deg, #052e16, #0f172a);
-            animation: profileFxMatrixScroll 2.2s linear infinite;
-        }
-        .profile-hero.profile-fx-golden-halo,
-        .dc-banner.profile-fx-golden-halo {
-            background: linear-gradient(135deg, #fbbf24, #d97706, #b45309);
-            animation: profileFxHaloPulse 3s ease-in-out infinite;
-        }
-        .profile-hero.profile-fx-void-ripple,
-        .dc-banner.profile-fx-void-ripple {
-            background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%);
-            animation: profileFxRipple 2.6s ease-in-out infinite;
-        }
-        .profile-hero.profile-fx-cherry-bloom,
-        .dc-banner.profile-fx-cherry-bloom {
-            background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e);
-            background-size: 240% 240%;
-            animation: profileFxShift 10s ease infinite;
-        }
-        .profile-hero.profile-fx-cyber-grid,
-        .dc-banner.profile-fx-cyber-grid {
-            background:
-                linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px),
-                linear-gradient(135deg, #0f172a, #1e40af);
-            background-size: 20px 20px, 20px 20px, 100% 100%;
-            animation: profileFxGridPulse 2.4s ease-in-out infinite;
-        }
-        .profile-hero.profile-fx-aurora-wave,
-        .dc-banner.profile-fx-aurora-wave {
-            background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6);
-            background-size: 280% 280%;
-            animation: profileFxShift 6.5s ease infinite;
-        }
-        .profile-hero.profile-fx-crystal-frost,
-        .dc-banner.profile-fx-crystal-frost {
-            background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe);
-            background-size: 200% 200%;
-            animation: profileFxShift 11s ease infinite;
-        }
-        .profile-hero.profile-fx-plasma-storm,
-        .dc-banner.profile-fx-plasma-storm {
-            background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
-            background-size: 260% 260%;
-            animation: profileFxShift 4.5s ease infinite;
-        }
-        .profile-hero.profile-fx-inferno-glow,
-        .dc-banner.profile-fx-inferno-glow {
-            background: linear-gradient(135deg, #ef4444, #f97316, #ea580c);
-            background-size: 220% 220%;
-            animation: profileFxShift 5.5s ease infinite;
-        }
-        .profile-hero.profile-fx-ocean-breeze,
-        .dc-banner.profile-fx-ocean-breeze {
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
-            background-size: 220% 220%;
-            animation: profileFxRipple 4s ease-in-out infinite;
-        }
-        .profile-hero.profile-fx-golden-aura,
-        .dc-banner.profile-fx-golden-aura {
-            background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
-            background-size: 200% 200%;
-            animation: profileFxHaloPulse 3.2s ease-in-out infinite;
         }
 
         /* 數據統計區 */
@@ -328,43 +190,24 @@
         #cosmetic-msg { font-size: 12px; margin-top: 8px; color:#93C5FD; min-height: 1.2em; }
 
         /* Discord 風格個人面板 */
-        .dc-profile-wrap { max-width: 680px; margin: 0 auto 24px; }
+        .dc-profile-wrap { max-width: 680px; margin: 0 auto 24px; overflow: hidden; border-radius: 16px; isolation: isolate; }
         .dc-banner {
-            height: 128px; border-radius: 16px 16px 0 0; position: relative;
+            height: 148px; border-radius: 16px 16px 0 0; position: relative;
             background: linear-gradient(135deg, #4C97FF, #855CD6);
+            overflow: hidden;
         }
         /* 橫幅／面板特效（置於 base 之後，確保覆蓋預設漸層） */
         .dc-banner.banner-midnight { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%) !important; }
         .dc-banner.banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed) !important; }
         .dc-banner.banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46) !important; }
-        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4) !important; background-size: 200% 200% !important; animation: profileFxShift 8s ease infinite !important; }
-        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee) !important; background-size: 220% 220% !important; animation: profileFxShift 6s ease infinite !important; }
-        .dc-banner.profile-fx-moonlight { background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8) !important; animation: profileFxRipple 4s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee) !important; background-size: 220% 220% !important; animation: profileFxShift 5s ease infinite !important; }
-        .dc-banner.profile-fx-sakura-night { background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af) !important; background-size: 240% 240% !important; animation: profileFxShift 8s ease infinite !important; }
-        .dc-banner.profile-fx-royal { background: linear-gradient(135deg, #d97706, #855CD6) !important; }
-        .dc-banner.profile-fx-nebula { background: linear-gradient(135deg, #2563eb, #7c3aed) !important; background-size: 200% 200% !important; animation: profileFxShift 7s ease infinite !important; }
-        .dc-banner.profile-fx-sakura { background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af) !important; background-size: 220% 220% !important; animation: profileFxShift 9s ease infinite !important; }
-        .dc-banner.profile-fx-starfall { background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%), linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca) !important; background-size: 200% 200%, 100% 100% !important; animation: profileFxStarStreak 5s linear infinite !important; }
-        .dc-banner.profile-fx-cosmic-aurora { background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4) !important; background-size: 300% 300% !important; animation: profileFxShift 8s ease infinite !important; }
-        .dc-banner.profile-fx-void-rift { background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b) !important; animation: profileFxRipple 3.5s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-glitch { background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15) !important; animation: profileFxGlitch 2.8s infinite !important; }
-        .dc-banner.profile-fx-matrix-rain { background: repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px), linear-gradient(180deg, #052e16, #0f172a) !important; animation: profileFxMatrixScroll 2.2s linear infinite !important; }
-        .dc-banner.profile-fx-golden-halo { background: linear-gradient(135deg, #fbbf24, #d97706, #b45309) !important; animation: profileFxHaloPulse 3s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-void-ripple { background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%) !important; animation: profileFxRipple 2.6s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-cherry-bloom { background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e) !important; background-size: 240% 240% !important; animation: profileFxShift 10s ease infinite !important; }
-        .dc-banner.profile-fx-cyber-grid { background: linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px), linear-gradient(135deg, #0f172a, #1e40af) !important; background-size: 20px 20px, 20px 20px, 100% 100% !important; animation: profileFxGridPulse 2.4s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-aurora-wave { background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6) !important; background-size: 280% 280% !important; animation: profileFxShift 6.5s ease infinite !important; }
-        .dc-banner.profile-fx-crystal-frost { background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe) !important; background-size: 200% 200% !important; animation: profileFxShift 11s ease infinite !important; }
-        .dc-banner.profile-fx-plasma-storm { background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6) !important; background-size: 260% 260% !important; animation: profileFxShift 4.5s ease infinite !important; }
-        .dc-banner.profile-fx-inferno-glow { background: linear-gradient(135deg, #ef4444, #f97316, #ea580c) !important; background-size: 220% 220% !important; animation: profileFxShift 5.5s ease infinite !important; }
-        .dc-banner.profile-fx-ocean-breeze { background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7) !important; background-size: 220% 220% !important; animation: profileFxRipple 4s ease-in-out infinite !important; }
-        .dc-banner.profile-fx-golden-aura { background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b) !important; background-size: 200% 200% !important; animation: profileFxHaloPulse 3.2s ease-in-out infinite !important; }
+        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4) !important; background-size: 200% 200% !important; animation: dfxShift 8s ease infinite !important; }
+        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee) !important; background-size: 220% 220% !important; animation: dfxShift 6s ease infinite !important; }
         .dc-body {
             background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06);
             border-top: none; border-radius: 0 0 16px 16px; padding: 0 20px 20px;
+            position: relative; z-index: 3;
         }
-        .dc-avatar-row { display: flex; gap: 16px; align-items: flex-end; margin-top: -52px; position: relative; z-index: 2; }
+        .dc-avatar-row { display: flex; gap: 16px; align-items: flex-end; margin-top: -52px; position: relative; z-index: 4; }
         .dc-avatar-wrap { position: relative; flex-shrink: 0; }
         .dc-avatar-wrap .avatar-large {
             width: 96px; height: 96px; margin-bottom: 0;
@@ -375,8 +218,12 @@
             position: absolute; bottom: 6px; right: 6px; width: 18px; height: 18px;
             border-radius: 50%; background: #23a559; border: 4px solid var(--card-bg);
         }
-        .dc-name-block { flex: 1; min-width: 0; padding-bottom: 6px; }
-        .dc-name-block .profile-name { font-size: 1.5rem; margin-bottom: 2px; text-align: left; }
+        .dc-name-block { flex: 1; min-width: 0; padding-bottom: 6px; position: relative; z-index: 1; }
+        .dc-name-block .profile-name {
+            font-size: 1.5rem; margin-bottom: 2px; text-align: left;
+            position: relative; z-index: 1;
+            display: inline-block; width: fit-content; max-width: 100%;
+        }
         .dc-custom-status { font-size: 13px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
         .dc-custom-status.empty { color: #64748b; font-style: italic; font-weight: 400; }
         .dc-meta-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; justify-content: flex-start; }
@@ -619,10 +466,17 @@
     </div>
 </div>
 
+<script src="shared/doratch-docoin-catalog.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const DocoinCatalog = window.DoratchDocoinCatalog || {};
+    const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
+    const isDocoinBanner = DocoinCatalog.isDocoinBanner || (() => false);
+    const isDocoinAvatar = DocoinCatalog.isDocoinAvatar || (() => false);
+    const isDocoinLegendaryTitle = DocoinCatalog.isDocoinLegendaryTitle || (() => false);
 
     const firebaseConfig = { apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU", authDomain: "chat-52c0d.firebaseapp.com", projectId: "chat-52c0d", appId: "1:449329325475:web:75f255c4055360dc9e6616" };
     const app = initializeApp(firebaseConfig);
@@ -967,6 +821,19 @@
         glitch: "name-effect-glitch"
     };
 
+    function ensureNameFxSpan(nameEl, label) {
+        if (!nameEl) return null;
+        let span = nameEl.querySelector(".name-fx-text");
+        if (!span) {
+            nameEl.textContent = "";
+            span = document.createElement("span");
+            span.className = "name-fx-text";
+            nameEl.appendChild(span);
+        }
+        span.textContent = label;
+        return span;
+    }
+
     function nameEffectClass(effectType) {
         const v = cosmeticDisplayValue("nameEffect", effectType);
         return NAME_EFFECT_CLASS_MAP[v] || "";
@@ -1110,10 +977,18 @@
 
         const nameEl = document.getElementById("profile-display-name");
         if (nameEl) {
-            nameEl.style.color = nameColor || "#ffffff";
+            const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
+            const nameSpan = ensureNameFxSpan(nameEl, label);
             nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-neon-flicker", "name-effect-sparkle", "name-effect-glitch");
+            nameEl.style.color = "";
+            nameEl.style.background = "";
             const cls = nameEffectClass(nameEffect);
             if (cls) nameEl.classList.add(cls);
+            const gradientFx = ["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow"];
+            if (nameSpan) {
+                nameSpan.style.color = (cls && gradientFx.includes(cls)) ? "" : (nameColor || "#ffffff");
+                nameSpan.style.background = "";
+            }
         }
         const sideNameEl = document.getElementById("side-username");
         if (sideNameEl) sideNameEl.style.color = nameColor || "";
@@ -1130,6 +1005,28 @@
             badgeEl.textContent = badge ? ("✨ " + badge) : "";
             badgeEl.classList.toggle("legendary-badge", isLegendaryBadge(badge));
             badgeEl.classList.toggle("legendary-badge-mythic", isMythicBadge(badge));
+        }
+        applyDocoinLuxuryUI(data);
+    }
+
+    function applyDocoinLuxuryUI(data) {
+        try {
+            const profileEffect = resolveVisualCosmetic(data, "profileEffect");
+            const banner = resolveVisualCosmetic(data, "banner");
+            const avatar = pickOwnedEquipped(data, "avatar");
+            const title = pickOwnedEquipped(data, "title");
+
+            document.querySelector(".dc-profile-wrap")?.classList.toggle(
+                "docoin-panel-lux",
+                isDocoinProfileEffect(profileEffect) || isDocoinBanner(banner)
+            );
+            const bannerEl = document.getElementById("dc-banner");
+            if (bannerEl) bannerEl.classList.toggle("docoin-banner-lux", isDocoinBanner(banner));
+            document.querySelector(".dc-avatar-wrap")?.classList.toggle("docoin-avatar-lux", isDocoinAvatar(avatar));
+            const titleEl = document.getElementById("profile-title-chip");
+            if (titleEl) titleEl.classList.toggle("docoin-title-lux", isDocoinLegendaryTitle(title));
+        } catch (e) {
+            console.warn("applyDocoinLuxuryUI", e);
         }
     }
 
@@ -1204,7 +1101,8 @@
     function applyDisplayUI(user, data) {
         const label = getDisplayLabel(data, user.email);
         const avatar = avatarUrlFor(data, user.email, 128);
-        document.getElementById("profile-display-name").innerText = label;
+        const nameEl = document.getElementById("profile-display-name");
+        ensureNameFxSpan(nameEl, label);
         document.getElementById("display-uid").innerText = `帳號：${user.email}`;
         const memberEl = document.getElementById("member-since");
         if (memberEl) memberEl.textContent = formatMemberSince(data);
@@ -1231,24 +1129,34 @@
     });
 
     const profileInfoModal = document.getElementById("profile-info-modal");
-    document.getElementById("btn-edit-profile-info").addEventListener("click", function () {
-        document.getElementById("input-custom-status").value = String(userData.customStatus || "").trim();
-        document.getElementById("input-profile-bio").value = String(userData.profileBio || "").trim();
-        document.getElementById("profile-form-msg").textContent = "";
-        profileInfoModal.classList.add("open");
-        profileInfoModal.setAttribute("aria-hidden", "false");
-    });
-    document.getElementById("btn-profile-info-cancel").addEventListener("click", function () {
-        profileInfoModal.classList.remove("open");
-        profileInfoModal.setAttribute("aria-hidden", "true");
-    });
-    profileInfoModal.addEventListener("click", function (e) {
-        if (e.target === profileInfoModal) {
+    const btnEditProfileInfo = document.getElementById("btn-edit-profile-info");
+    if (btnEditProfileInfo && profileInfoModal) {
+        btnEditProfileInfo.addEventListener("click", function () {
+            document.getElementById("input-custom-status").value = String(userData.customStatus || "").trim();
+            document.getElementById("input-profile-bio").value = String(userData.profileBio || "").trim();
+            document.getElementById("profile-form-msg").textContent = "";
+            profileInfoModal.classList.add("open");
+            profileInfoModal.setAttribute("aria-hidden", "false");
+        });
+    }
+    const btnProfileInfoCancel = document.getElementById("btn-profile-info-cancel");
+    if (btnProfileInfoCancel && profileInfoModal) {
+        btnProfileInfoCancel.addEventListener("click", function () {
             profileInfoModal.classList.remove("open");
             profileInfoModal.setAttribute("aria-hidden", "true");
-        }
-    });
-    document.getElementById("btn-profile-info-save").addEventListener("click", async function () {
+        });
+    }
+    if (profileInfoModal) {
+        profileInfoModal.addEventListener("click", function (e) {
+            if (e.target === profileInfoModal) {
+                profileInfoModal.classList.remove("open");
+                profileInfoModal.setAttribute("aria-hidden", "true");
+            }
+        });
+    }
+    const btnProfileInfoSave = document.getElementById("btn-profile-info-save");
+    if (btnProfileInfoSave) {
+        btnProfileInfoSave.addEventListener("click", async function () {
         if (!userRef) return;
         const status = String(document.getElementById("input-custom-status").value || "").trim().slice(0, 60);
         const bio = String(document.getElementById("input-profile-bio").value || "").trim().slice(0, 300);
@@ -1270,7 +1178,8 @@
             btn.disabled = false;
             btn.textContent = "儲存";
         }
-    });
+        });
+    }
 
     function openNameModal(required) {
         const cur = normalizeDisplayName(userData.displayName);

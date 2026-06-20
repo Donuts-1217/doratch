@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>聊天室 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -250,8 +252,11 @@
         }
         .name-effect-prism {
             color: transparent !important;
-            background: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
-            background-size: 220% auto;
+            -webkit-text-fill-color: transparent !important;
+            background-color: transparent;
+            background-image: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
+            background-size: 220% 100%;
+            background-repeat: no-repeat;
             -webkit-background-clip: text;
             background-clip: text;
             animation: namePrism 2.6s linear infinite;
@@ -267,8 +272,11 @@
         }
         .name-effect-aurora-pulse {
             color: transparent !important;
-            background: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
-            background-size: 220% auto;
+            -webkit-text-fill-color: transparent !important;
+            background-color: transparent;
+            background-image: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
+            background-size: 220% 100%;
+            background-repeat: no-repeat;
             -webkit-background-clip: text;
             background-clip: text;
             animation: namePrism 2.4s linear infinite;
@@ -276,8 +284,11 @@
         }
         .name-effect-rainbow {
             color: transparent !important;
-            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
-            background-size: 300% auto;
+            -webkit-text-fill-color: transparent !important;
+            background-color: transparent;
+            background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
+            background-size: 300% 100%;
+            background-repeat: no-repeat;
             -webkit-background-clip: text;
             background-clip: text;
             animation: namePrism 3s linear infinite;
@@ -292,7 +303,7 @@
             text-shadow: 0 0 6px rgba(250,204,21,0.55), 0 0 12px rgba(251,191,36,0.35);
         }
         .name-effect-glitch {
-            animation: pfxGlitch 2.2s infinite;
+            animation: dfxGlitch 2.2s infinite;
         }
         .msg-time { font-size: 12px; color: var(--text-muted); }
         .msg-edited { margin-left: 6px; color: #94a3b8; font-size: 11px; font-style: italic; }
@@ -554,25 +565,27 @@
             font-family: "Outfit", "Noto Sans TC", sans-serif;
         }
         .profile-pop-banner {
-            height: 105px;
+            height: 120px;
             background: linear-gradient(120deg, #5865f2, #4752c4 45%, #3c45a5);
             position: relative;
+            overflow: hidden;
         }
         .profile-pop-banner.pop-banner-midnight { background: linear-gradient(135deg, #0f172a, #1e3a8a 60%, #312e81); }
         .profile-pop-banner.pop-banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed); }
         .profile-pop-banner.pop-banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46); }
-        .profile-pop-banner.pop-banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: pfxShift 8s ease infinite; }
-        .profile-pop-banner.pop-banner-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: pfxShift 6s ease infinite; }
+        .profile-pop-banner.pop-banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: dfxShift 8s ease infinite; }
+        .profile-pop-banner.pop-banner-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: dfxShift 6s ease infinite; }
         .profile-pop-sheet {
             background: #2b2d31;
             padding: 0 16px 16px;
             position: relative;
+            z-index: 3;
         }
         .profile-pop-avatar-wrap {
             position: absolute;
             left: 16px;
             top: -42px;
-            z-index: 2;
+            z-index: 4;
         }
         .profile-pop-avatar {
             width: 80px;
@@ -599,6 +612,8 @@
             padding-top: 48px;
             padding-left: 2px;
             min-height: 52px;
+            position: relative;
+            z-index: 1;
         }
         .profile-pop-name {
             font-weight: 800;
@@ -737,161 +752,6 @@
         .profile-pop-section-title { display: none; }
         .profile-pop-email { display: none; }
         .profile-pop-role { display: none; }
-        @keyframes pfxShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-        @keyframes pfxGlitch {
-            0%, 88%, 100% { filter: none; transform: none; }
-            90% { filter: hue-rotate(90deg) saturate(1.4); transform: translateX(2px); }
-            92% { filter: hue-rotate(-70deg); transform: translateX(-2px); }
-            94% { filter: none; transform: translateX(1px); }
-        }
-        @keyframes pfxMatrixScroll {
-            0% { background-position: 0 0, 0 0; }
-            100% { background-position: 0 120px, 0 0; }
-        }
-        @keyframes pfxHaloPulse {
-            0%, 100% { box-shadow: inset 0 -20px 40px rgba(251,191,36,0.25); }
-            50% { box-shadow: inset 0 -28px 52px rgba(250,204,21,0.45); }
-        }
-        @keyframes pfxRipple {
-            0%, 100% { box-shadow: inset 0 0 0 0 rgba(139,92,246,0.2); }
-            50% { box-shadow: inset 0 0 0 18px rgba(139,92,246,0.08); }
-        }
-        @keyframes pfxStarStreak {
-            0% { background-position: 0% 0%, 0% 0%; }
-            100% { background-position: 100% 100%, 200% 200%; }
-        }
-        @keyframes pfxGridPulse {
-            0%, 100% { opacity: 0.55; }
-            50% { opacity: 0.9; }
-        }
-        .profile-pop.fx-royal .profile-pop-banner,
-        .profile-pop-banner.fx-royal {
-            background: linear-gradient(135deg, #d97706, #855CD6);
-        }
-        .profile-pop.fx-nebula .profile-pop-banner,
-        .profile-pop-banner.fx-nebula {
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            background-size: 200% 200%;
-            animation: pfxShift 7s ease infinite;
-        }
-        .profile-pop.fx-sakura .profile-pop-banner,
-        .profile-pop-banner.fx-sakura {
-            background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af);
-            background-size: 220% 220%;
-            animation: pfxShift 9s ease infinite;
-        }
-        .profile-pop.fx-starfall .profile-pop-banner,
-        .profile-pop-banner.fx-starfall {
-            background:
-                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%),
-                linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca);
-            background-size: 200% 200%, 100% 100%;
-            animation: pfxStarStreak 5s linear infinite;
-        }
-        .profile-pop.fx-cosmic-aurora .profile-pop-banner,
-        .profile-pop-banner.fx-cosmic-aurora {
-            background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4);
-            background-size: 300% 300%;
-            animation: pfxShift 8s ease infinite;
-        }
-        .profile-pop.fx-void-rift .profile-pop-banner,
-        .profile-pop-banner.fx-void-rift {
-            background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b);
-            animation: pfxRipple 3.5s ease-in-out infinite;
-        }
-        .profile-pop.fx-glitch .profile-pop-banner,
-        .profile-pop-banner.fx-glitch {
-            background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15);
-            animation: pfxGlitch 2.8s infinite;
-        }
-        .profile-pop.fx-matrix-rain .profile-pop-banner,
-        .profile-pop-banner.fx-matrix-rain {
-            background:
-                repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px),
-                linear-gradient(180deg, #052e16, #0f172a);
-            animation: pfxMatrixScroll 2.2s linear infinite;
-        }
-        .profile-pop.fx-golden-halo .profile-pop-banner,
-        .profile-pop-banner.fx-golden-halo {
-            background: linear-gradient(135deg, #fbbf24, #d97706, #b45309);
-            animation: pfxHaloPulse 3s ease-in-out infinite;
-        }
-        .profile-pop.fx-void-ripple .profile-pop-banner,
-        .profile-pop-banner.fx-void-ripple {
-            background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%);
-            animation: pfxRipple 2.6s ease-in-out infinite;
-        }
-        .profile-pop.fx-cherry-bloom .profile-pop-banner,
-        .profile-pop-banner.fx-cherry-bloom {
-            background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e);
-            background-size: 240% 240%;
-            animation: pfxShift 10s ease infinite;
-        }
-        .profile-pop.fx-cyber-grid .profile-pop-banner,
-        .profile-pop-banner.fx-cyber-grid {
-            background:
-                linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px),
-                linear-gradient(135deg, #0f172a, #1e40af);
-            background-size: 20px 20px, 20px 20px, 100% 100%;
-            animation: pfxGridPulse 2.4s ease-in-out infinite;
-        }
-        .profile-pop.fx-aurora-wave .profile-pop-banner,
-        .profile-pop-banner.fx-aurora-wave {
-            background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6);
-            background-size: 280% 280%;
-            animation: pfxShift 6.5s ease infinite;
-        }
-        .profile-pop.fx-crystal-frost .profile-pop-banner,
-        .profile-pop-banner.fx-crystal-frost {
-            background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe);
-            background-size: 200% 200%;
-            animation: pfxShift 11s ease infinite;
-        }
-        .profile-pop.fx-plasma-storm .profile-pop-banner,
-        .profile-pop-banner.fx-plasma-storm {
-            background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
-            background-size: 260% 260%;
-            animation: pfxShift 4.5s ease infinite;
-        }
-        .profile-pop.fx-inferno-glow .profile-pop-banner,
-        .profile-pop-banner.fx-inferno-glow {
-            background: linear-gradient(135deg, #ef4444, #f97316, #ea580c);
-            background-size: 220% 220%;
-            animation: pfxShift 5.5s ease infinite;
-        }
-        .profile-pop.fx-ocean-breeze .profile-pop-banner,
-        .profile-pop-banner.fx-ocean-breeze {
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
-            background-size: 220% 220%;
-            animation: pfxRipple 4s ease-in-out infinite;
-        }
-        .profile-pop.fx-golden-aura .profile-pop-banner,
-        .profile-pop-banner.fx-golden-aura {
-            background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
-            background-size: 200% 200%;
-            animation: pfxHaloPulse 3.2s ease-in-out infinite;
-        }
-        .profile-pop.fx-moonlight .profile-pop-banner,
-        .profile-pop-banner.fx-moonlight {
-            background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8);
-            animation: pfxRipple 4s ease-in-out infinite;
-        }
-        .profile-pop.fx-neon-city .profile-pop-banner,
-        .profile-pop-banner.fx-neon-city {
-            background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee);
-            background-size: 220% 220%;
-            animation: pfxShift 5s ease infinite;
-        }
-        .profile-pop.fx-sakura-night .profile-pop-banner,
-        .profile-pop-banner.fx-sakura-night {
-            background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af);
-            background-size: 240% 240%;
-            animation: pfxShift 8s ease infinite;
-        }
         .chat-pref-grid { display: grid; gap: 10px; margin-top: 12px; }
         .chat-pref-row { display: grid; gap: 6px; }
         .chat-pref-row label { font-size: 12px; color: #94a3b8; font-weight: 700; }
@@ -1194,11 +1054,18 @@
     <script src="discord-bot-runtime.js"></script>
     <script src="discord-bot-engine.js"></script>
     <script src="chat-discord-ui.js"></script>
+    <script src="shared/doratch-docoin-catalog.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const DocoinCatalog = window.DoratchDocoinCatalog || {};
+    const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
+    const isDocoinBanner = DocoinCatalog.isDocoinBanner || (() => false);
+    const isDocoinAvatar = DocoinCatalog.isDocoinAvatar || (() => false);
+    const isDocoinLegendaryTitle = DocoinCatalog.isDocoinLegendaryTitle || (() => false);
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -1676,6 +1543,13 @@
         return NAME_EFFECT_CLASS_MAP[v] || "";
     }
 
+    const GRADIENT_NAME_EFFECTS = new Set(["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow"]);
+    function nameColorStyleAttr(nameColor, effectType) {
+        const cls = nameEffectClass(effectType);
+        if (cls && GRADIENT_NAME_EFFECTS.has(cls)) return "";
+        return nameColor ? ` style="color:${escHtml(nameColor)}"` : "";
+    }
+
     const NAME_EFFECT_CLASS_MAP = {
         wave: "name-effect-wave",
         prism: "name-effect-prism",
@@ -1763,7 +1637,10 @@
         const sideBadge = document.getElementById("side-cosmetic-badge");
         const sideCoins = document.getElementById("side-coins");
         const c = currentCosmeticSnapshot();
-        if (sideAvatar) sideAvatar.src = avatarFromCosmetics((currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
+        if (sideAvatar) {
+            sideAvatar.src = avatarFromCosmetics((currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
+            sideAvatar.classList.toggle("docoin-avatar-lux", isDocoinAvatar(c.avatar));
+        }
         applyAvatarFrameToElement(sideAvatar, c.frame);
         if (sideName) sideName.style.color = c.nameColor || "";
         const badgeText = c.title || c.badge;
@@ -2715,14 +2592,17 @@
             const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
             const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
-            const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || "")) ? "user-title-badge legendary-title" : "user-title-badge";
+            const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || ""))
+                ? ("user-title-badge legendary-title" + (isDocoinLegendaryTitle(senderCosmetics.title || "") ? " docoin-title-lux" : ""))
+                : "user-title-badge";
             const badgeCls = (!isBotMsg && isLegendaryBadge(senderCosmetics.badge || ""))
                 ? ("user-cosmetic-badge legendary-badge" + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
                 : "user-cosmetic-badge";
             const titleBadge = (!isBotMsg && senderCosmetics.title) ? `<span class="${titleCls}">🏷️ ${escHtml(senderCosmetics.title)}</span>` : '';
             const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="${badgeCls}">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
-            const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? ` style="color:${escHtml(senderCosmetics.nameColor)}"` : '';
+            const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? nameColorStyleAttr(senderCosmetics.nameColor, senderCosmetics.nameEffect) : '';
             const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect) ? nameEffectClass(senderCosmetics.nameEffect) : "";
+            const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
             const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
             const replyHtml = msg.replyTo
                 ? `<div class="reply-quote">回覆 ${escHtml(msg.replyTo.senderName || "使用者")}：${escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90))}</div>`
@@ -2754,7 +2634,7 @@
             } else {
                 html += `
                     <div class="${rowClass}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
-                        <div class="msg-avatar-container"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
+                        <div class="msg-avatar-container${docoinAvatarLux ? " docoin-avatar-lux" : ""}"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
                         <div class="msg-content">
                             ${quickActionsHtml}
                             <div class="msg-header">
@@ -3111,7 +2991,8 @@
         const rolePills = [];
         if (c.title) {
             const leg = isLegendaryTitle(c.title);
-            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}">🏷️ ${escHtml(c.title)}</span>`);
+            const docoinTitle = isDocoinLegendaryTitle(c.title);
+            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}${docoinTitle ? " docoin-title-lux" : ""}">🏷️ ${escHtml(c.title)}</span>`);
         }
         if (isBot) rolePills.push('<span class="profile-pop-role-pill">🤖 BOT</span>');
         else if (msg.senderId === currentUser.uid) rolePills.push('<span class="profile-pop-role-pill">你</span>');
@@ -3138,7 +3019,8 @@
                 const ownedBadges = ownedItemsBySlot(senderData || {}, "badge");
                 badgeShelf = ownedBadges.slice(0, 10).map((b) => {
                     const isLegend = isLegendaryBadge(b.value || "");
-                    return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
+                    const isMythic = isMythicBadge(b.value || "");
+                    return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}${isMythic ? " docoin-mythic" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
                 });
             } catch (_) {}
         }
@@ -3151,7 +3033,8 @@
         if (c.nameColor) c.nameColor = resolveCosmeticForDisplay(senderData, "nameColor", c.nameColor) || c.nameColor;
         const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : "";
         if (!badgeShelf.length && c.badge) {
-            badgeShelf = [`<span class="profile-pop-badge-chip${isLegendaryBadge(c.badge) ? " legend" : ""}">✨ ${escHtml(c.badge)}</span>`];
+            const mythic = isMythicBadge(c.badge);
+            badgeShelf = [`<span class="profile-pop-badge-chip${isLegendaryBadge(c.badge) ? " legend" : ""}${mythic ? " docoin-mythic" : ""}">✨ ${escHtml(c.badge)}</span>`];
         }
         const avatarUrl = isBot
             ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=5865F2&color=fff`
@@ -3184,15 +3067,17 @@
                 <a class="profile-pop-action" href="${profileHref}">查看個人檔案</a>
                 <button type="button" class="profile-pop-action secondary" data-profile-pop-close>關閉</button>
                </div>`;
+        const docoinPanelLux = isDocoinProfileEffect(c.profileEffect) || isDocoinBanner(c.banner);
+        const docoinAvatarLux = !isBot && isDocoinAvatar(c.avatar || "");
         pop.innerHTML = `
             <div class="profile-pop-banner ${bannerVisualCls}"></div>
             <div class="profile-pop-sheet">
-                <div class="profile-pop-avatar-wrap">
+                <div class="profile-pop-avatar-wrap${docoinAvatarLux ? " docoin-avatar-lux" : ""}">
                     <img src="${avatarUrl}" alt="" class="profile-pop-avatar ${frameClass(c.frame || "")} ${isLegendaryFrame(c.frame || "") ? "avatar-frame-legendary" : ""}">
                     <span class="profile-pop-status-dot${isBot ? " bot" : ""}"></span>
                 </div>
                 <div class="profile-pop-identity">
-                    <div class="profile-pop-name ${nameFxCls}"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
+                    <div class="profile-pop-name ${nameFxCls}">${c.nameColor && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? `<span class="name-fx-text" style="color:${escHtml(c.nameColor)}">` : `<span class="name-fx-text">`}${escHtml(name)}</span></div>
                     <div class="profile-pop-handle">${escHtml(handle)}</div>
                     ${statusBlock}
                     ${rolePills.length ? `<div class="profile-pop-role-row">${rolePills.join("")}</div>` : ""}
@@ -3207,8 +3092,9 @@
                 ${profileBtn}
             </div>
         `;
-        pop.classList.remove(...PROFILE_FX_CLASSES);
+        pop.classList.remove(...PROFILE_FX_CLASSES, "docoin-panel-lux");
         if (profileFxCls) pop.classList.add(profileFxCls);
+        pop.classList.toggle("docoin-panel-lux", docoinPanelLux);
         const closeBtn = pop.querySelector("[data-profile-pop-close]");
         if (closeBtn) {
             closeBtn.addEventListener("click", (e) => {
