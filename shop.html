@@ -617,15 +617,51 @@
         return `https://ui-avatars.com/api/?name=${fb}&background=random`;
     }
 
-    function applySidebarCosmeticsFromData(data, email) {
+    const DISPLAY_NAME_MIN = 2;
+    const DISPLAY_NAME_MAX = 20;
+    function normalizeDisplayName(raw) {
+        if (raw == null) return "";
+        return String(raw).trim().slice(0, DISPLAY_NAME_MAX);
+    }
+    function getDisplayLabel(userData, email) {
+        const dn = normalizeDisplayName(userData && userData.displayName);
+        if (dn.length >= DISPLAY_NAME_MIN) return dn;
+        const em = (email || "").trim();
+        if (em.includes("@")) return em.split("@")[0];
+        return em || "使用者";
+    }
+    function sidebarNameColor(equipped) {
+        const c = (equipped && equipped.nameColor) ? String(equipped.nameColor).trim() : "";
+        if (!c || c === "transparent") return "#e2e8f0";
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c;
+        return "#e2e8f0";
+    }
+
+    function applySidebarUserUi(user, data) {
+        const email = user?.email || "";
+        const label = getDisplayLabel(data, email);
         const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
         const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
         const avatarType = eq.avatar ? String(eq.avatar) : "";
         const hasAvatar = avatarType && inv.includes("avatar_" + avatarType);
         const sideAvatar = document.getElementById("side-avatar");
         const sideName = document.getElementById("side-username");
-        if (sideAvatar) sideAvatar.src = avatarFromType(hasAvatar ? eq.avatar : "", email || "");
-        if (sideName) sideName.style.color = (eq && eq.nameColor) ? eq.nameColor : "";
+        if (sideAvatar) {
+            sideAvatar.src = avatarFromType(hasAvatar ? eq.avatar : "", label);
+        }
+        if (sideName) {
+            sideName.textContent = label;
+            sideName.className = "";
+            sideName.style.background = "";
+            sideName.style.webkitBackgroundClip = "";
+            sideName.style.backgroundClip = "";
+            sideName.style.webkitTextFillColor = "";
+            sideName.style.color = sidebarNameColor(eq);
+        }
+    }
+
+    function applySidebarCosmeticsFromData(data, email) {
+        applySidebarUserUi({ email }, data);
     }
 
     function updateWalletUi(data) {
@@ -678,8 +714,7 @@
         if (snap.exists()) {
             const data = snap.data();
             updateWalletUi(data || {});
-            document.getElementById('side-username').innerText = user.email.split('@')[0];
-            applySidebarCosmeticsFromData(data, user.email || "");
+            applySidebarUserUi(user, data);
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
@@ -714,7 +749,7 @@
         const fresh = await getDoc(userRef);
         currentUserData = fresh.data() || { doord: 0, docoin: 0, coins: 0, inventory: [] };
         updateWalletUi(currentUserData);
-        applySidebarCosmeticsFromData(currentUserData, user.email || "");
+        applySidebarUserUi(user, currentUserData);
         const reviewStatus = document.getElementById('review-status');
         if (reviewStatus) {
             const lim = Number.isFinite(currentUserData.reviewUploadDailyLimit) ? currentUserData.reviewUploadDailyLimit : 1;
