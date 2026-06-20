@@ -6,15 +6,14 @@
     <link rel="icon" type="image/png" href="icons/icon.png">
     <link rel="apple-touch-icon" href="icons/icon.png">
     <link rel="stylesheet" href="responsive-global.css">
+    <script src="doratch-mobile-shell.js"></script>
     <script>
         (function () {
             var qs = new URLSearchParams(location.search);
             if (qs.get("site") === "1") return;
-            var desktop = window.matchMedia("(min-width: 901px) and (hover: hover) and (pointer: fine)").matches;
-            if (desktop) return;
-            var uaMobile = /Android|webOS|iPhone|iPod|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent || "");
-            var touchPhone = window.matchMedia("(max-width: 900px) and (hover: none) and (pointer: coarse)").matches;
-            if (uaMobile || touchPhone) location.replace("app.html?app=1");
+            if (window.DoratchDevice && window.DoratchDevice.isMobileDevice && window.DoratchDevice.isMobileDevice()) {
+                location.replace("app.html?app=1");
+            }
         })();
     </script>
     <title>Doratch - 程式學習與創作平台</title>

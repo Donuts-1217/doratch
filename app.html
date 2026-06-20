@@ -160,7 +160,7 @@
     <div class="app-home">
         <div class="app-top">
             <div class="brand">doratch<span>mobile app</span></div>
-            <a href="login.html" class="auth-btn" id="auth-btn">登入</a>
+            <a href="login.html?app=1" class="auth-btn" id="auth-btn">登入</a>
         </div>
 
         <div class="hero-card">
@@ -256,7 +256,7 @@
 
             if (!user) {
                 btn.textContent = "登入";
-                btn.href = "login.html";
+                btn.href = "login.html?app=1";
                 btn.onclick = null;
                 strip.classList.remove("visible");
                 greeting.textContent = "歡迎來到 Doratch";

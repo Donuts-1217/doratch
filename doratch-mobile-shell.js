@@ -1,6 +1,44 @@
 /**
  * Doratch 手機 App — 底部導覽、PWA、App 模式連結保留
  */
+(function (global) {
+    function isMobileDevice() {
+        if (global.matchMedia && global.matchMedia("(min-width: 901px) and (hover: hover) and (pointer: fine)").matches) {
+            return false;
+        }
+        var ua = /Android|webOS|iPhone|iPod|IEMobile|Opera Mini|Mobile/i.test(global.navigator.userAgent || "");
+        var touch = global.matchMedia && global.matchMedia("(max-width: 900px) and (hover: none) and (pointer: coarse)").matches;
+        return ua || touch;
+    }
+
+    function postLoginDestination(opts) {
+        opts = opts || {};
+        if (!isMobileDevice()) {
+            if (opts.needDisplayName) return "profile.html?needDisplayName=1";
+            return opts.fallback || "main.html";
+        }
+        try { global.localStorage.setItem("doratchAppMode", "1"); } catch (_) {}
+        if (opts.needDisplayName) return "profile.html?needDisplayName=1&app=1";
+        return "app.html?app=1";
+    }
+
+    function maybeMobileEntryRedirect() {
+        var qs = new global.URLSearchParams(global.location.search);
+        if (qs.get("site") === "1") return;
+        var file = (global.location.pathname.split("/").pop() || "index.html").split("?")[0];
+        if ((file === "index.html" || file === "main.html") && isMobileDevice()) {
+            global.location.replace("app.html?app=1");
+        }
+    }
+
+    global.DoratchDevice = {
+        isMobileDevice: isMobileDevice,
+        postLoginDestination: postLoginDestination
+    };
+
+    maybeMobileEntryRedirect();
+})(window);
+
 (function () {
     const PAGE_KEYS = {
         "app.html": "home",
@@ -232,6 +270,8 @@
 
     window.DoratchMobile = {
         isAppMode: isAppMode,
+        isMobileDevice: function () { return window.DoratchDevice && window.DoratchDevice.isMobileDevice(); },
+        postLoginDestination: function (opts) { return window.DoratchDevice && window.DoratchDevice.postLoginDestination(opts); },
         withApp: withApp,
         siteHref: siteHref,
         clearAppMode: clearAppModeState,

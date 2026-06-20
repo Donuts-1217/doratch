@@ -146,6 +146,10 @@
         @media (max-width: 480px) {
             .nav-item { font-size: 13px; padding: 10px 15px; }
             .hero h1 { font-size: 2.5rem; }
+            .auth-card { padding: 32px 22px; border-radius: 20px; }
+            .logo-text { font-size: 1.5rem; }
+            #auth-title { font-size: 1.25rem; }
+            .subtitle { margin-bottom: 20px; }
         }
 
     </style>
@@ -188,6 +192,7 @@
     </div>
 </div>
 
+<script src="doratch-mobile-shell.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { 
@@ -237,11 +242,11 @@
     async function redirectAfterLogin(user) {
         const snap = await getDoc(doc(db, "users", user.uid));
         const data = snap.exists() ? snap.data() : {};
-        if (needsDisplayName(data)) {
-            location.href = "profile.html?needDisplayName=1";
-        } else {
-            location.href = "main.html";
-        }
+        const needName = needsDisplayName(data);
+        const dest = (window.DoratchDevice && window.DoratchDevice.postLoginDestination)
+            ? window.DoratchDevice.postLoginDestination({ needDisplayName: needName })
+            : (needName ? "profile.html?needDisplayName=1" : "main.html");
+        location.href = dest;
     }
 
     function showMsg(text, type) {
