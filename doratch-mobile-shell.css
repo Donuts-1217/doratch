@@ -44,6 +44,50 @@ body.doratch-app-mode.chat-app .app-container {
   overflow: hidden;
 }
 
+/* Hide bottom tab bar when modals open or active chat thread (prevents select tap bleed) */
+body.doratch-app-mode.doratch-modal-open #doratch-mobile-tabbar,
+body.doratch-app-mode.chat-app.chat-mobile-active #doratch-mobile-tabbar {
+  display: none !important;
+}
+
+body.doratch-app-mode.doratch-modal-open,
+body.doratch-app-mode.chat-app.chat-mobile-active {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+body.doratch-app-mode.doratch-modal-open .modal-overlay {
+  z-index: 10100 !important;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.doratch-app-mode.doratch-modal-open .modal-overlay .modal-content {
+  width: min(420px, calc(100vw - 24px));
+  margin: auto 0;
+  max-height: none;
+}
+
+body.doratch-app-mode.doratch-modal-open .modal-overlay select,
+body.doratch-app-mode.doratch-modal-open .modal-overlay .pretty-select {
+  font-size: 16px !important;
+  min-height: 44px;
+  position: relative;
+  z-index: 2;
+}
+
+body.doratch-app-mode.doratch-modal-open .select-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+body.doratch-app-mode.doratch-modal-open #cosmetic-modal .modal-content,
+body.doratch-app-mode.doratch-modal-open #chat-prefs-modal .modal-content {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
 body.doratch-app-mode .sidebar[data-doratch-admin-nav] {
   width: 100% !important;
   flex-direction: row !important;
@@ -505,6 +549,267 @@ body.doratch-app-mode .btn-edit-profile {
   cursor: pointer;
   white-space: nowrap;
   min-height: 36px;
+}
+
+body.doratch-app-mode .shop-toolbar {
+  background: #1e293b !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+body.doratch-app-mode .shop-search-input {
+  background: #0f172a !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #f8fafc !important;
+}
+body.doratch-app-mode .shop-filter-tab,
+body.doratch-app-mode .shop-currency-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #cbd5e1 !important;
+}
+body.doratch-app-mode .shop-filter-tab.active,
+body.doratch-app-mode .shop-currency-btn.active {
+  background: #4c97ff !important;
+  color: #fff !important;
+  border-color: #4c97ff !important;
+}
+body.doratch-app-mode .shop-page-btn {
+  background: #1e293b !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #e2e8f0 !important;
+}
+body.doratch-app-mode .shop-extras summary {
+  background: #1e293b !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #e2e8f0;
+}
+body.doratch-app-mode .dc-profile-wrap { max-width: 100%; }
+body.doratch-app-mode .dc-tabs { margin-top: 12px; }
+
+/* ── Chat mobile (Discord-style) ── */
+@media (max-width: 900px) {
+  body.doratch-app-mode.chat-app {
+    overflow: hidden;
+  }
+
+  body.doratch-app-mode.chat-app .app-container {
+    height: calc(100dvh - var(--doratch-mobile-tab-h) - env(safe-area-inset-bottom, 0px)) !important;
+    min-height: 0 !important;
+  }
+
+  body.doratch-app-mode.chat-app.chat-mobile-active .app-container {
+    height: 100dvh !important;
+  }
+
+  body.doratch-app-mode.chat-app .main-chat-wrapper {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.doratch-app-mode.chat-app .chat-container {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Channel list = full screen by default */
+  body.doratch-app-mode.chat-app .sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1;
+    min-height: 0;
+    border-right: none !important;
+  }
+
+  body.doratch-app-mode.chat-app .sidebar-header {
+    min-height: 52px;
+    padding: 10px 12px;
+    gap: 8px;
+    background: #0b0e14;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  body.doratch-app-mode.chat-app .sidebar-header h3 {
+    font-size: 15px;
+  }
+
+  body.doratch-app-mode.chat-app .action-btns {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  body.doratch-app-mode.chat-app .action-btns::-webkit-scrollbar {
+    display: none;
+  }
+
+  body.doratch-app-mode.chat-app .chat-list {
+    padding: 8px 0 12px;
+  }
+
+  body.doratch-app-mode.chat-app .chat-item {
+    margin: 2px 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+  }
+
+  body.doratch-app-mode.chat-app .category-title {
+    padding: 8px 16px 4px;
+    font-size: 10px;
+  }
+
+  /* Thread view: hide channel list, show chat full width */
+  body.doratch-app-mode.chat-app .chat-main {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  body.doratch-app-mode.chat-app.chat-mobile-active .sidebar {
+    display: none !important;
+  }
+
+  body.doratch-app-mode.chat-app.chat-mobile-active .chat-main {
+    display: flex !important;
+  }
+
+  body.doratch-app-mode.chat-app .chat-header {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 10px;
+    gap: 8px;
+    font-size: 0.95rem;
+    background: #0b0e14;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
+
+  body.doratch-app-mode.chat-app .chat-header h3 {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.95rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  body.doratch-app-mode.chat-app .chat-mobile-back {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  body.doratch-app-mode.chat-app .chat-header .btn-icon {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  body.doratch-app-mode.chat-app .messages-area {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.doratch-app-mode.chat-app .message-row {
+    padding: 4px 12px;
+    margin-top: 10px;
+  }
+
+  body.doratch-app-mode.chat-app .message-row.consecutive {
+    margin-top: 0;
+  }
+
+  body.doratch-app-mode.chat-app .msg-avatar-container {
+    width: 40px;
+    margin-right: 12px;
+  }
+
+  body.doratch-app-mode.chat-app .msg-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  body.doratch-app-mode.chat-app .msg-content {
+    padding-right: 0;
+    min-width: 0;
+  }
+
+  body.doratch-app-mode.chat-app .msg-header {
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+
+  body.doratch-app-mode.chat-app .msg-author {
+    font-size: 0.95rem;
+    margin-right: 0;
+  }
+
+  body.doratch-app-mode.chat-app .msg-time {
+    font-size: 10px;
+    color: #64748b;
+  }
+
+  body.doratch-app-mode.chat-app .msg-text {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  body.doratch-app-mode.chat-app .input-area {
+    flex-shrink: 0;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: #0b0e14;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  body.doratch-app-mode.chat-app .input-wrapper {
+    padding: 8px 10px;
+    border-radius: 22px;
+    gap: 8px;
+  }
+
+  body.doratch-app-mode.chat-app .input-box {
+    font-size: 16px;
+  }
+
+  body.doratch-app-mode.chat-app .member-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(280px, 88vw);
+    z-index: 10120;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.45);
+  }
+
+  body.doratch-app-mode.chat-app .member-sidebar.active {
+    display: flex;
+  }
+
+  body.doratch-app-mode.chat-app .empty-state {
+    display: none;
+  }
+
+  body.doratch-app-mode.chat-app:not(.chat-mobile-active) .chat-main .empty-state,
+  body.doratch-app-mode.chat-app:not(.chat-mobile-active) .chat-main > .empty-state {
+    display: none;
+  }
 }
 
 @media (min-width: 901px) {

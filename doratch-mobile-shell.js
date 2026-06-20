@@ -86,9 +86,16 @@
     function isAppMode() {
         const qs = new URLSearchParams(location.search);
         const file = currentFile();
+        const mobile = window.DoratchDevice && window.DoratchDevice.isMobileDevice();
 
         // 明確離開 App：完整網站
         if (qs.get("site") === "1" || qs.get("app") === "0" || file === "index.html") {
+            clearAppModeState();
+            return false;
+        }
+
+        // 桌面版一律走完整網站，不因 localStorage 或 ?app=1 進入手機殼層
+        if (!mobile) {
             clearAppModeState();
             return false;
         }
@@ -249,9 +256,6 @@
         if (isAppMode()) {
             document.body.classList.add("doratch-app-mode");
             if (key === "chat") document.body.classList.add("chat-app");
-            if (window.innerWidth > 900 && new URLSearchParams(location.search).get("app") === "1") {
-                document.body.classList.add("doratch-app-force");
-            }
             renderTabbar(key);
             patchLinks(document.body);
             registerServiceWorker();

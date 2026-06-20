@@ -145,6 +145,67 @@
             color: #334155 !important;
             cursor: not-allowed;
         }
+
+        .shop-extras { margin-bottom: 20px; }
+        .shop-extras summary {
+            cursor: pointer; font-weight: 900; padding: 14px 16px;
+            background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
+            list-style: none;
+        }
+        .shop-extras summary::-webkit-details-marker { display: none; }
+        .shop-extras[open] summary { border-radius: 14px 14px 0 0; border-bottom: none; }
+        .shop-extras .review-card { margin-bottom: 0; border-radius: 0 0 14px 14px; }
+
+        .shop-toolbar {
+            background: #fff; border-radius: 18px; padding: 16px;
+            border: 1px solid #e2e8f0; box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+        .shop-search-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .shop-search-input {
+            flex: 1; min-width: 180px; padding: 12px 16px; border-radius: 12px;
+            border: 2px solid #e2e8f0; font-size: 16px; font-family: inherit;
+            outline: none; transition: 0.2s;
+        }
+        .shop-search-input:focus { border-color: var(--scratch-blue); }
+        .shop-currency-filter { display: flex; gap: 6px; }
+        .shop-currency-btn {
+            border: 1px solid #e2e8f0; background: #f8fafc; color: #475569;
+            padding: 10px 14px; border-radius: 10px; font-weight: 800;
+            font-size: 12px; cursor: pointer; font-family: inherit;
+        }
+        .shop-currency-btn.active { background: var(--scratch-blue); color: #fff; border-color: var(--scratch-blue); }
+        .shop-filter-tabs {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .shop-filter-tabs::-webkit-scrollbar { display: none; }
+        .shop-filter-tab {
+            flex: 0 0 auto; border: 1px solid #e2e8f0; background: #f8fafc;
+            color: #475569; padding: 8px 14px; border-radius: 999px;
+            font-weight: 800; font-size: 12px; cursor: pointer; font-family: inherit;
+            white-space: nowrap;
+        }
+        .shop-filter-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+        .shop-result-meta {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 16px 0 12px; font-size: 13px; color: #64748b; font-weight: 700;
+        }
+        .shop-pagination {
+            display: flex; justify-content: center; align-items: center;
+            gap: 8px; margin-top: 24px; flex-wrap: wrap;
+        }
+        .shop-page-btn {
+            border: 1px solid #e2e8f0; background: #fff; color: #334155;
+            padding: 10px 16px; border-radius: 10px; font-weight: 800;
+            font-size: 13px; cursor: pointer; font-family: inherit; min-width: 44px;
+        }
+        .shop-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .shop-page-btn.active { background: var(--scratch-blue); color: #fff; border-color: var(--scratch-blue); }
+        .shop-empty {
+            grid-column: 1 / -1; text-align: center; padding: 48px 20px;
+            color: #94a3b8; font-weight: 700;
+        }
     
         
         @media (max-width: 1024px) {
@@ -212,7 +273,9 @@
         </div>
     </div>
 
-    <div class="review-card" style="margin-top:-18px;">
+    <details class="shop-extras">
+        <summary>💱 Docoin 兌換與作品送審（點開展開）</summary>
+    <div class="review-card" style="margin-top:0; border-radius:0;">
         <h3 style="margin:0 0 8px;">💱 Docoin 兌換 Doord</h3>
         <p style="margin:0 0 12px; color:#64748B; font-size:13px;">匯率：1 Docoin = 100 Doord。只能 Docoin 兌換 Doord，不能反向。</p>
         <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
@@ -241,15 +304,36 @@
         </div>
         <div id="review-status" style="margin-top:10px; font-size:12px; color:#64748B;"></div>
     </div>
+    </details>
 
-    <div class="category-title">🎨 個人風格</div>
-    <div class="shop-grid" id="style-items"></div>
+    <div class="shop-toolbar">
+        <div class="shop-search-row">
+            <input type="search" id="shop-search" class="shop-search-input" placeholder="🔍 搜尋道具名稱、描述…" autocomplete="off">
+            <div class="shop-currency-filter">
+                <button type="button" class="shop-currency-btn active" data-currency="all">全部</button>
+                <button type="button" class="shop-currency-btn" data-currency="doord">🪙 Doord</button>
+                <button type="button" class="shop-currency-btn" data-currency="docoin">💎 Docoin</button>
+            </div>
+        </div>
+        <div class="shop-filter-tabs" id="shop-filter-tabs">
+            <button type="button" class="shop-filter-tab active" data-filter="all">全部</button>
+            <button type="button" class="shop-filter-tab" data-filter="avatar">頭像</button>
+            <button type="button" class="shop-filter-tab" data-filter="frame">頭像框</button>
+            <button type="button" class="shop-filter-tab" data-filter="banner">橫幅</button>
+            <button type="button" class="shop-filter-tab" data-filter="title">稱號</button>
+            <button type="button" class="shop-filter-tab" data-filter="badge">徽章</button>
+            <button type="button" class="shop-filter-tab" data-filter="name">名稱</button>
+            <button type="button" class="shop-filter-tab" data-filter="effect">面板特效</button>
+            <button type="button" class="shop-filter-tab" data-filter="bundle">組合包</button>
+        </div>
+    </div>
 
-    <div class="category-title">🚀 實用道具</div>
-    <div class="shop-grid" id="utility-items"></div>
-
-    <div class="category-title">🎁 組合包</div>
-    <div class="shop-grid" id="bundle-items"></div>
+    <div class="shop-result-meta">
+        <span id="shop-result-count">共 0 項</span>
+        <span id="shop-page-info">第 1 頁</span>
+    </div>
+    <div class="shop-grid" id="shop-items-grid"></div>
+    <div class="shop-pagination" id="shop-pagination"></div>
 </div>
 
 <script type="module">
@@ -415,7 +499,36 @@
         { id: 'profilefx_golden_aura', category: 'utility', slot: 'profileEffect', name: '個人面板特效：黃金光環', desc: 'Docoin 傳奇面板特效，金色光環環繞動態。', price: 15, currency: 'docoin', icon: '✨' },
         { id: 'pack_animal_buddies', category: 'bundle', type: 'bundle', name: '組合包：動物夥伴包', desc: '海豚 + 貓頭鷹頭像 + 海浪框 + 海洋徽章 + 海洋藍字色。', price: 950, icon: '🐾', unlocks: ['avatar_dolphin_wave', 'avatar_owl_wise', 'frame_ocean_deep', 'badge_ocean_explorer', 'namecolor_ocean'] },
         { id: 'pack_foodie_gamer', category: 'bundle', type: 'bundle', name: '組合包：美食玩家包', desc: '奶茶 + 拉麵頭像 + 美食稱號 + 美食徽章 + 南瓜橙字色。', price: 820, icon: '🍜', unlocks: ['avatar_bubble_tea', 'avatar_ramen_bowl', 'title_foodie_coder', 'badge_meal_master', 'namecolor_pumpkin'] },
-        { id: 'pack_mythic_docoin', category: 'bundle', type: 'bundle', currency: 'docoin', name: '組合包：傳奇神話包', desc: '傳奇金鑽 + 妖狐頭像 + 月輝框 + 遠古符文徽章 + 黃金面板特效。', price: 30, icon: '🌠', unlocks: ['avatar_docoin_golden', 'avatar_kitsune_spirit', 'frame_moonlit_legend', 'badge_ancient_rune', 'profilefx_golden_aura'] }
+        { id: 'pack_mythic_docoin', category: 'bundle', type: 'bundle', currency: 'docoin', name: '組合包：傳奇神話包', desc: '傳奇金鑽 + 妖狐頭像 + 月輝框 + 遠古符文徽章 + 黃金面板特效。', price: 30, icon: '🌠', unlocks: ['avatar_docoin_golden', 'avatar_kitsune_spirit', 'frame_moonlit_legend', 'badge_ancient_rune', 'profilefx_golden_aura'] },
+        { id: 'avatar_penguin_chill', category: 'style', slot: 'avatar', name: '頭像：企鵝 chill', desc: '軟萌企鵝造型，適合放鬆寫 code 的你。', price: 360, icon: '🐧' },
+        { id: 'avatar_taco_fun', category: 'style', slot: 'avatar', name: '頭像：塔可趣味', desc: '美食系趣味頭像，聊天室辨識度超高。', price: 340, icon: '🌮' },
+        { id: 'avatar_moon_rabbit', category: 'style', slot: 'avatar', name: '頭像：月兔傳說', desc: '中秋與奇幻系風格的可愛月兔頭像。', price: 410, icon: '🐰' },
+        { id: 'avatar_corgi_wiggle', category: 'style', slot: 'avatar', name: '頭像：柯基搖尾', desc: '活潑柯基主題，治癒系頭像首選。', price: 380, icon: '🐕' },
+        { id: 'avatar_galaxy_cat', category: 'style', slot: 'avatar', name: '頭像：星際貓咪', desc: 'Docoin 傳奇頭像，深空背景與星塵貓眼。', price: 18, currency: 'docoin', icon: '🐱' },
+        { id: 'frame_rainbow_prism', category: 'style', slot: 'frame', name: '稜鏡彩虹頭像框', desc: '可在個人資料頁與聊天室套用彩虹稜鏡外框。', price: 480, icon: '🌈' },
+        { id: 'frame_lava_ring', category: 'style', slot: 'frame', name: '熔岩環繞頭像框', desc: '熾熱熔岩流動邊框，戰鬥風格必備。', price: 520, icon: '🌋' },
+        { id: 'frame_frost_crystal', category: 'style', slot: 'frame', name: '霜晶雪花頭像框', desc: '冰晶粒子環繞，冬季限定風格外框。', price: 400, icon: '💠' },
+        { id: 'banner_midnight', category: 'style', slot: 'banner', name: '個人橫幅：午夜深藍', desc: '個人頁與聊天面板頂部橫幅，深邃午夜漸層。', price: 280, icon: '🌃' },
+        { id: 'banner_sunset', category: 'style', slot: 'banner', name: '個人橫幅：夕陽餘暉', desc: '個人頁與聊天面板頂部橫幅，暖色夕陽漸層。', price: 280, icon: '🌇' },
+        { id: 'banner_forest', category: 'style', slot: 'banner', name: '個人橫幅：翠綠森林', desc: '個人頁與聊天面板頂部橫幅，自然系綠意漸層。', price: 300, icon: '🌲' },
+        { id: 'banner_galaxy', category: 'style', slot: 'banner', name: '個人橫幅：星際銀河', desc: 'Docoin 傳奇橫幅，深空星雲流動動態背景。', price: 14, currency: 'docoin', icon: '🌌' },
+        { id: 'banner_neon_city', category: 'style', slot: 'banner', name: '個人橫幅：霓虹都市', desc: 'Docoin 傳奇橫幅，賽博霓虹城市夜景風格。', price: 16, currency: 'docoin', icon: '🏙️' },
+        { id: 'title_community_star', category: 'style', slot: 'title', name: '稱號：社群之星', desc: '活躍交流、熱心助人的社群玩家稱號。', price: 340, icon: '⭐' },
+        { id: 'title_night_coder', category: 'style', slot: 'title', name: '稱號：深夜碼農', desc: '熬夜寫程式的夜貓子專屬稱號。', price: 360, icon: '🌙' },
+        { id: 'title_premium_fan', category: 'style', slot: 'title', name: '稱號：尊爵支持者', desc: '平台忠實支持者專屬高階稱號。', price: 680, icon: '💎' },
+        { id: 'badge_helper_heart', category: 'utility', slot: 'badge', name: '徽章：熱心助人', desc: '經常幫助同學解題的暖心徽章。', price: 220, icon: '💗' },
+        { id: 'badge_creator_star', category: 'utility', slot: 'badge', name: '徽章：創作者之星', desc: '優秀作品創作者專屬閃耀徽章。', price: 280, icon: '🌟' },
+        { id: 'badge_early_bird', category: 'utility', slot: 'badge', name: '徽章：早鳥先鋒', desc: '搶先體驗新功能的早鳥玩家徽章。', price: 240, icon: '🐦' },
+        { id: 'namecolor_rose', category: 'utility', slot: 'nameColor', name: '名稱顏色：玫瑰粉', desc: '可在個人資料頁與聊天室套用玫瑰粉字色。', price: 190, icon: '🌹' },
+        { id: 'namecolor_lavender', category: 'utility', slot: 'nameColor', name: '名稱顏色：薰衣草紫', desc: '可在個人資料頁與聊天室套用薰衣草紫字色。', price: 200, icon: '💜' },
+        { id: 'namecolor_teal', category: 'utility', slot: 'nameColor', name: '名稱顏色：青綠湖水', desc: '清新青綠字色，適合自然系造型。', price: 210, icon: '🩵' },
+        { id: 'namefx_rainbow', category: 'utility', slot: 'nameEffect', name: '名稱特效：彩虹流動', desc: '聊天名稱出現彩虹漸層流動動畫。', price: 320, icon: '🌈' },
+        { id: 'namefx_neon_flicker', category: 'utility', slot: 'nameEffect', name: '名稱特效：霓虹閃爍', desc: 'Docoin 傳奇名稱特效，霓虹燈管閃爍效果。', price: 15, currency: 'docoin', icon: '💡' },
+        { id: 'profilefx_moonlight', category: 'utility', slot: 'profileEffect', name: '個人面板特效：月光清輝', desc: '聊天個人面板帶有銀白月光柔和背景。', price: 340, icon: '🌙' },
+        { id: 'profilefx_neon_city', category: 'utility', slot: 'profileEffect', name: '個人面板特效：霓虹都市', desc: 'Docoin 傳奇面板特效，賽博都市霓虹夜景。', price: 18, currency: 'docoin', icon: '🌃' },
+        { id: 'profilefx_sakura_night', category: 'utility', slot: 'profileEffect', name: '個人面板特效：夜櫻飄雪', desc: '聊天個人面板夜櫻與飄雪混合動態。', price: 380, icon: '🌸' },
+        { id: 'pack_creator_pro', category: 'bundle', type: 'bundle', name: '組合包：創作者專業包', desc: '星際貓咪 + 稜鏡框 + 創作者徽章 + 彩虹名稱特效 + 午夜橫幅。', price: 1180, icon: '🎨', unlocks: ['avatar_galaxy_cat', 'frame_rainbow_prism', 'badge_creator_star', 'namefx_rainbow', 'banner_midnight'] },
+        { id: 'pack_dc_style', category: 'bundle', type: 'bundle', name: '組合包：社群達人包', desc: '企鵝頭像 + 森林橫幅 + 社群之星稱號 + 熱心徽章 + 月光面板。', price: 920, icon: '💬', unlocks: ['avatar_penguin_chill', 'banner_forest', 'title_community_star', 'badge_helper_heart', 'profilefx_moonlight'] }
     ];
 
     let currentUserData = null;
@@ -460,7 +573,12 @@
         basket_ace: "https://ui-avatars.com/api/?name=BKB&background=f97316&color=1e293b&bold=true",
         kitsune_spirit: "https://ui-avatars.com/api/?name=KTS&background=f97316&color=fef3c7&bold=true",
         docoin_golden: "https://ui-avatars.com/api/?name=DCN&background=fbbf24&color=451a03&bold=true",
-        docoin_crystal: "https://ui-avatars.com/api/?name=CRY&background=6366f1&color=e0e7ff&bold=true"
+        docoin_crystal: "https://ui-avatars.com/api/?name=CRY&background=6366f1&color=e0e7ff&bold=true",
+        penguin_chill: "https://ui-avatars.com/api/?name=PGN&background=1e293b&color=e2e8f0&bold=true",
+        taco_fun: "https://ui-avatars.com/api/?name=TAC&background=f97316&color=fff7ed&bold=true",
+        moon_rabbit: "https://ui-avatars.com/api/?name=RBT&background=c4b5fd&color=4c1d95&bold=true",
+        corgi_wiggle: "https://ui-avatars.com/api/?name=CRG&background=fbbf24&color=78350f&bold=true",
+        galaxy_cat: "https://ui-avatars.com/api/?name=GCT&background=312e81&color=a5b4fc&bold=true"
     };
 
     function avatarFromType(type, fallbackEmail) {
@@ -659,56 +777,166 @@
         return unlockIds.every((x) => inv.includes(x));
     }
 
-    function renderItems() {
-        const styleList = document.getElementById('style-items');
-        const utilList = document.getElementById('utility-items');
-        const bundleList = document.getElementById('bundle-items');
-        styleList.innerHTML = ''; utilList.innerHTML = ''; if (bundleList) bundleList.innerHTML = '';
-        const legendaryIds = new Set([
+    const SHOP_PAGE_SIZE = 12;
+    let shopFilter = "all";
+    let shopCurrency = "all";
+    let shopSearch = "";
+    let shopPage = 1;
+
+    const LEGENDARY_IDS = new Set([
             "frame_holo", "frame_cyberfire", "frame_aurora", "frame_matrix",
             "frame_phoenix_particle", "frame_quantum_particle", "frame_glitch_legend",
             "frame_celestial_particle", "frame_eclipse_particle", "frame_stardust_particle",
             "title_quantum", "title_void_walker", "title_overclock", "title_starlord", "title_cyber_ninja",
             "badge_dragon", "badge_cosmos", "badge_phantom", "badge_titan", "badge_supernova", "badge_reactor", "badge_void_rift",
             "badge_event_horizon", "badge_singularity", "badge_ether_crown",
-            "namefx_prism", "namefx_aurora_pulse", "namefx_stardust", "namefx_pulse_core",
+            "namefx_prism", "namefx_aurora_pulse", "namefx_stardust", "namefx_pulse_core", "namefx_neon_flicker",
             "profilefx_nebula", "profilefx_starfall", "profilefx_cosmic_aurora", "profilefx_void_rift",
-            "profilefx_glitch", "profilefx_matrix_rain", "profilefx_void_ripple", "profilefx_cyber_grid", "profilefx_plasma_storm",
-            "avatar_stardust_lord", "avatar_void_emperor", "avatar_phoenix_flame",
+            "profilefx_glitch", "profilefx_matrix_rain", "profilefx_void_ripple", "profilefx_cyber_grid", "profilefx_plasma_storm", "profilefx_neon_city",
+            "avatar_stardust_lord", "avatar_void_emperor", "avatar_phoenix_flame", "avatar_galaxy_cat",
             "avatar_docoin_golden", "avatar_docoin_crystal",
             "frame_moonlit_legend", "badge_ancient_rune", "profilefx_golden_aura",
+            "banner_galaxy", "banner_neon_city",
             "pack_legendary_cosmos", "pack_phoenix_overdrive", "pack_quantum_emperor", "pack_cyber_legend",
-            "pack_stellar_sovereign", "pack_void_legend", "pack_mythic_docoin"
+            "pack_stellar_sovereign", "pack_void_legend", "pack_mythic_docoin", "pack_creator_pro"
         ]);
 
-        itemsBank.forEach(item => {
-            const currency = item.currency === 'docoin' ? 'docoin' : 'doord';
-            const currencyIcon = currency === 'docoin' ? '💎' : '🪙';
-            const currencyName = currency === 'docoin' ? 'Docoin' : 'Doord';
-            const isOwned = itemOwned(item, currentUserData.inventory || []);
-            const canBuy = !!currentUser && !isOwned;
-            const div = document.createElement('div');
-            const isLegendary = legendaryIds.has(item.id);
-            div.className = `item-card${isLegendary ? ' legendary' : ''}`;
-            const metaTags = [];
-            if (item.type === 'bundle') metaTags.push('<span class="meta-tag bundle">組合包</span>');
-            metaTags.push(`<span class="meta-tag ${currency === 'docoin' ? 'docoin' : ''}">${currencyName}</span>`);
-            div.innerHTML = `
-                ${isLegendary ? '<div class="legend-tag">LEGENDARY</div>' : ''}
-                <div class="meta-tags">${metaTags.join('')}</div>
-                <span class="item-icon">${item.icon}</span>
-                <div class="item-name">${item.name}</div>
-                <div class="item-desc">${item.desc}</div>
-                <div class="item-price ${currency === 'docoin' ? 'docoin' : ''}">${currencyIcon} ${item.price} ${currencyName}</div>
-                <button class="btn-buy ${isOwned ? 'owned' : (canBuy ? 'available' : 'disabled')}" onclick="buyItem('${item.id}')">
-                    ${isOwned ? '已擁有' : (canBuy ? '立即購買' : '請先登入')}
-                </button>
-            `;
-            if(item.category === 'style') styleList.appendChild(div);
-            else if (item.category === 'bundle' && bundleList) bundleList.appendChild(div);
-            else utilList.appendChild(div);
+    function itemMatchesFilter(item) {
+        if (shopFilter === "all") return true;
+        if (shopFilter === "bundle") return item.type === "bundle" || item.category === "bundle";
+        if (shopFilter === "name") return item.slot === "nameColor" || item.slot === "nameEffect";
+        if (shopFilter === "effect") return item.slot === "profileEffect";
+        return item.slot === shopFilter;
+    }
+
+    function getFilteredShopItems() {
+        let list = itemsBank.filter(itemMatchesFilter);
+        if (shopCurrency === "doord") list = list.filter(function (i) { return i.currency !== "docoin"; });
+        if (shopCurrency === "docoin") list = list.filter(function (i) { return i.currency === "docoin"; });
+        const q = shopSearch.trim().toLowerCase();
+        if (q) {
+            list = list.filter(function (i) {
+                return (i.name || "").toLowerCase().includes(q) ||
+                    (i.desc || "").toLowerCase().includes(q) ||
+                    (i.id || "").toLowerCase().includes(q) ||
+                    (i.slot || "").toLowerCase().includes(q);
+            });
+        }
+        return list;
+    }
+
+    function buildItemCard(item) {
+        const currency = item.currency === "docoin" ? "docoin" : "doord";
+        const currencyIcon = currency === "docoin" ? "💎" : "🪙";
+        const currencyName = currency === "docoin" ? "Docoin" : "Doord";
+        const isOwned = itemOwned(item, currentUserData && currentUserData.inventory || []);
+        const canBuy = !!currentUser && !isOwned;
+        const isLegendary = LEGENDARY_IDS.has(item.id);
+        const div = document.createElement("div");
+        div.className = "item-card" + (isLegendary ? " legendary" : "");
+        const metaTags = [];
+        if (item.type === "bundle") metaTags.push('<span class="meta-tag bundle">組合包</span>');
+        metaTags.push('<span class="meta-tag ' + (currency === "docoin" ? "docoin" : "") + '">' + currencyName + "</span>");
+        div.innerHTML =
+            (isLegendary ? '<div class="legend-tag">LEGENDARY</div>' : "") +
+            '<div class="meta-tags">' + metaTags.join("") + "</div>" +
+            '<span class="item-icon">' + item.icon + "</span>" +
+            '<div class="item-name">' + item.name + "</div>" +
+            '<div class="item-desc">' + item.desc + "</div>" +
+            '<div class="item-price ' + (currency === "docoin" ? "docoin" : "") + '">' + currencyIcon + " " + item.price + " " + currencyName + "</div>" +
+            '<button class="btn-buy ' + (isOwned ? "owned" : (canBuy ? "available" : "disabled")) + '" onclick="buyItem(\'' + item.id + '\')">' +
+            (isOwned ? "已擁有" : (canBuy ? "立即購買" : "請先登入")) + "</button>";
+        return div;
+    }
+
+    function renderPagination(totalPages) {
+        const el = document.getElementById("shop-pagination");
+        if (!el) return;
+        el.innerHTML = "";
+        if (totalPages <= 1) return;
+        const prev = document.createElement("button");
+        prev.type = "button";
+        prev.className = "shop-page-btn";
+        prev.textContent = "← 上一頁";
+        prev.disabled = shopPage <= 1;
+        prev.onclick = function () { shopPage--; renderItems(); };
+        el.appendChild(prev);
+        const maxBtns = 5;
+        let start = Math.max(1, shopPage - 2);
+        let end = Math.min(totalPages, start + maxBtns - 1);
+        start = Math.max(1, end - maxBtns + 1);
+        for (let p = start; p <= end; p++) {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "shop-page-btn" + (p === shopPage ? " active" : "");
+            btn.textContent = String(p);
+            btn.onclick = (function (page) { return function () { shopPage = page; renderItems(); }; })(p);
+            el.appendChild(btn);
+        }
+        const next = document.createElement("button");
+        next.type = "button";
+        next.className = "shop-page-btn";
+        next.textContent = "下一頁 →";
+        next.disabled = shopPage >= totalPages;
+        next.onclick = function () { shopPage++; renderItems(); };
+        el.appendChild(next);
+    }
+
+    function initShopBrowser() {
+        const searchEl = document.getElementById("shop-search");
+        if (searchEl) {
+            let timer = null;
+            searchEl.addEventListener("input", function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    shopSearch = searchEl.value || "";
+                    shopPage = 1;
+                    renderItems();
+                }, 200);
+            });
+        }
+        document.querySelectorAll(".shop-filter-tab").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                document.querySelectorAll(".shop-filter-tab").forEach(function (b) { b.classList.remove("active"); });
+                btn.classList.add("active");
+                shopFilter = btn.getAttribute("data-filter") || "all";
+                shopPage = 1;
+                renderItems();
+            });
+        });
+        document.querySelectorAll(".shop-currency-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                document.querySelectorAll(".shop-currency-btn").forEach(function (b) { b.classList.remove("active"); });
+                btn.classList.add("active");
+                shopCurrency = btn.getAttribute("data-currency") || "all";
+                shopPage = 1;
+                renderItems();
+            });
         });
     }
+
+    function renderItems() {
+        const grid = document.getElementById("shop-items-grid");
+        if (!grid) return;
+        const filtered = getFilteredShopItems();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / SHOP_PAGE_SIZE));
+        if (shopPage > totalPages) shopPage = totalPages;
+        const start = (shopPage - 1) * SHOP_PAGE_SIZE;
+        const pageItems = filtered.slice(start, start + SHOP_PAGE_SIZE);
+        grid.innerHTML = "";
+        if (!pageItems.length) {
+            grid.innerHTML = '<div class="shop-empty">找不到符合條件的道具<br><span style="font-size:12px;font-weight:400;">試試其他分類或搜尋關鍵字</span></div>';
+        } else {
+            pageItems.forEach(function (item) { grid.appendChild(buildItemCard(item)); });
+        }
+        const countEl = document.getElementById("shop-result-count");
+        const pageEl = document.getElementById("shop-page-info");
+        if (countEl) countEl.textContent = "共 " + filtered.length + " 項";
+        if (pageEl) pageEl.textContent = filtered.length ? ("第 " + shopPage + " / " + totalPages + " 頁") : "無結果";
+        renderPagination(totalPages);
+    }
+
+    initShopBrowser();
 
     window.buyItem = async (id) => {
         if (!currentUser) {

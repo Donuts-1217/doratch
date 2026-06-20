@@ -89,6 +89,44 @@
             background-clip: text;
             animation: profileShimmer 2.4s linear infinite;
         }
+        .profile-name.name-effect-rainbow {
+            color: transparent !important;
+            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: profileShimmer 3s linear infinite;
+        }
+        .profile-name.name-effect-neon-flicker {
+            animation: profileNameWave 1.4s ease-in-out infinite;
+            text-shadow: 0 0 8px rgba(34,211,238,0.6), 0 0 16px rgba(244,114,182,0.4);
+        }
+        .profile-name.name-effect-sparkle {
+            animation: profileBadgeGlow 1.2s ease-in-out infinite;
+            text-shadow: 0 0 6px rgba(250,204,21,0.55), 0 0 12px rgba(251,191,36,0.35);
+        }
+        .profile-name.name-effect-glitch {
+            animation: profileFxGlitch 2.2s infinite;
+        }
+        .dc-banner.banner-midnight { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%); }
+        .dc-banner.banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed); }
+        .dc-banner.banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46); }
+        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: profileFxShift 8s ease infinite; }
+        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: profileFxShift 6s ease infinite; }
+        .dc-banner.profile-fx-moonlight {
+            background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8);
+            animation: profileFxRipple 4s ease-in-out infinite;
+        }
+        .dc-banner.profile-fx-neon-city {
+            background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee);
+            background-size: 220% 220%;
+            animation: profileFxShift 5s ease infinite;
+        }
+        .dc-banner.profile-fx-sakura-night {
+            background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af);
+            background-size: 240% 240%;
+            animation: profileFxShift 8s ease infinite;
+        }
         .profile-chip.legendary-title {
             color: transparent;
             background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
@@ -105,10 +143,12 @@
             animation: profileBadgeGlow 1.8s ease-in-out infinite;
             border-color: rgba(250,204,21,0.55);
         }
-        .profile-hero.profile-fx-royal {
+        .profile-hero.profile-fx-royal,
+        .dc-banner.profile-fx-royal {
             background: linear-gradient(135deg, #d97706, #855CD6);
         }
-        .profile-hero.profile-fx-nebula {
+        .profile-hero.profile-fx-nebula,
+        .dc-banner.profile-fx-nebula {
             background: linear-gradient(135deg, #2563eb, #7c3aed);
             background-size: 200% 200%;
             animation: profileFxShift 7s ease infinite;
@@ -142,51 +182,61 @@
             0%, 100% { opacity: 0.7; }
             50% { opacity: 1; }
         }
-        .profile-hero.profile-fx-sakura {
+        .profile-hero.profile-fx-sakura,
+        .dc-banner.profile-fx-sakura {
             background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af);
             background-size: 220% 220%;
             animation: profileFxShift 9s ease infinite;
         }
-        .profile-hero.profile-fx-starfall {
+        .profile-hero.profile-fx-starfall,
+        .dc-banner.profile-fx-starfall {
             background:
                 linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%),
                 linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca);
             background-size: 200% 200%, 100% 100%;
             animation: profileFxStarStreak 5s linear infinite;
         }
-        .profile-hero.profile-fx-cosmic-aurora {
+        .profile-hero.profile-fx-cosmic-aurora,
+        .dc-banner.profile-fx-cosmic-aurora {
             background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4);
             background-size: 300% 300%;
             animation: profileFxShift 8s ease infinite;
         }
-        .profile-hero.profile-fx-void-rift {
+        .profile-hero.profile-fx-void-rift,
+        .dc-banner.profile-fx-void-rift {
             background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b);
             animation: profileFxRipple 3.5s ease-in-out infinite;
         }
-        .profile-hero.profile-fx-glitch {
+        .profile-hero.profile-fx-glitch,
+        .dc-banner.profile-fx-glitch {
             background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15);
             animation: profileFxGlitch 2.8s infinite;
         }
-        .profile-hero.profile-fx-matrix-rain {
+        .profile-hero.profile-fx-matrix-rain,
+        .dc-banner.profile-fx-matrix-rain {
             background:
                 repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px),
                 linear-gradient(180deg, #052e16, #0f172a);
             animation: profileFxMatrixScroll 2.2s linear infinite;
         }
-        .profile-hero.profile-fx-golden-halo {
+        .profile-hero.profile-fx-golden-halo,
+        .dc-banner.profile-fx-golden-halo {
             background: linear-gradient(135deg, #fbbf24, #d97706, #b45309);
             animation: profileFxHaloPulse 3s ease-in-out infinite;
         }
-        .profile-hero.profile-fx-void-ripple {
+        .profile-hero.profile-fx-void-ripple,
+        .dc-banner.profile-fx-void-ripple {
             background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%);
             animation: profileFxRipple 2.6s ease-in-out infinite;
         }
-        .profile-hero.profile-fx-cherry-bloom {
+        .profile-hero.profile-fx-cherry-bloom,
+        .dc-banner.profile-fx-cherry-bloom {
             background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e);
             background-size: 240% 240%;
             animation: profileFxShift 10s ease infinite;
         }
-        .profile-hero.profile-fx-cyber-grid {
+        .profile-hero.profile-fx-cyber-grid,
+        .dc-banner.profile-fx-cyber-grid {
             background:
                 linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px),
@@ -194,32 +244,38 @@
             background-size: 20px 20px, 20px 20px, 100% 100%;
             animation: profileFxGridPulse 2.4s ease-in-out infinite;
         }
-        .profile-hero.profile-fx-aurora-wave {
+        .profile-hero.profile-fx-aurora-wave,
+        .dc-banner.profile-fx-aurora-wave {
             background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6);
             background-size: 280% 280%;
             animation: profileFxShift 6.5s ease infinite;
         }
-        .profile-hero.profile-fx-crystal-frost {
+        .profile-hero.profile-fx-crystal-frost,
+        .dc-banner.profile-fx-crystal-frost {
             background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe);
             background-size: 200% 200%;
             animation: profileFxShift 11s ease infinite;
         }
-        .profile-hero.profile-fx-plasma-storm {
+        .profile-hero.profile-fx-plasma-storm,
+        .dc-banner.profile-fx-plasma-storm {
             background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
             background-size: 260% 260%;
             animation: profileFxShift 4.5s ease infinite;
         }
-        .profile-hero.profile-fx-inferno-glow {
+        .profile-hero.profile-fx-inferno-glow,
+        .dc-banner.profile-fx-inferno-glow {
             background: linear-gradient(135deg, #ef4444, #f97316, #ea580c);
             background-size: 220% 220%;
             animation: profileFxShift 5.5s ease infinite;
         }
-        .profile-hero.profile-fx-ocean-breeze {
+        .profile-hero.profile-fx-ocean-breeze,
+        .dc-banner.profile-fx-ocean-breeze {
             background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
             background-size: 220% 220%;
             animation: profileFxRipple 4s ease-in-out infinite;
         }
-        .profile-hero.profile-fx-golden-aura {
+        .profile-hero.profile-fx-golden-aura,
+        .dc-banner.profile-fx-golden-aura {
             background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
             background-size: 200% 200%;
             animation: profileFxHaloPulse 3.2s ease-in-out infinite;
@@ -270,6 +326,98 @@
             cursor: pointer;
         }
         #cosmetic-msg { font-size: 12px; margin-top: 8px; color:#93C5FD; min-height: 1.2em; }
+
+        /* Discord 風格個人面板 */
+        .dc-profile-wrap { max-width: 680px; margin: 0 auto 24px; }
+        .dc-banner {
+            height: 128px; border-radius: 16px 16px 0 0; position: relative;
+            background: linear-gradient(135deg, #4C97FF, #855CD6);
+        }
+        /* 橫幅／面板特效（置於 base 之後，確保覆蓋預設漸層） */
+        .dc-banner.banner-midnight { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #312e81 100%) !important; }
+        .dc-banner.banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed) !important; }
+        .dc-banner.banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46) !important; }
+        .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4) !important; background-size: 200% 200% !important; animation: profileFxShift 8s ease infinite !important; }
+        .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee) !important; background-size: 220% 220% !important; animation: profileFxShift 6s ease infinite !important; }
+        .dc-banner.profile-fx-moonlight { background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8) !important; animation: profileFxRipple 4s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee) !important; background-size: 220% 220% !important; animation: profileFxShift 5s ease infinite !important; }
+        .dc-banner.profile-fx-sakura-night { background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af) !important; background-size: 240% 240% !important; animation: profileFxShift 8s ease infinite !important; }
+        .dc-banner.profile-fx-royal { background: linear-gradient(135deg, #d97706, #855CD6) !important; }
+        .dc-banner.profile-fx-nebula { background: linear-gradient(135deg, #2563eb, #7c3aed) !important; background-size: 200% 200% !important; animation: profileFxShift 7s ease infinite !important; }
+        .dc-banner.profile-fx-sakura { background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af) !important; background-size: 220% 220% !important; animation: profileFxShift 9s ease infinite !important; }
+        .dc-banner.profile-fx-starfall { background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%), linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca) !important; background-size: 200% 200%, 100% 100% !important; animation: profileFxStarStreak 5s linear infinite !important; }
+        .dc-banner.profile-fx-cosmic-aurora { background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4) !important; background-size: 300% 300% !important; animation: profileFxShift 8s ease infinite !important; }
+        .dc-banner.profile-fx-void-rift { background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b) !important; animation: profileFxRipple 3.5s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-glitch { background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15) !important; animation: profileFxGlitch 2.8s infinite !important; }
+        .dc-banner.profile-fx-matrix-rain { background: repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px), linear-gradient(180deg, #052e16, #0f172a) !important; animation: profileFxMatrixScroll 2.2s linear infinite !important; }
+        .dc-banner.profile-fx-golden-halo { background: linear-gradient(135deg, #fbbf24, #d97706, #b45309) !important; animation: profileFxHaloPulse 3s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-void-ripple { background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%) !important; animation: profileFxRipple 2.6s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-cherry-bloom { background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e) !important; background-size: 240% 240% !important; animation: profileFxShift 10s ease infinite !important; }
+        .dc-banner.profile-fx-cyber-grid { background: linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px), linear-gradient(135deg, #0f172a, #1e40af) !important; background-size: 20px 20px, 20px 20px, 100% 100% !important; animation: profileFxGridPulse 2.4s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-aurora-wave { background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6) !important; background-size: 280% 280% !important; animation: profileFxShift 6.5s ease infinite !important; }
+        .dc-banner.profile-fx-crystal-frost { background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe) !important; background-size: 200% 200% !important; animation: profileFxShift 11s ease infinite !important; }
+        .dc-banner.profile-fx-plasma-storm { background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6) !important; background-size: 260% 260% !important; animation: profileFxShift 4.5s ease infinite !important; }
+        .dc-banner.profile-fx-inferno-glow { background: linear-gradient(135deg, #ef4444, #f97316, #ea580c) !important; background-size: 220% 220% !important; animation: profileFxShift 5.5s ease infinite !important; }
+        .dc-banner.profile-fx-ocean-breeze { background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7) !important; background-size: 220% 220% !important; animation: profileFxRipple 4s ease-in-out infinite !important; }
+        .dc-banner.profile-fx-golden-aura { background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b) !important; background-size: 200% 200% !important; animation: profileFxHaloPulse 3.2s ease-in-out infinite !important; }
+        .dc-body {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06);
+            border-top: none; border-radius: 0 0 16px 16px; padding: 0 20px 20px;
+        }
+        .dc-avatar-row { display: flex; gap: 16px; align-items: flex-end; margin-top: -52px; position: relative; z-index: 2; }
+        .dc-avatar-wrap { position: relative; flex-shrink: 0; }
+        .dc-avatar-wrap .avatar-large {
+            width: 96px; height: 96px; margin-bottom: 0;
+            border: 5px solid var(--card-bg); border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+        }
+        .dc-status-dot {
+            position: absolute; bottom: 6px; right: 6px; width: 18px; height: 18px;
+            border-radius: 50%; background: #23a559; border: 4px solid var(--card-bg);
+        }
+        .dc-name-block { flex: 1; min-width: 0; padding-bottom: 6px; }
+        .dc-name-block .profile-name { font-size: 1.5rem; margin-bottom: 2px; text-align: left; }
+        .dc-custom-status { font-size: 13px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
+        .dc-custom-status.empty { color: #64748b; font-style: italic; font-weight: 400; }
+        .dc-meta-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; justify-content: flex-start; }
+        .dc-edit-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .dc-edit-btn {
+            border: none; background: rgba(255,255,255,0.08); color: #e2e8f0;
+            padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 12px; cursor: pointer;
+        }
+        .dc-edit-btn:hover { background: rgba(76,151,255,0.2); color: #fff; }
+        .dc-tabs {
+            display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin: 18px 0 0; overflow-x: auto; -webkit-overflow-scrolling: touch;
+        }
+        .dc-tab {
+            flex: 0 0 auto; padding: 12px 18px; background: none; border: none;
+            color: #94a3b8; font-weight: 800; font-size: 13px; cursor: pointer;
+            border-bottom: 2px solid transparent; font-family: inherit; white-space: nowrap;
+        }
+        .dc-tab.active { color: #fff; border-bottom-color: var(--primary); }
+        .dc-panel { display: none; padding-top: 16px; }
+        .dc-panel.active { display: block; }
+        .dc-field { margin-bottom: 14px; }
+        .dc-field label { display: block; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+        .dc-field input, .dc-field textarea, .dc-field select {
+            width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+            background: #0f172a; color: #fff; font-size: 16px; box-sizing: border-box; font-family: inherit;
+        }
+        .dc-field textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+        .dc-field input:focus, .dc-field textarea:focus { outline: none; border-color: var(--primary); }
+        .dc-about-preview {
+            background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px;
+            font-size: 14px; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap; word-break: break-word;
+        }
+        .dc-about-preview.empty { color: #64748b; font-style: italic; }
+        .dc-member-info { font-size: 12px; color: #64748b; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .btn-save-profile {
+            margin-top: 12px; border: none; border-radius: 12px; padding: 12px 18px;
+            font-weight: 900; color: white; background: linear-gradient(135deg, #4C97FF, #855CD6); cursor: pointer; width: 100%;
+        }
+        #profile-msg { font-size: 12px; margin-top: 8px; color: #93c5fd; min-height: 1.2em; }
+        .profile-hero { display: none; }
 
         .setup-banner {
             background: linear-gradient(90deg, #FFAB19, #FF6B6B);
@@ -361,79 +509,101 @@
             請先設定顯示名稱，讓同學與老師在排行榜、聊天室能認出你。
         </div>
 
-        <div id="profile-hero-card" class="profile-hero">
-            <img id="profile-avatar" class="avatar-large" src="">
-            <div id="profile-display-name" class="profile-name">載入中...</div>
-            <div class="profile-meta-line">
-                <span id="profile-title-chip" class="profile-chip" style="display:none;"></span>
-                <span id="profile-badge-chip" class="profile-chip badge" style="display:none;"></span>
+        <div class="dc-profile-wrap">
+            <div id="dc-banner" class="dc-banner"></div>
+            <div class="dc-body">
+                <div class="dc-avatar-row">
+                    <div class="dc-avatar-wrap">
+                        <img id="profile-avatar" class="avatar-large" src="" alt="">
+                        <span class="dc-status-dot" title="線上"></span>
+                    </div>
+                    <div class="dc-name-block">
+                        <div id="profile-display-name" class="profile-name">載入中...</div>
+                        <div id="profile-custom-status-view" class="dc-custom-status empty">設定自訂狀態…</div>
+                        <div class="dc-meta-line">
+                            <span id="profile-title-chip" class="profile-chip" style="display:none;"></span>
+                            <span id="profile-badge-chip" class="profile-chip badge" style="display:none;"></span>
+                        </div>
+                        <div class="dc-edit-row">
+                            <button type="button" class="dc-edit-btn" id="btn-edit-display-name">✏️ 編輯名稱</button>
+                            <button type="button" class="dc-edit-btn" id="btn-edit-profile-info">💬 編輯狀態與自介</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dc-tabs" role="tablist">
+                    <button type="button" class="dc-tab active" data-dc-tab="profile">個人資料</button>
+                    <button type="button" class="dc-tab" data-dc-tab="appearance">外觀裝備</button>
+                    <button type="button" class="dc-tab" data-dc-tab="account">帳號與統計</button>
+                </div>
+
+                <div class="dc-panel active" id="dc-panel-profile">
+                    <div class="dc-field">
+                        <label>關於我</label>
+                        <div id="profile-bio-view" class="dc-about-preview empty">尚未撰寫自我介紹…</div>
+                    </div>
+                    <div class="dc-member-info">
+                        <div id="display-uid">帳號：---</div>
+                        <div id="member-since">加入時間：---</div>
+                    </div>
+                </div>
+
+                <div class="dc-panel" id="dc-panel-appearance">
+                    <p style="font-size:13px;color:#94a3b8;margin:0 0 12px;">商城購買的道具可在這裡裝備，聊天室與個人面板會同步顯示。</p>
+                    <div class="cosmetic-grid">
+                        <div><label for="equip-avatar">頭像樣式</label><select id="equip-avatar"></select></div>
+                        <div><label for="equip-frame">頭像框</label><select id="equip-frame"></select></div>
+                        <div><label for="equip-banner">個人橫幅</label><select id="equip-banner"></select></div>
+                        <div><label for="equip-title">稱號</label><select id="equip-title"></select></div>
+                        <div><label for="equip-badge">徽章</label><select id="equip-badge"></select></div>
+                        <div><label for="equip-name-color">名稱顏色</label><select id="equip-name-color"></select></div>
+                        <div><label for="equip-name-effect">名稱特效</label><select id="equip-name-effect"></select></div>
+                        <div><label for="equip-profile-effect">個人面板特效</label><select id="equip-profile-effect"></select></div>
+                    </div>
+                    <button type="button" class="btn-save-cosmetic" id="btn-save-cosmetic">儲存外觀設定</button>
+                    <div id="cosmetic-msg"></div>
+                </div>
+
+                <div class="dc-panel" id="dc-panel-account">
+                    <div class="stats-grid">
+                        <div class="stat-box"><span id="count-projects" class="stat-value">0</span><span class="stat-label">我的作品</span></div>
+                        <div class="stat-box"><span id="count-classes" class="stat-value">0</span><span class="stat-label">參與班級</span></div>
+                        <div class="stat-box"><span id="count-coins" class="stat-value">0</span><span class="stat-label">🪙 Doord</span></div>
+                        <div class="stat-box"><span id="count-lv" class="stat-value">1</span><span class="stat-label">⭐ 等級</span></div>
+                    </div>
+                    <div class="action-card" style="margin-top:16px;">
+                        <h3>🚀 快捷操作</h3>
+                        <a href="create.html" class="action-btn">🎨 前往創作空間</a>
+                        <a href="main.html?view=mine" class="action-btn">📂 查看所有作品</a>
+                        <a href="dashboard.html" class="action-btn">🏫 管理我的班級</a>
+                        <a href="shop.html" class="action-btn">🛒 前往創意商城</a>
+                    </div>
+                </div>
             </div>
-            <div id="display-uid" class="profile-id">UID: ---</div>
-            <button type="button" class="btn-edit-profile" id="btn-edit-display-name">✏️ 修改顯示名稱</button>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-box">
-                <span id="count-projects" class="stat-value">0</span>
-                <span class="stat-label">我的作品</span>
-            </div>
-            <div class="stat-box">
-                <span id="count-classes" class="stat-value">0</span>
-                <span class="stat-label">參與班級</span>
-            </div>
-            <div class="stat-box">
-                <span id="count-coins" class="stat-value">0</span>
-                <span class="stat-label">🪙 Doord</span>
-            </div>
-            <div class="stat-box">
-                <span id="count-lv" class="stat-value">1</span>
-                <span class="stat-label">⭐ 等級</span>
-            </div>
-        </div>
-
-        <div class="action-card">
-            <h3>🚀 快捷操作</h3>
-            <a href="create.html" class="action-btn">🎨 前往創作空間</a>
-            <a href="main.html?view=mine" class="action-btn">📂 查看所有作品</a>
-            <a href="dashboard.html" class="action-btn">🏫 管理我的班級</a>
-            <a href="shop.html" class="action-btn">🛒 前往創意商城</a>
-        </div>
-        <div class="action-card" style="margin-top:20px;">
-            <h3>🎒 已擁有道具設定（商城購買後可套用）</h3>
-            <div class="cosmetic-grid">
-                <div>
-                    <label for="equip-avatar">頭像樣式</label>
-                    <select id="equip-avatar"></select>
-                </div>
-                <div>
-                    <label for="equip-frame">頭像框</label>
-                    <select id="equip-frame"></select>
-                </div>
-                <div>
-                    <label for="equip-title">稱號</label>
-                    <select id="equip-title"></select>
-                </div>
-                <div>
-                    <label for="equip-badge">徽章</label>
-                    <select id="equip-badge"></select>
-                </div>
-                <div>
-                    <label for="equip-name-color">名稱顏色</label>
-                    <select id="equip-name-color"></select>
-                </div>
-                <div>
-                    <label for="equip-name-effect">名稱特效</label>
-                    <select id="equip-name-effect"></select>
-                </div>
-                <div>
-                    <label for="equip-profile-effect">個人面板特效</label>
-                    <select id="equip-profile-effect"></select>
-                </div>
-            </div>
-            <button type="button" class="btn-save-cosmetic" id="btn-save-cosmetic">儲存外觀設定</button>
-            <div id="cosmetic-msg"></div>
-        </div>
+        <div id="profile-hero-card" class="profile-hero" aria-hidden="true"></div>
     </main>
+</div>
+
+<div id="profile-info-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card" role="dialog" style="max-width:440px;">
+        <h3>編輯狀態與自介</h3>
+        <p style="font-size:13px;color:#94a3b8;">類似 Discord 的自訂狀態與關於我，會顯示在個人頁與聊天頭像面板。</p>
+        <div class="dc-field" style="margin-top:12px;">
+            <label for="input-custom-status">自訂狀態（最多 60 字）</label>
+            <input type="text" id="input-custom-status" maxlength="60" placeholder="例：正在寫 Python 作業…">
+        </div>
+        <div class="dc-field">
+            <label for="input-profile-bio">關於我（最多 300 字）</label>
+            <textarea id="input-profile-bio" maxlength="300" placeholder="介紹自己、興趣、擅長的程式語言…"></textarea>
+        </div>
+        <div id="profile-form-msg"></div>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-profile-info-cancel">取消</button>
+            <button type="button" class="btn-modal-save" id="btn-profile-info-save">儲存</button>
+        </div>
+    </div>
 </div>
 
 <div id="name-modal" class="modal-overlay" aria-hidden="true">
@@ -506,6 +676,11 @@
         if (t === "kitsune_spirit") return "https://ui-avatars.com/api/?name=KTS&background=f97316&color=fef3c7&bold=true&size=128";
         if (t === "docoin_golden") return "https://ui-avatars.com/api/?name=DCN&background=fbbf24&color=451a03&bold=true&size=128";
         if (t === "docoin_crystal") return "https://ui-avatars.com/api/?name=CRY&background=6366f1&color=e0e7ff&bold=true&size=128";
+        if (t === "penguin_chill") return "https://ui-avatars.com/api/?name=PGN&background=1e293b&color=e2e8f0&bold=true&size=128";
+        if (t === "taco_fun") return "https://ui-avatars.com/api/?name=TAC&background=f97316&color=fff7ed&bold=true&size=128";
+        if (t === "moon_rabbit") return "https://ui-avatars.com/api/?name=RBT&background=c4b5fd&color=4c1d95&bold=true&size=128";
+        if (t === "corgi_wiggle") return "https://ui-avatars.com/api/?name=CRG&background=fbbf24&color=78350f&bold=true&size=128";
+        if (t === "galaxy_cat") return "https://ui-avatars.com/api/?name=GCT&background=312e81&color=a5b4fc&bold=true&size=128";
         return "https://ui-avatars.com/api/?name=" + encodeURIComponent(fallbackLabel || "User") + "&size=128&background=random";
     }
     function getDoordValue(data) {
@@ -569,6 +744,33 @@
         { id: "avatar_kitsune_spirit", slot: "avatar", label: "妖狐精靈頭像", value: "kitsune_spirit" },
         { id: "avatar_docoin_golden", slot: "avatar", label: "傳奇金鑽頭像", value: "docoin_golden" },
         { id: "avatar_docoin_crystal", slot: "avatar", label: "傳奇晶核頭像", value: "docoin_crystal" },
+        { id: "avatar_penguin_chill", slot: "avatar", label: "企鵝 chill 頭像", value: "penguin_chill" },
+        { id: "avatar_taco_fun", slot: "avatar", label: "塔可趣味頭像", value: "taco_fun" },
+        { id: "avatar_moon_rabbit", slot: "avatar", label: "月兔傳說頭像", value: "moon_rabbit" },
+        { id: "avatar_corgi_wiggle", slot: "avatar", label: "柯基搖尾頭像", value: "corgi_wiggle" },
+        { id: "avatar_galaxy_cat", slot: "avatar", label: "星際貓咪頭像", value: "galaxy_cat" },
+        { id: "banner_midnight", slot: "banner", label: "午夜深藍橫幅", value: "midnight" },
+        { id: "banner_sunset", slot: "banner", label: "夕陽餘暉橫幅", value: "sunset" },
+        { id: "banner_forest", slot: "banner", label: "翠綠森林橫幅", value: "forest" },
+        { id: "banner_galaxy", slot: "banner", label: "星際銀河橫幅", value: "galaxy" },
+        { id: "banner_neon_city", slot: "banner", label: "霓虹都市橫幅", value: "neon_city" },
+        { id: "frame_rainbow_prism", slot: "frame", label: "稜鏡彩虹頭像框", value: "rainbow_prism" },
+        { id: "frame_lava_ring", slot: "frame", label: "熔岩環繞頭像框", value: "lava_ring" },
+        { id: "frame_frost_crystal", slot: "frame", label: "霜晶雪花頭像框", value: "frost_crystal" },
+        { id: "title_community_star", slot: "title", label: "社群之星", value: "社群之星" },
+        { id: "title_night_coder", slot: "title", label: "深夜碼農", value: "深夜碼農" },
+        { id: "title_premium_fan", slot: "title", label: "尊爵支持者", value: "尊爵支持者" },
+        { id: "badge_helper_heart", slot: "badge", label: "熱心助人", value: "熱心助人" },
+        { id: "badge_creator_star", slot: "badge", label: "創作者之星", value: "創作者之星" },
+        { id: "badge_early_bird", slot: "badge", label: "早鳥先鋒", value: "早鳥先鋒" },
+        { id: "namecolor_rose", slot: "nameColor", label: "玫瑰粉", value: "#fb7185" },
+        { id: "namecolor_lavender", slot: "nameColor", label: "薰衣草紫", value: "#c084fc" },
+        { id: "namecolor_teal", slot: "nameColor", label: "青綠湖水", value: "#14b8a6" },
+        { id: "namefx_rainbow", slot: "nameEffect", label: "彩虹流動", value: "rainbow" },
+        { id: "namefx_neon_flicker", slot: "nameEffect", label: "霓虹閃爍", value: "neon_flicker" },
+        { id: "profilefx_moonlight", slot: "profileEffect", label: "月光清輝", value: "moonlight" },
+        { id: "profilefx_neon_city", slot: "profileEffect", label: "霓虹都市", value: "neon_city" },
+        { id: "profilefx_sakura_night", slot: "profileEffect", label: "夜櫻飄雪", value: "sakura_night" },
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
@@ -677,8 +879,43 @@
 
     function ownedItemsBySlot(data, slot) {
         const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
-        const ids = new Set(inv);
+        const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
         return COSMETIC_ITEMS.filter(it => it.slot === slot && ids.has(it.id));
+    }
+
+    function resolveVisualCosmetic(data, slot, fallbackRaw) {
+        const eq = data ? getEquipped(data) : {};
+        const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
+        if (!raw) return "";
+        let normalized = cosmeticDisplayValue(slot, raw);
+        if (!normalized && COSMETIC_ITEMS.some((it) => it.slot === slot && it.value === raw)) {
+            normalized = raw;
+        }
+        if (!normalized) return "";
+        if (!data) return normalized;
+        const owned = ownedItemsBySlot(data, slot);
+        if (owned.some((it) => it.value === normalized)) return normalized;
+        const viaPick = pickOwnedEquipped({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, slot);
+        if (viaPick) return viaPick;
+        if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
+        return "";
+    }
+
+    function pickOwnedEquipped(data, slot) {
+        const eq = getEquipped(data);
+        const owned = ownedItemsBySlot(data, slot);
+        const raw = String(eq[slot] || "").trim();
+        if (!raw) return "";
+        if (owned.some((it) => it.value === raw)) return raw;
+        const byId = owned.find((it) => it.id === raw);
+        return byId ? byId.value : "";
+    }
+
+    function cosmeticDisplayValue(slot, raw) {
+        const v = String(raw || "").trim();
+        if (!v) return "";
+        const item = COSMETIC_ITEMS.find((it) => it.slot === slot && (it.value === v || it.id === v));
+        return item ? item.value : "";
     }
 
     function getEquipped(data) {
@@ -697,13 +934,42 @@
     function isMythicBadge(badge) {
         return ["超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "遠古符文"].includes(String(badge || ""));
     }
+    const BANNER_CLASSES = ["banner-midnight", "banner-sunset", "banner-forest", "banner-galaxy", "banner-neon_city"];
+
+    function applyDcBannerVisuals(bannerType, profileEffectType, data) {
+        const el = document.getElementById("dc-banner");
+        if (!el) return;
+        el.classList.remove(...BANNER_CLASSES, ...PROFILE_FX_CLASSES);
+        const banner = data
+            ? resolveVisualCosmetic(data, "banner", bannerType)
+            : (cosmeticDisplayValue("banner", bannerType) || String(bannerType || "").trim());
+        if (banner === "midnight") el.classList.add("banner-midnight");
+        else if (banner === "sunset") el.classList.add("banner-sunset");
+        else if (banner === "forest") el.classList.add("banner-forest");
+        else if (banner === "galaxy") el.classList.add("banner-galaxy");
+        else if (banner === "neon_city") el.classList.add("banner-neon_city");
+        const fxVal = data
+            ? resolveVisualCosmetic(data, "profileEffect", profileEffectType)
+            : (cosmeticDisplayValue("profileEffect", profileEffectType) || String(profileEffectType || "").trim());
+        const fx = profileEffectClass(fxVal);
+        if (fx) el.classList.add(fx);
+    }
+
+    const NAME_EFFECT_CLASS_MAP = {
+        wave: "name-effect-wave",
+        prism: "name-effect-prism",
+        stardust: "name-effect-stardust",
+        pulse_core: "name-effect-pulse-core",
+        aurora_pulse: "name-effect-aurora-pulse",
+        rainbow: "name-effect-rainbow",
+        neon_flicker: "name-effect-neon-flicker",
+        sparkle: "name-effect-sparkle",
+        glitch: "name-effect-glitch"
+    };
+
     function nameEffectClass(effectType) {
-        if (effectType === "wave") return "name-effect-wave";
-        if (effectType === "prism") return "name-effect-prism";
-        if (effectType === "stardust") return "name-effect-stardust";
-        if (effectType === "pulse_core") return "name-effect-pulse-core";
-        if (effectType === "aurora_pulse") return "name-effect-aurora-pulse";
-        return "";
+        const v = cosmeticDisplayValue("nameEffect", effectType);
+        return NAME_EFFECT_CLASS_MAP[v] || "";
     }
     const PROFILE_EFFECT_CLASS_MAP = {
         royal: "profile-fx-royal",
@@ -723,12 +989,18 @@
         plasma_storm: "profile-fx-plasma-storm",
         inferno_glow: "profile-fx-inferno-glow",
         ocean_breeze: "profile-fx-ocean-breeze",
-        golden_aura: "profile-fx-golden-aura"
+        golden_aura: "profile-fx-golden-aura",
+        moonlight: "profile-fx-moonlight",
+        neon_city: "profile-fx-neon-city",
+        sakura_night: "profile-fx-sakura-night"
     };
     const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
 
     function profileEffectClass(effectType) {
-        return PROFILE_EFFECT_CLASS_MAP[effectType] || "";
+        const v = cosmeticDisplayValue("profileEffect", effectType);
+        if (PROFILE_EFFECT_CLASS_MAP[v]) return PROFILE_EFFECT_CLASS_MAP[v];
+        const raw = String(effectType || "").trim();
+        return PROFILE_EFFECT_CLASS_MAP[raw] || "";
     }
 
     function applyAvatarFrame(frameType) {
@@ -817,23 +1089,16 @@
     }
 
     function applyCosmetics(data) {
-        const eq = getEquipped(data);
-        const ownedAvatars = ownedItemsBySlot(data, "avatar").map(i => i.value);
-        const ownedFrames = ownedItemsBySlot(data, "frame").map(i => i.value);
-        const ownedTitles = ownedItemsBySlot(data, "title").map(i => i.value);
-        const ownedBadges = ownedItemsBySlot(data, "badge").map(i => i.value);
-        const ownedNameColors = ownedItemsBySlot(data, "nameColor").map(i => i.value);
-        const ownedNameEffects = ownedItemsBySlot(data, "nameEffect").map(i => i.value);
-        const ownedProfileEffects = ownedItemsBySlot(data, "profileEffect").map(i => i.value);
+        const avatar = pickOwnedEquipped(data, "avatar");
+        const frame = pickOwnedEquipped(data, "frame");
+        const title = pickOwnedEquipped(data, "title");
+        const badge = pickOwnedEquipped(data, "badge");
+        const nameColor = pickOwnedEquipped(data, "nameColor");
+        const nameEffect = pickOwnedEquipped(data, "nameEffect");
+        const profileEffect = resolveVisualCosmetic(data, "profileEffect");
+        const banner = resolveVisualCosmetic(data, "banner");
 
-        const avatar = ownedAvatars.includes(eq.avatar) ? eq.avatar : "";
-        const frame = ownedFrames.includes(eq.frame) ? eq.frame : "";
-        const title = ownedTitles.includes(eq.title) ? eq.title : "";
-        const badge = ownedBadges.includes(eq.badge) ? eq.badge : "";
-        const nameColor = ownedNameColors.includes(eq.nameColor) ? eq.nameColor : "";
-        const nameEffect = ownedNameEffects.includes(eq.nameEffect) ? eq.nameEffect : "";
-        const profileEffect = ownedProfileEffects.includes(eq.profileEffect) ? eq.profileEffect : "";
-
+        applyDcBannerVisuals(banner, profileEffect, data);
         applyAvatarFrame(frame);
         const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
         const avatarUrl = avatarFromType(avatar, label);
@@ -846,18 +1111,12 @@
         const nameEl = document.getElementById("profile-display-name");
         if (nameEl) {
             nameEl.style.color = nameColor || "#ffffff";
-            nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse");
+            nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-neon-flicker", "name-effect-sparkle", "name-effect-glitch");
             const cls = nameEffectClass(nameEffect);
             if (cls) nameEl.classList.add(cls);
         }
         const sideNameEl = document.getElementById("side-username");
         if (sideNameEl) sideNameEl.style.color = nameColor || "";
-        const heroEl = document.getElementById("profile-hero-card");
-        if (heroEl) {
-            heroEl.classList.remove(...PROFILE_FX_CLASSES);
-            const fx = profileEffectClass(profileEffect);
-            if (fx) heroEl.classList.add(fx);
-        }
 
         const titleEl = document.getElementById("profile-title-chip");
         const badgeEl = document.getElementById("profile-badge-chip");
@@ -882,24 +1141,64 @@
         base.value = "";
         base.textContent = emptyLabel;
         sel.appendChild(base);
+        const seenValues = new Set();
         items.forEach(function (it) {
+            const val = String(it.value || "");
+            if (!val || seenValues.has(val)) return;
+            seenValues.add(val);
             const opt = document.createElement("option");
-            opt.value = it.value;
+            opt.value = val;
             opt.textContent = it.label;
             sel.appendChild(opt);
         });
-        sel.value = selectedValue || "";
+        const target = String(selectedValue || "");
+        if (target && seenValues.has(target)) sel.value = target;
+        else sel.value = "";
     }
 
     function renderCosmeticPanel(data) {
-        const eq = getEquipped(data);
-        fillSelect("equip-avatar", ownedItemsBySlot(data, "avatar"), eq.avatar, "預設頭像");
-        fillSelect("equip-frame", ownedItemsBySlot(data, "frame"), eq.frame, "不使用頭像框");
-        fillSelect("equip-title", ownedItemsBySlot(data, "title"), eq.title, "不使用稱號");
-        fillSelect("equip-badge", ownedItemsBySlot(data, "badge"), eq.badge, "不使用徽章");
-        fillSelect("equip-name-color", ownedItemsBySlot(data, "nameColor"), eq.nameColor, "預設名稱顏色");
-        fillSelect("equip-name-effect", ownedItemsBySlot(data, "nameEffect"), eq.nameEffect, "不使用名稱特效");
-        fillSelect("equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), eq.profileEffect, "不使用個人面板特效");
+        fillSelect("equip-avatar", ownedItemsBySlot(data, "avatar"), pickOwnedEquipped(data, "avatar"), "預設頭像");
+        fillSelect("equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
+        fillSelect("equip-banner", ownedItemsBySlot(data, "banner"), pickOwnedEquipped(data, "banner"), "預設橫幅");
+        fillSelect("equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
+        fillSelect("equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
+        fillSelect("equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
+        fillSelect("equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
+        fillSelect("equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
+    }
+
+    function previewDcBannerFromForm() {
+        if (!userData) return;
+        const banner = (document.getElementById("equip-banner") && document.getElementById("equip-banner").value) || "";
+        const profileEffect = (document.getElementById("equip-profile-effect") && document.getElementById("equip-profile-effect").value) || "";
+        applyDcBannerVisuals(String(banner).trim(), String(profileEffect).trim(), userData);
+    }
+
+    function applyProfileTextFields(data) {
+        const status = String(data && data.customStatus || "").trim();
+        const bio = String(data && data.profileBio || "").trim();
+        const statusView = document.getElementById("profile-custom-status-view");
+        const bioView = document.getElementById("profile-bio-view");
+        if (statusView) {
+            statusView.textContent = status || "設定自訂狀態…";
+            statusView.classList.toggle("empty", !status);
+        }
+        if (bioView) {
+            bioView.textContent = bio || "尚未撰寫自我介紹…";
+            bioView.classList.toggle("empty", !bio);
+        }
+    }
+
+    function formatMemberSince(data) {
+        const ts = data && (data.createdAt || data.created_at);
+        if (!ts) return "加入時間：未知";
+        try {
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            if (isNaN(d.getTime())) return "加入時間：未知";
+            return "加入時間：" + d.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" });
+        } catch (_) {
+            return "加入時間：未知";
+        }
     }
 
     function applyDisplayUI(user, data) {
@@ -907,15 +1206,71 @@
         const avatar = avatarUrlFor(data, user.email, 128);
         document.getElementById("profile-display-name").innerText = label;
         document.getElementById("display-uid").innerText = `帳號：${user.email}`;
+        const memberEl = document.getElementById("member-since");
+        if (memberEl) memberEl.textContent = formatMemberSince(data);
         document.getElementById("profile-avatar").src = avatar;
         document.getElementById("side-avatar").src = avatarUrlFor(data, user.email, 32);
         document.getElementById("side-username").innerText = label;
         document.getElementById("side-coins").innerText = `Doord ${Math.floor(getDoordValue(data))} · Docoin ${Math.floor(getDocoinValue(data))}`;
         const missing = needsDisplayName(data);
         if (setupBanner) setupBanner.classList.toggle("visible", missing);
+        applyProfileTextFields(data);
         applyCosmetics(data);
         renderCosmeticPanel(data);
     }
+
+    document.querySelectorAll(".dc-tab").forEach(function (tab) {
+        tab.addEventListener("click", function () {
+            const key = tab.getAttribute("data-dc-tab");
+            document.querySelectorAll(".dc-tab").forEach(function (t) { t.classList.remove("active"); });
+            document.querySelectorAll(".dc-panel").forEach(function (p) { p.classList.remove("active"); });
+            tab.classList.add("active");
+            const panel = document.getElementById("dc-panel-" + key);
+            if (panel) panel.classList.add("active");
+        });
+    });
+
+    const profileInfoModal = document.getElementById("profile-info-modal");
+    document.getElementById("btn-edit-profile-info").addEventListener("click", function () {
+        document.getElementById("input-custom-status").value = String(userData.customStatus || "").trim();
+        document.getElementById("input-profile-bio").value = String(userData.profileBio || "").trim();
+        document.getElementById("profile-form-msg").textContent = "";
+        profileInfoModal.classList.add("open");
+        profileInfoModal.setAttribute("aria-hidden", "false");
+    });
+    document.getElementById("btn-profile-info-cancel").addEventListener("click", function () {
+        profileInfoModal.classList.remove("open");
+        profileInfoModal.setAttribute("aria-hidden", "true");
+    });
+    profileInfoModal.addEventListener("click", function (e) {
+        if (e.target === profileInfoModal) {
+            profileInfoModal.classList.remove("open");
+            profileInfoModal.setAttribute("aria-hidden", "true");
+        }
+    });
+    document.getElementById("btn-profile-info-save").addEventListener("click", async function () {
+        if (!userRef) return;
+        const status = String(document.getElementById("input-custom-status").value || "").trim().slice(0, 60);
+        const bio = String(document.getElementById("input-profile-bio").value || "").trim().slice(0, 300);
+        const msg = document.getElementById("profile-form-msg");
+        const btn = document.getElementById("btn-profile-info-save");
+        btn.disabled = true;
+        btn.textContent = "儲存中…";
+        try {
+            await updateDoc(userRef, { customStatus: status, profileBio: bio });
+            userData = { ...userData, customStatus: status, profileBio: bio };
+            applyProfileTextFields(userData);
+            profileInfoModal.classList.remove("open");
+            profileInfoModal.setAttribute("aria-hidden", "true");
+            if (msg) msg.textContent = "";
+        } catch (e) {
+            console.error(e);
+            if (msg) msg.textContent = "儲存失敗，請稍後再試";
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "儲存";
+        }
+    });
 
     function openNameModal(required) {
         const cur = normalizeDisplayName(userData.displayName);
@@ -976,6 +1331,7 @@
         const equipped = {
             avatar: (document.getElementById("equip-avatar").value || "").trim(),
             frame: (document.getElementById("equip-frame").value || "").trim(),
+            banner: (document.getElementById("equip-banner").value || "").trim(),
             title: (document.getElementById("equip-title").value || "").trim(),
             badge: (document.getElementById("equip-badge").value || "").trim(),
             nameColor: (document.getElementById("equip-name-color").value || "").trim(),
@@ -998,6 +1354,11 @@
             btn.disabled = false;
             btn.textContent = "儲存外觀設定";
         }
+    });
+
+    ["equip-banner", "equip-profile-effect"].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", previewDcBannerFromForm);
     });
 
     window.handleLogout = () => signOut(auth).then(() => location.href = "index.html");

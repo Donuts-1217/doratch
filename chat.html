@@ -274,6 +274,26 @@
             animation: namePrism 2.4s linear infinite;
             font-weight: 900;
         }
+        .name-effect-rainbow {
+            color: transparent !important;
+            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: namePrism 3s linear infinite;
+            font-weight: 900;
+        }
+        .name-effect-neon-flicker {
+            animation: nameWave 1.4s ease-in-out infinite;
+            text-shadow: 0 0 8px rgba(34,211,238,0.6), 0 0 16px rgba(244,114,182,0.4);
+        }
+        .name-effect-sparkle {
+            animation: badgeGlowBurst 1.2s ease-in-out infinite;
+            text-shadow: 0 0 6px rgba(250,204,21,0.55), 0 0 12px rgba(251,191,36,0.35);
+        }
+        .name-effect-glitch {
+            animation: pfxGlitch 2.2s infinite;
+        }
         .msg-time { font-size: 12px; color: var(--text-muted); }
         .msg-edited { margin-left: 6px; color: #94a3b8; font-size: 11px; font-style: italic; }
         .msg-quick-actions {
@@ -452,8 +472,13 @@
         .slash-picker-empty { padding: 20px; text-align: center; color: #949ba4; font-size: 13px; line-height: 1.6; }
         
         /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 10100; }
         .modal-content { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 400px; color: white; border: 1px solid rgba(255,255,255,0.1); }
+        #cosmetic-modal .modal-content {
+            max-height: min(90vh, 680px);
+            overflow-x: visible;
+            overflow-y: auto;
+        }
         .modal-content input { width: 100%; padding: 15px; margin: 20px 0; background: var(--bg); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; outline: none; }
         .btn-modal { padding: 12px 25px; border: none; border-radius: 12px; cursor: pointer; font-weight: 900; }
         .message-menu {
@@ -463,7 +488,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 10px;
             box-shadow: 0 12px 24px rgba(0,0,0,0.4);
-            z-index: 1200;
+            z-index: 10150;
             overflow: hidden;
         }
         .message-menu button {
@@ -517,63 +542,201 @@
         }
         .profile-pop {
             position: fixed;
-            width: 360px;
-            max-width: calc(100vw - 20px);
-            background: linear-gradient(180deg, #1f2937, #111827);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 16px;
-            box-shadow: 0 14px 32px rgba(0,0,0,0.45);
-            z-index: 1250;
+            width: 380px;
+            max-width: calc(100vw - 24px);
+            background: #2b2d31;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+            z-index: 10150;
             padding: 0;
             overflow: hidden;
+            font-family: "Outfit", "Noto Sans TC", sans-serif;
         }
         .profile-pop-banner {
-            height: 84px;
-            background: linear-gradient(120deg, rgba(99,102,241,0.35), rgba(37,99,235,0.2), rgba(168,85,247,0.28));
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            height: 105px;
+            background: linear-gradient(120deg, #5865f2, #4752c4 45%, #3c45a5);
+            position: relative;
         }
-        .profile-pop-body { padding: 14px; margin-top: -26px; }
-        .profile-pop-head { display: flex; gap: 12px; align-items: center; }
-        .profile-pop-avatar { width: 64px; height: 64px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.18); background: #0f172a; }
-        .profile-pop-name { font-weight: 900; font-size: 17px; color: #fff; }
-        .profile-pop-email { font-size: 12px; color: #94a3b8; margin-top: 2px; word-break: break-all; }
-        .profile-pop-role {
+        .profile-pop-banner.pop-banner-midnight { background: linear-gradient(135deg, #0f172a, #1e3a8a 60%, #312e81); }
+        .profile-pop-banner.pop-banner-sunset { background: linear-gradient(135deg, #f97316, #ec4899 50%, #7c3aed); }
+        .profile-pop-banner.pop-banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46); }
+        .profile-pop-banner.pop-banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: pfxShift 8s ease infinite; }
+        .profile-pop-banner.pop-banner-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: pfxShift 6s ease infinite; }
+        .profile-pop-sheet {
+            background: #2b2d31;
+            padding: 0 16px 16px;
+            position: relative;
+        }
+        .profile-pop-avatar-wrap {
+            position: absolute;
+            left: 16px;
+            top: -42px;
+            z-index: 2;
+        }
+        .profile-pop-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 6px solid #2b2d31;
+            background: #1e1f22;
+            display: block;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        }
+        .profile-pop-status-dot {
+            position: absolute;
+            right: 2px;
+            bottom: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #23a559;
+            border: 4px solid #2b2d31;
+        }
+        .profile-pop-status-dot.bot { background: #5865f2; }
+        .profile-pop-identity {
+            padding-top: 48px;
+            padding-left: 2px;
+            min-height: 52px;
+        }
+        .profile-pop-name {
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: #f2f3f5;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+        .profile-pop-handle {
+            font-size: 13px;
+            color: #b5bac1;
+            margin-top: 2px;
+            word-break: break-all;
+        }
+        .profile-pop-status {
+            font-size: 13px;
+            color: #dbdee1;
             margin-top: 6px;
-            display: inline-flex;
-            border-radius: 999px;
-            padding: 3px 10px;
-            font-size: 11px;
-            font-weight: 900;
-            letter-spacing: 0.02em;
-            background: rgba(88,101,242,0.22);
-            color: #c7d2fe;
+            font-weight: 500;
+            line-height: 1.45;
+            word-break: break-word;
         }
-        .profile-pop-section-title { font-size: 12px; color: #94a3b8; margin-top: 12px; margin-bottom: 6px; font-weight: 800; }
-        .profile-pop-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
-        .profile-pop-tag {
-            border-radius: 999px;
-            padding: 3px 8px;
+        .profile-pop-role-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .profile-pop-role-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(88,101,242,0.15);
+            color: #c9cdfb;
+            border: 1px solid rgba(88,101,242,0.25);
+        }
+        .profile-pop-role-pill.legend {
+            background: rgba(250,204,21,0.12);
+            border-color: rgba(250,204,21,0.35);
+            color: #fde68a;
+        }
+        .profile-pop-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 14px 0;
+        }
+        .profile-pop-section-label {
             font-size: 11px;
             font-weight: 800;
-            background: rgba(255,255,255,0.1);
-            color: #e2e8f0;
+            color: #b5bac1;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+        .profile-pop-bio {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #dbdee1;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .profile-pop-bio.empty {
+            color: #80848e;
+            font-style: italic;
+        }
+        .profile-pop-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .profile-pop-tag {
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(255,255,255,0.06);
+            color: #dbdee1;
+            border: 1px solid rgba(255,255,255,0.08);
         }
         .profile-pop-badge-grid { display: flex; flex-wrap: wrap; gap: 6px; }
         .profile-pop-badge-chip {
-            border-radius: 999px;
+            border-radius: 4px;
             padding: 5px 10px;
             font-size: 11px;
-            font-weight: 900;
-            background: rgba(148,163,184,0.16);
-            color: #e2e8f0;
+            font-weight: 800;
+            background: rgba(255,255,255,0.06);
+            color: #dbdee1;
             border: 1px solid rgba(255,255,255,0.08);
         }
         .profile-pop-badge-chip.legend {
-            background: rgba(250,204,21,0.18);
-            border-color: rgba(250,204,21,0.38);
-            color: #fef08a;
+            background: rgba(250,204,21,0.12);
+            border-color: rgba(250,204,21,0.35);
+            color: #fde68a;
             animation: badgeGlowBurst 1.9s ease-in-out infinite;
         }
+        .profile-pop-meta {
+            font-size: 11px;
+            color: #80848e;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+        .profile-pop-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+        .profile-pop-action {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 12px;
+            border-radius: 4px;
+            background: #4e5058;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .profile-pop-action:hover { background: #5865f2; }
+        .profile-pop-action.secondary {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #dbdee1;
+        }
+        .profile-pop-action.secondary:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(255,255,255,0.18);
+        }
+        /* legacy aliases */
+        .profile-pop-body { display: none; }
+        .profile-pop-head { display: none; }
+        .profile-pop-section-title { display: none; }
+        .profile-pop-email { display: none; }
+        .profile-pop-role { display: none; }
         @keyframes pfxShift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -604,95 +767,130 @@
             0%, 100% { opacity: 0.55; }
             50% { opacity: 0.9; }
         }
-        .profile-pop.fx-royal .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(245,158,11,0.38), rgba(251,191,36,0.18), rgba(217,119,6,0.25));
+        .profile-pop.fx-royal .profile-pop-banner,
+        .profile-pop-banner.fx-royal {
+            background: linear-gradient(135deg, #d97706, #855CD6);
         }
-        .profile-pop.fx-nebula .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(59,130,246,0.32), rgba(168,85,247,0.28), rgba(244,114,182,0.22));
+        .profile-pop.fx-nebula .profile-pop-banner,
+        .profile-pop-banner.fx-nebula {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
             background-size: 200% 200%;
             animation: pfxShift 7s ease infinite;
         }
-        .profile-pop.fx-sakura .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(251,207,232,0.5), rgba(244,114,182,0.3), rgba(253,186,216,0.38));
+        .profile-pop.fx-sakura .profile-pop-banner,
+        .profile-pop-banner.fx-sakura {
+            background: linear-gradient(135deg, #f9a8d4, #ec4899, #fda4af);
             background-size: 220% 220%;
             animation: pfxShift 9s ease infinite;
         }
-        .profile-pop.fx-starfall .profile-pop-banner {
+        .profile-pop.fx-starfall .profile-pop-banner,
+        .profile-pop-banner.fx-starfall {
             background:
-                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%),
-                linear-gradient(120deg, rgba(15,23,42,0.95), rgba(30,58,138,0.75), rgba(67,56,202,0.55));
+                linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%),
+                linear-gradient(135deg, #0f172a, #1e3a8a, #4338ca);
             background-size: 200% 200%, 100% 100%;
             animation: pfxStarStreak 5s linear infinite;
         }
-        .profile-pop.fx-cosmic-aurora .profile-pop-banner {
-            background: linear-gradient(120deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4, #1e3a8a);
+        .profile-pop.fx-cosmic-aurora .profile-pop-banner,
+        .profile-pop-banner.fx-cosmic-aurora {
+            background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4);
             background-size: 300% 300%;
             animation: pfxShift 8s ease infinite;
         }
-        .profile-pop.fx-void-rift .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(15,10,26,0.95), rgba(76,29,149,0.55), rgba(30,27,75,0.9));
+        .profile-pop.fx-void-rift .profile-pop-banner,
+        .profile-pop-banner.fx-void-rift {
+            background: linear-gradient(135deg, #0f0a1a, #4c1d95, #1e1b4b);
             animation: pfxRipple 3.5s ease-in-out infinite;
         }
-        .profile-pop.fx-glitch .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(236,72,153,0.38), rgba(34,211,238,0.32), rgba(250,204,21,0.28));
+        .profile-pop.fx-glitch .profile-pop-banner,
+        .profile-pop-banner.fx-glitch {
+            background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15);
             animation: pfxGlitch 2.8s infinite;
         }
-        .profile-pop.fx-matrix-rain .profile-pop-banner {
+        .profile-pop.fx-matrix-rain .profile-pop-banner,
+        .profile-pop-banner.fx-matrix-rain {
             background:
-                repeating-linear-gradient(0deg, rgba(34,197,94,0.12) 0 2px, transparent 2px 14px),
-                linear-gradient(180deg, rgba(5,46,22,0.92), rgba(15,23,42,0.88));
+                repeating-linear-gradient(0deg, rgba(34,197,94,0.14) 0 2px, transparent 2px 14px),
+                linear-gradient(180deg, #052e16, #0f172a);
             animation: pfxMatrixScroll 2.2s linear infinite;
         }
-        .profile-pop.fx-golden-halo .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(251,191,36,0.45), rgba(245,158,11,0.28), rgba(217,119,6,0.35));
+        .profile-pop.fx-golden-halo .profile-pop-banner,
+        .profile-pop-banner.fx-golden-halo {
+            background: linear-gradient(135deg, #fbbf24, #d97706, #b45309);
             animation: pfxHaloPulse 3s ease-in-out infinite;
         }
-        .profile-pop.fx-void-ripple .profile-pop-banner {
-            background: radial-gradient(circle at 50% 120%, rgba(88,28,135,0.55), rgba(15,23,42,0.92) 65%);
+        .profile-pop.fx-void-ripple .profile-pop-banner,
+        .profile-pop-banner.fx-void-ripple {
+            background: radial-gradient(circle at 50% 120%, #581c87, #0f172a 68%);
             animation: pfxRipple 2.6s ease-in-out infinite;
         }
-        .profile-pop.fx-cherry-bloom .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(253,164,175,0.45), rgba(251,113,133,0.32), rgba(244,63,94,0.22));
+        .profile-pop.fx-cherry-bloom .profile-pop-banner,
+        .profile-pop-banner.fx-cherry-bloom {
+            background: linear-gradient(135deg, #fda4af, #fb7185, #f43f5e);
             background-size: 240% 240%;
             animation: pfxShift 10s ease infinite;
         }
-        .profile-pop.fx-cyber-grid .profile-pop-banner {
+        .profile-pop.fx-cyber-grid .profile-pop-banner,
+        .profile-pop-banner.fx-cyber-grid {
             background:
-                linear-gradient(rgba(34,211,238,0.14) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(34,211,238,0.14) 1px, transparent 1px),
-                linear-gradient(120deg, rgba(15,23,42,0.95), rgba(30,64,175,0.55));
-            background-size: 18px 18px, 18px 18px, 100% 100%;
+                linear-gradient(rgba(34,211,238,0.16) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,211,238,0.16) 1px, transparent 1px),
+                linear-gradient(135deg, #0f172a, #1e40af);
+            background-size: 20px 20px, 20px 20px, 100% 100%;
             animation: pfxGridPulse 2.4s ease-in-out infinite;
         }
-        .profile-pop.fx-aurora-wave .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(34,211,238,0.38), rgba(52,211,153,0.32), rgba(168,85,247,0.35), rgba(59,130,246,0.3));
+        .profile-pop.fx-aurora-wave .profile-pop-banner,
+        .profile-pop-banner.fx-aurora-wave {
+            background: linear-gradient(135deg, #22d3ee, #34d399, #a78bfa, #3b82f6);
             background-size: 280% 280%;
             animation: pfxShift 6.5s ease infinite;
         }
-        .profile-pop.fx-crystal-frost .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(186,230,253,0.42), rgba(125,211,252,0.28), rgba(224,242,254,0.35));
+        .profile-pop.fx-crystal-frost .profile-pop-banner,
+        .profile-pop-banner.fx-crystal-frost {
+            background: linear-gradient(135deg, #bae6fd, #7dd3fc, #e0f2fe);
             background-size: 200% 200%;
             animation: pfxShift 11s ease infinite;
         }
-        .profile-pop.fx-plasma-storm .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(168,85,247,0.42), rgba(236,72,153,0.35), rgba(59,130,246,0.38));
+        .profile-pop.fx-plasma-storm .profile-pop-banner,
+        .profile-pop-banner.fx-plasma-storm {
+            background: linear-gradient(135deg, #a855f7, #ec4899, #3b82f6);
             background-size: 260% 260%;
             animation: pfxShift 4.5s ease infinite;
         }
-        .profile-pop.fx-inferno-glow .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(239,68,68,0.38), rgba(249,115,22,0.35), rgba(234,88,12,0.28));
+        .profile-pop.fx-inferno-glow .profile-pop-banner,
+        .profile-pop-banner.fx-inferno-glow {
+            background: linear-gradient(135deg, #ef4444, #f97316, #ea580c);
             background-size: 220% 220%;
             animation: pfxShift 5.5s ease infinite;
         }
-        .profile-pop.fx-ocean-breeze .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(14,165,233,0.42), rgba(6,182,212,0.32), rgba(2,132,199,0.35));
+        .profile-pop.fx-ocean-breeze .profile-pop-banner,
+        .profile-pop-banner.fx-ocean-breeze {
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4, #0284c7);
             background-size: 220% 220%;
             animation: pfxRipple 4s ease-in-out infinite;
         }
-        .profile-pop.fx-golden-aura .profile-pop-banner {
-            background: linear-gradient(120deg, rgba(253,230,138,0.45), rgba(251,191,36,0.35), rgba(245,158,11,0.3));
+        .profile-pop.fx-golden-aura .profile-pop-banner,
+        .profile-pop-banner.fx-golden-aura {
+            background: linear-gradient(135deg, #fde68a, #fbbf24, #f59e0b);
             background-size: 200% 200%;
             animation: pfxHaloPulse 3.2s ease-in-out infinite;
+        }
+        .profile-pop.fx-moonlight .profile-pop-banner,
+        .profile-pop-banner.fx-moonlight {
+            background: linear-gradient(135deg, #1e293b, #475569 50%, #94a3b8);
+            animation: pfxRipple 4s ease-in-out infinite;
+        }
+        .profile-pop.fx-neon-city .profile-pop-banner,
+        .profile-pop-banner.fx-neon-city {
+            background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee);
+            background-size: 220% 220%;
+            animation: pfxShift 5s ease infinite;
+        }
+        .profile-pop.fx-sakura-night .profile-pop-banner,
+        .profile-pop-banner.fx-sakura-night {
+            background: linear-gradient(135deg, #1e1b4b, #831843 50%, #fda4af);
+            background-size: 240% 240%;
+            animation: pfxShift 8s ease infinite;
         }
         .chat-pref-grid { display: grid; gap: 10px; margin-top: 12px; }
         .chat-pref-row { display: grid; gap: 6px; }
@@ -891,6 +1089,8 @@
             <div class="select-wrap"><select id="chat-equip-avatar" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">頭像框</label>
             <div class="select-wrap"><select id="chat-equip-frame" class="pretty-select"></select></div>
+            <label style="font-size:12px;color:#94a3b8;">個人橫幅</label>
+            <div class="select-wrap"><select id="chat-equip-banner" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">稱號</label>
             <div class="select-wrap"><select id="chat-equip-title" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">徽章</label>
@@ -1033,6 +1233,29 @@
     let currentUserData = {};
     let replyToMessage = null;
     let incomingMessageRequestCount = -1;
+
+    function isMobileChatShell() {
+        return window.DoratchMobile && typeof window.DoratchMobile.isMobileDevice === "function" && window.DoratchMobile.isMobileDevice();
+    }
+
+    function syncMobileModalOpen() {
+        if (!document.body.classList.contains("doratch-app-mode")) return;
+        const open = ["modal", "cosmetic-modal", "chat-prefs-modal"].some((id) => {
+            const el = document.getElementById(id);
+            return el && el.style.display === "flex";
+        });
+        document.body.classList.toggle("doratch-modal-open", open);
+    }
+
+    function syncMobileChatView(active) {
+        if (!isMobileChatShell()) return;
+        document.body.classList.toggle("chat-mobile-active", !!active);
+    }
+
+    window.closeMobileChatView = () => {
+        syncMobileChatView(false);
+        document.querySelectorAll(".chat-item").forEach((el) => el.classList.remove("active"));
+    };
     let incomingFriendRequestCount = -1;
     const chatUpdatedAtCache = {};
     let chatMaxMessages = 300;
@@ -1078,6 +1301,33 @@
         { id: "avatar_kitsune_spirit", slot: "avatar", label: "妖狐精靈頭像", value: "kitsune_spirit" },
         { id: "avatar_docoin_golden", slot: "avatar", label: "傳奇金鑽頭像", value: "docoin_golden" },
         { id: "avatar_docoin_crystal", slot: "avatar", label: "傳奇晶核頭像", value: "docoin_crystal" },
+        { id: "avatar_penguin_chill", slot: "avatar", label: "企鵝 chill 頭像", value: "penguin_chill" },
+        { id: "avatar_taco_fun", slot: "avatar", label: "塔可趣味頭像", value: "taco_fun" },
+        { id: "avatar_moon_rabbit", slot: "avatar", label: "月兔傳說頭像", value: "moon_rabbit" },
+        { id: "avatar_corgi_wiggle", slot: "avatar", label: "柯基搖尾頭像", value: "corgi_wiggle" },
+        { id: "avatar_galaxy_cat", slot: "avatar", label: "星際貓咪頭像", value: "galaxy_cat" },
+        { id: "banner_midnight", slot: "banner", label: "午夜深藍橫幅", value: "midnight" },
+        { id: "banner_sunset", slot: "banner", label: "夕陽餘暉橫幅", value: "sunset" },
+        { id: "banner_forest", slot: "banner", label: "翠綠森林橫幅", value: "forest" },
+        { id: "banner_galaxy", slot: "banner", label: "星際銀河橫幅", value: "galaxy" },
+        { id: "banner_neon_city", slot: "banner", label: "霓虹都市橫幅", value: "neon_city" },
+        { id: "frame_rainbow_prism", slot: "frame", label: "稜鏡彩虹頭像框", value: "rainbow_prism" },
+        { id: "frame_lava_ring", slot: "frame", label: "熔岩環繞頭像框", value: "lava_ring" },
+        { id: "frame_frost_crystal", slot: "frame", label: "霜晶雪花頭像框", value: "frost_crystal" },
+        { id: "title_community_star", slot: "title", label: "社群之星", value: "社群之星" },
+        { id: "title_night_coder", slot: "title", label: "深夜碼農", value: "深夜碼農" },
+        { id: "title_premium_fan", slot: "title", label: "尊爵支持者", value: "尊爵支持者" },
+        { id: "badge_helper_heart", slot: "badge", label: "熱心助人", value: "熱心助人" },
+        { id: "badge_creator_star", slot: "badge", label: "創作者之星", value: "創作者之星" },
+        { id: "badge_early_bird", slot: "badge", label: "早鳥先鋒", value: "早鳥先鋒" },
+        { id: "namecolor_rose", slot: "nameColor", label: "玫瑰粉", value: "#fb7185" },
+        { id: "namecolor_lavender", slot: "nameColor", label: "薰衣草紫", value: "#c084fc" },
+        { id: "namecolor_teal", slot: "nameColor", label: "青綠湖水", value: "#14b8a6" },
+        { id: "namefx_rainbow", slot: "nameEffect", label: "彩虹流動", value: "rainbow" },
+        { id: "namefx_neon_flicker", slot: "nameEffect", label: "霓虹閃爍", value: "neon_flicker" },
+        { id: "profilefx_moonlight", slot: "profileEffect", label: "月光清輝", value: "moonlight" },
+        { id: "profilefx_neon_city", slot: "profileEffect", label: "霓虹都市", value: "neon_city" },
+        { id: "profilefx_sakura_night", slot: "profileEffect", label: "夜櫻飄雪", value: "sakura_night" },
         { id: "frame_neon", slot: "frame", label: "霓虹脈衝頭像框", value: "neon" },
         { id: "frame_gold", slot: "frame", label: "王者金邊頭像框", value: "gold" },
         { id: "frame_sakura", slot: "frame", label: "櫻花柔光頭像框", value: "sakura" },
@@ -1263,6 +1513,11 @@
         if (avatarType === "kitsune_spirit") return `https://ui-avatars.com/api/?name=KTS&background=f97316&color=fef3c7&bold=true`;
         if (avatarType === "docoin_golden") return `https://ui-avatars.com/api/?name=DCN&background=fbbf24&color=451a03&bold=true`;
         if (avatarType === "docoin_crystal") return `https://ui-avatars.com/api/?name=CRY&background=6366f1&color=e0e7ff&bold=true`;
+        if (avatarType === "penguin_chill") return `https://ui-avatars.com/api/?name=PGN&background=1e293b&color=e2e8f0&bold=true`;
+        if (avatarType === "taco_fun") return `https://ui-avatars.com/api/?name=TAC&background=f97316&color=fff7ed&bold=true`;
+        if (avatarType === "moon_rabbit") return `https://ui-avatars.com/api/?name=RBT&background=c4b5fd&color=4c1d95&bold=true`;
+        if (avatarType === "corgi_wiggle") return `https://ui-avatars.com/api/?name=CRG&background=fbbf24&color=78350f&bold=true`;
+        if (avatarType === "galaxy_cat") return `https://ui-avatars.com/api/?name=GCT&background=312e81&color=a5b4fc&bold=true`;
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
@@ -1315,15 +1570,59 @@
 
     function ownedItemsBySlot(data, slot) {
         const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
-        const ids = new Set(inv);
+        const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
         return COSMETIC_ITEMS.filter((it) => it.slot === slot && ids.has(it.id));
+    }
+
+    function resolveVisualCosmetic(data, slot, fallbackRaw) {
+        const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+        const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
+        if (!raw) return "";
+        let normalized = cosmeticDisplayValue(slot, raw);
+        if (!normalized && COSMETIC_ITEMS.some((it) => it.slot === slot && it.value === raw)) {
+            normalized = raw;
+        }
+        if (!normalized) return "";
+        if (!data) return normalized;
+        const owned = ownedItemsBySlot(data, slot);
+        if (owned.some((it) => it.value === normalized)) return normalized;
+        const viaPick = pickOwnedEquipped({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, slot);
+        if (viaPick) return viaPick;
+        if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
+        return "";
     }
 
     function pickOwnedEquipped(data, slot) {
         const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
-        const ownedValues = ownedItemsBySlot(data, slot).map((i) => i.value);
-        const v = String(eq[slot] || "");
-        return ownedValues.includes(v) ? v : "";
+        const owned = ownedItemsBySlot(data, slot);
+        const raw = String(eq[slot] || "").trim();
+        if (!raw) return "";
+        if (owned.some((it) => it.value === raw)) return raw;
+        const byId = owned.find((it) => it.id === raw);
+        return byId ? byId.value : "";
+    }
+
+    function cosmeticDisplayValue(slot, raw) {
+        const v = String(raw || "").trim();
+        if (!v) return "";
+        const item = COSMETIC_ITEMS.find((it) => it.slot === slot && (it.value === v || it.id === v));
+        return item ? item.value : "";
+    }
+
+    function resolveCosmeticForDisplay(data, slot, fallbackRaw) {
+        const raw = String(fallbackRaw || "").trim();
+        if (data) {
+            const resolved = resolveVisualCosmetic(data, slot, raw || undefined);
+            if (resolved) return resolved;
+            const eq = getEquipped(data);
+            const eqVal = String(eq[slot] || "").trim();
+            const candidate = raw || eqVal;
+            if (candidate) {
+                const normalized = cosmeticDisplayValue(slot, candidate);
+                if (normalized) return normalized;
+            }
+        }
+        return cosmeticDisplayValue(slot, raw);
     }
 
     function frameClass(frameType) {
@@ -1350,6 +1649,9 @@
         if (frameType === "ocean_deep") return "avatar-frame-ocean-deep";
         if (frameType === "stadium_spotlight") return "avatar-frame-stadium-spotlight";
         if (frameType === "moonlit_legend") return "avatar-frame-moonlit-legend";
+        if (frameType === "rainbow_prism") return "avatar-frame-rainbow-prism";
+        if (frameType === "lava_ring") return "avatar-frame-lava-ring";
+        if (frameType === "frost_crystal") return "avatar-frame-frost-crystal";
         return "";
     }
 
@@ -1370,13 +1672,21 @@
     }
 
     function nameEffectClass(effectType) {
-        if (effectType === "wave") return "name-effect-wave";
-        if (effectType === "prism") return "name-effect-prism";
-        if (effectType === "stardust") return "name-effect-stardust";
-        if (effectType === "pulse_core") return "name-effect-pulse-core";
-        if (effectType === "aurora_pulse") return "name-effect-aurora-pulse";
-        return "";
+        const v = cosmeticDisplayValue("nameEffect", effectType);
+        return NAME_EFFECT_CLASS_MAP[v] || "";
     }
+
+    const NAME_EFFECT_CLASS_MAP = {
+        wave: "name-effect-wave",
+        prism: "name-effect-prism",
+        stardust: "name-effect-stardust",
+        pulse_core: "name-effect-pulse-core",
+        aurora_pulse: "name-effect-aurora-pulse",
+        rainbow: "name-effect-rainbow",
+        neon_flicker: "name-effect-neon-flicker",
+        sparkle: "name-effect-sparkle",
+        glitch: "name-effect-glitch"
+    };
 
     const PROFILE_EFFECT_CLASS_MAP = {
         royal: "fx-royal",
@@ -1396,31 +1706,55 @@
         plasma_storm: "fx-plasma-storm",
         inferno_glow: "fx-inferno-glow",
         ocean_breeze: "fx-ocean-breeze",
-        golden_aura: "fx-golden-aura"
+        golden_aura: "fx-golden-aura",
+        moonlight: "fx-moonlight",
+        neon_city: "fx-neon-city",
+        sakura_night: "fx-sakura-night"
     };
     const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
 
     function profileEffectClass(effectType) {
-        return PROFILE_EFFECT_CLASS_MAP[effectType] || "";
+        const v = cosmeticDisplayValue("profileEffect", effectType);
+        if (PROFILE_EFFECT_CLASS_MAP[v]) return PROFILE_EFFECT_CLASS_MAP[v];
+        const raw = String(effectType || "").trim();
+        return PROFILE_EFFECT_CLASS_MAP[raw] || "";
     }
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend", "avatar-frame-rainbow-prism", "avatar-frame-lava-ring", "avatar-frame-frost-crystal");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
 
     function currentCosmeticSnapshot() {
+        const eq = getEquipped(currentUserData);
         return {
             avatar: pickOwnedEquipped(currentUserData, "avatar"),
             frame: pickOwnedEquipped(currentUserData, "frame"),
+            banner: resolveVisualCosmetic(currentUserData, "banner"),
             title: pickOwnedEquipped(currentUserData, "title"),
             badge: pickOwnedEquipped(currentUserData, "badge"),
             nameColor: pickOwnedEquipped(currentUserData, "nameColor"),
             nameEffect: pickOwnedEquipped(currentUserData, "nameEffect"),
-            profileEffect: pickOwnedEquipped(currentUserData, "profileEffect")
+            profileEffect: resolveVisualCosmetic(currentUserData, "profileEffect"),
+            customStatus: String(currentUserData && currentUserData.customStatus || "").trim(),
+            profileBio: String(currentUserData && currentUserData.profileBio || "").trim()
         };
+    }
+
+    function getEquipped(data) {
+        return (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+    }
+
+    function bannerClass(bannerType) {
+        const v = cosmeticDisplayValue("banner", bannerType);
+        if (v === "midnight") return "pop-banner-midnight";
+        if (v === "sunset") return "pop-banner-sunset";
+        if (v === "forest") return "pop-banner-forest";
+        if (v === "galaxy") return "pop-banner-galaxy";
+        if (v === "neon_city") return "pop-banner-neon-city";
+        return "";
     }
 
     function applySidebarCosmetics(data) {
@@ -1448,36 +1782,48 @@
         base.value = "";
         base.textContent = emptyLabel;
         sel.appendChild(base);
+        const seenValues = new Set();
         items.forEach((it) => {
+            const val = String(it.value || "");
+            if (!val || seenValues.has(val)) return;
+            seenValues.add(val);
             const opt = document.createElement("option");
-            opt.value = it.value;
+            opt.value = val;
             opt.textContent = it.label;
             sel.appendChild(opt);
         });
-        sel.value = selectedValue || "";
+        const target = String(selectedValue || "");
+        if (target && seenValues.has(target)) sel.value = target;
+        else sel.value = "";
     }
 
     window.openCosmeticModal = () => {
         const data = currentUserData || {};
         fillCosmeticSelect("chat-equip-avatar", ownedItemsBySlot(data, "avatar"), pickOwnedEquipped(data, "avatar"), "預設頭像");
         fillCosmeticSelect("chat-equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
+        fillCosmeticSelect("chat-equip-banner", ownedItemsBySlot(data, "banner"), pickOwnedEquipped(data, "banner"), "預設橫幅");
         fillCosmeticSelect("chat-equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
         fillCosmeticSelect("chat-equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
         fillCosmeticSelect("chat-equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
         fillCosmeticSelect("chat-equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
         fillCosmeticSelect("chat-equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
         document.getElementById("cosmetic-modal").style.display = "flex";
+        syncMobileModalOpen();
     };
 
     window.closeCosmeticModal = () => {
         document.getElementById("cosmetic-modal").style.display = "none";
+        syncMobileModalOpen();
     };
 
     window.saveChatCosmetics = async () => {
         if (!currentUser) return;
+        const prev = getEquipped(currentUserData);
         const equipped = {
+            ...prev,
             avatar: (document.getElementById("chat-equip-avatar").value || "").trim(),
             frame: (document.getElementById("chat-equip-frame").value || "").trim(),
+            banner: (document.getElementById("chat-equip-banner").value || "").trim(),
             title: (document.getElementById("chat-equip-title").value || "").trim(),
             badge: (document.getElementById("chat-equip-badge").value || "").trim(),
             nameColor: (document.getElementById("chat-equip-name-color").value || "").trim(),
@@ -1514,11 +1860,13 @@
         if (desktopSel) desktopSel.value = p.desktopNotification ? "on" : "off";
         const modal = document.getElementById("chat-prefs-modal");
         if (modal) modal.style.display = "flex";
+        syncMobileModalOpen();
     };
 
     window.closeChatPrefsModal = () => {
         const modal = document.getElementById("chat-prefs-modal");
         if (modal) modal.style.display = "none";
+        syncMobileModalOpen();
     };
 
     window.saveChatPrefs = async () => {
@@ -2258,9 +2606,14 @@
             }
         }
 
+        const mobileBackBtn = isMobileChatShell()
+            ? `<button type="button" class="chat-mobile-back btn-icon" onclick="closeMobileChatView()" title="返回頻道列表">←</button>`
+            : "";
+
         const mainDiv = document.getElementById('chat-main');
         mainDiv.innerHTML = `
             <div class="chat-header">
+                ${mobileBackBtn}
                 <h3 id="current-chat-name" style="margin: 0; font-size: 1.1rem;">${icon} ${displayTitle}</h3>
                 <div style="margin-left:auto; display:flex; align-items:center;">
                     ${inviteBtnHtml}
@@ -2290,6 +2643,8 @@
                 </div>
             </div>
         `;
+
+        syncMobileChatView(true);
 
         if (unsubscribeMessages) unsubscribeMessages();
         if (unsubscribeChatDoc) unsubscribeChatDoc();
@@ -2475,6 +2830,7 @@
             currentChatId = null;
             currentChatTeacherId = null;
             currentChatType = null;
+            syncMobileChatView(false);
             alert("已成功退出聊天室");
         } catch (e) { alert("退出失敗：" + e.message); }
     };
@@ -2488,6 +2844,7 @@
             currentChatId = null;
             currentChatTeacherId = null;
             currentChatType = null;
+            syncMobileChatView(false);
             alert("已成功解散聊天室");
         } catch (e) { alert("解散失敗：" + e.message); }
     };
@@ -2627,6 +2984,7 @@
         const el = document.getElementById("profile-pop");
         if (el) el.style.display = "none";
     }
+    window.hideProfilePop = hideProfilePop;
 
     function setReplyBar() {
         const bar = document.getElementById("reply-bar");
@@ -2717,6 +3075,24 @@
         menu.style.display = "block";
     };
 
+    function formatPopMemberSince(data) {
+        const ts = data && (data.createdAt || data.created_at);
+        if (!ts) return "";
+        try {
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            if (isNaN(d.getTime())) return "";
+            return "加入 Doratch：" + d.toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" });
+        } catch (_) {
+            return "";
+        }
+    }
+
+    function popHandleFromEmail(email) {
+        const em = String(email || "").trim();
+        if (!em.includes("@")) return em ? ("@" + em) : "";
+        return "@" + em.split("@")[0];
+    }
+
     window.openProfileByMessage = async (ev, msgId) => {
         ev.preventDefault();
         hideMessageMenu();
@@ -2728,51 +3104,128 @@
         const name = isBot ? (msg.botName || "Bot") : (msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0]);
         const email = isBot ? ("bot@" + String(msg.botToken || "local").slice(0, 8)) : (msg.senderEmail || "");
         const c = (!isBot && msg.senderCosmetics && typeof msg.senderCosmetics === "object") ? msg.senderCosmetics : {};
-        const tags = [];
-        if (c.title) tags.push(`<span class="profile-pop-tag">🏷️ ${escHtml(c.title)}</span>`);
-        if (c.badge) tags.push(`<span class="profile-pop-tag">✨ ${escHtml(c.badge)}</span>`);
-        if (isBot) tags.push('<span class="profile-pop-tag">🤖 BOT</span>');
-        const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : "";
-        const profileFxCls = c.profileEffect ? profileEffectClass(c.profileEffect) : "";
-        const roleText = isBot ? "BOT" : (msg.senderId === currentUser.uid ? "你" : "成員");
+        let customStatus = c.customStatus || "";
+        let profileBio = c.profileBio || "";
+        let memberSince = "";
+        let senderLv = "";
+        const rolePills = [];
+        if (c.title) {
+            const leg = isLegendaryTitle(c.title);
+            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}">🏷️ ${escHtml(c.title)}</span>`);
+        }
+        if (isBot) rolePills.push('<span class="profile-pop-role-pill">🤖 BOT</span>');
+        else if (msg.senderId === currentUser.uid) rolePills.push('<span class="profile-pop-role-pill">你</span>');
         let badgeShelf = [];
+        let senderData = null;
         if (!isBot && msg.senderId) {
             try {
-                const senderData = await fetchUserByUid(msg.senderId);
+                if (msg.senderId === currentUser.uid && currentUserData) {
+                    senderData = currentUserData;
+                } else {
+                    senderData = await fetchUserByUid(msg.senderId);
+                }
+                if (senderData) {
+                    if (!customStatus) customStatus = String(senderData.customStatus || "").trim();
+                    if (!profileBio) profileBio = String(senderData.profileBio || "").trim();
+                    const eq = senderData.equippedCosmetics && typeof senderData.equippedCosmetics === "object"
+                        ? senderData.equippedCosmetics
+                        : {};
+                    if (!c.banner && eq.banner) c.banner = eq.banner;
+                    if (!c.profileEffect && eq.profileEffect) c.profileEffect = eq.profileEffect;
+                    memberSince = formatPopMemberSince(senderData);
+                    if (Number.isFinite(senderData.lv)) senderLv = "Lv." + Math.floor(senderData.lv);
+                }
                 const ownedBadges = ownedItemsBySlot(senderData || {}, "badge");
-                badgeShelf = ownedBadges.slice(0, 8).map((b) => {
+                badgeShelf = ownedBadges.slice(0, 10).map((b) => {
                     const isLegend = isLegendaryBadge(b.value || "");
-                    return `<span class="profile-pop-badge-chip ${isLegend ? 'legend' : ''}">✨ ${escHtml(b.label || b.value)}</span>`;
+                    return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
                 });
             } catch (_) {}
         }
+        const resolvedBanner = resolveCosmeticForDisplay(senderData, "banner", c.banner);
+        const resolvedProfileFx = resolveCosmeticForDisplay(senderData, "profileEffect", c.profileEffect);
+        const resolvedNameFx = resolveCosmeticForDisplay(senderData, "nameEffect", c.nameEffect);
+        if (resolvedBanner) c.banner = resolvedBanner;
+        if (resolvedProfileFx) c.profileEffect = resolvedProfileFx;
+        if (resolvedNameFx) c.nameEffect = resolvedNameFx;
+        if (c.nameColor) c.nameColor = resolveCosmeticForDisplay(senderData, "nameColor", c.nameColor) || c.nameColor;
+        const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : "";
         if (!badgeShelf.length && c.badge) {
-            badgeShelf = [`<span class="profile-pop-badge-chip ${isLegendaryBadge(c.badge) ? 'legend' : ''}">✨ ${escHtml(c.badge)}</span>`];
+            badgeShelf = [`<span class="profile-pop-badge-chip${isLegendaryBadge(c.badge) ? " legend" : ""}">✨ ${escHtml(c.badge)}</span>`];
         }
         const avatarUrl = isBot
-            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=23a559&color=fff`
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=5865F2&color=fff`
             : avatarFromCosmetics(email || name, c.avatar || "");
+        const profileFxCls = c.profileEffect ? profileEffectClass(c.profileEffect) : "";
+        const bannerCls = bannerClass(c.banner || "");
+        const bannerVisualCls = profileFxCls
+            ? profileFxCls
+            : bannerCls;
+        const handle = isBot ? "bot" : popHandleFromEmail(email);
+        const statusBlock = customStatus
+            ? `<div class="profile-pop-status">${escHtml(customStatus)}</div>`
+            : "";
+        const bioBlock = profileBio
+            ? `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio">${escHtml(profileBio)}</div></div><div class="profile-pop-divider"></div>`
+            : `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio empty">尚未設定自我介紹</div></div><div class="profile-pop-divider"></div>`;
+        const badgesBlock = badgeShelf.length
+            ? `<div class="profile-pop-badge-grid">${badgeShelf.join("")}</div>`
+            : `<div class="profile-pop-bio empty" style="font-size:12px;">尚未裝備徽章</div>`;
+        const metaParts = [memberSince, senderLv].filter(Boolean);
+        const metaBlock = metaParts.length ? `<div class="profile-pop-meta">${escHtml(metaParts.join(" · "))}</div>` : "";
+        const profileHref = isBot ? "#" : (
+            (window.DoratchDevice && window.DoratchDevice.isMobileDevice())
+                ? "profile.html?app=1"
+                : "profile.html"
+        );
+        const profileBtn = isBot
+            ? ""
+            : `<div class="profile-pop-actions">
+                <a class="profile-pop-action" href="${profileHref}">查看個人檔案</a>
+                <button type="button" class="profile-pop-action secondary" data-profile-pop-close>關閉</button>
+               </div>`;
         pop.innerHTML = `
-            <div class="profile-pop-banner"></div>
-            <div class="profile-pop-body">
-                <div class="profile-pop-head">
-                    <img src="${avatarUrl}" class="profile-pop-avatar ${frameClass(c.frame || "")} ${isLegendaryFrame(c.frame || "") ? 'avatar-frame-legendary' : ''}">
-                    <div>
-                        <div class="profile-pop-name ${nameFxCls}"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
-                        <div class="profile-pop-email">${escHtml(email)}</div>
-                        <div class="profile-pop-role">${roleText}</div>
-                    </div>
+            <div class="profile-pop-banner ${bannerVisualCls}"></div>
+            <div class="profile-pop-sheet">
+                <div class="profile-pop-avatar-wrap">
+                    <img src="${avatarUrl}" alt="" class="profile-pop-avatar ${frameClass(c.frame || "")} ${isLegendaryFrame(c.frame || "") ? "avatar-frame-legendary" : ""}">
+                    <span class="profile-pop-status-dot${isBot ? " bot" : ""}"></span>
                 </div>
-                <div class="profile-pop-section-title">裝備標籤</div>
-                <div class="profile-pop-tags">${tags.join("") || '<span class="profile-pop-tag">一般使用者</span>'}</div>
-                <div class="profile-pop-section-title">徽章展示</div>
-                <div class="profile-pop-badge-grid">${badgeShelf.join("") || '<span class="profile-pop-badge-chip">尚未裝備徽章</span>'}</div>
+                <div class="profile-pop-identity">
+                    <div class="profile-pop-name ${nameFxCls}"${c.nameColor ? ` style="color:${escHtml(c.nameColor)}"` : ""}>${escHtml(name)}</div>
+                    <div class="profile-pop-handle">${escHtml(handle)}</div>
+                    ${statusBlock}
+                    ${rolePills.length ? `<div class="profile-pop-role-row">${rolePills.join("")}</div>` : ""}
+                </div>
+                <div class="profile-pop-divider"></div>
+                ${bioBlock}
+                <div class="profile-pop-section">
+                    <div class="profile-pop-section-label">徽章</div>
+                    ${badgesBlock}
+                </div>
+                ${metaBlock}
+                ${profileBtn}
             </div>
         `;
         pop.classList.remove(...PROFILE_FX_CLASSES);
         if (profileFxCls) pop.classList.add(profileFxCls);
-        pop.style.left = Math.min(ev.clientX + 8, window.innerWidth - 380) + "px";
-        pop.style.top = Math.min(ev.clientY + 8, window.innerHeight - 330) + "px";
+        const closeBtn = pop.querySelector("[data-profile-pop-close]");
+        if (closeBtn) {
+            closeBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                hideProfilePop();
+            });
+        }
+        const popW = Math.min(380, window.innerWidth - 24);
+        const popH = 420;
+        let left = ev.clientX + 12;
+        let top = ev.clientY + 12;
+        if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+        if (top + popH > window.innerHeight - 12) top = Math.max(12, ev.clientY - popH - 8);
+        if (left < 12) left = 12;
+        pop.style.left = left + "px";
+        pop.style.top = top + "px";
         pop.style.display = "block";
     };
 
@@ -3253,9 +3706,13 @@
         input.value = '';
         modal.style.display = 'flex';
         input.focus();
+        syncMobileModalOpen();
     };
 
-    window.closeModal = () => document.getElementById('modal').style.display = 'none';
+    window.closeModal = () => {
+        document.getElementById('modal').style.display = 'none';
+        syncMobileModalOpen();
+    };
     (function bindModalClickGuards() {
         ["modal", "cosmetic-modal", "chat-prefs-modal"].forEach((id) => {
             const root = document.getElementById(id);
@@ -3278,6 +3735,8 @@
     });
     window.addEventListener("click", (e) => {
         const t = e.target;
+        const tag = (t && t.tagName) ? t.tagName.toLowerCase() : "";
+        if (tag === "select" || tag === "option") return;
         if (t && t.id === "modal") closeModal();
         if (t && t.id === "cosmetic-modal") closeCosmeticModal();
         if (t && t.id === "chat-prefs-modal") closeChatPrefsModal();
