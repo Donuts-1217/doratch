@@ -256,6 +256,50 @@
         box.style.display = 'block';
     }
 
+    /** 驗證信完成後導回的 Doratch 頁面 */
+    function getEmailVerifyUrl() {
+        return new URL("verify-email.html", window.location.href).href;
+    }
+
+    function getEmailActionSettings() {
+        return {
+            url: getEmailVerifyUrl(),
+            handleCodeInApp: true
+        };
+    }
+
+    async function sendVerifyEmail(user) {
+        await sendEmailVerification(user, getEmailActionSettings());
+    }
+
+    window.resendVerification = async () => {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        if (!email || !password) {
+            showMsg("請先輸入 Email 與密碼，再按「重發驗證信」。", "error");
+            return;
+        }
+        try {
+            const res = await signInWithEmailAndPassword(auth, email, password);
+            if (res.user.emailVerified) {
+                showMsg("此 Email 已驗證完成，可以直接登入。", "success");
+                await signOut(auth);
+                return;
+            }
+            await sendVerifyEmail(res.user);
+            await signOut(auth);
+            showMsg(`
+                📬 驗證信已重新寄出！<br>
+                請至信箱點擊連結，會在 Doratch 驗證頁完成。<br>
+                <span class="spam-notice">⚠️ 若沒看到信件，請查看「垃圾郵件」。</span>
+            `, "success");
+        } catch (err) {
+            let msg = "重發失敗，請確認帳密是否正確。";
+            if (err.code === "auth/too-many-requests") msg = "寄送次數過多，請稍後再試。";
+            showMsg(msg, "error");
+        }
+    };
+
     window.switchMode = (target, opts) => {
         opts = opts || {};
         mode = target;
@@ -309,12 +353,12 @@
                     role: "student",
                     createdAt: serverTimestamp()
                 });
-                await sendEmailVerification(res.user);
+                await sendVerifyEmail(res.user);
                 await signOut(auth);
                 
                 showMsg(`
                     ✅ 註冊成功！驗證信已寄出。<br>
-                    請至信箱點擊連結後再登入。<br>
+                    請至信箱點擊連結，會在 <strong>Doratch 驗證頁</strong> 完成驗證後再登入。<br>
                     <span class="spam-notice">⚠️ 若沒看到信件，請務必查看「垃圾郵件」資料夾！</span>
                 `, "success");
                 switchMode('login', { keepMessage: true });
@@ -329,8 +373,9 @@
                 if (!verified) {
                     showMsg(`
                         ⚠️ Email 尚未驗證！<br>
-                        請先到信箱點擊驗證連結後再登入。<br>
-                        <span class="spam-notice">💡 若剛完成驗證，請稍候 3 秒再重試；或重新開啟此頁。</span>
+                        請到信箱點擊連結，在 Doratch 驗證頁完成後再登入。<br>
+                        <span class="spam-notice">💡 若剛完成驗證，請稍候幾秒再重試。</span><br>
+                        <span style="color:var(--primary);cursor:pointer;font-weight:bold;" onclick="resendVerification()">📬 重發驗證信</span>
                     `, "error");
                     await signOut(auth);
                     return;
@@ -388,6 +433,10 @@
         e.preventDefault();
         handleAuth();
     });
+
+    if (new URLSearchParams(window.location.search).get("verified") === "1") {
+        showMsg("✅ Email 已驗證成功！現在可以登入了。", "success");
+    }
 </script>
 
 </body>

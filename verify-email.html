@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0F172A">
+    <link rel="icon" type="image/png" href="icons/icon.png">
+    <link rel="apple-touch-icon" href="icons/icon.png">
+    <link rel="stylesheet" href="responsive-global.css">
+    <title>Email 驗證 - Doratch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4C97FF;
+            --accent: #855CD6;
+            --bg: #0F172A;
+            --card-bg: #1E293B;
+            --text: #F8FAFC;
+        }
+        body {
+            font-family: "Outfit", "Noto Sans TC", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .bg-glow {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(80px);
+            opacity: 0.35;
+        }
+        .bg-glow-a { width: 320px; height: 320px; top: -80px; left: -80px; background: var(--primary); }
+        .bg-glow-b { width: 260px; height: 260px; bottom: -60px; right: -60px; background: var(--accent); }
+        .verify-card {
+            background: var(--card-bg);
+            padding: 44px 36px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        .logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            text-decoration: none;
+        }
+        .logo-icon { width: 44px; height: 44px; border-radius: 12px; }
+        .logo-text {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: 0.06em;
+            text-transform: lowercase;
+        }
+        .subtitle { color: #94A3B8; font-size: 13px; margin-bottom: 24px; }
+        .status-icon {
+            font-size: 3rem;
+            margin: 8px 0 16px;
+            line-height: 1;
+        }
+        h1 {
+            font-size: 1.45rem;
+            font-weight: 900;
+            margin: 0 0 12px;
+        }
+        .message {
+            color: #CBD5E1;
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+        .message.error { color: #FCA5A5; }
+        .message.success { color: #86EFAC; }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 151, 255, 0.3);
+        }
+        .btn-primary:hover { background: #357ABD; transform: translateY(-2px); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: #E2E8F0;
+            margin-top: 10px;
+        }
+        .spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid rgba(255,255,255,0.12);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hint {
+            margin-top: 18px;
+            font-size: 12px;
+            color: #64748B;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+<div class="bg-glow bg-glow-a"></div>
+<div class="bg-glow bg-glow-b"></div>
+
+<div class="verify-card">
+    <a class="logo-wrap" href="index.html" aria-label="Doratch 首頁">
+        <img class="logo-icon" src="icons/icon.png" alt="">
+        <span class="logo-text">doratch</span>
+    </a>
+    <div class="subtitle">Email 驗證</div>
+
+    <div id="state-loading">
+        <div class="spinner"></div>
+        <h1>正在驗證中…</h1>
+        <p class="message">請稍候，我們正在確認你的 Email。</p>
+    </div>
+
+    <div id="state-success" style="display:none;">
+        <div class="status-icon">✅</div>
+        <h1>驗證成功！</h1>
+        <p class="message success">你的 Email 已通過驗證，現在可以登入 Doratch 了。</p>
+        <a class="btn btn-primary" href="login.html">前往登入</a>
+    </div>
+
+    <div id="state-error" style="display:none;">
+        <div class="status-icon">⚠️</div>
+        <h1>驗證失敗</h1>
+        <p class="message error" id="error-text">連結可能已過期或已被使用。</p>
+        <a class="btn btn-primary" href="login.html">返回登入</a>
+        <a class="btn btn-secondary" href="login.html">重新註冊或重發驗證信</a>
+        <p class="hint">若你剛完成驗證，可直接到登入頁再試一次。</p>
+    </div>
+
+    <div id="state-info" style="display:none;">
+        <div class="status-icon">📬</div>
+        <h1>請查收驗證信</h1>
+        <p class="message">註冊後請到信箱點擊連結，驗證會在 Doratch 頁面完成。</p>
+        <a class="btn btn-primary" href="login.html">返回登入</a>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, applyActionCode } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        storageBucket: "chat-52c0d.firebasestorage.app",
+        messagingSenderId: "449329325475",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const loadingEl = document.getElementById("state-loading");
+    const successEl = document.getElementById("state-success");
+    const errorEl = document.getElementById("state-error");
+    const infoEl = document.getElementById("state-info");
+    const errorTextEl = document.getElementById("error-text");
+
+    function showState(name) {
+        loadingEl.style.display = name === "loading" ? "block" : "none";
+        successEl.style.display = name === "success" ? "block" : "none";
+        errorEl.style.display = name === "error" ? "block" : "none";
+        infoEl.style.display = name === "info" ? "block" : "none";
+    }
+
+    function friendlyError(code) {
+        const map = {
+            "auth/expired-action-code": "驗證連結已過期，請重新註冊或重發驗證信。",
+            "auth/invalid-action-code": "驗證連結無效或已使用過。",
+            "auth/user-disabled": "此帳號已停用，請聯絡管理員。",
+            "auth/user-not-found": "找不到對應帳號，可能已被刪除。"
+        };
+        return map[code] || "驗證時發生錯誤，請重新註冊或重發驗證信。";
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get("mode");
+    const oobCode = params.get("oobCode");
+
+    async function run() {
+        if (params.get("verified") === "1" || params.get("success") === "1") {
+            showState("success");
+            return;
+        }
+
+        if (mode === "verifyEmail" && oobCode) {
+            try {
+                await applyActionCode(auth, oobCode);
+                showState("success");
+                setTimeout(() => { window.location.href = "login.html?verified=1"; }, 2500);
+            } catch (err) {
+                errorTextEl.textContent = friendlyError(err && err.code);
+                showState("error");
+            }
+            return;
+        }
+
+        if (!mode && !oobCode) {
+            showState("info");
+            return;
+        }
+
+        errorTextEl.textContent = "無法識別的驗證連結，請從信箱重新點擊，或返回登入重發驗證信。";
+        showState("error");
+    }
+
+    run();
+</script>
+</body>
+</html>
