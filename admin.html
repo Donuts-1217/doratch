@@ -266,6 +266,40 @@
             </div>
             <p style="margin:12px 0 0; font-size:12px; color:#64748B;">超過上限時，系統會自動刪除最舊訊息（私訊、群組、伺服器皆適用）。預設 300 則。</p>
         </div>
+        <div class="card">
+            <h3 style="margin-top:0;">Python 問答助教（Gemini）</h3>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#E2E8F0; cursor:pointer;">
+                    <input type="checkbox" id="python-tutor-enabled" style="width:auto;">
+                    啟用雲端 AI 助教
+                </label>
+                <label for="python-tutor-backend" style="font-size:13px; color:#94A3B8;">後端</label>
+                <select id="python-tutor-backend" style="min-width:220px;">
+                    <option value="gas">Google 試算表代理（免費 · 免 Blaze）</option>
+                    <option value="firebase">Firebase Function（需 Blaze）</option>
+                </select>
+                <label for="python-tutor-model" style="font-size:13px; color:#94A3B8;">模型</label>
+                <select id="python-tutor-model" style="min-width:180px;">
+                    <option value="gemini-2.0-flash">gemini-2.0-flash（推薦）</option>
+                    <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+                <label for="python-tutor-gas-url" style="font-size:13px; color:#94A3B8; flex:0 0 auto;">GAS 代理 URL</label>
+                <input type="url" id="python-tutor-gas-url" placeholder="https://script.google.com/macros/s/…/exec" style="flex:1; min-width:280px; padding:8px 10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:#e2e8f0;">
+                <button class="btn btn-primary" onclick="savePythonTutorSettings()">儲存</button>
+                <span id="python-tutor-status" style="font-size:12px; color:#94A3B8;"></span>
+            </div>
+            <p style="margin:8px 0 0; font-size:12px; color:#64748B; line-height:1.65;">
+                <strong style="color:#A5B4FC;">免費方案（推薦）：</strong>複製專案內 <code style="color:#CBD5E1;">scripts/python-tutor-gas-proxy.gs</code> 到
+                <a href="https://script.google.com" target="_blank" rel="noopener" style="color:#93C5FD;">Google Apps Script</a>，
+                在「指令碼屬性」設定 <code style="color:#CBD5E1;">GEMINI_API_KEY</code> 與 <code style="color:#CBD5E1;">ALLOWED_ORIGIN</code>（你的 GitHub Pages 網域），
+                部署為「網頁應用程式（任何人）」→ 把 /exec URL 貼到上方。<strong>不需 Firebase Blaze。</strong>
+            </p>
+            <p style="margin:8px 0 0; font-size:12px; color:#64748B;">未啟用時使用離線規則助教（完全免費）。Firebase 後端需 <code style="color:#CBD5E1;">firebase deploy --only functions:pythonTutorGemini</code>。</p>
+        </div>
     </div>
 
     <div id="tab-users" style="display:none;">
@@ -617,6 +651,69 @@
         if(tab === 'dashboard') {
             loadSystemStorageSettings();
             loadChatSettings();
+            loadPythonTutorSettings();
+        }
+    };
+
+    async function loadPythonTutorSettings() {
+        const enabledEl = document.getElementById('python-tutor-enabled');
+        const modelEl = document.getElementById('python-tutor-model');
+        const backendEl = document.getElementById('python-tutor-backend');
+        const gasUrlEl = document.getElementById('python-tutor-gas-url');
+        const status = document.getElementById('python-tutor-status');
+        if (!enabledEl) return;
+        try {
+            const snap = await getDoc(doc(db, "system_config", "python_tutor"));
+            const data = snap.exists() ? (snap.data() || {}) : {};
+            enabledEl.checked = !!data.enabled;
+            if (modelEl && data.model) modelEl.value = data.model;
+            if (backendEl && data.backend) backendEl.value = data.backend;
+            else if (backendEl) backendEl.value = "gas";
+            if (gasUrlEl && data.gasProxyUrl) gasUrlEl.value = data.gasProxyUrl;
+            if (status) {
+                if (!data.enabled) status.textContent = "目前為離線助教";
+                else if ((data.backend || "gas") === "gas") status.textContent = "GAS 免費後端";
+                else status.textContent = "Firebase 後端";
+            }
+        } catch (e) {
+            console.error(e);
+            if (status) status.textContent = "讀取失敗";
+        }
+    }
+
+    window.savePythonTutorSettings = async () => {
+        const enabledEl = document.getElementById('python-tutor-enabled');
+        const modelEl = document.getElementById('python-tutor-model');
+        const backendEl = document.getElementById('python-tutor-backend');
+        const gasUrlEl = document.getElementById('python-tutor-gas-url');
+        const status = document.getElementById('python-tutor-status');
+        const enabled = !!(enabledEl && enabledEl.checked);
+        const model = (modelEl && modelEl.value) ? modelEl.value : "gemini-2.0-flash";
+        const backend = (backendEl && backendEl.value) ? backendEl.value : "gas";
+        const gasProxyUrl = (gasUrlEl && gasUrlEl.value) ? String(gasUrlEl.value).trim() : "";
+        if (enabled && backend === "gas" && !gasProxyUrl) {
+            return showToast("GAS 免費後端需填寫代理 URL", "error");
+        }
+        try {
+            await setDoc(doc(db, "system_config", "python_tutor"), {
+                enabled: enabled,
+                backend: backend,
+                model: model,
+                gasProxyUrl: gasProxyUrl,
+                updatedAt: serverTimestamp(),
+                updatedBy: auth.currentUser?.email || ""
+            }, { merge: true });
+            if (status) {
+                status.textContent = enabled
+                    ? (backend === "gas" ? "已儲存 · GAS 免費" : "已儲存 · Firebase")
+                    : "已儲存 · 離線模式";
+            }
+            await logAction("更新 Python 問答助教", "enabled=" + enabled + ", backend=" + backend + ", model=" + model);
+            showToast("Python 問答助教設定已更新");
+        } catch (e) {
+            console.error(e);
+            if (status) status.textContent = "儲存失敗";
+            showToast("儲存失敗：" + (e.message || e), 'error');
         }
     };
 

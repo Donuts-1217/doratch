@@ -1,0 +1,121 @@
+/* Python 學習 — 問答助教 */
+.tutor-qa {
+    border: 1px solid #c4b5fd;
+    background: linear-gradient(180deg, #faf5ff 0%, #fff 100%);
+}
+.tutor-qa-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.tutor-qa-head h3 {
+    margin: 0;
+    color: #5b21b6;
+    font-size: 1.05rem;
+}
+.tutor-qa-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #ede9fe;
+    color: #6d28d9;
+    white-space: nowrap;
+}
+.tutor-qa-desc {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.6;
+}
+.tutor-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.tutor-quick button {
+    border: none;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    background: #ede9fe;
+    color: #5b21b6;
+}
+.tutor-quick button:hover { background: #ddd6fe; }
+.tutor-messages {
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #e9d5ff;
+    border-radius: 10px;
+    background: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.tutor-msg {
+    max-width: 92%;
+    font-size: 13px;
+    line-height: 1.65;
+    padding: 8px 12px;
+    border-radius: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.tutor-msg.user {
+    align-self: flex-end;
+    background: #5865f2;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+.tutor-msg.bot {
+    align-self: flex-start;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+.tutor-msg.bot strong { color: #5b21b6; }
+.tutor-input-row {
+    display: flex;
+    gap: 8px;
+}
+.tutor-input-row input {
+    flex: 1;
+    min-width: 0;
+    border: 2px solid #ddd6fe;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+}
+.tutor-input-row input:focus {
+    outline: none;
+    border-color: #8b5cf6;
+}
+.tutor-input-row button {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 900;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    background: #7c3aed;
+    color: #fff;
+    white-space: nowrap;
+}
+.tutor-input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+.tutor-empty {
+    font-size: 13px;
+    color: #94a3b8;
+    text-align: center;
+    padding: 12px 8px;
+}

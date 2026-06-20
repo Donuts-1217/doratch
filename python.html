@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="python-terminal.css">
     <link rel="stylesheet" href="python-editor-assist.css">
+    <link rel="stylesheet" href="python-tutor-qa.css">
     <link rel="stylesheet" href="discord-bot-sim.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -287,6 +288,8 @@
     <script src="discord-bot-simulator.js"></script>
     <script src="python-completions-data.js"></script>
     <script src="python-editor-assist.js"></script>
+    <script src="python-learn-assist.js"></script>
+    <script src="python-tutor-qa.js"></script>
     <script src="python-terminal.js"></script>
     <script src="python-monaco.js"></script>
     <script src="doratch-ui-boot.js"></script>
@@ -309,7 +312,7 @@
     <main class="main-content">
         <div class="py-hero">
             <h1>🐍 Doratch Python 學習</h1>
-            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 每關含分段教學、示範程式、學習助教分析與通關檢查</p>
+            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 每關含分段教學、示範程式、<strong>學習輔助系統</strong>（即時分析）與通關檢查</p>
         </div>
 
         <div id="file-warn" class="file-warn">
@@ -404,6 +407,21 @@
                     </div>
                     <div id="assist-status" class="assist-status">尚未分析：先寫幾行程式，再按「分析目前程式」。</div>
                 </div>
+                <div class="card tutor-qa" id="tutor-qa-root">
+                    <div class="tutor-qa-head">
+                        <h3>💬 問答助教</h3>
+                        <span class="tutor-qa-badge">引導模式 · 不給答案</span>
+                    </div>
+                    <p class="tutor-qa-desc">可問本關目標、語法用法、為什麼出錯。預設為離線規則助教；管理員可在 admin 啟用 Gemini（免費 GAS 代理，不需 Blaze）。</p>
+                    <div class="tutor-quick"></div>
+                    <div class="tutor-messages">
+                        <div class="tutor-empty">選快捷問題，或輸入你的疑問。</div>
+                    </div>
+                    <div class="tutor-input-row">
+                        <input type="text" class="tutor-qa-input" placeholder="例如：這關要幹嘛？ / 為什麼測試失敗？" maxlength="500" autocomplete="off">
+                        <button type="button" class="tutor-qa-send">送出</button>
+                    </div>
+                </div>
                 <div class="card" style="padding:0;border:none;background:transparent;">
                     <div class="terminal-panel">
                         <div class="terminal-head">
@@ -430,6 +448,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initPythonGeminiTutor } from "./python-gemini-tutor.js";
 
     const PYTHON_LESSONS = window.PYTHON_LESSONS || [];
     const getLesson = window.getPythonLesson || (() => PYTHON_LESSONS[0]);
@@ -470,6 +489,8 @@
     let engineReady = !!window.__DORATCH_ENGINE_READY__;
     let useMonaco = false;
     let botSim = null;
+    let lastRunError = "";
+    let tutorPanel = null;
 
     function isEngineReady() {
         return engineReady || window.__DORATCH_ENGINE_READY__ ||
@@ -633,126 +654,26 @@
     }
 
     function countEffectiveLines(code) {
-        return String(code || "")
-            .split("\n")
-            .map((s) => s.trim())
-            .filter((s) => s && !s.startsWith("#")).length;
+        return window.PythonLearnAssist
+            ? window.PythonLearnAssist.countEffectiveLines(code)
+            : 0;
     }
 
     function getLessonScaffold(lesson) {
-        const lines = [];
-        if ((lesson.rules?.mustUse || []).includes("def")) {
-            lines.push("def solve():");
-            lines.push("    # TODO: 先完成邏輯");
-            lines.push("    pass");
-            lines.push("");
-            lines.push("# TODO: 讀取輸入並呼叫 solve()");
-            return lines.join("\n");
-        }
-        if (lesson.rules?.requireLoop && (lesson.rules?.mustUse || []).includes("while")) {
-            lines.push("total = 0");
-            lines.push("while True:");
-            lines.push("    x = int(input())");
-            lines.push("    if x == 0:");
-            lines.push("        break");
-            lines.push("    # TODO: 更新 total");
-            lines.push("print(total)");
-            return lines.join("\n");
-        }
-        if (lesson.rules?.requireLoop) {
-            lines.push("n = int(input())");
-            lines.push("for i in range(n):");
-            lines.push("    # TODO: 補上邏輯");
-            lines.push("    pass");
-            lines.push("print()");
-            return lines.join("\n");
-        }
-        if (lesson.rules?.requireBranch) {
-            lines.push("x = input()");
-            lines.push("if ...:");
-            lines.push("    print(...)");
-            lines.push("elif ...:");
-            lines.push("    print(...)");
-            lines.push("else:");
-            lines.push("    print(...)");
-            return lines.join("\n");
-        }
-        lines.push("# TODO: 依題目補上程式");
-        if ((lesson.rules?.mustUse || []).includes("input")) lines.push("x = input()");
-        if ((lesson.rules?.mustUse || []).includes("print")) lines.push("print(x)");
-        return lines.join("\n");
+        return window.PythonLearnAssist
+            ? window.PythonLearnAssist.getLessonScaffold(lesson)
+            : "# TODO\n";
     }
 
     function analyzeCodeForLesson(code, lesson) {
-        const rules = lesson.rules || {};
-        const mustUse = rules.mustUse || [];
-        const checks = [];
-        const next = [];
-        const src = String(code || "");
-        const effectiveLines = countEffectiveLines(src);
-        const lower = src.toLowerCase();
-
-        if (!effectiveLines) {
-            checks.push({ pass: false, text: "尚未撰寫可執行程式碼（目前只有空白或註解）" });
-            next.push("先完成最小可執行版本：至少讀 input / print 一次");
-            return { checks, next, ok: false };
-        }
-
-        if (rules.minLines) {
-            const pass = effectiveLines >= rules.minLines;
-            checks.push({ pass, text: `有效程式碼行數 ${effectiveLines}/${rules.minLines}` });
-            if (!pass) next.push(`至少補到 ${rules.minLines} 行可執行程式碼`);
-        }
-
-        mustUse.forEach((kw) => {
-            const pass = lower.includes(String(kw).toLowerCase());
-            checks.push({ pass, text: `需使用 \`${kw}\`` });
-            if (!pass) next.push(`加入 \`${kw}\`（本關必要語法）`);
-        });
-
-        if (rules.requireLoop) {
-            const pass = /\bfor\b|\bwhile\b/.test(lower);
-            checks.push({ pass, text: "需要迴圈邏輯（for 或 while）" });
-            if (!pass) next.push("先用 for/while 建立可重複處理輸入的骨架");
-        }
-        if (rules.requireBranch) {
-            const pass = /\bif\b/.test(lower);
-            checks.push({ pass, text: "需要條件分支（if / elif / else）" });
-            if (!pass) next.push("加入 if / elif / else 處理不同情況");
-        }
-        if (rules.requireDef) {
-            const pass = /\bdef\s+[a-zA-Z_]\w*\s*\(/.test(src);
-            checks.push({ pass, text: "需要函式定義（def）" });
-            if (!pass) next.push("先定義函式，再由主程式呼叫");
-        }
-
-        const hasInput = /\binput\s*\(/.test(src);
-        if ((mustUse.includes("input") || lesson.id === "io") && !hasInput) {
-            next.push("本關是動態輸入題，請勿把答案寫死在 print 裡");
-        }
-        if (/print\(\s*["'][^"']*alice|bob|hello doratch/i.test(src) && hasInput) {
-            next.push("偵測到可能寫死測資，請改為使用 input 讀入值");
-        }
-
-        if (!next.length) next.push("很接近完成：先按「▶ 執行」手測，再按「✅ 跑測試」");
-        return { checks, next, ok: checks.every((c) => c.pass) };
+        return window.PythonLearnAssist
+            ? window.PythonLearnAssist.analyzeCodeForLesson(code, lesson)
+            : { checks: [], next: [], ok: true };
     }
 
     function renderAssistResult(analysis) {
-        const goalEl = document.getElementById("assist-goals");
-        const nextEl = document.getElementById("assist-next");
-        const statusEl = document.getElementById("assist-status");
-        if (!goalEl || !nextEl || !statusEl) return;
-        goalEl.innerHTML = analysis.checks.map((c) =>
-            `<li class="${c.pass ? "pass" : "warn"}">${c.pass ? "✓" : "•"} ${c.text}</li>`
-        ).join("");
-        nextEl.innerHTML = analysis.next.map((s) => `<li>${s}</li>`).join("");
-        if (analysis.ok) {
-            statusEl.classList.add("ok");
-            statusEl.textContent = "助教判定：核心條件大致完整，可以進入測試驗證。";
-        } else {
-            statusEl.classList.remove("ok");
-            statusEl.textContent = "助教判定：還有條件未滿足，先補上「下一步建議」再測試。";
+        if (window.PythonLearnAssist) {
+            window.PythonLearnAssist.renderAssistResult(analysis);
         }
     }
 
@@ -796,6 +717,7 @@
         updateDiscordLayout();
         if (botSim) botSim.clearMessages();
         runAssistAnalysis();
+        if (tutorPanel && tutorPanel.refresh) tutorPanel.refresh();
     }
 
     async function awardCoins(amount) {
@@ -833,14 +755,19 @@
         term.clear();
         term.setRunning(true);
         document.getElementById("btn-run").disabled = true;
+        lastRunError = "";
         try {
             const { error } = await Engine.runPythonInteractive(code, {
                 onWrite: (text) => term.write(text),
                 onInput: (prompt) => term.readLine(prompt)
             });
-            if (error) term.writeError(error);
+            if (error) {
+                lastRunError = String(error);
+                term.writeError(error);
+            }
         } catch (e) {
-            term.writeError(String(e.message || e));
+            lastRunError = String(e.message || e);
+            term.writeError(lastRunError);
         } finally {
             term.setRunning(false);
             document.getElementById("btn-run").disabled = false;
@@ -880,6 +807,7 @@
             }
             const { allPass, validationFailed, validationMessage, results } = await Engine.runTests(code, lesson);
             if (validationFailed) {
+                lastRunError = validationMessage || "驗證未通過";
                 if (term) term.writeError(validationMessage);
                 return;
             }
@@ -887,7 +815,10 @@
                 if (term) term.write("\n✓ 全部測試通過\n");
             } else {
                 const failed = results.filter((r) => !r.pass);
-                if (failed.length && term) term.writeError("測試未通過：" + failed[0].label);
+                if (failed.length) {
+                    lastRunError = "測試「" + failed[0].label + "」未通過：期望 " + failed[0].expected + "，得到 " + failed[0].got;
+                    if (term) term.writeError("測試未通過：" + failed[0].label);
+                }
             }
             box.innerHTML = results.map((r) =>
                 `<div class="test-row ${r.pass ? "pass" : "fail"}">` +
@@ -911,7 +842,8 @@
                 alert("尚有測試未通過，請修改程式後再試。");
             }
         } catch (e) {
-            if (term) term.writeError(String(e.message || e));
+            lastRunError = String(e.message || e);
+            if (term) term.writeError(lastRunError);
             box.innerHTML = "";
         }
     };
@@ -946,11 +878,18 @@
         alert(lines.join("\n"));
     };
 
-    const fallbackEditorEl = document.getElementById("editor-fallback");
-    if (fallbackEditorEl) {
-        fallbackEditorEl.addEventListener("input", function () {
-            clearTimeout(window.__assistTimer);
-            window.__assistTimer = setTimeout(runAssistAnalysis, 220);
+    if (window.PythonLearnAssist) {
+        window.PythonLearnAssist.bindAutoAnalysis(getCode, () => getLesson(currentId), runAssistAnalysis);
+    }
+
+    if (window.PythonTutorQA) {
+        tutorPanel = window.PythonTutorQA.mount({
+            getContext: () => ({
+                lesson: getLesson(currentId),
+                code: getCode(),
+                analysis: runAssistAnalysis(),
+                lastError: lastRunError
+            })
         });
     }
 
@@ -1050,6 +989,7 @@
         }
         await loadCloudProgress();
         renderLessonList();
+        await initPythonGeminiTutor(app, db);
     });
 </script>
 </body>

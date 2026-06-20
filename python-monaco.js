@@ -185,6 +185,10 @@
             editor.trigger("manual", "editor.action.triggerSuggest", {});
         });
 
+        editor.onDidChangeModelContent(function () {
+            document.dispatchEvent(new CustomEvent("doratch-editor-change"));
+        });
+
         waitForEditorFonts().then(function () {
             if (editor) {
                 editor.layout();
@@ -298,6 +302,7 @@
             if (snippetController && typeof snippetController.insert === "function") {
                 snippetController.insert(text);
                 editor.focus();
+                document.dispatchEvent(new CustomEvent("doratch-editor-change"));
                 return true;
             }
         }
@@ -308,7 +313,16 @@
             forceMoveMarkers: true
         }]);
         editor.focus();
+        document.dispatchEvent(new CustomEvent("doratch-editor-change"));
         return true;
+    }
+
+    var changeListeners = [];
+
+    function notifyChange() {
+        changeListeners.forEach(function (fn) {
+            try { fn(); } catch (_) {}
+        });
     }
 
     global.PythonMonaco = {
@@ -322,7 +336,12 @@
                 editor.setValue(code || "");
                 editor.setPosition({ lineNumber: 1, column: 1 });
                 editor.focus();
+                notifyChange();
             }
+        },
+        onDidChange: function (fn) {
+            if (typeof fn !== "function") return;
+            changeListeners.push(fn);
         },
         insertSnippet: insertSnippet,
         layout: function () {

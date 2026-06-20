@@ -217,6 +217,26 @@
             border-color: #c4b5fd !important;
             animation: particlePulse 2.2s ease-in-out infinite;
         }
+        .avatar-frame-rainbow-prism {
+            border-color: #f472b6 !important;
+            box-shadow: 0 0 0 4px rgba(244,114,182,0.22), 0 0 18px rgba(59,130,246,0.45);
+        }
+        .avatar-frame-lava-ring {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.22), 0 0 18px rgba(249,115,22,0.48);
+        }
+        .avatar-frame-frost-crystal {
+            border-color: #67e8f9 !important;
+            box-shadow: 0 0 0 4px rgba(103,232,249,0.25), 0 0 18px rgba(14,165,233,0.42);
+        }
+        .avatar-frame-circuit-pulse {
+            border-color: #06b6d4 !important;
+            box-shadow: 0 0 0 4px rgba(6,182,212,0.22), 0 0 18px rgba(59,130,246,0.45);
+        }
+        .avatar-frame-comet-legend {
+            border-color: #fde68a !important;
+            animation: particlePulse 2s ease-in-out infinite;
+        }
         @keyframes legendGlowPulse {
             0%, 100% { box-shadow: 0 0 0 4px rgba(167,139,250,0.2), 0 0 16px rgba(99,102,241,0.42); }
             50% { box-shadow: 0 0 0 6px rgba(244,114,182,0.26), 0 0 28px rgba(251,191,36,0.55); }
@@ -575,6 +595,9 @@
         .profile-pop-banner.pop-banner-forest { background: linear-gradient(135deg, #14532d, #22c55e 45%, #065f46); }
         .profile-pop-banner.pop-banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: dfxShift 8s ease infinite; }
         .profile-pop-banner.pop-banner-neon-city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: dfxShift 6s ease infinite; }
+        .profile-pop-banner.pop-banner-aurora-borealis { background: linear-gradient(135deg, #042f2e, #0e7490 35%, #6366f1 65%, #22d3ee); background-size: 240% 240%; animation: dfxShift 7s ease infinite; }
+        .profile-pop-banner.pop-banner-candy-pop { background: linear-gradient(135deg, #f472b6, #fb923c 40%, #a78bfa 70%, #22d3ee); }
+        .profile-pop-banner.pop-banner-circuit-board { background: linear-gradient(135deg, #0f172a 0%, #134e4a 40%, #1e3a8a 100%); }
         .profile-pop-sheet {
             background: #2b2d31;
             padding: 0 16px 16px;
@@ -1298,7 +1321,32 @@
         { id: "namecolor_matrix", slot: "nameColor", label: "矩陣綠", value: "#4ade80" },
         { id: "namecolor_ocean", slot: "nameColor", label: "海洋藍", value: "#0ea5e9" },
         { id: "namecolor_gold_medal", slot: "nameColor", label: "金牌金", value: "#eab308" },
-        { id: "namecolor_pumpkin", slot: "nameColor", label: "南瓜橙", value: "#ea580c" }
+        { id: "namecolor_pumpkin", slot: "nameColor", label: "南瓜橙", value: "#ea580c" },
+        { id: "namecolor_cobalt", slot: "nameColor", label: "鈷藍", value: "#2563eb" },
+        { id: "namecolor_bubblegum", slot: "nameColor", label: "泡泡糖粉", value: "#f472b6" },
+        { id: "namecolor_ivory", slot: "nameColor", label: "象牙白", value: "#fef3c7" },
+        { id: "avatar_red_panda", slot: "avatar", label: "紅熊貓頭像", value: "red_panda" },
+        { id: "avatar_hamster_dev", slot: "avatar", label: "倉鼠工程師頭像", value: "hamster_dev" },
+        { id: "avatar_pixel_ghost", slot: "avatar", label: "像素幽靈頭像", value: "pixel_ghost" },
+        { id: "avatar_chess_knight", slot: "avatar", label: "西洋棋騎士頭像", value: "chess_knight" },
+        { id: "avatar_mermaid_wave", slot: "avatar", label: "人魚浪花頭像", value: "mermaid_wave" },
+        { id: "avatar_docoin_phoenix", slot: "avatar", label: "傳奇鳳凰頭像", value: "docoin_phoenix" },
+        { id: "banner_aurora_borealis", slot: "banner", label: "極光 borealis 橫幅", value: "aurora_borealis" },
+        { id: "banner_candy_pop", slot: "banner", label: "糖果繽紛橫幅", value: "candy_pop" },
+        { id: "banner_circuit_board", slot: "banner", label: "電路板橫幅", value: "circuit_board" },
+        { id: "frame_circuit_pulse", slot: "frame", label: "電路脈衝頭像框", value: "circuit_pulse" },
+        { id: "frame_comet_legend", slot: "frame", label: "傳奇框：彗星軌跡", value: "comet_legend" },
+        { id: "title_api_architect", slot: "title", label: "API 架構師", value: "API 架構師" },
+        { id: "title_block_master", slot: "title", label: "積木大師", value: "積木大師" },
+        { id: "title_open_source_hero", slot: "title", label: "開源英雄", value: "開源英雄" },
+        { id: "title_neon_empress", slot: "title", label: "霓虹女帝", value: "霓虹女帝" },
+        { id: "badge_open_source", slot: "badge", label: "開源貢獻者", value: "開源貢獻者" },
+        { id: "badge_pixel_master", slot: "badge", label: "像素大師", value: "像素大師" },
+        { id: "badge_hackathon_winner", slot: "badge", label: "黑客松冠軍", value: "黑客松冠軍" },
+        { id: "badge_quantum_flux", slot: "badge", label: "量子 flux", value: "量子 flux" },
+        { id: "profilefx_thunder_roll", slot: "profileEffect", label: "雷雲翻滾", value: "thunder_roll" },
+        { id: "profilefx_candy_pop", slot: "profileEffect", label: "糖果爆彩", value: "candy_pop" },
+        { id: "profilefx_digital_pulse", slot: "profileEffect", label: "數位脈衝", value: "digital_pulse" }
     ];
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
@@ -1385,6 +1433,12 @@
         if (avatarType === "moon_rabbit") return `https://ui-avatars.com/api/?name=RBT&background=c4b5fd&color=4c1d95&bold=true`;
         if (avatarType === "corgi_wiggle") return `https://ui-avatars.com/api/?name=CRG&background=fbbf24&color=78350f&bold=true`;
         if (avatarType === "galaxy_cat") return `https://ui-avatars.com/api/?name=GCT&background=312e81&color=a5b4fc&bold=true`;
+        if (avatarType === "red_panda") return `https://ui-avatars.com/api/?name=RPD&background=dc2626&color=fecaca&bold=true`;
+        if (avatarType === "hamster_dev") return `https://ui-avatars.com/api/?name=HMS&background=d97706&color=fef3c7&bold=true`;
+        if (avatarType === "pixel_ghost") return `https://ui-avatars.com/api/?name=8BT&background=1e293b&color=a3e635&bold=true`;
+        if (avatarType === "chess_knight") return `https://ui-avatars.com/api/?name=CHK&background=44403c&color=fbbf24&bold=true`;
+        if (avatarType === "mermaid_wave") return `https://ui-avatars.com/api/?name=MRM&background=0891b2&color=f0fdfa&bold=true`;
+        if (avatarType === "docoin_phoenix") return `https://ui-avatars.com/api/?name=PHX&background=b91c1c&color=fbbf24&bold=true`;
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
@@ -1519,23 +1573,25 @@
         if (frameType === "rainbow_prism") return "avatar-frame-rainbow-prism";
         if (frameType === "lava_ring") return "avatar-frame-lava-ring";
         if (frameType === "frost_crystal") return "avatar-frame-frost-crystal";
+        if (frameType === "circuit_pulse") return "avatar-frame-circuit-pulse";
+        if (frameType === "comet_legend") return "avatar-frame-comet-legend";
         return "";
     }
 
     function isLegendaryFrame(frameType) {
-        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend"].includes(String(frameType || ""));
+        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend", "rainbow_prism", "lava_ring", "frost_crystal", "circuit_pulse", "comet_legend"].includes(String(frameType || ""));
     }
 
     function isLegendaryTitle(title) {
-        return ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者"].includes(String(title || ""));
+        return ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者", "霓虹女帝"].includes(String(title || ""));
     }
 
     function isLegendaryBadge(badge) {
-        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文"].includes(String(badge || ""));
+        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
     }
 
     function isMythicBadge(badge) {
-        return ["超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "遠古符文"].includes(String(badge || ""));
+        return ["超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
     }
 
     function nameEffectClass(effectType) {
@@ -1583,7 +1639,10 @@
         golden_aura: "fx-golden-aura",
         moonlight: "fx-moonlight",
         neon_city: "fx-neon-city",
-        sakura_night: "fx-sakura-night"
+        sakura_night: "fx-sakura-night",
+        thunder_roll: "fx-thunder-roll",
+        candy_pop: "fx-candy-pop",
+        digital_pulse: "fx-digital-pulse"
     };
     const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
 
@@ -1596,7 +1655,7 @@
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend", "avatar-frame-rainbow-prism", "avatar-frame-lava-ring", "avatar-frame-frost-crystal");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend", "avatar-frame-rainbow-prism", "avatar-frame-lava-ring", "avatar-frame-frost-crystal", "avatar-frame-circuit-pulse", "avatar-frame-comet-legend");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
@@ -1628,6 +1687,9 @@
         if (v === "forest") return "pop-banner-forest";
         if (v === "galaxy") return "pop-banner-galaxy";
         if (v === "neon_city") return "pop-banner-neon-city";
+        if (v === "aurora_borealis") return "pop-banner-aurora-borealis";
+        if (v === "candy_pop") return "pop-banner-candy-pop";
+        if (v === "circuit_board") return "pop-banner-circuit-board";
         return "";
     }
 
