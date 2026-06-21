@@ -336,9 +336,8 @@
         var head = document.head;
         if (!head) return;
         [
-            { rel: "icon", type: "image/svg+xml", href: "icon.svg" },
-            { rel: "icon", type: "image/png", href: "icon.png" },
-            { rel: "apple-touch-icon", href: "icon.png" }
+            { rel: "icon", type: "image/png", href: "Doratch.png" },
+            { rel: "apple-touch-icon", href: "Doratch.png" }
         ].forEach(function (spec) {
             var link = document.createElement("link");
             link.rel = spec.rel;

@@ -1,12 +1,10 @@
-const CACHE = "doratch-app-v1";
+const CACHE = "doratch-app-v2";
 const SHELL = [
   "./app.html",
   "./doratch-mobile-shell.js",
   "./doratch-mobile-shell.css",
   "./manifest.json",
-  "./icon.png",
-  "./icon-192.png",
-  "./icon-512.png",
+  "./Doratch.png",
   "./responsive-global.css"
 ];
 
