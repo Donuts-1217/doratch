@@ -4,9 +4,9 @@ const SHELL = [
   "./doratch-mobile-shell.js",
   "./doratch-mobile-shell.css",
   "./manifest.json",
-  "./icons/icon.png",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./icon.png",
+  "./icon-192.png",
+  "./icon-512.png",
   "./responsive-global.css"
 ];
 

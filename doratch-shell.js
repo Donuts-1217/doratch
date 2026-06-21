@@ -331,7 +331,25 @@
         });
     }
 
+    function ensureSiteIcons() {
+        if (document.querySelector('link[rel="icon"], link[rel="shortcut icon"]')) return;
+        var head = document.head;
+        if (!head) return;
+        [
+            { rel: "icon", type: "image/svg+xml", href: "icon.svg" },
+            { rel: "icon", type: "image/png", href: "icon.png" },
+            { rel: "apple-touch-icon", href: "icon.png" }
+        ].forEach(function (spec) {
+            var link = document.createElement("link");
+            link.rel = spec.rel;
+            if (spec.type) link.type = spec.type;
+            link.href = spec.href;
+            head.appendChild(link);
+        });
+    }
+
     function init() {
+        ensureSiteIcons();
         rebrandDocument();
         mountAppSidebars();
         mountAdminQuickNav();
