@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="doratch-staff-fx.css">
     <title>創意商城 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -29,6 +30,31 @@
 
         .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
         .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; }
+        .staff-shop-section { margin-bottom: 28px; }
+        .staff-shop-head {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+            padding: 12px 16px; border-radius: 14px;
+            background: linear-gradient(135deg, #1e1b4b, #312e81); color: #e0e7ff;
+        }
+        .staff-shop-head.admin { background: linear-gradient(135deg, #450a0a, #7c2d12); color: #fef3c7; }
+        .staff-shop-head h2 { margin: 0; font-size: 1.1rem; }
+        .staff-shop-head p { margin: 4px 0 0; font-size: 13px; opacity: 0.9; }
+        .staff-shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+        .item-card.staff-exclusive {
+            border: 2px solid #818cf8;
+            background: linear-gradient(180deg, #eef2ff 0%, #fff 100%);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+        }
+        .item-card.staff-exclusive.admin {
+            border-color: #fbbf24;
+            background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+        .staff-price-tag {
+            font-size: 14px; font-weight: 900; color: #6366f1;
+            background: #e0e7ff; padding: 6px 12px; border-radius: 999px;
+        }
+        .staff-price-tag.admin { color: #b45309; background: #fef3c7; }
 
         .item-card { background: white; border-radius: 20px; padding: 20px; text-align: center; box-shadow: var(--card-shadow); transition: 0.3s; border: 2px solid transparent; }
         .item-card:hover { transform: translateY(-8px); border-color: var(--scratch-orange); }
@@ -336,6 +362,12 @@
     </div>
     </details>
 
+    <section id="shop-staff-section" class="shop-staff-section" style="display:none;">
+        <h2>✨ 身份專屬</h2>
+        <p class="shop-staff-sub" id="shop-staff-sub"></p>
+        <div class="shop-grid" id="shop-staff-grid"></div>
+    </section>
+
     <div class="shop-toolbar">
         <div class="shop-search-row">
             <input type="search" id="shop-search" class="shop-search-input" placeholder="🔍 搜尋道具名稱、描述…" autocomplete="off">
@@ -366,10 +398,29 @@
     <div class="shop-pagination" id="shop-pagination"></div>
 </div>
 
+<script src="doratch-staff-cosmetics.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    let getStaffRole = () => "";
+    let staffRoleLabel = () => "";
+    let staffGrantedItems = () => [];
+
+    function bindShopStaff(mod) {
+        if (!mod) return false;
+        getStaffRole = mod.getStaffRole;
+        staffRoleLabel = mod.staffRoleLabel;
+        staffGrantedItems = mod.staffGrantedItems;
+        return true;
+    }
+    if (!bindShopStaff(window.DoratchRoleCosmetics)) {
+        try {
+            bindShopStaff(await import("./shared/doratch-role-cosmetics.js"));
+        } catch (staffErr) {
+            console.warn("Staff cosmetics module unavailable — shop runs without identity-exclusive section", staffErr);
+        }
+    }
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -718,6 +769,7 @@
 
     onAuthStateChanged(auth, async (user) => {
         currentUser = user || null;
+        window.__DORATCH_AUTH_EMAIL__ = (user && user.email) || "";
         if (!user) {
             applyGuestState();
             return;
@@ -742,7 +794,61 @@
         if (reviewStatus) reviewStatus.innerText = '請先登入後送出審核。';
         currentUserData = { doord: 0, docoin: 0, coins: 0, inventory: [] };
         restoreCoinReviewDraft();
+        renderStaffSection();
         renderItems();
+    }
+
+    const STAFF_SLOT_ICONS = { avatar: "👤", frame: "🖼️", badge: "✨", title: "🏷️", nameEffect: "🌈", nameColor: "🎨", profileEffect: "💫", banner: "🏳️" };
+
+    function buildStaffItemCard(item) {
+        const div = document.createElement("div");
+        div.className = "item-card staff-exclusive";
+        div.innerHTML =
+            '<div class="legend-tag" style="background:linear-gradient(90deg,#6366f1,#22d3ee);color:#fff;">身份專屬</div>' +
+            '<span class="item-icon">' + (STAFF_SLOT_ICONS[item.slot] || "⭐") + "</span>" +
+            '<div class="item-name">' + item.label + "</div>" +
+            '<div class="item-desc">依你的平台身份自動解鎖，無需購買。可在個人檔案或聊天外觀中裝備。</div>' +
+            '<div class="item-price staff-price">∞ 身份專屬</div>' +
+            '<button class="btn-buy owned" type="button" disabled>已解鎖</button>';
+        return div;
+    }
+
+    function staffUserCtx() {
+        return {
+            ...(currentUserData || {}),
+            email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || window.__DORATCH_AUTH_EMAIL__ || ""
+        };
+    }
+
+    function renderStaffSection() {
+        const section = document.getElementById("shop-staff-section");
+        const grid = document.getElementById("shop-staff-grid");
+        const sub = document.getElementById("shop-staff-sub");
+        if (!section || !grid) return;
+        const ctx = staffUserCtx();
+        const role = getStaffRole(ctx);
+        const staffRoles = (window.DoratchRoleCosmetics && window.DoratchRoleCosmetics.getStaffRoles)
+            ? window.DoratchRoleCosmetics.getStaffRoles(ctx)
+            : (role ? [role] : []);
+        if (!staffRoles.length) {
+            section.style.display = "none";
+            grid.innerHTML = "";
+            return;
+        }
+        section.style.display = "block";
+        if (sub) {
+            const roles = (window.DoratchRoleCosmetics && window.DoratchRoleCosmetics.getStaffRoles)
+                ? window.DoratchRoleCosmetics.getStaffRoles(ctx)
+                : (role ? [role] : []);
+            const labels = roles.map(function (r) { return staffRoleLabel(r); }).filter(Boolean);
+            sub.textContent = labels.length
+                ? "你是「" + labels.join("／") + "」— 以下外觀已永久解鎖。"
+                : "以下外觀已永久解鎖。";
+        }
+        grid.innerHTML = "";
+        staffGrantedItems(ctx).forEach(function (it) {
+            grid.appendChild(buildStaffItemCard(it));
+        });
     }
 
     async function fetchSidebarData(user) {
@@ -783,7 +889,7 @@
             }, { merge: true });
         }
         const fresh = await getDoc(userRef);
-        currentUserData = fresh.data() || { doord: 0, docoin: 0, coins: 0, inventory: [] };
+        currentUserData = fresh.exists() ? { ...fresh.data(), email: user.email || fresh.data().email || "" } : { doord: 0, docoin: 0, coins: 0, inventory: [], email: user.email || "" };
         updateWalletUi(currentUserData);
         applySidebarUserUi(user, currentUserData);
         const reviewStatus = document.getElementById('review-status');
@@ -794,7 +900,7 @@
         }
         await loadOnlineProjects(user);
         restoreCoinReviewDraft();
-
+        renderStaffSection();
         renderItems();
     };
 

@@ -90,28 +90,38 @@ body.doratch-app-mode.doratch-modal-open #chat-prefs-modal .modal-content {
 
 body.doratch-app-mode .sidebar[data-doratch-admin-nav] {
   width: 100% !important;
-  flex-direction: row !important;
+  flex-direction: column !important;
   flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: visible !important;
   height: auto !important;
   max-height: none !important;
   border-right: none !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 8px 0 !important;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  padding: 0 !important;
 }
 
-body.doratch-app-mode .sidebar[data-doratch-admin-nav]::-webkit-scrollbar {
-  display: none;
-}
-
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-sidebar-brand,
 body.doratch-app-mode .sidebar[data-doratch-admin-nav] > div[onclick*="index.html"] {
   display: none !important;
 }
 
-body.doratch-app-mode .sidebar[data-doratch-admin-nav] .nav-item {
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-primary-nav {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  width: 100% !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-primary-nav::-webkit-scrollbar {
+  display: none;
+}
+
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-primary-nav .nav-item {
   flex: 0 0 auto !important;
   padding: 10px 14px !important;
   font-size: 12px !important;
@@ -120,9 +130,13 @@ body.doratch-app-mode .sidebar[data-doratch-admin-nav] .nav-item {
   border-bottom: 2px solid transparent !important;
 }
 
-body.doratch-app-mode .sidebar[data-doratch-admin-nav] .nav-item.active {
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-primary-nav .nav-item.active {
   border-bottom-color: #4c97ff !important;
   background: rgba(76, 151, 255, 0.12) !important;
+}
+
+body.doratch-app-mode .sidebar[data-doratch-admin-nav] .admin-site-nav-fold-btn {
+  display: flex !important;
 }
 
 body.doratch-app-mode .sidebar[data-doratch-admin-nav] .sidebar-footer {

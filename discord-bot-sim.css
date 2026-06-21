@@ -121,14 +121,14 @@
 }
 
 .bot-sim-panel {
-    position: sticky;
-    top: 16px;
-    max-height: calc(100vh - 120px);
     display: flex;
     flex-direction: column;
     min-width: 0;
-    min-height: 0;
+    min-height: 320px;
+    height: 100%;
     width: 100%;
+    border-radius: 0;
+    background: #313338;
 }
 .bot-sim-panel #bot-simulator {
     flex: 1;
@@ -139,32 +139,24 @@
 }
 .bot-sim-panel .dbs-root {
     flex: 1;
-    min-height: 360px;
-    max-height: calc(100vh - 140px);
+    min-height: 320px;
     height: 100%;
+    max-height: none;
+    border-radius: 0;
+    border: none;
 }
 
-.py-layout-discord {
-    grid-template-columns: 260px minmax(0, 1fr) min(340px, 32vw) !important;
-    align-items: start;
+.py-workspace-discord .py-side-panel {
+    /* Discord 關卡時側欄維持相同寬度，Bot 在分頁內 */
 }
-.py-layout-discord .work-panel {
-    min-width: 0;
-}
-.py-layout-discord .lesson-list {
-    max-height: calc(100vh - 200px);
-}
-@media (max-width: 1200px) {
-    .py-layout-discord {
-        grid-template-columns: 1fr !important;
-    }
+
+@media (max-width: 1023px) {
     .bot-sim-panel {
-        position: static;
-        max-height: none;
-        order: 10;
+        min-height: 280px;
     }
     .bot-sim-panel .dbs-root {
-        max-height: min(520px, 70vh);
+        min-height: 260px;
+        max-height: min(480px, 55vh);
     }
 }
 

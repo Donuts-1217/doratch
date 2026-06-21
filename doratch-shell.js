@@ -252,9 +252,10 @@
     }
 
     function mountAdminQuickNav() {
+        if (document.querySelector('.sidebar-main[data-doratch-active="admin"]')) return;
         const sidebar = document.querySelector('.sidebar[data-doratch-active="admin"], .sidebar[data-doratch-admin-nav]');
         if (!sidebar) return;
-        const footer = sidebar.querySelector(".sidebar-footer");
+        const panel = document.getElementById("admin-site-nav-panel");
         const oldQuick = sidebar.querySelector(".doratch-admin-quick-nav");
         if (oldQuick) oldQuick.remove();
         const wrap = document.createElement("div");
@@ -262,8 +263,15 @@
         wrap.innerHTML =
             '<div class="doratch-nav-section-label">全站導覽</div>' +
             renderSidebarLinks("admin", false, true);
-        if (footer) sidebar.insertBefore(wrap, footer);
-        else sidebar.appendChild(wrap);
+        if (panel) {
+            panel.innerHTML = "";
+            panel.appendChild(wrap);
+        } else {
+            const footer = sidebar.querySelector(".sidebar-footer");
+            if (footer) sidebar.insertBefore(wrap, footer);
+            else sidebar.appendChild(wrap);
+        }
+        bindSidebarMenus(sidebar);
     }
 
     function mountTopNav() {

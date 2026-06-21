@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>個人檔案 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -34,6 +35,8 @@
         .profile-hero::after { content: "👤"; position: absolute; right: -20px; bottom: -30px; font-size: 200px; opacity: 0.07; }
         .avatar-large { width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.4); margin-bottom: 20px; transition: 0.2s; }
         .profile-name { font-size: 2rem; font-weight: 900; margin-bottom: 5px; }
+        .dc-name-row { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+        .dc-name-row .profile-name { margin-bottom: 0; }
         .profile-id { font-size: 12px; opacity: 0.7; }
         .profile-meta-line { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin-bottom: 6px; }
         .profile-chip { padding:4px 10px; border-radius: 999px; font-size:12px; font-weight:900; background: rgba(255,255,255,0.2); color:#fff; }
@@ -127,12 +130,24 @@
         .dc-banner.banner-galaxy { background: linear-gradient(135deg, #0f0a1a, #4338ca 40%, #7c3aed 70%, #06b6d4); background-size: 200% 200%; animation: dfxShift 8s ease infinite; }
         .dc-banner.banner-neon_city { background: linear-gradient(135deg, #0f172a, #be185d 40%, #7c3aed 70%, #22d3ee); background-size: 220% 220%; animation: dfxShift 6s ease infinite; }
         .profile-chip.legendary-title {
-            color: transparent;
-            background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
-            background-size: 200% auto;
+            color: #fde68a;
+            background: linear-gradient(135deg, rgba(251,191,36,0.22), rgba(244,63,94,0.12), rgba(96,165,250,0.14));
+            border: 1px solid rgba(251,191,36,0.45);
+            box-shadow: 0 0 14px rgba(245,158,11,0.28), inset 0 0 12px rgba(251,191,36,0.08);
+            animation: profileShimmer 2.6s linear infinite;
+        }
+        .profile-chip.legendary-title .chip-label {
+            background: linear-gradient(90deg, #fbbf24, #f472b6, #60a5fa, #fbbf24);
+            background-size: 220% auto;
             -webkit-background-clip: text;
             background-clip: text;
+            color: transparent;
+            -webkit-text-fill-color: transparent;
             animation: profileShimmer 2.6s linear infinite;
+        }
+        .profile-chip.legendary-title .chip-icon {
+            color: #fde68a;
+            text-shadow: 0 0 8px rgba(251,191,36,0.65);
         }
         .profile-chip.badge.legendary-badge {
             border-color: rgba(255,255,255,0.45);
@@ -229,7 +244,15 @@
         }
         .dc-custom-status { font-size: 13px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
         .dc-custom-status.empty { color: #64748b; font-style: italic; font-weight: 400; }
-        .dc-meta-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; justify-content: flex-start; }
+        .dc-meta-line { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; justify-content: flex-start; position: relative; z-index: 6; }
+        .profile-chip {
+            position: relative;
+            z-index: 2;
+            isolation: isolate;
+            overflow: visible;
+        }
+        .profile-chip .chip-icon { margin-right: 2px; filter: none; -webkit-text-fill-color: initial; color: inherit; }
+        .profile-chip .chip-label { position: relative; z-index: 1; }
         .dc-edit-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .dc-edit-btn {
             border: none; background: rgba(255,255,255,0.08); color: #e2e8f0;
@@ -368,7 +391,10 @@
                         <span class="dc-status-dot" title="線上"></span>
                     </div>
                     <div class="dc-name-block">
-                        <div id="profile-display-name" class="profile-name">載入中...</div>
+                        <div class="dc-name-row">
+                            <div id="profile-display-name" class="profile-name">載入中...</div>
+                            <span id="profile-staff-role-pill" style="display:none;"></span>
+                        </div>
                         <div id="profile-custom-status-view" class="dc-custom-status empty">設定自訂狀態…</div>
                         <div class="dc-meta-line">
                             <span id="profile-title-chip" class="profile-chip" style="display:none;"></span>
@@ -469,11 +495,100 @@
     </div>
 </div>
 
+<script src="doratch-staff-cosmetics.js"></script>
 <script src="shared/doratch-docoin-catalog.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    let STAFF_COSMETIC_ITEMS = [];
+    let STAFF_AVATAR_URLS = {};
+    let ownedItemsBySlotWithStaff;
+    let pickOwnedWithStaff;
+    let resolveVisualWithStaff;
+    let getStaffRole;
+    let staffRoleLabel;
+    let isStaffLegendaryBadge;
+    let isStaffLegendaryTitle;
+    let isStaffLegendaryFrame;
+    let staffFrameClass;
+    let staffNameEffectClass;
+    let staffProfileEffectClass;
+
+    function bindStaffFallback() {
+        STAFF_COSMETIC_ITEMS = [];
+        STAFF_AVATAR_URLS = {};
+        getStaffRole = () => "";
+        staffRoleLabel = () => "";
+        isStaffLegendaryBadge = () => false;
+        isStaffLegendaryTitle = () => false;
+        isStaffLegendaryFrame = () => false;
+        staffFrameClass = () => "";
+        staffNameEffectClass = () => "";
+        staffProfileEffectClass = () => "";
+        ownedItemsBySlotWithStaff = function (data, allItems, slot) {
+            const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
+            const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
+            return allItems.filter((it) => it.slot === slot && ids.has(it.id));
+        };
+        pickOwnedWithStaff = function (data, allItems, slot) {
+            const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+            const owned = ownedItemsBySlotWithStaff(data, allItems, slot);
+            const raw = String(eq[slot] || "").trim();
+            if (!raw) return "";
+            if (owned.some((it) => it.value === raw)) return raw;
+            const byId = owned.find((it) => it.id === raw);
+            return byId ? byId.value : "";
+        };
+        resolveVisualWithStaff = function (data, allItems, slot, fallbackRaw, helpers) {
+            const eq = data ? ((helpers && helpers.getEquipped) ? helpers.getEquipped(data) : (data.equippedCosmetics || {})) : {};
+            const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
+            if (!raw) return "";
+            const cosmeticDisplayValue = (helpers && helpers.cosmeticDisplayValue) || function (s, r) {
+                const v = String(r || "").trim();
+                if (!v) return "";
+                const item = allItems.find((it) => it.slot === s && (it.value === v || it.id === v));
+                return item ? item.value : "";
+            };
+            let normalized = cosmeticDisplayValue(slot, raw);
+            if (!normalized && allItems.some((it) => it.slot === slot && it.value === raw)) normalized = raw;
+            if (!normalized) return "";
+            if (!data) return normalized;
+            const owned = ownedItemsBySlotWithStaff(data, allItems, slot);
+            if (owned.some((it) => it.value === normalized)) return normalized;
+            const viaPick = pickOwnedWithStaff({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, allItems, slot);
+            if (viaPick) return viaPick;
+            if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
+            return "";
+        };
+    }
+
+    function bindStaffModule(staffMod) {
+        if (!staffMod) return false;
+        STAFF_COSMETIC_ITEMS = staffMod.STAFF_COSMETIC_ITEMS || [];
+        STAFF_AVATAR_URLS = staffMod.STAFF_AVATAR_URLS || {};
+        ownedItemsBySlotWithStaff = staffMod.ownedItemsBySlotWithStaff;
+        pickOwnedWithStaff = staffMod.pickOwnedWithStaff;
+        resolveVisualWithStaff = staffMod.resolveVisualWithStaff;
+        getStaffRole = staffMod.getStaffRole;
+        staffRoleLabel = staffMod.staffRoleLabel;
+        isStaffLegendaryBadge = staffMod.isStaffLegendaryBadge;
+        isStaffLegendaryTitle = staffMod.isStaffLegendaryTitle;
+        isStaffLegendaryFrame = staffMod.isStaffLegendaryFrame;
+        staffFrameClass = staffMod.staffFrameClass;
+        staffNameEffectClass = staffMod.staffNameEffectClass;
+        staffProfileEffectClass = staffMod.staffProfileEffectClass;
+        return true;
+    }
+
+    if (!bindStaffModule(window.DoratchRoleCosmetics)) {
+        try {
+            bindStaffModule(await import("./shared/doratch-role-cosmetics.js"));
+        } catch (staffErr) {
+            console.warn("Staff cosmetics module unavailable — profile runs without identity-exclusive items", staffErr);
+            bindStaffFallback();
+        }
+    }
 
     const DocoinCatalog = window.DoratchDocoinCatalog || {};
     const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
@@ -544,6 +659,10 @@
         if (t === "chess_knight") return "https://ui-avatars.com/api/?name=CHK&background=44403c&color=fbbf24&bold=true&size=128";
         if (t === "mermaid_wave") return "https://ui-avatars.com/api/?name=MRM&background=0891b2&color=f0fdfa&bold=true&size=128";
         if (t === "docoin_phoenix") return "https://ui-avatars.com/api/?name=PHX&background=b91c1c&color=fbbf24&bold=true&size=128";
+        if (STAFF_AVATAR_URLS[t]) {
+            const u = STAFF_AVATAR_URLS[t];
+            return u.startsWith("data:") ? u : u + "&size=128";
+        }
         return "https://ui-avatars.com/api/?name=" + encodeURIComponent(fallbackLabel || "User") + "&size=128&background=random";
     }
     function getDoordValue(data) {
@@ -764,39 +883,18 @@
         { id: "profilefx_candy_pop", slot: "profileEffect", label: "糖果爆彩", value: "candy_pop" },
         { id: "profilefx_digital_pulse", slot: "profileEffect", label: "數位脈衝", value: "digital_pulse" }
     ];
+    STAFF_COSMETIC_ITEMS.forEach(function (it) { COSMETIC_ITEMS.push(it); });
 
     function ownedItemsBySlot(data, slot) {
-        const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
-        const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
-        return COSMETIC_ITEMS.filter(it => it.slot === slot && ids.has(it.id));
+        return ownedItemsBySlotWithStaff(data, COSMETIC_ITEMS, slot);
     }
 
     function resolveVisualCosmetic(data, slot, fallbackRaw) {
-        const eq = data ? getEquipped(data) : {};
-        const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
-        if (!raw) return "";
-        let normalized = cosmeticDisplayValue(slot, raw);
-        if (!normalized && COSMETIC_ITEMS.some((it) => it.slot === slot && it.value === raw)) {
-            normalized = raw;
-        }
-        if (!normalized) return "";
-        if (!data) return normalized;
-        const owned = ownedItemsBySlot(data, slot);
-        if (owned.some((it) => it.value === normalized)) return normalized;
-        const viaPick = pickOwnedEquipped({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, slot);
-        if (viaPick) return viaPick;
-        if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
-        return "";
+        return resolveVisualWithStaff(data, COSMETIC_ITEMS, slot, fallbackRaw, { getEquipped, cosmeticDisplayValue });
     }
 
     function pickOwnedEquipped(data, slot) {
-        const eq = getEquipped(data);
-        const owned = ownedItemsBySlot(data, slot);
-        const raw = String(eq[slot] || "").trim();
-        if (!raw) return "";
-        if (owned.some((it) => it.value === raw)) return raw;
-        const byId = owned.find((it) => it.id === raw);
-        return byId ? byId.value : "";
+        return pickOwnedWithStaff(data, COSMETIC_ITEMS, slot);
     }
 
     function cosmeticDisplayValue(slot, raw) {
@@ -811,18 +909,18 @@
     }
 
     function isLegendaryFrame(frameType) {
-        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend", "rainbow_prism", "lava_ring", "frost_crystal", "circuit_pulse", "comet_legend"].includes(String(frameType || ""));
+        return isStaffLegendaryFrame(frameType) || ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend", "rainbow_prism", "lava_ring", "frost_crystal", "circuit_pulse", "comet_legend"].includes(String(frameType || ""));
     }
     function isLegendaryTitle(title) {
-        return ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者", "霓虹女帝"].includes(String(title || ""));
+        return isStaffLegendaryTitle(title) || ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者", "霓虹女帝"].includes(String(title || ""));
     }
     function isLegendaryBadge(badge) {
-        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
+        return isStaffLegendaryBadge(badge) || ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
     }
     function isMythicBadge(badge) {
         return ["超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
     }
-    const BANNER_CLASSES = ["banner-midnight", "banner-sunset", "banner-forest", "banner-galaxy", "banner-neon_city", "banner-aurora_borealis", "banner-candy_pop", "banner-circuit_board"];
+    const BANNER_CLASSES = ["banner-midnight", "banner-sunset", "banner-forest", "banner-galaxy", "banner-neon_city", "banner-aurora_borealis", "banner-candy_pop", "banner-circuit_board", "banner-dev_neural", "banner-dev_void_code", "banner-admin_throne", "banner-admin_judgment"];
 
     function applyDcBannerVisuals(bannerType, profileEffectType, data) {
         const el = document.getElementById("dc-banner");
@@ -839,6 +937,10 @@
         else if (banner === "aurora_borealis") el.classList.add("banner-aurora_borealis");
         else if (banner === "candy_pop") el.classList.add("banner-candy_pop");
         else if (banner === "circuit_board") el.classList.add("banner-circuit_board");
+        else if (banner === "dev_neural") el.classList.add("banner-dev_neural");
+        else if (banner === "dev_void_code") el.classList.add("banner-dev_void_code");
+        else if (banner === "admin_throne") el.classList.add("banner-admin_throne");
+        else if (banner === "admin_judgment") el.classList.add("banner-admin_judgment");
         const fxVal = data
             ? resolveVisualCosmetic(data, "profileEffect", profileEffectType)
             : (cosmeticDisplayValue("profileEffect", profileEffectType) || String(profileEffectType || "").trim());
@@ -855,7 +957,10 @@
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
         sparkle: "name-effect-sparkle",
-        glitch: "name-effect-glitch"
+        glitch: "name-effect-glitch",
+        chaos_prism: "name-effect-chaos-prism",
+        code_storm: "name-effect-code-storm",
+        holy_radiance: "name-effect-holy-radiance"
     };
 
     function ensureNameFxSpan(nameEl, label) {
@@ -873,7 +978,7 @@
 
     function nameEffectClass(effectType) {
         const v = cosmeticDisplayValue("nameEffect", effectType);
-        return NAME_EFFECT_CLASS_MAP[v] || "";
+        return NAME_EFFECT_CLASS_MAP[v] || staffNameEffectClass(v || effectType) || "";
     }
     const PROFILE_EFFECT_CLASS_MAP = {
         royal: "profile-fx-royal",
@@ -899,7 +1004,11 @@
         sakura_night: "profile-fx-sakura-night",
         thunder_roll: "profile-fx-thunder-roll",
         candy_pop: "profile-fx-candy-pop",
-        digital_pulse: "profile-fx-digital-pulse"
+        digital_pulse: "profile-fx-digital-pulse",
+        dev_overlord: "profile-fx-dev-overlord",
+        dev_singularity: "profile-fx-dev-singularity",
+        admin_crown: "profile-fx-admin-crown",
+        admin_judgment: "profile-fx-admin-judgment"
     };
     const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
 
@@ -907,15 +1016,26 @@
         const v = cosmeticDisplayValue("profileEffect", effectType);
         if (PROFILE_EFFECT_CLASS_MAP[v]) return PROFILE_EFFECT_CLASS_MAP[v];
         const raw = String(effectType || "").trim();
-        return PROFILE_EFFECT_CLASS_MAP[raw] || "";
+        return PROFILE_EFFECT_CLASS_MAP[raw] || staffProfileEffectClass(v || raw, "profile") || "";
     }
+
+    const STAFF_FRAME_CLASSES = ["avatar-frame-dev-supernova", "avatar-frame-dev-matrix-crown", "avatar-frame-admin-royal-pulse", "avatar-frame-admin-divine-verdict"];
 
     function applyAvatarFrame(frameType) {
         const avatarEl = document.getElementById("profile-avatar");
         if (!avatarEl) return;
         avatarEl.style.border = "4px solid rgba(255,255,255,0.4)";
         avatarEl.style.boxShadow = "none";
-        avatarEl.classList.remove("avatar-particle");
+        avatarEl.classList.remove("avatar-particle", ...STAFF_FRAME_CLASSES);
+        if (isStaffLegendaryFrame(frameType)) {
+            const sfc = staffFrameClass(frameType);
+            if (sfc) {
+                avatarEl.style.border = "";
+                avatarEl.style.boxShadow = "";
+                avatarEl.classList.add(sfc, "avatar-particle");
+            }
+            return;
+        }
         if (frameType === "neon") {
             avatarEl.style.border = "4px solid #22d3ee";
             avatarEl.style.boxShadow = "0 0 0 5px rgba(34,211,238,0.25), 0 0 28px rgba(34,211,238,0.55)";
@@ -1035,12 +1155,12 @@
         if (nameEl) {
             const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
             const nameSpan = ensureNameFxSpan(nameEl, label);
-            nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-neon-flicker", "name-effect-sparkle", "name-effect-glitch");
+            nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-neon-flicker", "name-effect-sparkle", "name-effect-glitch", "name-effect-chaos-prism", "name-effect-code-storm", "name-effect-holy-radiance");
             nameEl.style.color = "";
             nameEl.style.background = "";
             const cls = nameEffectClass(nameEffect);
             if (cls) nameEl.classList.add(cls);
-            const gradientFx = ["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow"];
+            const gradientFx = ["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-chaos-prism", "name-effect-holy-radiance"];
             if (nameSpan) {
                 nameSpan.style.color = (cls && gradientFx.includes(cls)) ? "" : (nameColor || "#ffffff");
                 nameSpan.style.background = "";
@@ -1053,14 +1173,51 @@
         const badgeEl = document.getElementById("profile-badge-chip");
         if (titleEl) {
             titleEl.style.display = title ? "inline-flex" : "none";
-            titleEl.textContent = title ? ("🏷️ " + title) : "";
+            titleEl.innerHTML = title
+                ? ('<span class="chip-icon">🏷️</span><span class="chip-label">' + title + "</span>")
+                : "";
             titleEl.classList.toggle("legendary-title", isLegendaryTitle(title));
+            titleEl.classList.toggle("staff-legendary", isStaffLegendaryTitle(title));
         }
         if (badgeEl) {
             badgeEl.style.display = badge ? "inline-flex" : "none";
             badgeEl.textContent = badge ? ("✨ " + badge) : "";
             badgeEl.classList.toggle("legendary-badge", isLegendaryBadge(badge));
             badgeEl.classList.toggle("legendary-badge-mythic", isMythicBadge(badge));
+            badgeEl.classList.toggle("staff-legendary", isStaffLegendaryBadge(badge));
+        }
+        const staffPill = document.getElementById("profile-staff-role-pill");
+        const staffRole = getStaffRole({ ...data, email: (data && data.email) || (currentUser && currentUser.email) || "" });
+        if (staffPill) {
+            if (staffRole) {
+                staffPill.style.display = "inline-flex";
+                staffPill.className = "staff-role-pill staff-role-" + staffRole;
+                staffPill.textContent = staffRole === "developer" ? "⚡ " + staffRoleLabel(staffRole) : "👑 " + staffRoleLabel(staffRole);
+            } else {
+                staffPill.style.display = "none";
+                staffPill.textContent = "";
+            }
+        }
+        const profileWrap = document.querySelector(".dc-profile-wrap");
+        if (profileWrap) {
+            profileWrap.classList.remove("staff-aura-developer", "staff-aura-admin");
+            if (staffRole === "developer") profileWrap.classList.add("staff-aura-developer");
+            else if (staffRole === "admin") profileWrap.classList.add("staff-aura-admin");
+        }
+        const avWrap = document.querySelector(".dc-avatar-wrap");
+        if (avWrap) {
+            avWrap.classList.remove("staff-avatar-halo-dev", "staff-avatar-halo-admin");
+            if (staffRole === "developer") avWrap.classList.add("staff-avatar-halo-dev");
+            else if (staffRole === "admin") avWrap.classList.add("staff-avatar-halo-admin");
+        }
+        const nameElStaff = document.getElementById("profile-display-name");
+        if (nameElStaff) {
+            nameElStaff.classList.remove("staff-namecolor-dev-cyan", "staff-namecolor-dev-matrix", "staff-namecolor-admin-gold", "staff-namecolor-admin-crimson");
+            const nc = String(nameColor || "").trim().toLowerCase();
+            if (nc === "#00f5ff") nameElStaff.classList.add("staff-namecolor-dev-cyan");
+            else if (nc === "#00ff41") nameElStaff.classList.add("staff-namecolor-dev-matrix");
+            else if (nc === "#ffd700") nameElStaff.classList.add("staff-namecolor-admin-gold");
+            else if (nc === "#dc2626") nameElStaff.classList.add("staff-namecolor-admin-crimson");
         }
         applyDocoinLuxuryUI(data);
     }
@@ -1101,7 +1258,7 @@
             seenValues.add(val);
             const opt = document.createElement("option");
             opt.value = val;
-            opt.textContent = it.label;
+            opt.textContent = (it.staffGranted ? "∞ 身份專屬 · " : "") + it.label;
             sel.appendChild(opt);
         });
         const target = String(selectedValue || "");
@@ -1330,6 +1487,7 @@
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
+        window.__DORATCH_AUTH_EMAIL__ = user.email || "";
         currentUser = user;
         userRef = doc(db, "users", user.uid);
 
@@ -1340,6 +1498,7 @@
                 userSnap = await getDoc(userRef);
             }
             userData = userSnap.exists() ? userSnap.data() : {};
+            userData = { ...userData, email: user.email || userData.email || "" };
             applyDisplayUI(user, userData);
 
             document.getElementById("count-coins").innerText = Math.floor(getDoordValue(userData));

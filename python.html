@@ -9,270 +9,11 @@
     <link rel="stylesheet" href="python-editor-assist.css">
     <link rel="stylesheet" href="python-tutor-qa.css">
     <link rel="stylesheet" href="discord-bot-sim.css">
+    <link rel="stylesheet" href="python-layout.css">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --py-green: #306998;
-            --py-yellow: #FFD43B;
-            --scratch-blue: #4C97FF;
-            --bg: #0f172a;
-            --panel: #1e293b;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-        }
-        body { margin: 0; font-family: "Noto Sans TC", sans-serif; background: #F0F2F5; color: #334155; }
-        .main-content { padding: 24px; box-sizing: border-box; }
-        @media (max-width: 1024px) {
-            .main-content { padding: 16px; }
-            .py-layout { grid-template-columns: 1fr !important; }
-        }
-        .py-hero {
-            background: linear-gradient(135deg, var(--py-green), #1e3a5f);
-            color: white; border-radius: 20px; padding: 28px 32px; margin-bottom: 20px;
-        }
-        .py-hero h1 { margin: 0 0 8px; font-size: 1.75rem; }
-        .py-hero p { margin: 0; opacity: 0.9; line-height: 1.6; font-size: 14px; }
-        .py-layout {
-            display: grid; grid-template-columns: 260px 1fr; gap: 16px; align-items: start;
-        }
-        .lesson-list {
-            background: white; border-radius: 16px; padding: 12px;
-            border: 1px solid #e2e8f0; max-height: calc(100vh - 200px); overflow-y: auto;
-        }
-        .lesson-item {
-            display: block; width: 100%; text-align: left; border: none; background: transparent;
-            padding: 12px; border-radius: 12px; cursor: pointer; font-family: inherit;
-            border: 2px solid transparent; margin-bottom: 4px;
-        }
-        .lesson-item:hover { background: #f1f5f9; }
-        .lesson-item.active { border-color: var(--scratch-blue); background: #eff6ff; }
-        .lesson-item.done .lesson-title::after { content: " ✓"; color: #16a34a; }
-        .lesson-title { font-weight: 900; font-size: 13px; display: block; }
-        .lesson-lv { font-size: 11px; color: var(--muted); margin-top: 4px; }
-        .lesson-track-label {
-            font-size: 11px; font-weight: 900; color: #64748b; letter-spacing: 0.04em;
-            padding: 14px 8px 6px; margin-top: 4px;
-        }
-        .lesson-track-label:first-child { margin-top: 0; padding-top: 4px; }
-        .work-panel { display: flex; flex-direction: column; gap: 12px; }
-        .card {
-            background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0;
-        }
-        .card h2 { margin: 0 0 8px; font-size: 1.2rem; color: var(--py-green); }
-        .card p { margin: 0 0 12px; font-size: 14px; line-height: 1.65; color: #64748b; }
-        .goals { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8; color: #475569; }
-        .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-        .btn {
-            border: none; padding: 10px 18px; border-radius: 10px; font-weight: 900;
-            cursor: pointer; font-family: inherit; font-size: 14px;
-        }
-        .btn-run { background: var(--py-yellow); color: #1e293b; }
-        .btn-test { background: var(--scratch-blue); color: white; }
-        .btn-reset { background: #e2e8f0; color: #475569; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .monaco-shell {
-            position: relative;
-            border-radius: 12px;
-            border: 2px solid #334155;
-            overflow: hidden;
-            font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-        }
-        #monaco-editor {
-            width: 100%;
-            height: 320px;
-        }
-        /* 編輯器游標對齊：與 Monaco 同字體同 line-height */
-        .monaco-shell .monaco-editor,
-        .monaco-shell .monaco-editor .margin,
-        .monaco-shell .monaco-editor .view-lines {
-            font-family: "JetBrains Mono", Consolas, "Courier New", monospace !important;
-            font-variant-ligatures: none !important;
-        }
-        /* 自動完成：fixed 定位，空間不足時改顯示在游標下方 */
-        .monaco-editor .suggest-widget {
-            max-height: min(280px, calc(100vh - 120px)) !important;
-            z-index: 10000;
-        }
-        .editor-hint {
-            font-size: 12px; color: #64748b; margin: 6px 0 0; line-height: 1.5;
-        }
-        .editor-hint kbd {
-            background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 11px;
-            font-family: inherit;
-        }
-        .monaco-shell { display: none; }
-        #editor-fallback {
-            display: block; width: 100%; min-height: 280px; box-sizing: border-box;
-            font-family: "JetBrains Mono", monospace; font-size: 14px; line-height: 1.5;
-            padding: 16px; border-radius: 12px; border: 2px solid #334155;
-            background: var(--bg); color: #e2e8f0;
-        }
-        .terminal-panel {
-            background: #0f172a; border-radius: 12px; border: 2px solid #334155;
-            overflow: hidden; display: flex; flex-direction: column;
-        }
-        .terminal-head {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 14px; background: #1e293b; border-bottom: 1px solid #334155;
-            font-size: 13px; font-weight: 900; color: #cbd5e1;
-        }
-        .terminal-head button {
-            border: none; background: rgba(255,255,255,0.08); color: #94a3b8;
-            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 800;
-            cursor: pointer; font-family: inherit;
-        }
-        .terminal-head button:hover { color: #e2e8f0; }
-        .terminal-body--term { padding: 0; min-height: 220px; display: flex; flex-direction: column; }
-        .status-bar {
-            font-size: 13px; padding: 10px 14px; border-radius: 10px; background: #f1f5f9;
-            color: #64748b;
-        }
-        .status-bar.ready { background: #dcfce7; color: #166534; }
-        .status-bar.loading { background: #fef3c7; color: #92400e; }
-        .status-bar.error { background: #fee2e2; color: #991b1b; }
-        .file-warn {
-            display: none; margin-bottom: 12px; padding: 12px 16px; border-radius: 12px;
-            background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; font-size: 13px; line-height: 1.6;
-        }
-        .file-warn.show { display: block; }
-        .test-row { font-size: 13px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
-        .test-row.pass { color: #16a34a; }
-        .test-row.fail { color: #dc2626; }
-        .progress-text { font-size: 13px; color: #64748b; margin-top: 8px; }
-        .teach-card { border-color: #bfdbfe; background: linear-gradient(180deg, #f8fbff 0%, #fff 100%); }
-        .teach-card-head {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 12px; gap: 12px;
-        }
-        .teach-card-head h2 { margin: 0; font-size: 1.1rem; color: #1e40af; }
-        .teach-toggle {
-            border: none; background: #e0e7ff; color: #3730a3; padding: 6px 12px;
-            border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit;
-        }
-        .lesson-teach { font-size: 14px; line-height: 1.75; color: #475569; max-height: 520px; overflow-y: auto; }
-        .lesson-teach.collapsed { display: none; }
-        .teach-block { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed #e2e8f0; }
-        .teach-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .teach-block h3 { margin: 0 0 8px; font-size: 14px; font-weight: 900; color: #334155; }
-        .teach-block p { margin: 0 0 10px; }
-        .teach-apis { margin: 0; padding-left: 18px; }
-        .teach-apis code { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-        .teach-code {
-            background: #1e293b; color: #e2e8f0; padding: 12px 14px; border-radius: 10px;
-            font-family: "JetBrains Mono", Consolas, monospace; font-size: 12px; line-height: 1.55;
-            overflow-x: auto; margin: 8px 0 4px;
-        }
-        .teach-code-note { font-size: 12px; color: #94a3b8; margin: 0 0 8px !important; }
-        .teach-code-demo { background: #0f172a; border: 2px solid #6366f1; }
-        .teach-code-note.demo { color: #818cf8; font-weight: 700; }
-        .teach-banner {
-            background: #eff6ff; border: 1px solid #93c5fd; border-radius: 10px;
-            padding: 10px 12px; font-size: 13px; color: #1e40af; margin-bottom: 14px; line-height: 1.6;
-        }
-        .teach-sim { background: #faf5ff; border: 1px solid #ddd6fe; border-radius: 10px; padding: 12px; }
-        .teach-sim h3 { color: #5b21b6 !important; }
-        .teach-demo-program { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 12px; }
-        .teach-demo-program h3 { color: #166534 !important; }
-        .teach-load-demo {
-            margin-top: 8px; border: none; background: #5865f2; color: #fff;
-            padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 800;
-            cursor: pointer; font-family: inherit;
-        }
-        .teach-load-demo:hover { background: #4752c4; }
-        .teach-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
-        .teach-table th, .teach-table td { border: 1px solid #e2e8f0; padding: 6px 10px; text-align: left; }
-        .teach-table th { background: #f1f5f9; font-weight: 800; }
-        .teach-table code { font-size: 12px; }
-        .teach-steps { margin: 0; padding-left: 22px; }
-        .teach-steps li { margin-bottom: 6px; }
-        .teach-tips { margin: 0; padding-left: 18px; color: #b45309; }
-        .teach-run { background: #f0fdf4; margin: 0 -4px; padding: 12px; border-radius: 10px; border: 1px solid #bbf7d0 !important; }
-        .teach-empty { color: #94a3b8; font-size: 13px; }
-        .assist-system {
-            border: 1px solid #cbd5e1;
-            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-        }
-        .assist-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-        }
-        .assist-head h3 {
-            margin: 0;
-            color: #1e40af;
-            font-size: 1.05rem;
-        }
-        .assist-desc {
-            margin: 0 0 10px;
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-        .assist-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-        .assist-box {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 10px 12px;
-            min-height: 96px;
-        }
-        .assist-box h4 {
-            margin: 0 0 6px;
-            color: #334155;
-            font-size: 13px;
-            font-weight: 900;
-        }
-        .assist-list {
-            margin: 0;
-            padding-left: 18px;
-            font-size: 13px;
-            line-height: 1.7;
-            color: #475569;
-        }
-        .assist-list li.pass { color: #15803d; }
-        .assist-list li.warn { color: #b45309; }
-        .assist-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .assist-chip {
-            border: none;
-            border-radius: 999px;
-            padding: 6px 12px;
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            font-family: inherit;
-            background: #e0e7ff;
-            color: #3730a3;
-        }
-        .assist-chip:hover { background: #c7d2fe; }
-        .assist-status {
-            margin-top: 10px;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 13px;
-            line-height: 1.65;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1e3a8a;
-        }
-        .assist-status.ok {
-            background: #ecfdf5;
-            border-color: #86efac;
-            color: #166534;
-        }
-        @media (max-width: 900px) {
-            .assist-grid { grid-template-columns: 1fr; }
-        }
+        /* doratch-shell 側欄與主區高度微調 */
+        .app-container { min-height: 100vh; }
     </style>
     <script src="doratch-base.js"></script>
     <script src="skulpt.min.js"></script>
@@ -310,119 +51,90 @@
     </aside>
 
     <main class="main-content">
-        <div class="py-hero">
-            <h1>🐍 Doratch Python 學習</h1>
-            <p>在瀏覽器寫 Python · 基礎 10 關 + Discord Bot 入門 5 關 · 每關含分段教學、示範程式、<strong>學習輔助系統</strong>（即時分析）與通關檢查</p>
-        </div>
-
-        <div id="file-warn" class="file-warn">
-            ⚠️ 你正在用<strong>本機檔案</strong>開啟。若引擎無法載入，請在 VS Code 用 <strong>Live Server</strong> 開啟，或 push 到 GitHub Pages 後用 <strong>https://帳號.github.io/倉庫名/python.html</strong> 進入。
-        </div>
-        <div id="gh-warn" class="file-warn" style="display:none;">
-            📦 <strong>GitHub Pages</strong>：所有 .html 與 .js 放在 repo <strong>根目錄</strong>（不要 js/ 子資料夾）。Settings → Pages → main / root，用 <strong>https://帳號.github.io/倉庫名/python.html</strong> 開啟。
-        </div>
-        <div id="gh-blob-warn" class="file-warn" style="display:none;">
-            ⚠️ 你現在在 <strong>github.com 原始碼頁</strong>，無法執行 Python。請開啟 GitHub Pages 網址：<strong id="gh-pages-url">—</strong>
-        </div>
-
-        <div id="engine-status" class="status-bar loading">Python 引擎載入中…</div>
-        <div style="margin-top:8px;">
-            <button type="button" class="btn btn-reset" id="btn-reload-engine" style="display:none;">🔄 重新載入引擎</button>
-        </div>
-
-        <div class="py-layout" style="margin-top:16px;">
-            <div class="lesson-list" id="lesson-list"></div>
-            <div class="work-panel">
-                <div class="card teach-card">
-                    <div class="teach-card-head">
-                        <h2 id="lesson-title">—</h2>
-                        <button type="button" class="teach-toggle" id="teach-toggle">收起教學</button>
+        <header class="py-topbar">
+            <div class="py-topbar-main">
+                <button type="button" class="py-drawer-btn" id="btn-lesson-drawer" aria-label="開啟關卡列表">☰ 關卡</button>
+                <div class="py-topbar-info">
+                    <div class="py-topbar-title-row">
+                        <h1 class="py-topbar-title" id="topbar-lesson-title">🐍 Doratch Python</h1>
+                        <span class="py-track-badge" id="topbar-track-badge">📘 基礎</span>
                     </div>
-                    <p id="lesson-summary" style="margin-bottom:12px;"></p>
-                    <ul class="goals" id="lesson-goals"></ul>
-                    <div id="lesson-teach" class="lesson-teach"></div>
+                    <span class="progress-text" id="progress-text"></span>
                 </div>
-                <div class="card">
-                    <div class="toolbar">
-                        <button type="button" class="btn btn-run" id="btn-run" disabled>▶ 執行</button>
-                        <button type="button" class="btn btn-test" id="btn-test" disabled>✅ 跑測試</button>
-                        <button type="button" class="btn btn-reset" id="btn-reset">🗑 清空重寫</button>
+            </div>
+            <div class="py-topbar-status">
+                <div id="engine-status" class="status-bar loading">引擎載入中…</div>
+                <button type="button" class="btn btn-reset" id="btn-reload-engine" style="display:none;">🔄 重載</button>
+            </div>
+            <details class="py-warn-accordion" id="py-warn-accordion">
+                <summary>⚠️ 環境提示</summary>
+                <div class="py-warn-body">
+                    <div id="file-warn" class="file-warn">
+                        ⚠️ 你正在用<strong>本機檔案</strong>開啟。若引擎無法載入，請在 VS Code 用 <strong>Live Server</strong> 開啟，或 push 到 GitHub Pages 後用 <strong>https://帳號.github.io/倉庫名/python.html</strong> 進入。
                     </div>
-                    <div class="assist-bar" id="py-assist-bar" style="margin-bottom:8px;border-radius:10px;">
-                        <span style="color:#64748b;font-weight:800;">🐍 快插：</span>
-                        <button type="button" data-snippet="print">print</button>
-                        <button type="button" data-snippet="for">for</button>
-                        <button type="button" data-snippet="if">if</button>
-                        <button type="button" data-snippet="def">def</button>
-                        <button type="button" data-snippet="input-str">input</button>
-                        <button type="button" data-snippet="listcomp">串列推導</button>
-                        <button type="button" data-snippet="try">try/except</button>
+                    <div id="gh-warn" class="file-warn" style="display:none;">
+                        📦 <strong>GitHub Pages</strong>：所有 .html 與 .js 放在 repo <strong>根目錄</strong>（不要 js/ 子資料夾）。Settings → Pages → main / root，用 <strong>https://帳號.github.io/倉庫名/python.html</strong> 開啟。
                     </div>
-                    <div class="assist-bar" id="bot-assist-bar" style="display:none;margin-bottom:8px;border-radius:10px;">
-                        <span style="color:#64748b;font-weight:800;">🤖 Bot 快插：</span>
-                        <button type="button" data-snippet="bot-if-hello">!hello</button>
-                        <button type="button" data-snippet="handle-func">handle()</button>
-                        <button type="button" data-snippet="bot-elif-chain">! 多指令</button>
-                        <button type="button" data-snippet="bot-skeleton">discord.py 骨架</button>
-                        <button type="button" data-snippet="@bot.command">@bot.command</button>
-                        <button type="button" data-snippet="@bot.tree.command">/ 斜線</button>
-                        <button type="button" data-snippet="send_">send_</button>
-                        <button type="button" data-snippet="ui.View">UI 按鈕</button>
+                    <div id="gh-blob-warn" class="file-warn" style="display:none;">
+                        ⚠️ 你現在在 <strong>github.com 原始碼頁</strong>，無法執行 Python。請開啟 GitHub Pages 網址：<strong id="gh-pages-url">—</strong>
                     </div>
-                    <label style="font-size:13px;font-weight:900;color:#64748b;">程式碼</label>
-                    <div class="monaco-shell">
-                        <div id="monaco-editor"></div>
+                </div>
+            </details>
+        </header>
+
+        <div class="py-lesson-backdrop" id="lesson-backdrop" aria-hidden="true"></div>
+
+        <div class="py-workspace">
+            <aside class="py-lesson-rail" id="py-lesson-rail">
+                <div class="lesson-list" id="lesson-list"></div>
+            </aside>
+
+            <section class="py-code-zone">
+                <div class="py-code-toolbar">
+                    <button type="button" class="btn btn-run" id="btn-run" disabled>▶ 執行</button>
+                    <button type="button" class="btn btn-test" id="btn-test" disabled>✅ 跑測試</button>
+                    <button type="button" class="btn btn-reset" id="btn-reset">🗑 清空重寫</button>
+                </div>
+                <div class="assist-bar" id="py-assist-bar">
+                    <span style="color:#64748b;font-weight:800;">🐍 快插：</span>
+                    <button type="button" data-snippet="print">print</button>
+                    <button type="button" data-snippet="for">for</button>
+                    <button type="button" data-snippet="if">if</button>
+                    <button type="button" data-snippet="def">def</button>
+                    <button type="button" data-snippet="input-str">input</button>
+                    <button type="button" data-snippet="listcomp">串列推導</button>
+                    <button type="button" data-snippet="try">try/except</button>
+                </div>
+                <div class="assist-bar" id="bot-assist-bar" style="display:none;">
+                    <span style="color:#64748b;font-weight:800;">🤖 Bot 快插：</span>
+                    <button type="button" data-snippet="bot-if-hello">!hello</button>
+                    <button type="button" data-snippet="handle-func">handle()</button>
+                    <button type="button" data-snippet="bot-elif-chain">! 多指令</button>
+                    <button type="button" data-snippet="bot-skeleton">discord.py 骨架</button>
+                    <button type="button" data-snippet="@bot.command">@bot.command</button>
+                    <button type="button" data-snippet="@bot.tree.command">/ 斜線</button>
+                    <button type="button" data-snippet="send_">send_</button>
+                    <button type="button" data-snippet="ui.View">UI 按鈕</button>
+                </div>
+                <div class="py-editor-block">
+                    <label>程式碼</label>
+                    <div class="py-editor-area">
+                        <div class="monaco-shell">
+                            <div id="monaco-editor"></div>
+                        </div>
+                        <textarea id="editor-fallback" spellcheck="false" placeholder="# 在此撰寫 Python…"></textarea>
                     </div>
-                    <textarea id="editor-fallback" spellcheck="false" placeholder="# 在此撰寫 Python…"></textarea>
                     <p class="editor-hint" id="editor-hint-base">
                         💡 語法輔助：<kbd>Ctrl</kbd>+<kbd>Space</kbd> 開啟選單 ·
                         輸入 <kbd>pr</kbd> <kbd>def</kbd> <kbd>for</kbd> <kbd>if</kbd> <kbd>try</kbd> ·
-                        變數後加 <kbd>.</kbd> 提示方法（如 <kbd>s.split</kbd>） ·
-                        <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行
+                        變數後加 <kbd>.</kbd> 提示方法 · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行
                     </p>
                     <p class="editor-hint editor-hint-bot" id="editor-hint-bot" style="display:none;">
                         🤖 Bot 輔助：<kbd>@</kbd> 或 <kbd>bot.</kbd>、<kbd>ctx.</kbd>、<kbd>interaction.</kbd> 自動提示 ·
-                        快插按鈕可插入骨架 · discord.py 關卡用右側模擬器測 <kbd>!</kbd> / <kbd>/</kbd> 指令
+                        右側「Bot」分頁可測 <kbd>!</kbd> / <kbd>/</kbd> 指令
                     </p>
                 </div>
-                <div class="card assist-system">
-                    <div class="assist-head">
-                        <h3>🧠 學習輔助系統</h3>
-                        <button type="button" class="btn btn-test" id="btn-analyze" style="padding:8px 12px;">分析目前程式</button>
-                    </div>
-                    <p class="assist-desc">逐項檢查本關要求、提醒常見錯誤，並提供下一步建議。此工具不會直接給答案。</p>
-                    <div class="assist-grid">
-                        <div class="assist-box">
-                            <h4>通關條件檢查</h4>
-                            <ul id="assist-goals" class="assist-list"></ul>
-                        </div>
-                        <div class="assist-box">
-                            <h4>下一步建議</h4>
-                            <ul id="assist-next" class="assist-list"></ul>
-                        </div>
-                    </div>
-                    <div class="assist-actions">
-                        <button type="button" class="assist-chip" id="assist-template">載入本關骨架</button>
-                        <button type="button" class="assist-chip" id="assist-run-guide">執行測試前檢查</button>
-                    </div>
-                    <div id="assist-status" class="assist-status">尚未分析：先寫幾行程式，再按「分析目前程式」。</div>
-                </div>
-                <div class="card tutor-qa" id="tutor-qa-root">
-                    <div class="tutor-qa-head">
-                        <h3>💬 問答助教</h3>
-                        <span class="tutor-qa-badge">引導模式 · 不給答案</span>
-                    </div>
-                    <p class="tutor-qa-desc">可問本關目標、語法用法、為什麼出錯。預設為離線規則助教；管理員可在 admin 啟用 Gemini（免費 GAS 代理，不需 Blaze）。</p>
-                    <div class="tutor-quick"></div>
-                    <div class="tutor-messages">
-                        <div class="tutor-empty">選快捷問題，或輸入你的疑問。</div>
-                    </div>
-                    <div class="tutor-input-row">
-                        <input type="text" class="tutor-qa-input" placeholder="例如：這關要幹嘛？ / 為什麼測試失敗？" maxlength="500" autocomplete="off">
-                        <button type="button" class="tutor-qa-send">送出</button>
-                    </div>
-                </div>
-                <div class="card" style="padding:0;border:none;background:transparent;">
+                <div class="py-output-pane">
                     <div class="terminal-panel">
                         <div class="terminal-head">
                             <span>▶ 執行視窗</span>
@@ -434,11 +146,79 @@
                         <div id="test-results"></div>
                     </div>
                 </div>
-                <p class="progress-text" id="progress-text"></p>
-            </div>
-            <div id="bot-sim-panel" class="bot-sim-panel" style="display:none;">
-                <div id="bot-simulator"></div>
-            </div>
+            </section>
+
+            <aside class="py-side-panel">
+                <nav class="py-side-tabs" role="tablist" aria-label="學習面板">
+                    <button type="button" class="py-side-tab-btn active" data-py-tab="teach" role="tab" aria-selected="true">📖 教學</button>
+                    <button type="button" class="py-side-tab-btn" data-py-tab="assist" role="tab" aria-selected="false">🧠 輔助</button>
+                    <button type="button" class="py-side-tab-btn" data-py-tab="tutor" role="tab" aria-selected="false">💬 問答</button>
+                    <button type="button" class="py-side-tab-btn" data-py-tab="bot" role="tab" aria-selected="false" hidden>🤖 Bot</button>
+                </nav>
+                <div class="py-side-tab-panels">
+                    <div class="py-side-tab-panel active" data-py-tab-panel="teach" role="tabpanel">
+                        <div class="card teach-card">
+                            <div class="teach-card-head">
+                                <h2 id="lesson-title">—</h2>
+                                <button type="button" class="teach-toggle" id="teach-toggle">收起教學</button>
+                            </div>
+                            <div class="py-side-scroll">
+                                <p id="lesson-summary" style="margin-bottom:12px;"></p>
+                                <ul class="goals" id="lesson-goals"></ul>
+                                <div id="lesson-teach" class="lesson-teach"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-side-tab-panel" data-py-tab-panel="assist" role="tabpanel">
+                        <div class="card assist-system">
+                            <div class="assist-head">
+                                <h3>🧠 學習輔助系統</h3>
+                                <button type="button" class="btn btn-test" id="btn-analyze" style="padding:8px 12px;">分析目前程式</button>
+                            </div>
+                            <div class="py-side-scroll">
+                                <p class="assist-desc">逐項檢查本關要求、提醒常見錯誤，並提供下一步建議。此工具不會直接給答案。</p>
+                                <div class="assist-grid">
+                                    <div class="assist-box">
+                                        <h4>通關條件檢查</h4>
+                                        <ul id="assist-goals" class="assist-list"></ul>
+                                    </div>
+                                    <div class="assist-box">
+                                        <h4>下一步建議</h4>
+                                        <ul id="assist-next" class="assist-list"></ul>
+                                    </div>
+                                </div>
+                                <div class="assist-actions">
+                                    <button type="button" class="assist-chip" id="assist-template">載入本關骨架</button>
+                                    <button type="button" class="assist-chip" id="assist-run-guide">執行測試前檢查</button>
+                                </div>
+                                <div id="assist-status" class="assist-status">尚未分析：先寫幾行程式，再按「分析目前程式」。</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-side-tab-panel" data-py-tab-panel="tutor" role="tabpanel">
+                        <div class="card tutor-qa" id="tutor-qa-root">
+                            <div class="tutor-qa-head">
+                                <h3>💬 問答助教</h3>
+                                <span class="tutor-qa-badge">引導模式 · 不給答案</span>
+                            </div>
+                            <p class="tutor-qa-desc">可問本關目標、語法用法、為什麼出錯。預設為離線規則助教；管理員可在 admin 啟用 Gemini。</p>
+                            <div class="tutor-quick"></div>
+                            <div class="tutor-messages">
+                                <div class="tutor-empty">選快捷問題，或輸入你的疑問。</div>
+                            </div>
+                            <div class="tutor-input-row">
+                                <input type="text" class="tutor-qa-input" placeholder="例如：這關要幹嘛？ / 為什麼測試失敗？" maxlength="500" autocomplete="off">
+                                <button type="button" class="tutor-qa-send">送出</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="py-side-tab-panel" data-py-tab-panel="bot" role="tabpanel" hidden>
+                        <div id="bot-sim-panel" class="bot-sim-panel" style="display:none;">
+                            <div id="bot-simulator"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
         </div>
     </main>
 </div>
@@ -448,15 +228,57 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { initPythonGeminiTutor } from "./python-gemini-tutor.js";
 
     const PYTHON_LESSONS = window.PYTHON_LESSONS || [];
+    const isLocalFile = location.protocol === "file:";
     const getLesson = window.getPythonLesson || (() => PYTHON_LESSONS[0]);
     const Engine = window.PythonEngine;
     let pyTerm = null;
 
-    if (location.protocol === "file:") {
+    if (isLocalFile) {
         document.getElementById("file-warn").classList.add("show");
+        var warnAcc = document.getElementById("py-warn-accordion");
+        if (warnAcc) warnAcc.open = true;
+    }
+
+    function openWarnAccordionIfNeeded() {
+        var acc = document.getElementById("py-warn-accordion");
+        if (!acc) return;
+        var fileWarn = document.getElementById("file-warn");
+        var ghWarn = document.getElementById("gh-warn");
+        var ghBlob = document.getElementById("gh-blob-warn");
+        var visible = (fileWarn && fileWarn.classList.contains("show")) ||
+            (ghWarn && ghWarn.style.display !== "none") ||
+            (ghBlob && ghBlob.style.display !== "none");
+        if (visible) acc.open = true;
+    }
+
+    function escapeHtml(s) {
+        return String(s || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    function renderTestRows(results) {
+        return results.map(function (r) {
+            return '<div class="test-row ' + (r.pass ? "pass" : "fail") + '">' +
+                escapeHtml(r.label) + "：" + (r.pass ? "✓ 通過" : "✗ 失敗") +
+                (r.stdin ? "<br><small>輸入：" + escapeHtml(r.stdin) + "</small>" : "") +
+                "<br><small>期望：" + escapeHtml(r.expected) + " · 得到：" + escapeHtml(r.got) + "</small></div>";
+        }).join("");
+    }
+
+    async function tryInitGeminiTutor(app, db) {
+        if (isLocalFile) return false;
+        try {
+            var mod = await import("./python-gemini-tutor.js");
+            return await mod.initPythonGeminiTutor(app, db);
+        } catch (e) {
+            console.warn("Gemini tutor init skipped:", e);
+            return false;
+        }
     }
     if (/github\.com/i.test(location.hostname) && /\/blob\//.test(location.pathname)) {
         var parts = location.pathname.split("/");
@@ -467,9 +289,11 @@
         if (el && urlEl && user && repo) {
             urlEl.textContent = "https://" + user + ".github.io/" + repo + "/python.html";
             el.style.display = "block";
+            openWarnAccordionIfNeeded();
         }
     } else if (window.DoratchBase && window.DoratchBase.isGitHubPages()) {
         document.getElementById("gh-warn").style.display = "block";
+        openWarnAccordionIfNeeded();
     }
 
     const firebaseConfig = {
@@ -491,6 +315,100 @@
     let botSim = null;
     let lastRunError = "";
     let tutorPanel = null;
+    let sideTabsApi = null;
+    const SIDE_TAB_KEY = "doratch_py_side_tab";
+
+    function triggerEditorLayout() {
+        if (window.PythonMonaco && window.PythonMonaco.layout) {
+            window.PythonMonaco.layout();
+        }
+        window.dispatchEvent(new Event("resize"));
+    }
+
+    function initPySideTabs() {
+        var tabBtns = document.querySelectorAll(".py-side-tab-btn");
+        var tabPanels = document.querySelectorAll(".py-side-tab-panel");
+        var saved = sessionStorage.getItem(SIDE_TAB_KEY) || "teach";
+
+        function activate(tabId, force) {
+            var botBtn = document.querySelector('.py-side-tab-btn[data-py-tab="bot"]');
+            var botPanel = document.querySelector('[data-py-tab-panel="bot"]');
+            if (tabId === "bot" && botBtn && botBtn.hidden) {
+                tabId = "teach";
+            }
+            if (!force && tabId === saved) { /* allow re-activate for layout */ }
+            tabBtns.forEach(function (btn) {
+                var on = btn.dataset.pyTab === tabId;
+                btn.classList.toggle("active", on);
+                btn.setAttribute("aria-selected", on ? "true" : "false");
+            });
+            tabPanels.forEach(function (panel) {
+                var on = panel.dataset.pyTabPanel === tabId;
+                panel.classList.toggle("active", on);
+                if (on) panel.removeAttribute("hidden");
+                else panel.setAttribute("hidden", "");
+            });
+            sessionStorage.setItem(SIDE_TAB_KEY, tabId);
+            saved = tabId;
+            setTimeout(triggerEditorLayout, 50);
+        }
+
+        tabBtns.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                activate(btn.dataset.pyTab, true);
+            });
+        });
+
+        activate(saved, true);
+        return { activate: activate, getActive: function () { return saved; } };
+    }
+
+    function initLessonDrawer() {
+        var rail = document.getElementById("py-lesson-rail");
+        var backdrop = document.getElementById("lesson-backdrop");
+        var openBtn = document.getElementById("btn-lesson-drawer");
+        if (!rail || !openBtn) return;
+
+        function closeDrawer() {
+            rail.classList.remove("is-open");
+            if (backdrop) backdrop.classList.remove("is-visible");
+            document.body.style.overflow = "";
+            triggerEditorLayout();
+        }
+        function openDrawer() {
+            rail.classList.add("is-open");
+            if (backdrop) backdrop.classList.add("is-visible");
+            document.body.style.overflow = "hidden";
+        }
+
+        openBtn.addEventListener("click", function () {
+            if (rail.classList.contains("is-open")) closeDrawer();
+            else openDrawer();
+        });
+        if (backdrop) backdrop.addEventListener("click", closeDrawer);
+        rail.addEventListener("click", function (e) {
+            if (e.target.closest(".lesson-item")) closeDrawer();
+        });
+        window.addEventListener("resize", function () {
+            if (window.innerWidth >= 1024) closeDrawer();
+        });
+    }
+
+    function updateTopbar(lesson) {
+        var titleEl = document.getElementById("topbar-lesson-title");
+        var badgeEl = document.getElementById("topbar-track-badge");
+        if (titleEl) titleEl.textContent = lesson.title;
+        if (badgeEl) {
+            var track = lesson.track || "base";
+            if (track === "discord") {
+                badgeEl.textContent = "🤖 Discord";
+                badgeEl.classList.add("discord");
+            } else {
+                badgeEl.textContent = "📘 基礎";
+                badgeEl.classList.remove("discord");
+            }
+        }
+    }
 
     function isEngineReady() {
         return engineReady || window.__DORATCH_ENGINE_READY__ ||
@@ -518,29 +436,36 @@
     }
 
     function updateDiscordLayout() {
-        var layout = document.querySelector(".py-layout");
+        var workspace = document.querySelector(".py-workspace");
         var panel = document.getElementById("bot-sim-panel");
+        var botTabBtn = document.querySelector('.py-side-tab-btn[data-py-tab="bot"]');
         var assistBar = document.getElementById("bot-assist-bar");
         var hintBase = document.getElementById("editor-hint-base");
         var hintBot = document.getElementById("editor-hint-bot");
         var discord = isDiscordLesson(currentId);
         if (discord) {
-            layout.classList.add("py-layout-discord");
-            panel.style.display = "block";
+            if (workspace) workspace.classList.add("py-workspace-discord");
+            if (panel) panel.style.display = "flex";
+            if (botTabBtn) botTabBtn.hidden = false;
             if (assistBar) assistBar.style.display = "flex";
             if (hintBase) hintBase.style.display = "none";
             if (hintBot) hintBot.style.display = "block";
             window.__DORATCH_FORCE_BOT_ASSIST__ = true;
             if (window.PythonEditorAssist) window.PythonEditorAssist.setForceBot(true);
         } else {
-            layout.classList.remove("py-layout-discord");
-            panel.style.display = "none";
+            if (workspace) workspace.classList.remove("py-workspace-discord");
+            if (panel) panel.style.display = "none";
+            if (botTabBtn) botTabBtn.hidden = true;
             if (assistBar) assistBar.style.display = "none";
             if (hintBase) hintBase.style.display = "block";
             if (hintBot) hintBot.style.display = "none";
             window.__DORATCH_FORCE_BOT_ASSIST__ = false;
             if (window.PythonEditorAssist) window.PythonEditorAssist.setForceBot(false);
+            if (sideTabsApi && sideTabsApi.getActive() === "bot") {
+                sideTabsApi.activate("teach", true);
+            }
         }
+        triggerEditorLayout();
     }
 
     function getCode() {
@@ -578,7 +503,7 @@
         }
         return window.PythonMonaco.init("monaco-editor").then(function () {
             useMonaco = true;
-            document.querySelector(".monaco-shell").style.display = "";
+            document.querySelector(".monaco-shell").style.display = "flex";
             document.getElementById("editor-fallback").style.display = "none";
             setCode(document.getElementById("editor-fallback").value || getLesson(currentId).starter);
         }).catch(function (e) {
@@ -689,6 +614,7 @@
         const lesson = getLesson(id);
         history.replaceState({}, "", `python.html?lesson=${encodeURIComponent(id)}`);
         document.getElementById("lesson-title").textContent = lesson.title;
+        updateTopbar(lesson);
         document.getElementById("lesson-summary").textContent = lesson.summary;
         document.getElementById("lesson-goals").innerHTML =
             "<li style=\"list-style:none;font-weight:900;color:#64748b;margin-bottom:6px;\">🎯 通關條件</li>" +
@@ -790,8 +716,9 @@
         const term = getPyTerm();
         if (!lesson.tests || !lesson.tests.length) {
             if (isDiscordLesson(currentId)) {
-                alert("本關請用右側 Bot 模擬器：連線 → 測 /斜線指令 → 改程式後按「重新連線」");
+                alert("本關請用右側「Bot」分頁：連線 → 測 /斜線指令 → 改程式後按「重新連線」");
                 updateDiscordLayout();
+                if (sideTabsApi) sideTabsApi.activate("bot", true);
             } else {
                 alert("本關沒有自動測試。");
             }
@@ -802,13 +729,16 @@
         try {
             const pre = Engine.validateSubmission(code, lesson.rules || {});
             if (!pre.ok) {
+                lastRunError = pre.message;
                 if (term) term.writeError(pre.message);
+                box.innerHTML = '<div class="test-row fail">' + escapeHtml(pre.message) + "</div>";
                 return;
             }
             const { allPass, validationFailed, validationMessage, results } = await Engine.runTests(code, lesson);
             if (validationFailed) {
                 lastRunError = validationMessage || "驗證未通過";
                 if (term) term.writeError(validationMessage);
+                box.innerHTML = '<div class="test-row fail">' + escapeHtml(lastRunError) + "</div>";
                 return;
             }
             if (allPass) {
@@ -820,12 +750,7 @@
                     if (term) term.writeError("測試未通過：" + failed[0].label);
                 }
             }
-            box.innerHTML = results.map((r) =>
-                `<div class="test-row ${r.pass ? "pass" : "fail"}">` +
-                `${r.label}：${r.pass ? "✓ 通過" : "✗ 失敗"}` +
-                (r.stdin ? `<br><small>輸入：${r.stdin}</small>` : "") +
-                `<br><small>期望：${r.expected} · 得到：${r.got}</small></div>`
-            ).join("");
+            box.innerHTML = renderTestRows(results);
             if (allPass) {
                 const firstTime = !completed.has(currentId);
                 completed.add(currentId);
@@ -844,7 +769,7 @@
         } catch (e) {
             lastRunError = String(e.message || e);
             if (term) term.writeError(lastRunError);
-            box.innerHTML = "";
+            box.innerHTML = '<div class="test-row fail">' + escapeHtml(lastRunError) + "</div>";
         }
     };
 
@@ -953,6 +878,8 @@
     };
 
     loadLocalProgress();
+    sideTabsApi = initPySideTabs();
+    initLessonDrawer();
     renderLessonList();
     selectLesson(currentId);
 
@@ -977,6 +904,11 @@
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
+            if (isLocalFile) {
+                document.getElementById("side-username").textContent = "本機模式";
+                document.getElementById("side-avatar").src = "https://ui-avatars.com/api/?name=Local&background=64748b";
+                return;
+            }
             location.href = "login.html";
             return;
         }
@@ -989,7 +921,7 @@
         }
         await loadCloudProgress();
         renderLessonList();
-        await initPythonGeminiTutor(app, db);
+        await tryInitGeminiTutor(app, db);
     });
 </script>
 </body>

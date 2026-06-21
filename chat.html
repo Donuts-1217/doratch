@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>聊天室 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -366,18 +367,31 @@
         .message-row.bot-msg .msg-author { color: #23a559; }
         .message-row.bot-msg .msg-avatar { border-color: rgba(35,165,89,0.4); }
         .bot-badge { background: #23a559; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
-        .user-title-badge { background: rgba(88,101,242,0.2); color: #c7d2fe; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
-        .user-cosmetic-badge { background: rgba(250,204,21,0.2); color: #fde68a; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
+        .user-title-badge { background: rgba(88,101,242,0.2); color: #c7d2fe; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; position: relative; z-index: 2; isolation: isolate; overflow: visible; }
+        .user-title-badge .chip-icon { margin-right: 2px; color: #c7d2fe; -webkit-text-fill-color: initial; }
+        .user-title-badge .chip-label { position: relative; z-index: 1; }
         .user-title-badge.legendary-title {
-            color: transparent;
-            background: linear-gradient(90deg, #f59e0b, #f43f5e, #60a5fa, #f59e0b);
-            background-size: 200% auto;
+            color: #fde68a;
+            background: linear-gradient(135deg, rgba(251,191,36,0.2), rgba(244,63,94,0.1), rgba(96,165,250,0.12));
+            border: 1px solid rgba(251,191,36,0.4);
+            box-shadow: 0 0 10px rgba(245,158,11,0.3);
+            font-weight: 900;
+            animation: textShimmer 2.6s linear infinite;
+        }
+        .user-title-badge.legendary-title .chip-label {
+            background: linear-gradient(90deg, #fbbf24, #f472b6, #60a5fa, #fbbf24);
+            background-size: 220% auto;
             -webkit-background-clip: text;
             background-clip: text;
-            text-shadow: 0 0 10px rgba(245,158,11,0.35);
+            color: transparent;
+            -webkit-text-fill-color: transparent;
             animation: textShimmer 2.6s linear infinite;
-            font-weight: 900;
         }
+        .user-title-badge.legendary-title .chip-icon {
+            color: #fde68a;
+            text-shadow: 0 0 6px rgba(251,191,36,0.55);
+        }
+        .user-cosmetic-badge { background: rgba(250,204,21,0.2); color: #fde68a; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle; }
         .user-cosmetic-badge.legendary-badge {
             border: 1px solid rgba(255,255,255,0.35);
             animation: badgeFloat 1.8s ease-in-out infinite;
@@ -1078,11 +1092,107 @@
     <script src="discord-bot-engine.js"></script>
     <script src="chat-discord-ui.js"></script>
     <script src="shared/doratch-docoin-catalog.js"></script>
+    <script src="doratch-staff-cosmetics.js"></script>
+    <script src="doratch-staff-cinematic.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    let STAFF_COSMETIC_ITEMS = [];
+    let STAFF_AVATAR_URLS = {};
+    let ownedItemsBySlotWithStaff;
+    let pickOwnedWithStaff;
+    let resolveVisualWithStaff;
+    let getStaffRole;
+    let staffRoleLabel;
+    let staffBadgeHtml;
+    let staffRoleForSnapshot;
+    let isStaffLegendaryBadge;
+    let isStaffLegendaryTitle;
+    let isStaffLegendaryFrame;
+    let staffFrameClass;
+    let staffNameEffectClass;
+    let staffProfileEffectClass;
+
+    function bindStaffFallback() {
+        STAFF_COSMETIC_ITEMS = [];
+        STAFF_AVATAR_URLS = {};
+        getStaffRole = () => "";
+        staffRoleLabel = () => "";
+        staffBadgeHtml = () => "";
+        staffRoleForSnapshot = () => "";
+        isStaffLegendaryBadge = () => false;
+        isStaffLegendaryTitle = () => false;
+        isStaffLegendaryFrame = () => false;
+        staffFrameClass = () => "";
+        staffNameEffectClass = () => "";
+        staffProfileEffectClass = () => "";
+        ownedItemsBySlotWithStaff = function (data, allItems, slot) {
+            const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
+            const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
+            return allItems.filter((it) => it.slot === slot && ids.has(it.id));
+        };
+        pickOwnedWithStaff = function (data, allItems, slot) {
+            const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
+            const owned = ownedItemsBySlotWithStaff(data, allItems, slot);
+            const raw = String(eq[slot] || "").trim();
+            if (!raw) return "";
+            if (owned.some((it) => it.value === raw)) return raw;
+            const byId = owned.find((it) => it.id === raw);
+            return byId ? byId.value : "";
+        };
+        resolveVisualWithStaff = function (data, allItems, slot, fallbackRaw, helpers) {
+            const eq = data ? ((helpers && helpers.getEquipped) ? helpers.getEquipped(data) : (data.equippedCosmetics || {})) : {};
+            const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
+            if (!raw) return "";
+            const cosmeticDisplayValue = (helpers && helpers.cosmeticDisplayValue) || function (s, r) {
+                const v = String(r || "").trim();
+                if (!v) return "";
+                const item = allItems.find((it) => it.slot === s && (it.value === v || it.id === v));
+                return item ? item.value : "";
+            };
+            let normalized = cosmeticDisplayValue(slot, raw);
+            if (!normalized && allItems.some((it) => it.slot === slot && it.value === raw)) normalized = raw;
+            if (!normalized) return "";
+            if (!data) return normalized;
+            const owned = ownedItemsBySlotWithStaff(data, allItems, slot);
+            if (owned.some((it) => it.value === normalized)) return normalized;
+            const viaPick = pickOwnedWithStaff({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, allItems, slot);
+            if (viaPick) return viaPick;
+            if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
+            return "";
+        };
+    }
+
+    function bindStaffModule(staffMod) {
+        if (!staffMod) return false;
+        STAFF_COSMETIC_ITEMS = staffMod.STAFF_COSMETIC_ITEMS || [];
+        STAFF_AVATAR_URLS = staffMod.STAFF_AVATAR_URLS || {};
+        ownedItemsBySlotWithStaff = staffMod.ownedItemsBySlotWithStaff;
+        pickOwnedWithStaff = staffMod.pickOwnedWithStaff;
+        resolveVisualWithStaff = staffMod.resolveVisualWithStaff;
+        getStaffRole = staffMod.getStaffRole;
+        staffRoleLabel = staffMod.staffRoleLabel;
+        staffBadgeHtml = staffMod.staffBadgeHtml;
+        staffRoleForSnapshot = staffMod.staffRoleForSnapshot;
+        isStaffLegendaryBadge = staffMod.isStaffLegendaryBadge;
+        isStaffLegendaryTitle = staffMod.isStaffLegendaryTitle;
+        isStaffLegendaryFrame = staffMod.isStaffLegendaryFrame;
+        staffFrameClass = staffMod.staffFrameClass;
+        staffNameEffectClass = staffMod.staffNameEffectClass;
+        staffProfileEffectClass = staffMod.staffProfileEffectClass;
+        return true;
+    }
+
+    if (!bindStaffModule(window.DoratchRoleCosmetics)) {
+        try {
+            bindStaffModule(await import("./shared/doratch-role-cosmetics.js"));
+        } catch (staffErr) {
+            console.warn("Staff cosmetics module unavailable — chat runs without identity-exclusive items", staffErr);
+            bindStaffFallback();
+        }
+    }
 
     const DocoinCatalog = window.DoratchDocoinCatalog || {};
     const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
@@ -1348,6 +1458,7 @@
         { id: "profilefx_candy_pop", slot: "profileEffect", label: "糖果爆彩", value: "candy_pop" },
         { id: "profilefx_digital_pulse", slot: "profileEffect", label: "數位脈衝", value: "digital_pulse" }
     ];
+    STAFF_COSMETIC_ITEMS.forEach(function (it) { COSMETIC_ITEMS.push(it); });
 
     window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
 
@@ -1439,6 +1550,7 @@
         if (avatarType === "chess_knight") return `https://ui-avatars.com/api/?name=CHK&background=44403c&color=fbbf24&bold=true`;
         if (avatarType === "mermaid_wave") return `https://ui-avatars.com/api/?name=MRM&background=0891b2&color=f0fdfa&bold=true`;
         if (avatarType === "docoin_phoenix") return `https://ui-avatars.com/api/?name=PHX&background=b91c1c&color=fbbf24&bold=true`;
+        if (STAFF_AVATAR_URLS[avatarType]) return STAFF_AVATAR_URLS[avatarType];
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
@@ -1490,37 +1602,15 @@
     }
 
     function ownedItemsBySlot(data, slot) {
-        const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
-        const ids = new Set(inv.map((x) => (typeof x === "string" ? x : (x && x.id) || "")).filter(Boolean));
-        return COSMETIC_ITEMS.filter((it) => it.slot === slot && ids.has(it.id));
+        return ownedItemsBySlotWithStaff(data, COSMETIC_ITEMS, slot);
     }
 
     function resolveVisualCosmetic(data, slot, fallbackRaw) {
-        const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
-        const raw = String(fallbackRaw !== undefined ? fallbackRaw : eq[slot] || "").trim();
-        if (!raw) return "";
-        let normalized = cosmeticDisplayValue(slot, raw);
-        if (!normalized && COSMETIC_ITEMS.some((it) => it.slot === slot && it.value === raw)) {
-            normalized = raw;
-        }
-        if (!normalized) return "";
-        if (!data) return normalized;
-        const owned = ownedItemsBySlot(data, slot);
-        if (owned.some((it) => it.value === normalized)) return normalized;
-        const viaPick = pickOwnedEquipped({ ...data, equippedCosmetics: { ...eq, [slot]: raw } }, slot);
-        if (viaPick) return viaPick;
-        if (String(eq[slot] || "").trim() || (fallbackRaw !== undefined && String(fallbackRaw).trim())) return normalized;
-        return "";
+        return resolveVisualWithStaff(data, COSMETIC_ITEMS, slot, fallbackRaw, { getEquipped, cosmeticDisplayValue });
     }
 
     function pickOwnedEquipped(data, slot) {
-        const eq = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
-        const owned = ownedItemsBySlot(data, slot);
-        const raw = String(eq[slot] || "").trim();
-        if (!raw) return "";
-        if (owned.some((it) => it.value === raw)) return raw;
-        const byId = owned.find((it) => it.id === raw);
-        return byId ? byId.value : "";
+        return pickOwnedWithStaff(data, COSMETIC_ITEMS, slot);
     }
 
     function cosmeticDisplayValue(slot, raw) {
@@ -1547,6 +1637,8 @@
     }
 
     function frameClass(frameType) {
+        const staff = staffFrameClass(frameType);
+        if (staff) return staff;
         if (frameType === "neon") return "avatar-frame-neon";
         if (frameType === "gold") return "avatar-frame-gold";
         if (frameType === "sakura") return "avatar-frame-sakura";
@@ -1579,15 +1671,15 @@
     }
 
     function isLegendaryFrame(frameType) {
-        return ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend", "rainbow_prism", "lava_ring", "frost_crystal", "circuit_pulse", "comet_legend"].includes(String(frameType || ""));
+        return isStaffLegendaryFrame(frameType) || ["holo", "cyberfire", "aurora", "phoenix_particle", "quantum_particle", "glitch_legend", "celestial_particle", "eclipse_particle", "stardust_particle", "moonlit_legend", "rainbow_prism", "lava_ring", "frost_crystal", "circuit_pulse", "comet_legend"].includes(String(frameType || ""));
     }
 
     function isLegendaryTitle(title) {
-        return ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者", "霓虹女帝"].includes(String(title || ""));
+        return isStaffLegendaryTitle(title) || ["量子駭客", "虛空行者", "超頻核心", "星際領主", "賽博忍者", "神話守護者", "霓虹女帝"].includes(String(title || ""));
     }
 
     function isLegendaryBadge(badge) {
-        return ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
+        return isStaffLegendaryBadge(badge) || ["龍焰核心", "星穹航行者", "幻影駭客", "鈦晶守衛", "超新星之眼", "反應爐核心", "虛無裂隙", "事件視界", "奇點核心", "以太王冠", "遠古符文", "量子 flux"].includes(String(badge || ""));
     }
 
     function isMythicBadge(badge) {
@@ -1596,10 +1688,10 @@
 
     function nameEffectClass(effectType) {
         const v = cosmeticDisplayValue("nameEffect", effectType);
-        return NAME_EFFECT_CLASS_MAP[v] || "";
+        return NAME_EFFECT_CLASS_MAP[v] || staffNameEffectClass(v || effectType) || "";
     }
 
-    const GRADIENT_NAME_EFFECTS = new Set(["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow"]);
+    const GRADIENT_NAME_EFFECTS = new Set(["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-chaos-prism", "name-effect-holy-radiance"]);
     function nameColorStyleAttr(nameColor, effectType) {
         const cls = nameEffectClass(effectType);
         if (cls && GRADIENT_NAME_EFFECTS.has(cls)) return "";
@@ -1615,7 +1707,10 @@
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
         sparkle: "name-effect-sparkle",
-        glitch: "name-effect-glitch"
+        glitch: "name-effect-glitch",
+        chaos_prism: "name-effect-chaos-prism",
+        code_storm: "name-effect-code-storm",
+        holy_radiance: "name-effect-holy-radiance"
     };
 
     const PROFILE_EFFECT_CLASS_MAP = {
@@ -1642,7 +1737,11 @@
         sakura_night: "fx-sakura-night",
         thunder_roll: "fx-thunder-roll",
         candy_pop: "fx-candy-pop",
-        digital_pulse: "fx-digital-pulse"
+        digital_pulse: "fx-digital-pulse",
+        dev_overlord: "fx-dev-overlord",
+        dev_singularity: "fx-dev-singularity",
+        admin_crown: "fx-admin-crown",
+        admin_judgment: "fx-admin-judgment"
     };
     const PROFILE_FX_CLASSES = Object.values(PROFILE_EFFECT_CLASS_MAP);
 
@@ -1650,12 +1749,12 @@
         const v = cosmeticDisplayValue("profileEffect", effectType);
         if (PROFILE_EFFECT_CLASS_MAP[v]) return PROFILE_EFFECT_CLASS_MAP[v];
         const raw = String(effectType || "").trim();
-        return PROFILE_EFFECT_CLASS_MAP[raw] || "";
+        return PROFILE_EFFECT_CLASS_MAP[raw] || staffProfileEffectClass(v || raw, "chat") || "";
     }
 
     function applyAvatarFrameToElement(el, frameType) {
         if (!el) return;
-        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend", "avatar-frame-rainbow-prism", "avatar-frame-lava-ring", "avatar-frame-frost-crystal", "avatar-frame-circuit-pulse", "avatar-frame-comet-legend");
+        el.classList.remove("avatar-frame-neon", "avatar-frame-gold", "avatar-frame-sakura", "avatar-frame-holo", "avatar-frame-obsidian", "avatar-frame-cyberfire", "avatar-frame-aurora", "avatar-frame-phoenix-particle", "avatar-frame-quantum-particle", "avatar-frame-glitch-legend", "avatar-frame-celestial-particle", "avatar-frame-eclipse-particle", "avatar-frame-stardust-particle", "avatar-frame-bamboo", "avatar-frame-matrix", "avatar-frame-snowflake", "avatar-frame-amethyst", "avatar-frame-thunder", "avatar-frame-dragon-jade", "avatar-frame-sunset-glow", "avatar-frame-ocean-deep", "avatar-frame-stadium-spotlight", "avatar-frame-moonlit-legend", "avatar-frame-rainbow-prism", "avatar-frame-lava-ring", "avatar-frame-frost-crystal", "avatar-frame-circuit-pulse", "avatar-frame-comet-legend", "avatar-frame-dev-supernova", "avatar-frame-dev-matrix-crown", "avatar-frame-admin-royal-pulse", "avatar-frame-admin-divine-verdict");
         const cls = frameClass(frameType);
         if (cls) el.classList.add(cls);
     }
@@ -1671,6 +1770,7 @@
             nameColor: pickOwnedEquipped(currentUserData, "nameColor"),
             nameEffect: pickOwnedEquipped(currentUserData, "nameEffect"),
             profileEffect: resolveVisualCosmetic(currentUserData, "profileEffect"),
+            staffRole: staffRoleForSnapshot({ ...(currentUserData || {}), email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || "" }),
             customStatus: String(currentUserData && currentUserData.customStatus || "").trim(),
             profileBio: String(currentUserData && currentUserData.profileBio || "").trim()
         };
@@ -1690,6 +1790,10 @@
         if (v === "aurora_borealis") return "pop-banner-aurora-borealis";
         if (v === "candy_pop") return "pop-banner-candy-pop";
         if (v === "circuit_board") return "pop-banner-circuit-board";
+        if (v === "dev_neural") return "pop-banner-dev-neural";
+        if (v === "dev_void_code") return "pop-banner-dev-void-code";
+        if (v === "admin_throne") return "pop-banner-admin-throne";
+        if (v === "admin_judgment") return "pop-banner-admin-judgment";
         return "";
     }
 
@@ -1728,7 +1832,7 @@
             seenValues.add(val);
             const opt = document.createElement("option");
             opt.value = val;
-            opt.textContent = it.label;
+            opt.textContent = (it.staffGranted ? "∞ 身份專屬 · " : "") + it.label;
             sel.appendChild(opt);
         });
         const target = String(selectedValue || "");
@@ -2144,6 +2248,7 @@
 
     onAuthStateChanged(auth, async user => {
         if (!user) return location.href = "login.html";
+        window.__DORATCH_AUTH_EMAIL__ = user.email || "";
         currentUser = user;
         await loadChatConfig();
 
@@ -2628,7 +2733,7 @@
             const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
             const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
                 ? msg.senderCosmetics
-                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "" };
+                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "", staffRole: "" };
             const senderName = isBotMsg
                 ? (msg.botName || "Bot")
                 : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
@@ -2655,17 +2760,24 @@
             const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
             const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
             const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || ""))
-                ? ("user-title-badge legendary-title" + (isDocoinLegendaryTitle(senderCosmetics.title || "") ? " docoin-title-lux" : ""))
+                ? ("user-title-badge legendary-title" + (isStaffLegendaryTitle(senderCosmetics.title || "") ? " staff-legendary" : "") + (isDocoinLegendaryTitle(senderCosmetics.title || "") ? " docoin-title-lux" : ""))
                 : "user-title-badge";
             const badgeCls = (!isBotMsg && isLegendaryBadge(senderCosmetics.badge || ""))
-                ? ("user-cosmetic-badge legendary-badge" + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
+                ? ("user-cosmetic-badge legendary-badge" + (isStaffLegendaryBadge(senderCosmetics.badge || "") ? " staff-legendary" : "") + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
                 : "user-cosmetic-badge";
-            const titleBadge = (!isBotMsg && senderCosmetics.title) ? `<span class="${titleCls}">🏷️ ${escHtml(senderCosmetics.title)}</span>` : '';
+            const titleBadge = (!isBotMsg && senderCosmetics.title)
+                ? `<span class="${titleCls}"><span class="chip-icon">🏷️</span><span class="chip-label">${escHtml(senderCosmetics.title)}</span></span>`
+                : '';
             const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="${badgeCls}">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
             const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? nameColorStyleAttr(senderCosmetics.nameColor, senderCosmetics.nameEffect) : '';
             const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect) ? nameEffectClass(senderCosmetics.nameEffect) : "";
             const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
-            const rowClass = isBotMsg ? 'message-row bot-msg' : 'message-row';
+            const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
+            const rowClass = isBotMsg ? 'message-row bot-msg' : ('message-row' + (msgStaffRole === 'developer' ? ' staff-dev-glow' : msgStaffRole === 'admin' ? ' staff-admin-glow' : ''));
+            const staffRoleBadge = (!isBotMsg && msgStaffRole) ? staffBadgeHtml(msgStaffRole) : '';
+            const staffAvatarHalo = msgStaffRole === 'developer' ? ' staff-avatar-halo-dev' : (msgStaffRole === 'admin' ? ' staff-avatar-halo-admin' : '');
+            const staffBubbleCls = msgStaffRole === 'developer' ? ' staff-msg-bubble-dev' : (msgStaffRole === 'admin' ? ' staff-msg-bubble-admin' : '');
+            const staffNameGlow = (!isBotMsg && msgStaffRole === 'developer') ? ' staff-author-dev' : ((!isBotMsg && msgStaffRole === 'admin') ? ' staff-author-admin' : '');
             const replyHtml = msg.replyTo
                 ? `<div class="reply-quote">回覆 ${escHtml(msg.replyTo.senderName || "使用者")}：${escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90))}</div>`
                 : "";
@@ -2688,19 +2800,19 @@
 
             if (isConsecutive) {
                 html += `
-                    <div class="${rowClass} consecutive">
+                    <div class="${rowClass} consecutive" data-sender-id="${escHtml(msg.senderId || "")}" data-staff-role="${escHtml(msgStaffRole)}">
                         <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}${msg.editedAt ? " (edited)" : ""}</span></div>
-                        <div class="msg-content" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${quickActionsHtml}${replyHtml}${contentHtml}</div>
+                        <div class="msg-content${staffBubbleCls}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${quickActionsHtml}${replyHtml}${contentHtml}</div>
                     </div>
                 `;
             } else {
                 html += `
-                    <div class="${rowClass}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
-                        <div class="msg-avatar-container${docoinAvatarLux ? " docoin-avatar-lux" : ""}"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
-                        <div class="msg-content">
+                    <div class="${rowClass}" data-sender-id="${escHtml(msg.senderId || "")}" data-staff-role="${escHtml(msgStaffRole)}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
+                        <div class="msg-avatar-container${docoinAvatarLux ? " docoin-avatar-lux" : ""}${staffAvatarHalo}"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
+                        <div class="msg-content${staffBubbleCls}">
                             ${quickActionsHtml}
                             <div class="msg-header">
-                                <span class="msg-author ${nameEffectCls}"${nameStyle}>${senderName}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
+                                <span class="msg-author ${nameEffectCls}${staffNameGlow}"${nameStyle}>${senderName}${staffRoleBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
@@ -3046,6 +3158,16 @@
         const name = isBot ? (msg.botName || "Bot") : (msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0]);
         const email = isBot ? ("bot@" + String(msg.botToken || "local").slice(0, 8)) : (msg.senderEmail || "");
         const c = (!isBot && msg.senderCosmetics && typeof msg.senderCosmetics === "object") ? msg.senderCosmetics : {};
+        if (!isBot && window.DoratchStaffCinematic) {
+            const clickStaffRole = String(c.staffRole || "").trim()
+                || getStaffRole({ email: msg.senderEmail || "" });
+            if (clickStaffRole === "developer" || clickStaffRole === "admin") {
+                const anchor = (ev.target && ev.target.closest)
+                    ? (ev.target.closest(".msg-avatar") || ev.target.closest(".msg-avatar-container"))
+                    : null;
+                window.DoratchStaffCinematic.trigger(clickStaffRole, anchor, { soft: true });
+            }
+        }
         let customStatus = c.customStatus || "";
         let profileBio = c.profileBio || "";
         let memberSince = "";
@@ -3054,7 +3176,8 @@
         if (c.title) {
             const leg = isLegendaryTitle(c.title);
             const docoinTitle = isDocoinLegendaryTitle(c.title);
-            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}${docoinTitle ? " docoin-title-lux" : ""}">🏷️ ${escHtml(c.title)}</span>`);
+            const staffLeg = isStaffLegendaryTitle(c.title);
+            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}${staffLeg ? " staff-legendary" : ""}${docoinTitle ? " docoin-title-lux" : ""}">🏷️ ${escHtml(c.title)}</span>`);
         }
         if (isBot) rolePills.push('<span class="profile-pop-role-pill">🤖 BOT</span>');
         else if (msg.senderId === currentUser.uid) rolePills.push('<span class="profile-pop-role-pill">你</span>');
@@ -3082,9 +3205,14 @@
                 badgeShelf = ownedBadges.slice(0, 10).map((b) => {
                     const isLegend = isLegendaryBadge(b.value || "");
                     const isMythic = isMythicBadge(b.value || "");
-                    return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}${isMythic ? " docoin-mythic" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
+                    const isStaffLeg = isStaffLegendaryBadge(b.value || "");
+                    return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}${isStaffLeg ? " staff-legendary" : ""}${isMythic ? " docoin-mythic" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
                 });
             } catch (_) {}
+        }
+        const popStaffRole = c.staffRole || getStaffRole(senderData);
+        if (popStaffRole) {
+            rolePills.unshift(`<span class="profile-pop-role-pill staff-role-${popStaffRole}">${popStaffRole === "developer" ? "⚡" : "👑"} ${escHtml(staffRoleLabel(popStaffRole))}</span>`);
         }
         const resolvedBanner = resolveCosmeticForDisplay(senderData, "banner", c.banner);
         const resolvedProfileFx = resolveCosmeticForDisplay(senderData, "profileEffect", c.profileEffect);

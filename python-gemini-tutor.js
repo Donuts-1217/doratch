@@ -55,12 +55,40 @@ function buildPayload(question, ctx, history) {
     };
 }
 
+function normalizeTutorModel(name) {
+    var aliases = {
+        "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
+        "gemini-2.0-flash": "gemini-2.5-flash",
+        "gemini-1.5-flash": "gemini-2.5-flash-lite",
+        "gemini-1.5-pro": "gemini-2.5-flash"
+    };
+    var m = String(name || "").trim();
+    return aliases[m] || m || "gemini-2.5-flash-lite";
+}
+
+function friendlyGeminiError(json, rawMsg) {
+    var msg = rawMsg || (json && json.error) || "GAS 代理錯誤";
+    if (/not found|not supported/i.test(msg)) {
+        return "Gemini 模型已下架或名稱錯誤。請在 admin 改為 gemini-2.5-flash-lite，並重新部署 GAS 代理。";
+    }
+    if (json && json.quotaExceeded) {
+        return "Gemini 配額已用盡或該模型無免費額度。請稍後再試，或在管理後台改為 gemini-2.5-flash-lite，並至 Google AI Studio 查看 API 用量。";
+    }
+    if (/quota|exceeded|limit:\s*0|resource exhausted/i.test(msg)) {
+        return "Gemini 配額不足。請稍後再試，或在管理後台改為 gemini-2.5-flash-lite。";
+    }
+    if (/rate limit|429|too many requests/i.test(msg)) {
+        return "請求過於頻繁，請稍候數分鐘後再試。";
+    }
+    return msg;
+}
+
 async function callGasProxy(proxyUrl, payload, model) {
     var url = String(proxyUrl || "").trim();
     if (!url || url.indexOf("script.google.com") < 0) {
         throw new Error("未設定有效的 Google Apps Script 代理 URL");
     }
-    payload.model = model || "gemini-2.0-flash";
+    payload.model = normalizeTutorModel(model);
     var res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -68,7 +96,10 @@ async function callGasProxy(proxyUrl, payload, model) {
     });
     var json = await res.json();
     if (!json.ok) {
-        throw new Error(json.error || "GAS 代理錯誤");
+        var err = new Error(friendlyGeminiError(json, json.error));
+        err.quotaExceeded = !!json.quotaExceeded;
+        err.gasHint = json.hint || "";
+        throw err;
     }
     return json;
 }
@@ -90,8 +121,12 @@ function attachRemoteHandler(handler, cfg) {
         } catch (err) {
             var msg = err && err.message ? String(err.message) : "連線失敗";
             var local = await window.PythonTutorQA.answerLocal(question, ctx);
+            var suffix = "⚠️ 雲端助教暫不可用（" + msg + "），以上為離線回覆。";
+            if (err && err.gasHint) {
+                suffix += "\n\n" + err.gasHint;
+            }
             return {
-                text: local.text + "\n\n⚠️ 雲端助教暫不可用（" + msg + "），以上為離線回覆。",
+                text: local.text + "\n\n" + suffix,
                 chips: local.chips
             };
         }
@@ -122,7 +157,7 @@ export async function initPythonGeminiTutor(app, db) {
         }
 
         var backend = String(cfg.backend || "gas").trim();
-        var model = cfg.model || "gemini-2.0-flash";
+        var model = normalizeTutorModel(cfg.model);
 
         if (backend === "gas") {
             var proxyUrl = cfg.gasProxyUrl || "";
