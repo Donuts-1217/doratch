@@ -548,13 +548,13 @@
                 <button type="button" class="q-single" onclick="mapQuickLoad('tutorial')">📍 單關 5×5</button>
                 <button type="button" class="q-pack5" onclick="mapQuickLoad('pack5')">📦 五關漸進</button>
                 <button type="button" class="q-pack10" onclick="mapQuickLoad('pack10_hidden')">🏆 競技 20 關</button>
-            </div>
+                </div>
             <div id="map-level-tabs" class="map-level-tabs"></div>
             <select id="map-pack-select" style="display:none;" onchange="mapEditorSelectMap(this.value)"></select>
             <div class="map-level-actions">
                 <button type="button" onclick="mapEditorAddMap()">+ 加一關</button>
                 <button type="button" onclick="mapEditorRemoveMap()">刪除這關</button>
-            </div>
+                </div>
 
             <div class="map-editor-wrap">
                 <div class="map-editor-panel">
@@ -563,11 +563,11 @@
                         <button type="button" class="map-size-btn" data-w="5" data-h="5" onclick="mapEditorSetSize(5,5)">5×5</button>
                         <button type="button" class="map-size-btn" data-w="6" data-h="6" onclick="mapEditorSetSize(6,6)">6×6</button>
                         <button type="button" class="map-size-btn" data-w="8" data-h="8" onclick="mapEditorSetSize(8,8)">8×8</button>
-                    </div>
+                </div>
                     <div class="map-editor-row">
                         <label>步數上限</label>
                         <input type="number" id="map-max-moves" value="15" min="1" max="99" onchange="mapEditorSyncMaxMoves()">
-                    </div>
+                </div>
                     <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:8px 0 12px;">
                         <input type="checkbox" id="map-preview-visible" style="width:auto;" onchange="mapEditorSyncPreview()">
                         <span style="font-size:13px;">學生作答前可預覽（看得到金幣與終點）</span>
@@ -577,7 +577,7 @@
                         <button type="button" class="map-tool-btn active" id="tool-coin" onclick="mapEditorSetTool('coin')">💰 放金幣（同一格：1下→1枚、2下→2枚…4下清除）</button>
                         <button type="button" class="map-tool-btn" id="tool-start" onclick="mapEditorSetTool('start')">🚩 設起點（點一格）</button>
                         <button type="button" class="map-tool-btn" id="tool-end" onclick="mapEditorSetTool('end')">🏁 設終點（點一格）</button>
-                    </div>
+            </div>
                     <div class="map-editor-hint">同一格連點會依序 1→2→3 枚，第 4 下清除。按住左鍵拖曳可在空格快速放 1 枚。右鍵減少 1 枚。</div>
 
                     <details class="map-advanced">
@@ -587,19 +587,19 @@
                                 <button type="button" onclick="mapEditorCopyMap()">📋 複製</button>
                                 <button type="button" onclick="mapEditorPasteMap()">📌 貼上</button>
                                 <button type="button" onclick="mapEditorDuplicateMap()">⧉ 複製為新關</button>
-                            </div>
+                </div>
                             <div class="map-editor-row">
                                 <label>寬</label>
                                 <input type="number" id="map-width" value="5" min="3" max="10" onchange="mapEditorResize()">
                                 <label>高</label>
                                 <input type="number" id="map-height" value="5" min="3" max="10" onchange="mapEditorResize()">
-                            </div>
+            </div>
                             <div class="map-editor-row">
                                 <label>前</label>
                                 <input type="number" id="map-preview-first-n" value="10" min="0" max="20" style="width:72px;">
                                 <label>關可預覽</label>
                                 <button type="button" class="btn-solid" style="width:auto; margin:0; padding:8px 12px; border-radius:10px; font-size:12px;" onclick="mapEditorApplyPreviewFirstN()">套用</button>
-                            </div>
+            </div>
                             <div class="map-editor-row">
                                 <label>關卡數</label>
                                 <input type="number" id="map-random-level-count" value="5" min="1" max="20" style="width:72px;">
@@ -624,7 +624,7 @@
                             <button type="button" class="map-tool-btn" id="tool-clear" style="width:100%; margin-top:8px;" onclick="mapEditorSetTool('clear')">🧹 清除工具（點格子移除金幣）</button>
                         </div>
                     </details>
-                </div>
+        </div>
 
                 <div class="map-grid-shell">
                     <div class="map-grid-header">
@@ -1731,12 +1731,12 @@
             if (!uSnap.exists()) continue;
             const ud = uSnap.data();
             const name = (ud.displayName && String(ud.displayName).trim()) || (ud.email || "").split("@")[0] || "學生";
-            list.innerHTML += `
-                <div style="margin-bottom:5px;">
-                    <input type="checkbox" class="target-student-check" value="${uid}" id="check-${uid}" style="width:auto;">
-                    <label for="check-${uid}" style="display:inline; font-weight:normal;">${name}</label>
-                </div>
-            `;
+                list.innerHTML += `
+                    <div style="margin-bottom:5px;">
+                        <input type="checkbox" class="target-student-check" value="${uid}" id="check-${uid}" style="width:auto;">
+                        <label for="check-${uid}" style="display:inline; font-weight:normal;">${name}</label>
+                    </div>
+                `;
         }
     }
 
@@ -1795,7 +1795,7 @@
             await addDoc(collection(db, "classes", classId, "assignments"), payload);
             closeModal("modal-create-assign");
             alert("任務已發布！");
-            loadList();
+        loadList();
         } catch (e) {
             console.error(e);
             alert("發布失敗：" + (e.message || "請稍後再試"));
@@ -1944,7 +1944,7 @@
         if (!confirm("確定取消繳交？取消後可再修改程式，並需在作答頁重新按「✅ 繳交作業」。")) return;
         const ref = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
         try {
-            const snap = await getDoc(ref);
+        const snap = await getDoc(ref);
             if (!snap.exists()) return;
             await updateDoc(ref, { status: "assigned", submittedAt: serverTimestamp() });
             await loadMySub();
@@ -1966,8 +1966,8 @@
             div.innerHTML = `<div style="font-weight:900;">🧩 ${d.data().name}</div>`;
             div.onclick = async () => {
                 try {
-                    const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
-                    const sSnap = await getDoc(subRef);
+                const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
+                const sSnap = await getDoc(subRef);
                     const att = { id: d.id, name: d.data().name };
                     const existing = sSnap.exists() ? (sSnap.data().atts || []) : [];
                     if (existing.some((a) => a.id === att.id)) {
@@ -1996,9 +1996,9 @@
         reader.onload = async (e) => {
             try {
                 await enforceCloudStorageLimit(db, firebaseFns, currentUser, { targetPid: null, extraBytes: e.target.result || "" });
-                const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
-                const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
-                const sSnap = await getDoc(subRef);
+            const ref = await addDoc(collection(db, "users", currentUser.uid, "projects"), { name: file.name, code: e.target.result, isPublic: true, createdAt: serverTimestamp() });
+            const subRef = doc(db, "classes", classId, "assignments", currentAssignId, "submissions", currentUser.uid);
+            const sSnap = await getDoc(subRef);
                 const att = { id: ref.id, name: file.name };
                 if (!sSnap.exists()) {
                     await setDoc(subRef, { studentId: currentUser.uid, status: "assigned", atts: [att], submittedAt: serverTimestamp() });
