@@ -124,7 +124,7 @@
 
 /* ── Name effects ── */
 .name-effect-chaos-prism > .name-fx-text,
-.msg-author.name-effect-chaos-prism {
+.msg-author .name-fx-text.name-effect-chaos-prism {
     background: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6, #22d3ee) !important;
     background-size: 300% auto !important;
     -webkit-background-clip: text !important;
@@ -134,13 +134,13 @@
     animation: staffChaosPrism 2.5s linear infinite !important;
 }
 .name-effect-code-storm > .name-fx-text,
-.msg-author.name-effect-code-storm {
+.msg-author .name-fx-text.name-effect-code-storm {
     color: #22c55e !important;
     text-shadow: 0 0 8px rgba(34,197,94,0.8), 0 0 16px rgba(34,211,238,0.5) !important;
     animation: staffCodeStorm 0.15s steps(2) infinite !important;
 }
 .name-effect-holy-radiance > .name-fx-text,
-.msg-author.name-effect-holy-radiance {
+.msg-author .name-fx-text.name-effect-holy-radiance {
     background: linear-gradient(90deg, #ffd700, #fff7ed, #fca5a5, #ffd700) !important;
     background-size: 250% auto !important;
     -webkit-background-clip: text !important;
@@ -448,20 +448,20 @@
 
 /* ── 名稱特效：加強 ── */
 .name-effect-chaos-prism > .name-fx-text,
-.msg-author.name-effect-chaos-prism {
+.msg-author .name-fx-text.name-effect-chaos-prism {
     background: linear-gradient(90deg, #22d3ee, #6366f1, #f472b6, #fde68a, #22d3ee) !important;
     background-size: 400% auto !important;
     animation: staffChaosPrism 1.8s linear infinite, staffGlitchFlicker 6s steps(1) infinite !important;
     filter: drop-shadow(0 0 8px rgba(34,211,238,0.6)) drop-shadow(0 0 16px rgba(167,139,250,0.4));
 }
 .name-effect-code-storm > .name-fx-text,
-.msg-author.name-effect-code-storm {
+.msg-author .name-fx-text.name-effect-code-storm {
     color: #4ade80 !important;
     text-shadow: 0 0 10px rgba(74,222,128,1), 0 0 20px rgba(34,211,238,0.7), 0 0 40px rgba(34,197,94,0.4) !important;
     animation: staffCodeStorm 0.12s steps(3) infinite !important;
 }
 .name-effect-holy-radiance > .name-fx-text,
-.msg-author.name-effect-holy-radiance {
+.msg-author .name-fx-text.name-effect-holy-radiance {
     background: linear-gradient(90deg, #ffd700, #fff, #fca5a5, #fbbf24, #ffd700) !important;
     background-size: 300% auto !important;
     animation: staffHolyRadiance 2s ease infinite !important;

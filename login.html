@@ -185,7 +185,7 @@
         <input type="text" id="display-name" maxlength="20" placeholder="2～20 字，其他人會看到此名稱" autocomplete="nickname">
     </div>
     
-    <button id="main-btn" class="btn btn-primary" onclick="handleAuth()">登入</button>
+    <button type="button" id="main-btn" class="btn btn-primary">登入</button>
 
     <div class="toggle-link" id="toggle-area">
         還沒有帳號嗎？ <span onclick="switchMode('reg')">立即註冊</span>
@@ -219,6 +219,7 @@
     const db = getFirestore(app);
 
     let mode = 'login';
+    let authBusy = false;
 
     const DISPLAY_NAME_MIN = 2;
     const DISPLAY_NAME_MAX = 20;
@@ -328,11 +329,14 @@
     };
 
     window.handleAuth = async () => {
-        const email = document.getElementById('email').value.trim();
+        if (authBusy) return;
+        const email = document.getElementById('email').value.trim().toLowerCase();
         const password = document.getElementById('password').value.trim();
         if (!email || !password) return showMsg("請填寫完整資訊", "error");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMsg("Email 格式不正確", "error");
 
         const btn = document.getElementById('main-btn');
+        authBusy = true;
         btn.disabled = true;
         btn.innerText = "處理中...";
 
@@ -353,7 +357,7 @@
                     coins: 0,
                     role: "student",
                     createdAt: serverTimestamp()
-                });
+                }, { merge: true });
                 await sendVerifyEmail(res.user);
                 await signOut(auth);
                 
@@ -414,10 +418,16 @@
             if (error.code === 'auth/network-request-failed') errorMsg = "網路連線失敗，請檢查網路後重試";
             showMsg(errorMsg, "error");
         } finally {
+            authBusy = false;
             btn.disabled = false;
             btn.innerText = mode === 'reg' ? "註冊並發送驗證信" : "登入";
         }
     };
+
+    document.getElementById("main-btn").addEventListener("click", function (e) {
+        e.preventDefault();
+        handleAuth();
+    });
 
     ["email", "password", "display-name"].forEach((id) => {
         const el = document.getElementById(id);
@@ -428,11 +438,6 @@
                 handleAuth();
             }
         });
-    });
-
-    document.getElementById("main-btn").addEventListener("click", function (e) {
-        e.preventDefault();
-        handleAuth();
     });
 
     if (new URLSearchParams(window.location.search).get("verified") === "1") {

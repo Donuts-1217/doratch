@@ -214,7 +214,8 @@ service cloud.firestore {
             .hasOnly(['attachedBots', 'lastMessage', 'updatedAt'])
         )
       );
-      allow delete: if isAdmin() || (resource.data.type == 'server' && request.auth.uid == resource.data.teacherId);
+      allow delete: if isAdmin() || (resource.data.type == 'server' && request.auth.uid == resource.data.teacherId) ||
+        (resource.data.type == 'private' && request.auth.uid in resource.data.participants);
 
       match /messages/{messageId} {
         allow read: if request.auth != null; // 簡化處理，具備 chat 讀取權限者通常可讀

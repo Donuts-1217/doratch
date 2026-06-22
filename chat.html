@@ -297,7 +297,11 @@
         
         .msg-content { display: flex; flex-direction: column; flex: 1; position: relative; padding-right: 120px; }
         .msg-header { display: flex; align-items: baseline; margin-bottom: 6px; }
-        .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; }
+        .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 6px; max-width: 100%; }
+        .msg-author > .name-fx-text { display: inline; position: relative; z-index: 1; flex-shrink: 0; }
+        .msg-author .user-title-badge,
+        .msg-author .user-cosmetic-badge,
+        .msg-author .bot-badge { flex-shrink: 0; }
         @keyframes nameFxPrismBurst {
             0%, 34%, 100% {
                 color: #f8fafc !important;
@@ -352,44 +356,44 @@
             0%, 34%, 100% { text-shadow: none; filter: none; }
             40%, 64% { text-shadow: var(--chat-name-glow, 0 0 10px rgba(56,189,248,0.5)); }
         }
-        .name-effect-wave {
+        .name-fx-text.name-effect-wave {
             color: #f8fafc !important;
             --chat-name-glow: 0 0 10px rgba(59,130,246,0.5);
             animation: nameFxGlowBurst 2.6s ease-in-out infinite;
         }
-        .name-effect-prism {
+        .name-fx-text.name-effect-prism {
             animation: nameFxPrismBurst 2.8s ease-in-out infinite;
             font-weight: 900;
         }
-        .name-effect-stardust {
+        .name-fx-text.name-effect-stardust {
             color: #f8fafc !important;
             --chat-name-glow: 0 0 10px rgba(251,191,36,0.55), 0 0 16px rgba(167,139,250,0.4);
             animation: nameFxGlowBurst 2.6s ease-in-out infinite;
         }
-        .name-effect-pulse-core {
+        .name-fx-text.name-effect-pulse-core {
             color: #f8fafc !important;
             --chat-name-glow: 0 0 12px rgba(244,114,182,0.65);
             animation: nameFxGlowBurst 2.4s ease-in-out infinite;
         }
-        .name-effect-aurora-pulse {
+        .name-fx-text.name-effect-aurora-pulse {
             animation: nameFxAuroraBurst 2.8s ease-in-out infinite;
             font-weight: 900;
         }
-        .name-effect-rainbow {
+        .name-fx-text.name-effect-rainbow {
             animation: nameFxRainbowBurst 3s ease-in-out infinite;
             font-weight: 900;
         }
-        .name-effect-neon-flicker {
+        .name-fx-text.name-effect-neon-flicker {
             color: #e2e8f0 !important;
             --chat-name-glow: 0 0 10px rgba(34,211,238,0.7), 0 0 18px rgba(244,114,182,0.45);
             animation: nameFxGlowBurst 2.2s ease-in-out infinite;
         }
-        .name-effect-sparkle {
+        .name-fx-text.name-effect-sparkle {
             color: #f8fafc !important;
             --chat-name-glow: 0 0 8px rgba(250,204,21,0.65);
             animation: nameFxGlowBurst 2.2s ease-in-out infinite;
         }
-        .name-effect-glitch {
+        .name-fx-text.name-effect-glitch {
             color: #f8fafc !important;
             --chat-name-glow: 0 0 8px rgba(34,211,238,0.55);
             animation: nameFxGlowBurst 2.4s ease-in-out infinite;
@@ -444,16 +448,28 @@
             border: 1px solid rgba(251,191,36,0.4);
             box-shadow: 0 0 10px rgba(245,158,11,0.3);
             font-weight: 900;
-            animation: textShimmer 2.6s linear infinite;
         }
         .user-title-badge.legendary-title .chip-label {
-            background: linear-gradient(90deg, #fbbf24, #f472b6, #60a5fa, #fbbf24);
-            background-size: 220% auto;
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            -webkit-text-fill-color: transparent;
-            animation: textShimmer 2.6s linear infinite;
+            color: #fde68a;
+            -webkit-text-fill-color: #fde68a;
+            animation: titleChipBurst 2.8s ease-in-out infinite;
+        }
+        @keyframes titleChipBurst {
+            0%, 34%, 100% {
+                color: #fde68a !important;
+                -webkit-text-fill-color: #fde68a !important;
+                background-image: none !important;
+                text-shadow: 0 0 4px rgba(251,191,36,0.35);
+            }
+            40%, 64% {
+                color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                background-image: linear-gradient(90deg, #fbbf24, #f472b6, #60a5fa, #fbbf24) !important;
+                background-size: 220% auto !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+                text-shadow: 0 0 8px rgba(251,191,36,0.55);
+            }
         }
         .user-title-badge.legendary-title .chip-icon {
             color: #fde68a;
@@ -1732,6 +1748,34 @@
         return { uid: snap.docs[0].id, ...snap.docs[0].data() };
     }
 
+    function normalizeEmailInput(raw) {
+        return String(raw || "").trim().toLowerCase();
+    }
+
+    function isValidEmailFormat(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || ""));
+    }
+
+    async function confirmUserByEmail(email, actionLabel) {
+        const targetEmail = normalizeEmailInput(email);
+        if (!targetEmail) throw new Error("EMPTY_EMAIL");
+        if (!isValidEmailFormat(targetEmail)) {
+            alert("Email 格式不正確，請再檢查一次。");
+            throw new Error("INVALID_EMAIL");
+        }
+        const target = await fetchUserByEmail(targetEmail);
+        if (!target || !target.uid) {
+            alert("找不到此 Email 的使用者。對方可能尚未註冊，或 Email 打錯了。");
+            throw new Error("USER_NOT_FOUND");
+        }
+        const label = displayNameFromUser(target);
+        const ok = confirm(
+            `${actionLabel}\n\n對象：${label}\nEmail：${target.email || targetEmail}\n\n請確認是否為正確的人？`
+        );
+        if (!ok) throw new Error("USER_CANCELLED");
+        return { ...target, email: target.email || targetEmail };
+    }
+
     function displayNameFromUser(userData) {
         const e = String(userData?.email || "");
         const n = String(userData?.displayName || "").trim();
@@ -2247,10 +2291,30 @@
 
     window.cancelMessageRequest = async (chatId) => {
         try {
-            if (!confirm("確定要取消你送出的訊息請求？")) return;
+            if (!confirm("確定要取消你送出的訊息請求？這會從列表移除。")) return;
             await deleteDoc(doc(db, "chats", chatId));
+            if (currentChatId === chatId) {
+                showChatIdleState("選擇一個聊天室開始對話", "從左側列表選擇或發起新對話");
+                currentChatId = null;
+                syncMobileChatView(false);
+            }
         } catch (e) {
             alert("取消訊息請求失敗：" + (e.message || e));
+        }
+    };
+
+    window.removePrivateChat = async (chatId) => {
+        if (!chatId) return;
+        if (!confirm("確定要移除此私訊？若打錯對象，刪除後可重新用正確 Email 發起。")) return;
+        try {
+            await deleteDoc(doc(db, "chats", chatId));
+            if (currentChatId === chatId) {
+                showChatIdleState("選擇一個聊天室開始對話", "從左側列表選擇或發起新對話");
+                currentChatId = null;
+                syncMobileChatView(false);
+            }
+        } catch (e) {
+            alert("移除私訊失敗：" + (e.message || e));
         }
     };
 
@@ -2267,13 +2331,13 @@
     }
 
     async function sendFriendRequestByEmail(targetEmailRaw) {
-        const targetEmail = String(targetEmailRaw || "").trim().toLowerCase();
+        const targetEmail = normalizeEmailInput(targetEmailRaw);
         const currentEmail = String(currentUser?.email || "").toLowerCase();
         if (!targetEmail) throw new Error("EMPTY_EMAIL");
+        if (!isValidEmailFormat(targetEmail)) throw new Error("INVALID_EMAIL");
         if (targetEmail === currentEmail) throw new Error("SELF_REQUEST");
 
-        const target = await fetchUserByEmail(targetEmail);
-        if (!target || !target.uid) throw new Error("USER_NOT_FOUND");
+        const target = await confirmUserByEmail(targetEmail, "送出好友請求給：");
         const targetUid = target.uid;
         if (isFriendWithUid(targetUid)) throw new Error("ALREADY_FRIEND");
 
@@ -2643,9 +2707,14 @@
                     item.classList.add("message-request");
                 }
 
+                const privateRemoveBtn = (chat.type === "private" && !isIncomingReq)
+                    ? `<div class="mini-actions"><button type="button" class="mini-btn cancel" onclick="event.stopPropagation();${isOutgoingReq ? `cancelMessageRequest('${chat.id}')` : `removePrivateChat('${chat.id}')`}">${isOutgoingReq ? "取消請求" : "移除私訊"}</button></div>`
+                    : "";
+
                 item.innerHTML = `
                     <div class="chat-name">${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
                     <div class="chat-preview">${isOutgoingReq ? '你已送出訊息請求，等待對方回應' : (chat.lastMessage || '開始聊天吧！')}</div>
+                    ${privateRemoveBtn}
                 `;
                 
                 if (chat.type === 'server') {
@@ -3038,7 +3107,7 @@
                         <div class="msg-content${staffBubbleCls}">
                             ${quickActionsHtml}
                             <div class="msg-header">
-                                <span class="msg-author ${nameEffectCls}${staffNameGlow}"${nameStyle}>${senderName}${staffRoleBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
+                                <span class="msg-author${staffNameGlow}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
@@ -4127,32 +4196,29 @@
             }
 
             if (modalMode === 'private') {
-                const targetEmail = inputVal.toLowerCase();
+                const targetEmail = normalizeEmailInput(inputVal);
                 const currentEmail = currentUser.email || "";
                 if (targetEmail === currentEmail.toLowerCase() && currentEmail !== "") {
                     alert("不能跟自己發私訊喔！");
                     throw new Error("Self chat");
                 }
 
-                // 透過 Email 尋找使用者 UID
-                const target = await fetchUserByEmail(targetEmail);
-                if (!target || !target.uid) {
-                    alert("找不到此 Email 的聯絡人！對方可能尚未登入過聊天室。");
-                    throw new Error("User not found");
-                }
-                await openOrCreatePrivateChat(target.uid, targetEmail);
+                const target = await confirmUserByEmail(targetEmail, "發起私訊給：");
+                await openOrCreatePrivateChat(target.uid, target.email || targetEmail);
             } else if (modalMode === 'friendRequest') {
                 try {
                     await sendFriendRequestByEmail(inputVal);
                     alert("好友請求已送出！");
                 } catch (e) {
-                    if (e.message === "SELF_REQUEST") alert("不能送好友請求給自己。");
-                    else if (e.message === "USER_NOT_FOUND") alert("找不到此 Email 使用者。");
+                    if (e.message === "USER_CANCELLED") { /* user backed out */ }
+                    else if (e.message === "SELF_REQUEST") alert("不能送好友請求給自己。");
+                    else if (e.message === "INVALID_EMAIL") { /* already alerted */ }
+                    else if (e.message === "USER_NOT_FOUND") { /* already alerted */ }
                     else if (e.message === "ALREADY_FRIEND") alert("你們已經是好友。");
                     else if (e.message === "REQUEST_ALREADY_SENT_REVERSE") alert("對方已送出好友請求給你，請直接在「好友請求」中接受。");
                     else if (e.message === "REQUEST_ALREADY_SENT") alert("你已送出請求，或對方已向你發出請求。");
                     else alert("送出好友請求失敗：" + (e.message || e));
-                    throw e;
+                    if (e.message !== "USER_CANCELLED") throw e;
                 }
                 
             } else if (modalMode === 'group') {
@@ -4206,15 +4272,13 @@
                     alert("查無此伺服器代碼，或是該代碼非伺服器！");
                 }
             } else if (modalMode === 'invite') {
-                const targetEmail = inputVal.toLowerCase();
-                const userQuery = query(collection(db, "users"), where("email", "==", targetEmail));
-                const userSnap = await getDocs(userQuery);
-                
-                if (userSnap.empty) {
-                    alert("找不到此 Email 的聯絡人！");
-                    throw new Error("User not found");
+                const targetEmail = normalizeEmailInput(inputVal);
+                if (!isValidEmailFormat(targetEmail)) {
+                    alert("Email 格式不正確，請再檢查一次。");
+                    throw new Error("Invalid email");
                 }
-                const targetUid = userSnap.docs[0].id;
+                const target = await confirmUserByEmail(targetEmail, "邀請加入聊天室：");
+                const targetUid = target.uid;
                 
                 await updateDoc(doc(db, "chats", currentChatId), {
                     pendingInvites: arrayUnion(targetUid)
@@ -4262,7 +4326,8 @@
                 e.message !== "Bot inactive" && e.message !== "Already connected" &&
                 e.message !== "Not friend" && e.message !== "SELF_REQUEST" &&
                 e.message !== "USER_NOT_FOUND" && e.message !== "ALREADY_FRIEND" &&
-                e.message !== "REQUEST_ALREADY_SENT" && e.message !== "REQUEST_ALREADY_SENT_REVERSE") {
+                e.message !== "REQUEST_ALREADY_SENT" && e.message !== "REQUEST_ALREADY_SENT_REVERSE" &&
+                e.message !== "USER_CANCELLED" && e.message !== "INVALID_EMAIL" && e.message !== "Invalid email") {
                 alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
             }
         } finally {
