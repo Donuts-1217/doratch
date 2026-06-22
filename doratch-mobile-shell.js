@@ -243,6 +243,28 @@
         document.body.appendChild(banner);
     }
 
+    function syncAppModalOpen() {
+        if (!document.body.classList.contains("doratch-app-mode")) return;
+        var chatModalOpen = ["modal", "cosmetic-modal", "chat-prefs-modal"].some(function (id) {
+            var el = document.getElementById(id);
+            return el && el.style.display === "flex";
+        });
+        var overlayOpen = !!document.querySelector(".modal-overlay.open");
+        document.body.classList.toggle("doratch-modal-open", chatModalOpen || overlayOpen);
+    }
+
+    function bindMobileKeyboardOffset() {
+        if (!document.body.classList.contains("chat-app") || !window.visualViewport) return;
+        var apply = function () {
+            var vv = window.visualViewport;
+            var offset = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+            document.body.style.setProperty("--keyboard-offset", offset + "px");
+        };
+        window.visualViewport.addEventListener("resize", apply);
+        window.visualViewport.addEventListener("scroll", apply);
+        apply();
+    }
+
     function init() {
         const file = currentFile();
         if (file === "index.html") {
@@ -259,10 +281,13 @@
             renderTabbar(key);
             patchLinks(document.body);
             registerServiceWorker();
+            syncAppModalOpen();
+            if (key === "chat") bindMobileKeyboardOffset();
 
             const obs = new MutationObserver(function () {
                 syncAdminTab();
                 patchLinks(document.body);
+                syncAppModalOpen();
             });
             obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["style", "class"] });
             setTimeout(syncAdminTab, 400);
@@ -275,6 +300,7 @@
     window.DoratchMobile = {
         isAppMode: isAppMode,
         isMobileDevice: function () { return window.DoratchDevice && window.DoratchDevice.isMobileDevice(); },
+        syncAppModalOpen: syncAppModalOpen,
         postLoginDestination: function (opts) { return window.DoratchDevice && window.DoratchDevice.postLoginDestination(opts); },
         withApp: withApp,
         siteHref: siteHref,

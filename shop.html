@@ -762,9 +762,19 @@
         if (sideCoinsEl) sideCoinsEl.innerText = `Doord ${d} · Docoin ${dc}`;
     }
 
+    function appAwareHref(path) {
+        if (window.DoratchMobile && typeof window.DoratchMobile.isAppMode === "function" && window.DoratchMobile.isAppMode()) {
+            return window.DoratchMobile.withApp(path);
+        }
+        return path;
+    }
+
     window.handleLogout = () => {
-        if (!auth.currentUser) return location.href = 'login.html';
-        return signOut(auth).then(() => location.href='index.html');
+        if (!auth.currentUser) return location.href = appAwareHref('login.html');
+        return signOut(auth).then(() => {
+            location.href = (window.DoratchMobile && window.DoratchMobile.isAppMode && window.DoratchMobile.isAppMode())
+                ? 'app.html?app=1' : 'index.html';
+        });
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -784,7 +794,7 @@
         const sideCoins = document.getElementById('side-coins');
         const sideAvatar = document.getElementById('side-avatar');
         if (authCta) {
-            authCta.innerHTML = '<a class="auth-btn primary" href="login.html">登入帳號</a><a class="auth-btn ghost" href="create.html">前往寫程式</a>';
+            authCta.innerHTML = '<a class="auth-btn primary" href="' + appAwareHref('login.html') + '">登入帳號</a><a class="auth-btn ghost" href="' + appAwareHref('create.html') + '">前往寫程式</a>';
         }
         if (sideUser) sideUser.innerText = '訪客';
         if (sideCoins) sideCoins.innerText = 'Doord 0 · Docoin 0';
@@ -1152,7 +1162,7 @@
     window.buyItem = async (id) => {
         if (!currentUser) {
             alert("請先登入後再購買。");
-            location.href = "login.html";
+            location.href = appAwareHref("login.html");
             return;
         }
         const item = itemsBank.find((x) => x.id === id);
@@ -1211,7 +1221,7 @@
     window.exchangeDocoinToDoord = async () => {
         if (!currentUser) {
             alert("請先登入後再兌換。");
-            location.href = "login.html";
+            location.href = appAwareHref("login.html");
             return;
         }
         const input = document.getElementById("exchange-docoin-amount");
@@ -1252,7 +1262,7 @@
     window.submitCoinReview = async () => {
         if (!currentUser) {
             alert("請先登入後送出審核。");
-            location.href = "login.html";
+            location.href = appAwareHref("login.html");
             return;
         }
         const workType = (document.getElementById('review-work-type').value || 'python').trim();

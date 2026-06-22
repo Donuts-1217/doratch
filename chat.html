@@ -24,6 +24,7 @@
             --text: #F8FAFC; --text-muted: #94A3B8;
         }
         body { font-family: "Outfit", "Noto Sans TC", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body.doratch-app-mode.chat-app { height: 100dvh; }
         
         /* 導覽列 */
         nav { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); color: white; padding: 0 5%; height: 70px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; z-index: 100; }
@@ -110,8 +111,38 @@
         .mini-btn.dm { background: #5865f2; }
         
         /* 右側對話區 */
-        .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
-        .chat-header { height: 70px; padding: 0 30px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 900; font-size: 1.2rem; color: white; flex-shrink: 0; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; min-height: 0; }
+        .chat-header { height: 70px; padding: 0 30px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 900; font-size: 1.2rem; color: white; flex-shrink: 0; gap: 10px; }
+        .chat-header h3 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .chat-header-more-wrap { position: relative; }
+        .chat-header-menu {
+            display: none; position: absolute; right: 0; top: calc(100% + 6px); min-width: 168px;
+            background: #1e1f22; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.45); padding: 6px; z-index: 50;
+        }
+        .chat-header-menu.open { display: block; }
+        .chat-header-menu button {
+            display: block; width: 100%; text-align: left; border: none; background: transparent;
+            color: #e2e8f0; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 700;
+            cursor: pointer; font-family: inherit;
+        }
+        .chat-header-menu button:hover { background: rgba(255,255,255,0.06); }
+        .chat-header-menu button.danger { color: #f87171; }
+        .scroll-bottom-pill {
+            position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%);
+            z-index: 12; display: none; align-items: center; gap: 6px;
+            padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(88,101,242,0.45);
+            background: rgba(30,33,40,0.96); color: #c7d2fe; font-size: 13px; font-weight: 800;
+            cursor: pointer; font-family: inherit; box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            backdrop-filter: blur(8px);
+        }
+        .scroll-bottom-pill.visible { display: inline-flex; }
+        .chat-panel-backdrop {
+            display: none; position: fixed; inset: 0; z-index: 10110;
+            background: rgba(0,0,0,0.5); border: none; padding: 0; margin: 0; cursor: pointer;
+        }
+        .chat-panel-backdrop.active { display: block; }
         
         .messages-area { flex: 1; padding: 30px 0; overflow-y: auto; display: flex; flex-direction: column; }
         .messages-area::-webkit-scrollbar { width: 6px; }
@@ -267,64 +298,101 @@
         .msg-content { display: flex; flex-direction: column; flex: 1; position: relative; padding-right: 120px; }
         .msg-header { display: flex; align-items: baseline; margin-bottom: 6px; }
         .msg-author { font-weight: 900; font-size: 1.1rem; color: white; margin-right: 12px; }
+        @keyframes nameFxPrismBurst {
+            0%, 34%, 100% {
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc !important;
+                background-image: none !important;
+                text-shadow: none !important;
+                filter: none !important;
+            }
+            40%, 64% {
+                color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                background-image: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b) !important;
+                background-size: 220% 100% !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+                text-shadow: 0 0 10px rgba(245,158,11,0.45);
+            }
+        }
+        @keyframes nameFxAuroraBurst {
+            0%, 34%, 100% {
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc !important;
+                background-image: none !important;
+                text-shadow: none !important;
+            }
+            40%, 64% {
+                color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                background-image: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399) !important;
+                background-size: 220% 100% !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+            }
+        }
+        @keyframes nameFxRainbowBurst {
+            0%, 34%, 100% {
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc !important;
+                background-image: none !important;
+                text-shadow: none !important;
+            }
+            40%, 64% {
+                color: transparent !important;
+                -webkit-text-fill-color: transparent !important;
+                background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444) !important;
+                background-size: 300% 100% !important;
+                -webkit-background-clip: text !important;
+                background-clip: text !important;
+            }
+        }
+        @keyframes nameFxGlowBurst {
+            0%, 34%, 100% { text-shadow: none; filter: none; }
+            40%, 64% { text-shadow: var(--chat-name-glow, 0 0 10px rgba(56,189,248,0.5)); }
+        }
         .name-effect-wave {
-            text-shadow: 0 0 8px rgba(59,130,246,0.28);
-            animation: nameWave 2.4s ease-in-out infinite;
+            color: #f8fafc !important;
+            --chat-name-glow: 0 0 10px rgba(59,130,246,0.5);
+            animation: nameFxGlowBurst 2.6s ease-in-out infinite;
         }
         .name-effect-prism {
-            color: transparent !important;
-            -webkit-text-fill-color: transparent !important;
-            background-color: transparent;
-            background-image: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #f59e0b);
-            background-size: 220% 100%;
-            background-repeat: no-repeat;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: namePrism 2.6s linear infinite;
+            animation: nameFxPrismBurst 2.8s ease-in-out infinite;
             font-weight: 900;
         }
         .name-effect-stardust {
-            text-shadow: 0 0 8px rgba(251,191,36,0.45), 0 0 14px rgba(167,139,250,0.35);
-            animation: nameWave 2.1s ease-in-out infinite;
+            color: #f8fafc !important;
+            --chat-name-glow: 0 0 10px rgba(251,191,36,0.55), 0 0 16px rgba(167,139,250,0.4);
+            animation: nameFxGlowBurst 2.6s ease-in-out infinite;
         }
         .name-effect-pulse-core {
-            animation: badgeGlowBurst 1.6s ease-in-out infinite;
-            text-shadow: 0 0 10px rgba(244,114,182,0.42);
+            color: #f8fafc !important;
+            --chat-name-glow: 0 0 12px rgba(244,114,182,0.65);
+            animation: nameFxGlowBurst 2.4s ease-in-out infinite;
         }
         .name-effect-aurora-pulse {
-            color: transparent !important;
-            -webkit-text-fill-color: transparent !important;
-            background-color: transparent;
-            background-image: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #34d399);
-            background-size: 220% 100%;
-            background-repeat: no-repeat;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: namePrism 2.4s linear infinite;
+            animation: nameFxAuroraBurst 2.8s ease-in-out infinite;
             font-weight: 900;
         }
         .name-effect-rainbow {
-            color: transparent !important;
-            -webkit-text-fill-color: transparent !important;
-            background-color: transparent;
-            background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444);
-            background-size: 300% 100%;
-            background-repeat: no-repeat;
-            -webkit-background-clip: text;
-            background-clip: text;
-            animation: namePrism 3s linear infinite;
+            animation: nameFxRainbowBurst 3s ease-in-out infinite;
             font-weight: 900;
         }
         .name-effect-neon-flicker {
-            animation: nameWave 1.4s ease-in-out infinite;
-            text-shadow: 0 0 8px rgba(34,211,238,0.6), 0 0 16px rgba(244,114,182,0.4);
+            color: #e2e8f0 !important;
+            --chat-name-glow: 0 0 10px rgba(34,211,238,0.7), 0 0 18px rgba(244,114,182,0.45);
+            animation: nameFxGlowBurst 2.2s ease-in-out infinite;
         }
         .name-effect-sparkle {
-            animation: badgeGlowBurst 1.2s ease-in-out infinite;
-            text-shadow: 0 0 6px rgba(250,204,21,0.55), 0 0 12px rgba(251,191,36,0.35);
+            color: #f8fafc !important;
+            --chat-name-glow: 0 0 8px rgba(250,204,21,0.65);
+            animation: nameFxGlowBurst 2.2s ease-in-out infinite;
         }
         .name-effect-glitch {
-            animation: dfxGlitch 2.2s infinite;
+            color: #f8fafc !important;
+            --chat-name-glow: 0 0 8px rgba(34,211,238,0.55);
+            animation: nameFxGlowBurst 2.4s ease-in-out infinite;
         }
         .msg-time { font-size: 12px; color: var(--text-muted); }
         .msg-edited { margin-left: 6px; color: #94a3b8; font-size: 11px; font-style: italic; }
@@ -598,6 +666,11 @@
             overflow: hidden;
             font-family: "Outfit", "Noto Sans TC", sans-serif;
         }
+        .profile-pop-sheet-handle {
+            display: none;
+            width: 40px; height: 4px; border-radius: 999px;
+            background: rgba(255,255,255,0.22); margin: 10px auto 0;
+        }
         .profile-pop-banner {
             height: 120px;
             background: linear-gradient(120deg, #5865f2, #4752c4 45%, #3c45a5);
@@ -850,13 +923,20 @@
         body.chat-density-comfortable .msg-author { font-size: 1.18rem; }
         body.chat-density-comfortable .msg-text { font-size: 16px; line-height: 1.72; }
         
-        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); background: var(--bg); }
+        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); background: var(--bg); padding: 24px; text-align: center; }
         .empty-state i { font-size: 60px; margin-bottom: 20px; opacity: 0.2; }
+        .empty-state p { margin: 0; font-size: 15px; line-height: 1.5; max-width: 280px; }
+        .empty-state .empty-hint { margin-top: 8px; font-size: 13px; color: #64748b; }
 
         /* 成員列表側邊欄 */
         .member-sidebar { width: 260px; background: var(--sidebar-bg); border-left: 1px solid rgba(255,255,255,0.05); display: none; flex-direction: column; flex-shrink: 0; }
         .member-sidebar.active { display: flex; }
-        .member-sidebar-header { height: 70px; padding: 0 25px; display: flex; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; font-weight: 900; color: white; }
+        .member-sidebar-header { height: 70px; padding: 0 16px 0 25px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; font-weight: 900; color: white; }
+        .member-sidebar-close {
+            display: none; width: 32px; height: 32px; border: none; border-radius: 8px;
+            background: rgba(255,255,255,0.06); color: #94a3b8; cursor: pointer; font-size: 14px; flex-shrink: 0;
+        }
+        .member-sidebar-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .member-list { flex: 1; overflow-y: auto; padding: 12px 16px 20px; }
         .member-section-title {
             font-size: 11px; font-weight: 900; color: #64748b; text-transform: uppercase;
@@ -883,6 +963,7 @@
         .member-item--bot:hover .bot-disconnect { opacity: 1; }
 
         .app-container { flex: 1; min-height: 0; height: 100%; max-height: 100vh; overflow: hidden; }
+        body.doratch-app-mode.chat-app .app-container { max-height: none; height: 100%; }
     </style>
 </head>
 <body>
@@ -961,7 +1042,10 @@
     </div>
     
     <div class="member-sidebar" id="member-sidebar">
-        <div class="member-sidebar-header" id="member-sidebar-header">成員</div>
+        <div class="member-sidebar-header" id="member-sidebar-header">
+            <span id="member-sidebar-header-text">成員</span>
+            <button type="button" class="member-sidebar-close" onclick="closeMemberSidebar()" title="關閉">✕</button>
+        </div>
         <div class="member-list" id="member-list"></div>
     </div>
 </div>
@@ -1076,6 +1160,7 @@
 </div>
 
 <div id="message-menu" class="message-menu" style="display:none;"></div>
+<button type="button" id="chat-panel-backdrop" class="chat-panel-backdrop" aria-hidden="true" onclick="closeChatPanelOverlays()"></button>
 <div id="profile-pop" class="profile-pop" style="display:none;"></div>
 
     </div>
@@ -1235,8 +1320,158 @@
     let incomingMessageRequestCount = -1;
 
     function isMobileChatShell() {
-        return window.DoratchMobile && typeof window.DoratchMobile.isMobileDevice === "function" && window.DoratchMobile.isMobileDevice();
+        return window.DoratchMobile
+            && typeof window.DoratchMobile.isAppMode === "function"
+            && window.DoratchMobile.isAppMode()
+            && typeof window.DoratchMobile.isMobileDevice === "function"
+            && window.DoratchMobile.isMobileDevice();
     }
+
+    function isMsgAreaNearBottom(msgArea, threshold) {
+        if (!msgArea) return true;
+        const gap = typeof threshold === "number" ? threshold : 96;
+        return msgArea.scrollHeight - msgArea.scrollTop - msgArea.clientHeight < gap;
+    }
+
+    function hideNewMessagesPill() {
+        const pill = document.getElementById("scroll-bottom-pill");
+        if (pill) pill.classList.remove("visible");
+    }
+
+    function showNewMessagesPill() {
+        const pill = document.getElementById("scroll-bottom-pill");
+        if (pill) pill.classList.add("visible");
+    }
+
+    window.scrollMessagesToBottom = () => {
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea) return;
+        msgArea.scrollTop = msgArea.scrollHeight;
+        hideNewMessagesPill();
+    };
+
+    function bindMessagesScrollWatch() {
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea || msgArea._scrollWatchBound) return;
+        msgArea._scrollWatchBound = true;
+        msgArea.addEventListener("scroll", () => {
+            if (isMsgAreaNearBottom(msgArea)) hideNewMessagesPill();
+        }, { passive: true });
+    }
+
+    function showChatIdleState(message, hint) {
+        const main = document.getElementById("chat-main");
+        if (!main) return;
+        main.innerHTML = `
+            <div class="empty-state">
+                <i>💬</i>
+                <p>${message || "選擇一個聊天室開始對話"}</p>
+                ${hint ? `<span class="empty-hint">${hint}</span>` : ""}
+            </div>
+        `;
+    }
+
+    window.closeChatHeaderMenu = () => {
+        const menu = document.getElementById("chat-header-menu");
+        if (menu) menu.classList.remove("open");
+    };
+
+    window.toggleChatHeaderMenu = (ev) => {
+        if (ev) ev.stopPropagation();
+        const menu = document.getElementById("chat-header-menu");
+        if (!menu) return;
+        menu.classList.toggle("open");
+    };
+
+    function buildChatHeaderActionsHtml(chatId, chatType, teacherId) {
+        const items = [];
+        if (chatType === "group" || chatType === "server") {
+            items.push({ label: "➕ 邀請", onclick: "openModal('invite')" });
+            items.push({ label: "🤖 Bot", onclick: "openModal('connectBot')" });
+            items.push({ label: "👥 成員", onclick: "toggleMemberSidebar()" });
+        }
+        if (chatType === "server" || chatType === "group") {
+            if (currentUser.uid === teacherId) {
+                items.push({ label: "🗑️ 解散", onclick: `deleteChat('${chatId}')`, danger: true });
+            } else {
+                items.push({ label: "🚪 退出", onclick: `leaveChat('${chatId}')`, danger: true });
+            }
+        }
+        if (!items.length) return "";
+
+        if (isMobileChatShell() && items.length > 1) {
+            const memberItem = items.find((it) => it.label.includes("成員"));
+            const menuItems = items.filter((it) => it !== memberItem);
+            const memberBtn = memberItem
+                ? `<button type="button" class="btn-icon" style="margin-left:8px; background:#4e5058;" onclick="${memberItem.onclick}" title="顯示成員名單">${memberItem.label}</button>`
+                : "";
+            const menuHtml = menuItems.map((it) =>
+                `<button type="button" class="${it.danger ? "danger" : ""}" onclick="${it.onclick};closeChatHeaderMenu()">${it.label}</button>`
+            ).join("");
+            return `${memberBtn}<div class="chat-header-more-wrap">
+                <button type="button" class="btn-icon chat-header-more-btn" style="margin-left:8px; background:#35373c; min-width:36px;" onclick="toggleChatHeaderMenu(event)" title="更多">⋯</button>
+                <div class="chat-header-menu" id="chat-header-menu">${menuHtml}</div>
+            </div>`;
+        }
+
+        return items.map((it) => {
+            let bg = "#4e5058";
+            if (it.label.includes("邀請")) bg = "#5865F2";
+            else if (it.label.includes("Bot")) bg = "#23a559";
+            else if (it.danger) bg = it.label.includes("解散") ? "#FF4D4D" : "#f47f24";
+            return `<button type="button" class="btn-icon" style="margin-left:8px; background:${bg};" onclick="${it.onclick}" title="${it.label}">${it.label}</button>`;
+        }).join("");
+    }
+
+    window.closeMemberSidebar = () => {
+        const sidebar = document.getElementById("member-sidebar");
+        if (!sidebar) return;
+        sidebar.classList.remove("active");
+        syncMobileChatChrome();
+    };
+
+    window.closeChatPanelOverlays = () => {
+        hideProfilePop();
+        closeMemberSidebar();
+        closeChatHeaderMenu();
+    };
+
+    function syncMobileChatChrome() {
+        const profilePop = document.getElementById("profile-pop");
+        const profileOpen = profilePop && profilePop.style.display === "block";
+        document.body.classList.toggle("doratch-profile-open", !!profileOpen);
+        const sidebar = document.getElementById("member-sidebar");
+        const sidebarOpen = sidebar && sidebar.classList.contains("active");
+        document.body.classList.toggle("doratch-member-sidebar-open", !!sidebarOpen);
+        const backdrop = document.getElementById("chat-panel-backdrop");
+        const showBackdrop = isMobileChatShell() && (profileOpen || sidebarOpen);
+        if (backdrop) {
+            backdrop.classList.toggle("active", showBackdrop);
+            backdrop.setAttribute("aria-hidden", showBackdrop ? "false" : "true");
+        }
+    }
+
+    function collapseChatComposer() {
+        const input = document.getElementById("msg-input");
+        if (input) input.blur();
+        document.body.classList.add("chat-composer-collapsed");
+        syncMobileChatChrome();
+    }
+
+    function expandChatComposer() {
+        document.body.classList.remove("chat-composer-collapsed");
+        syncMobileChatChrome();
+        focusChatInput();
+        requestAnimationFrame(function () {
+            const input = document.getElementById("msg-input");
+            if (input && typeof input.scrollIntoView === "function") {
+                input.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            }
+        });
+    }
+
+    window.collapseChatComposer = collapseChatComposer;
+    window.expandChatComposer = expandChatComposer;
 
     function syncMobileModalOpen() {
         if (!document.body.classList.contains("doratch-app-mode")) return;
@@ -1253,6 +1488,11 @@
     }
 
     window.closeMobileChatView = () => {
+        collapseChatComposer();
+        hideProfilePop();
+        document.body.classList.remove("chat-composer-collapsed", "doratch-profile-open", "doratch-member-sidebar-open");
+        const sidebar = document.getElementById("member-sidebar");
+        if (sidebar) sidebar.classList.remove("active");
         syncMobileChatView(false);
         document.querySelectorAll(".chat-item").forEach((el) => el.classList.remove("active"));
     };
@@ -2637,18 +2877,7 @@
         if (activeItem) activeItem.classList.add('active');
 
         const displayTitle = chatType === 'server' ? `${chatName} <span style="font-size:12px; color:#949ba4;">(代碼: ${chatId})</span>` : chatName;
-        const inviteBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:auto; background:#5865F2;" onclick="openModal('invite')">邀請</button>` : '';
-        const botBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:8px; background:#23a559;" onclick="openModal('connectBot')" title="連接 Discord Bot">🤖 Bot</button>` : '';
-        const memberToggleBtnHtml = (chatType === 'group' || chatType === 'server') ? `<button class="btn-icon" style="margin-left:8px; background:#4e5058;" onclick="toggleMemberSidebar()" title="顯示成員名單">👥</button>` : '';
-        
-        let manageBtnHtml = '';
-        if (chatType === 'server' || chatType === 'group') {
-            if (currentUser.uid === teacherId) {
-                manageBtnHtml = `<button class="btn-icon" style="background:#FF4D4D; margin-left:10px;" onclick="deleteChat('${chatId}')">🗑️ 解散</button>`;
-            } else {
-                manageBtnHtml = `<button class="btn-icon" style="background:#f47f24; margin-left:10px;" onclick="leaveChat('${chatId}')">🚪 退出</button>`;
-            }
-        }
+        const headerActionsHtml = buildChatHeaderActionsHtml(chatId, chatType, teacherId);
 
         const mobileBackBtn = isMobileChatShell()
             ? `<button type="button" class="chat-mobile-back btn-icon" onclick="closeMobileChatView()" title="返回頻道列表">←</button>`
@@ -2659,14 +2888,11 @@
             <div class="chat-header">
                 ${mobileBackBtn}
                 <h3 id="current-chat-name" style="margin: 0; font-size: 1.1rem;">${icon} ${displayTitle}</h3>
-                <div style="margin-left:auto; display:flex; align-items:center;">
-                    ${inviteBtnHtml}
-                    ${botBtnHtml}
-                    ${memberToggleBtnHtml}
-                    ${manageBtnHtml}
-                </div>
+                <div class="chat-header-actions">${headerActionsHtml}</div>
             </div>
             <div class="messages-area" id="messages-area"></div>
+            <button type="button" class="scroll-bottom-pill" id="scroll-bottom-pill" onclick="scrollMessagesToBottom()">↓ 新訊息</button>
+            <button type="button" class="chat-composer-teaser" onclick="expandChatComposer()"><span class="chat-composer-teaser-icon">💬</span><span class="chat-composer-teaser-text">輸入訊息…</span></button>
             <div class="input-area">
                 <div class="request-banner" id="private-request-banner">
                     <span id="private-request-text"></span>
@@ -2824,8 +3050,15 @@
             lastSenderId = msg.senderId;
             lastTimeStr = fullTimeStr;
         });
+        const stickToBottom = isMsgAreaNearBottom(msgArea);
+        const prevScrollHeight = msgArea.scrollHeight;
         msgArea.innerHTML = html;
-        msgArea.scrollTop = msgArea.scrollHeight;
+        if (stickToBottom) {
+            msgArea.scrollTop = msgArea.scrollHeight;
+            hideNewMessagesPill();
+        } else if (msgArea.scrollHeight > prevScrollHeight) {
+            showNewMessagesPill();
+        }
         setReplyBar();
     });
         
@@ -2851,25 +3084,42 @@
             refreshChatBotsMeta();
             const memberSidebar = document.getElementById('member-sidebar');
             if (chatType === 'group' || chatType === 'server') {
-                memberSidebar.classList.add('active');
+                if (!isMobileChatShell()) {
+                    memberSidebar.classList.add('active');
+                } else {
+                    memberSidebar.classList.remove('active');
+                }
             } else {
                 memberSidebar.classList.remove('active');
             }
+            if (isMobileChatShell()) {
+                document.body.classList.add("chat-composer-collapsed");
+            } else {
+                document.body.classList.remove("chat-composer-collapsed");
+            }
+            syncMobileChatChrome();
             if (chatType === "private") {
                 getDoc(doc(db, "chats", chatId)).then((s) => applyPrivateRequestState(s.exists() ? s.data() : null)).catch(() => {});
             } else {
                 applyPrivateRequestState(null);
             }
             if (mainDiv) {
-                const tryFocus = (ev) => {
-                    const t = ev.target;
-                    if (t && typeof t.closest === "function" && (t.closest("button") || t.closest("a") || t.closest("input[type='file']"))) return;
-                    focusChatInput();
-                };
                 const msgAreaEl = document.getElementById("messages-area");
-                if (msgAreaEl) msgAreaEl.addEventListener("click", tryFocus);
+                if (msgAreaEl) {
+                    msgAreaEl._scrollWatchBound = false;
+                    bindMessagesScrollWatch();
+                    msgAreaEl.addEventListener("click", (ev) => {
+                        const t = ev.target;
+                        if (t && typeof t.closest === "function" && (t.closest("button") || t.closest("a") || t.closest("input[type='file']"))) return;
+                        if (isMobileChatShell()) {
+                            collapseChatComposer();
+                        } else {
+                            const input = document.getElementById("msg-input");
+                            if (input) input.blur();
+                        }
+                    });
+                }
             }
-            focusChatInput();
         }, 100);
     };
 
@@ -2880,7 +3130,7 @@
             await updateDoc(doc(db, "chats", chatId), {
                 participants: arrayRemove(currentUser.uid)
             });
-            document.getElementById('chat-main').innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#949ba4;">選擇一個聊天室開始對話</div>';
+            showChatIdleState("選擇一個聊天室開始對話", "從左側列表選擇或發起新對話");
             currentChatId = null;
             currentChatTeacherId = null;
             currentChatType = null;
@@ -2894,7 +3144,7 @@
         if (!confirm("⚠️ 警告：確定要解散這個聊天室嗎？\n此動作將永久刪除所有對話紀錄與檔案，且無法還原！")) return;
         try {
             await deleteDoc(doc(db, "chats", chatId));
-            document.getElementById('chat-main').innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#949ba4;">選擇一個聊天室開始對話</div>';
+            showChatIdleState("選擇一個聊天室開始對話", "從左側列表選擇或發起新對話");
             currentChatId = null;
             currentChatTeacherId = null;
             currentChatType = null;
@@ -2944,6 +3194,7 @@
         if (sidebar.classList.contains('active')) {
             loadMembers();
         }
+        syncMobileChatChrome();
     };
 
     window.loadMembers = async () => {
@@ -3036,7 +3287,14 @@
 
     function hideProfilePop() {
         const el = document.getElementById("profile-pop");
-        if (el) el.style.display = "none";
+        if (el) {
+            el.style.display = "none";
+            el.classList.remove("profile-pop-mobile");
+            el.style.left = "";
+            el.style.top = "";
+        }
+        document.body.classList.remove("doratch-profile-open");
+        syncMobileChatChrome();
     }
     window.hideProfilePop = hideProfilePop;
 
@@ -3075,8 +3333,12 @@
             fileName: msg.fileName || ""
         };
         setReplyBar();
-        const input = document.getElementById("msg-input");
-        if (input) input.focus();
+        if (isMobileChatShell()) {
+            expandChatComposer();
+        } else {
+            const input = document.getElementById("msg-input");
+            if (input) input.focus();
+        }
     };
 
     window.editMessageById = async (msgId) => {
@@ -3260,6 +3522,7 @@
         const docoinPanelLux = isDocoinProfileEffect(c.profileEffect) || isDocoinBanner(c.banner);
         const docoinAvatarLux = !isBot && isDocoinAvatar(c.avatar || "");
         pop.innerHTML = `
+            <div class="profile-pop-sheet-handle" aria-hidden="true"></div>
             <div class="profile-pop-banner ${bannerVisualCls}"></div>
             <div class="profile-pop-sheet">
                 <div class="profile-pop-avatar-wrap${docoinAvatarLux ? " docoin-avatar-lux" : ""}">
@@ -3293,15 +3556,29 @@
                 hideProfilePop();
             });
         }
-        const popW = Math.min(380, window.innerWidth - 24);
-        const popH = 420;
-        let left = ev.clientX + 12;
-        let top = ev.clientY + 12;
-        if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
-        if (top + popH > window.innerHeight - 12) top = Math.max(12, ev.clientY - popH - 8);
-        if (left < 12) left = 12;
-        pop.style.left = left + "px";
-        pop.style.top = top + "px";
+        if (isMobileChatShell()) {
+            const input = document.getElementById("msg-input");
+            if (input) input.blur();
+            collapseChatComposer();
+            pop.classList.add("profile-pop-mobile");
+            pop.style.left = "";
+            pop.style.top = "";
+            pop.style.display = "block";
+            syncMobileChatChrome();
+        } else {
+            const input = document.getElementById("msg-input");
+            if (input) input.blur();
+            pop.classList.remove("profile-pop-mobile");
+            const popW = Math.min(380, window.innerWidth - 24);
+            const popH = 420;
+            let left = ev.clientX + 12;
+            let top = ev.clientY + 12;
+            if (left + popW > window.innerWidth - 12) left = window.innerWidth - popW - 12;
+            if (top + popH > window.innerHeight - 12) top = Math.max(12, ev.clientY - popH - 8);
+            if (left < 12) left = 12;
+            pop.style.left = left + "px";
+            pop.style.top = top + "px";
+        }
         pop.style.display = "block";
     };
 
@@ -3666,7 +3943,6 @@
         } finally {
             isSendingMessage = false;
             if (sendBtn) sendBtn.disabled = false;
-            focusChatInput();
         }
     };
 
@@ -3799,6 +4075,7 @@
     })();
     window.addEventListener("keydown", (e) => {
         if (!currentChatId) return;
+        if (isMobileChatShell()) return;
         if (e.defaultPrevented) return;
         if (e.ctrlKey || e.metaKey || e.altKey) return;
         const t = e.target;
@@ -3813,13 +4090,14 @@
         const t = e.target;
         const tag = (t && t.tagName) ? t.tagName.toLowerCase() : "";
         if (tag === "select" || tag === "option") return;
+        if (!t.closest || !t.closest(".chat-header-more-wrap")) closeChatHeaderMenu();
         if (t && t.id === "modal") closeModal();
         if (t && t.id === "cosmetic-modal") closeCosmeticModal();
         if (t && t.id === "chat-prefs-modal") closeChatPrefsModal();
         const menu = document.getElementById("message-menu");
         if (menu && t && !menu.contains(t)) hideMessageMenu();
         const pop = document.getElementById("profile-pop");
-        if (pop && t && !pop.contains(t) && !String(t.className || "").includes("msg-avatar")) hideProfilePop();
+        if (pop && pop.style.display === "block" && t && !pop.contains(t) && !String(t.className || "").includes("msg-avatar") && t.id !== "chat-panel-backdrop") hideProfilePop();
     });
 
     window.submitModal = async () => {

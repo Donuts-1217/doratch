@@ -205,7 +205,7 @@
         var onDisconnectBot = options.onDisconnectBot;
         var onUseSlash = options.onUseSlash;
 
-        var header = document.getElementById("member-sidebar-header");
+        var header = document.getElementById("member-sidebar-header-text");
         if (header) {
             header.textContent = "成員 — " + members.length + (bots.length ? " · 🤖 " + bots.length : "");
         }
