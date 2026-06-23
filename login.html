@@ -242,8 +242,10 @@
         signInWithEmailAndPassword, 
         createUserWithEmailAndPassword, 
         sendEmailVerification,
+        fetchSignInMethodsForEmail,
         GoogleAuthProvider,
         getRedirectResult,
+        linkWithCredential,
         signInWithPopup,
         signInWithRedirect,
         signOut 
@@ -284,6 +286,10 @@
             return { ok: false, name, error: "僅可使用中文、英文、數字、空格、底線或連字號" };
         }
         return { ok: true, name, error: "" };
+    }
+
+    function normalizeEmailInput(raw) {
+        return String(raw || "").trim().toLowerCase();
     }
 
     async function redirectAfterLogin(user) {
@@ -331,6 +337,53 @@
         await ensureUserDocAfterLogin(user);
         showMsg("🎉 Google 登入成功，正在導向...", "success");
         setTimeout(() => redirectAfterLogin(user), 350);
+    }
+
+    function providerLabel(method) {
+        if (method === "password") return "Email/密碼";
+        if (method === "google.com") return "Google";
+        return method || "未知方式";
+    }
+
+    async function tryAutoLinkGoogleByEmailConflict(error) {
+        const conflictEmail = normalizeEmailInput(
+            (error && error.customData && error.customData.email) ||
+            document.getElementById("email").value
+        );
+        if (!conflictEmail) return false;
+        const pendingGoogleCred = GoogleAuthProvider.credentialFromError(error) || error.credential || null;
+        if (!pendingGoogleCred) return false;
+
+        let methods = [];
+        try {
+            methods = await fetchSignInMethodsForEmail(auth, conflictEmail);
+        } catch (_) {
+            methods = [];
+        }
+        if (!methods.includes("password")) {
+            const labels = methods.length ? methods.map(providerLabel).join("、") : "其他方式";
+            showMsg("此 Email 已綁定「" + labels + "」，請先用該方式登入後再綁定 Google。", "error");
+            return false;
+        }
+
+        const pwdInput = document.getElementById("password");
+        const password = String((pwdInput && pwdInput.value) || "").trim();
+        if (!password) {
+            showMsg("偵測到同 Email 帳號，請先輸入該帳號密碼，再按一次 Google 登入即可自動綁定。", "error");
+            return false;
+        }
+
+        const res = await signInWithEmailAndPassword(auth, conflictEmail, password);
+        try {
+            await linkWithCredential(res.user, pendingGoogleCred);
+        } catch (linkErr) {
+            const c = (linkErr && linkErr.code) || "";
+            if (c !== "auth/provider-already-linked" && c !== "auth/credential-already-in-use") {
+                throw linkErr;
+            }
+        }
+        await handleGoogleLoginSuccess(res.user);
+        return true;
     }
 
     function showMsg(text, type) {
@@ -529,10 +582,24 @@
                     // fall through to message below
                 }
             }
+            if (code === "auth/account-exists-with-different-credential") {
+                try {
+                    const linked = await tryAutoLinkGoogleByEmailConflict(error);
+                    if (linked) return;
+                } catch (linkErr) {
+                    const c = (linkErr && linkErr.code) || "";
+                    if (c === "auth/wrong-password" || c === "auth/invalid-credential") {
+                        showMsg("此 Email 已有密碼帳號，密碼不正確，請修正後再按一次 Google 登入。", "error");
+                        return;
+                    }
+                    showMsg("Google 綁定失敗：" + (linkErr.message || "請稍後再試"), "error");
+                    return;
+                }
+            }
             let errorMsg = "Google 登入失敗，請稍後再試";
             if (code === "auth/popup-closed-by-user") errorMsg = "你已取消 Google 登入";
             if (code === "auth/popup-blocked") errorMsg = "瀏覽器阻擋彈窗，已嘗試改為重新導向登入";
-            if (code === "auth/account-exists-with-different-credential") errorMsg = "此 Email 已使用其他登入方式註冊";
+            if (code === "auth/account-exists-with-different-credential") errorMsg = "此 Email 已使用其他登入方式註冊（可輸入密碼後再按 Google 進行自動綁定）";
             if (code === "auth/unauthorized-domain") errorMsg = "此網域尚未加入 Firebase 授權網域";
             showMsg(errorMsg, "error");
         } finally {
@@ -549,6 +616,10 @@
             }
         } catch (error) {
             const code = (error && error.code) || "";
+            if (code === "auth/account-exists-with-different-credential") {
+                showMsg("此 Email 已有密碼帳號。請回登入頁輸入密碼後再按 Google 登入，系統會自動綁定。", "error");
+                return;
+            }
             let errorMsg = "Google 登入失敗，請稍後再試";
             if (code === "auth/unauthorized-domain") errorMsg = "此網域尚未加入 Firebase 授權網域";
             if (code === "auth/account-exists-with-different-credential") errorMsg = "此 Email 已使用其他登入方式註冊";

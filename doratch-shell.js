@@ -55,9 +55,10 @@
         {
             key: "other",
             label: "📦 其他",
-            pages: ["shop", "chat", "support"],
+            pages: ["shop", "topup", "chat", "support"],
             items: [
                 { href: "shop.html", label: "創意商城", pages: ["shop"] },
+                { href: "topup.html", label: "儲值中心", pages: ["topup"] },
                 { href: "chat.html", label: "交流大廳", pages: ["chat"] },
                 { href: "support.html", label: "客服中心", pages: ["support"] }
             ]
@@ -104,6 +105,7 @@
         "game-pet.html": "game_pet",
         "game-mine.html": "game_mine",
         "shop.html": "shop",
+        "topup.html": "topup",
         "chat.html": "chat",
         "support.html": "support",
         "admin.html": "admin",

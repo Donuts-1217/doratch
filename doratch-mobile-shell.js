@@ -44,6 +44,7 @@
         "app.html": "home",
         "chat.html": "chat",
         "shop.html": "shop",
+        "topup.html": "shop",
         "game.html": "game",
         "game-survival.html": "game",
         "game-clicker.html": "game",

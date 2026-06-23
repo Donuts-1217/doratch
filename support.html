@@ -105,7 +105,46 @@
             text-decoration: none; background: #eef2ff; color: #4338ca;
             padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 800;
         }
-        .ticket-list { display: flex; flex-direction: column; gap: 12px; }
+        .ticket-list { display: flex; flex-direction: column; gap: 12px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+        .ticket-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .ticket-search {
+            flex: 1;
+            min-width: 180px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        .ticket-filter-btn {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .ticket-filter-btn.active {
+            background: #4C97FF;
+            color: #fff;
+            border-color: #4C97FF;
+        }
+        .ticket-group-title {
+            margin: 6px 0 2px;
+            font-size: 12px;
+            font-weight: 900;
+            color: #64748b;
+            letter-spacing: 0.04em;
+        }
         .ticket-item {
             border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px;
             background: #fafafa; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
@@ -128,6 +167,7 @@
         .ticket-preview { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .ticket-open-hint { font-size: 12px; color: #4C97FF; font-weight: 800; margin-top: 8px; }
+        .ticket-actions-inline { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
 
         /* 工單對話 */
         .ticket-thread-overlay {
@@ -269,6 +309,12 @@
                     <h2 style="margin:0;">📋 我的工單</h2>
                     <button type="button" class="btn-ghost" id="btn-refresh-tickets">重新整理</button>
                 </div>
+                <div class="ticket-toolbar">
+                    <input id="ticket-search" class="ticket-search" type="text" placeholder="搜尋主旨、分類、內容…">
+                    <button type="button" class="ticket-filter-btn active" data-ticket-filter="all">全部</button>
+                    <button type="button" class="ticket-filter-btn" data-ticket-filter="open">進行中</button>
+                    <button type="button" class="ticket-filter-btn" data-ticket-filter="closed">已結案</button>
+                </div>
                 <div id="ticket-list" class="ticket-list">
                     <div class="empty-hint">載入中…</div>
                 </div>
@@ -298,6 +344,7 @@
         <div id="thread-closed-bar" class="ticket-thread-closed" style="display:none;">
             此工單已結案，無法繼續對話。
             <button type="button" class="btn-ghost" id="btn-reopen-ticket" style="margin-left:8px;background:#dcfce7;color:#166534;">重新開啟</button>
+            <button type="button" class="btn-ghost" id="btn-delete-ticket" style="margin-left:8px;background:#fee2e2;color:#991b1b;">刪除工單</button>
         </div>
     </div>
 </div>
@@ -307,7 +354,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, serverTimestamp, orderBy, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, serverTimestamp, orderBy, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -326,6 +373,8 @@
     let activeTicketData = null;
     let threadUnsub = null;
     let ticketDocsCache = [];
+    let ticketSearchKeyword = "";
+    let ticketStatusFilter = "all";
 
     const FAQ = [
         { q: "驗證信沒收到怎麼辦？", a: "請先檢查垃圾郵件資料夾。若仍沒有，可在登入頁使用「重發驗證信」。Email 打錯需重新註冊正確信箱，或聯絡客服協助。" },
@@ -490,11 +539,13 @@
         const closedBar = document.getElementById("thread-closed-bar");
         const closeTicketBtn = document.getElementById("btn-close-ticket");
         const reopenBtn = document.getElementById("btn-reopen-ticket");
+        const deleteBtn = document.getElementById("btn-delete-ticket");
         const closed = status === "closed";
         if (compose) compose.style.display = closed ? "none" : "";
         if (closedBar) closedBar.style.display = closed ? "" : "none";
         if (closeTicketBtn) closeTicketBtn.style.display = closed ? "none" : "";
         if (reopenBtn) reopenBtn.style.display = closed ? "" : "none";
+        if (deleteBtn) deleteBtn.style.display = closed ? "" : "none";
         document.getElementById("thread-reply-input").value = "";
         overlay.classList.add("open");
         overlay.setAttribute("aria-hidden", "false");
@@ -614,6 +665,51 @@
         }
     }
 
+    async function deleteTicketCascade(ticketId) {
+        const msgSnap = await getDocs(query(
+            collection(db, "support_tickets", ticketId, "messages"),
+            orderBy("createdAt", "asc")
+        ));
+        for (const d of msgSnap.docs) {
+            await deleteDoc(doc(db, "support_tickets", ticketId, "messages", d.id));
+        }
+        await deleteDoc(doc(db, "support_tickets", ticketId));
+    }
+
+    async function deleteActiveTicketByUser() {
+        if (!currentUser || !activeTicketId || !activeTicketData) return;
+        if ((activeTicketData.status || "") !== "closed") return alert("僅已結案工單可刪除");
+        if (!confirm("確定要刪除此工單？刪除後無法復原。")) return;
+        const btn = document.getElementById("btn-delete-ticket");
+        if (btn) btn.disabled = true;
+        try {
+            await deleteTicketCascade(activeTicketId);
+            closeTicketThread();
+            await loadTickets();
+        } catch (e) {
+            console.error(e);
+            alert("刪除失敗：" + (e.message || e));
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function matchesTicketFilter(t) {
+        const status = String((t && t.status) || "open");
+        if (ticketStatusFilter === "open") return status !== "closed";
+        if (ticketStatusFilter === "closed") return status === "closed";
+        return true;
+    }
+
+    function matchesTicketSearch(t) {
+        const key = String(ticketSearchKeyword || "").trim().toLowerCase();
+        if (!key) return true;
+        const cat = (CATEGORY_LABELS[t.category] || t.category || "").toLowerCase();
+        const subject = String(t.subject || "").toLowerCase();
+        const preview = String(t.lastMessagePreview || t.message || "").toLowerCase();
+        return cat.includes(key) || subject.includes(key) || preview.includes(key);
+    }
+
     async function loadTickets() {
         const host = document.getElementById("ticket-list");
         if (!currentUser) return;
@@ -637,7 +733,34 @@
                 return;
             }
             host.innerHTML = "";
-            docs.forEach(function (d) {
+            const filtered = docs.filter(function (d) {
+                const t = d.data() || {};
+                return matchesTicketFilter(t) && matchesTicketSearch(t);
+            });
+            if (!filtered.length) {
+                host.innerHTML = '<div class="empty-hint">沒有符合條件的工單</div>';
+                return;
+            }
+            const grouped = { open: [], replied: [], closed: [] };
+            filtered.forEach(function (d) {
+                const st = String((d.data() || {}).status || "open");
+                if (st === "closed") grouped.closed.push(d);
+                else if (st === "replied") grouped.replied.push(d);
+                else grouped.open.push(d);
+            });
+            const order = [
+                { key: "open", label: "🟢 進行中" },
+                { key: "replied", label: "💬 已回覆" },
+                { key: "closed", label: "⚪ 已結案" }
+            ];
+            order.forEach(function (group) {
+                const arr = grouped[group.key];
+                if (!arr.length) return;
+                const title = document.createElement("div");
+                title.className = "ticket-group-title";
+                title.textContent = group.label + " (" + arr.length + ")";
+                host.appendChild(title);
+                arr.forEach(function (d) {
                 const t = d.data() || {};
                 const status = t.status || "open";
                 const created = formatTime(t.createdAt);
@@ -651,11 +774,13 @@
                     '<div class="ticket-subject">[' + esc(cat) + "] " + esc(t.subject || "（無主旨）") + "</div>" +
                     '<span class="status-pill status-' + esc(status) + '">' + esc(STATUS_LABELS[status] || status) + "</span>" +
                     "</div>" +
-                    '<div class="ticket-meta">更新時間：' + esc(created) + "</div>" +
+                    '<div class="ticket-meta">建立：' + esc(created) + " · 更新：" + esc(formatTime(t.updatedAt || t.createdAt)) + "</div>" +
                     '<div class="ticket-preview">' + esc(preview) + "</div>" +
-                    '<div class="ticket-open-hint">點擊查看對話 →</div>';
+                    '<div class="ticket-open-hint">點擊查看對話 →</div>' +
+                    (status === "closed" ? '<div class="ticket-actions-inline"><button type="button" class="btn-ghost" style="background:#fee2e2;color:#991b1b;" onclick="event.stopPropagation();deleteClosedTicketFromList(\'' + d.id + '\')">刪除</button></div>' : "");
                 div.addEventListener("click", function () { openTicketThread(d.id); });
                 host.appendChild(div);
+                });
             });
             if (activeTicketId) {
                 const active = ticketDocsCache.find(function (t) { return t.id === activeTicketId; });
@@ -733,6 +858,7 @@
     document.getElementById("btn-close-thread-2").addEventListener("click", closeTicketThread);
     document.getElementById("btn-close-ticket").addEventListener("click", closeActiveTicketByUser);
     document.getElementById("btn-reopen-ticket").addEventListener("click", reopenActiveTicketByUser);
+    document.getElementById("btn-delete-ticket").addEventListener("click", deleteActiveTicketByUser);
     document.getElementById("btn-send-thread").addEventListener("click", sendThreadReply);
     document.getElementById("ticket-thread-overlay").addEventListener("click", function (e) {
         if (e.target === e.currentTarget) closeTicketThread();
@@ -742,6 +868,34 @@
             e.preventDefault();
             sendThreadReply();
         }
+    });
+
+    window.deleteClosedTicketFromList = async function (ticketId) {
+        const rec = ticketDocsCache.find(function (d) { return d.id === ticketId; });
+        if (!rec || String(rec.data.status || "") !== "closed") return alert("僅已結案工單可刪除");
+        if (!confirm("確定刪除此工單？刪除後無法復原。")) return;
+        try {
+            await deleteTicketCascade(ticketId);
+            if (activeTicketId === ticketId) closeTicketThread();
+            await loadTickets();
+        } catch (e) {
+            console.error(e);
+            alert("刪除失敗：" + (e.message || e));
+        }
+    };
+
+    document.querySelectorAll("[data-ticket-filter]").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            ticketStatusFilter = btn.getAttribute("data-ticket-filter") || "all";
+            document.querySelectorAll("[data-ticket-filter]").forEach(function (b) {
+                b.classList.toggle("active", b === btn);
+            });
+            if (currentUser) loadTickets();
+        });
+    });
+    document.getElementById("ticket-search").addEventListener("input", function (e) {
+        ticketSearchKeyword = String((e.target && e.target.value) || "");
+        if (currentUser) loadTickets();
     });
 
     const backLink = document.getElementById("support-back-link");

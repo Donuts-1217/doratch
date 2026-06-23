@@ -66,6 +66,15 @@ service cloud.firestore {
       allow update: if request.auth != null && (
         isDeveloper() ||
         (
+          isSupportStaff() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doord', 'coins', 'docoin']) &&
+          request.resource.data.doord >= (('doord' in resource.data) ? resource.data.doord : (('coins' in resource.data) ? resource.data.coins : 0)) &&
+          request.resource.data.doord - (('doord' in resource.data) ? resource.data.doord : (('coins' in resource.data) ? resource.data.coins : 0)) <= 30000 &&
+          request.resource.data.coins == request.resource.data.doord &&
+          request.resource.data.docoin >= (('docoin' in resource.data) ? resource.data.docoin : 0) &&
+          request.resource.data.docoin - (('docoin' in resource.data) ? resource.data.docoin : 0) <= 30
+        ) ||
+        (
           isAdmin() &&
           (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
@@ -202,6 +211,7 @@ service cloud.firestore {
       );
       allow create: if request.auth != null && (
         isAdmin() ||
+        isSupportStaff() ||
         request.resource.data.type != 'server'
       );
       allow update: if request.auth != null && (
@@ -332,6 +342,7 @@ service cloud.firestore {
 
       allow read: if request.auth != null && (
         isAdmin() ||
+        isSupportStaff() ||
         resource.data.userId == request.auth.uid
       );
 
@@ -342,10 +353,29 @@ service cloud.firestore {
           request.resource.data.userId == resource.data.userId &&
           request.resource.data.status == resource.data.status
         ) ||
-        isAdmin()
+        (
+          (isAdmin() || isSupportStaff()) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status',
+            'awardedDoord',
+            'awardedDocoin',
+            'awardedCoins',
+            'reviewedBy',
+            'reviewedAt'
+          ]) &&
+          request.resource.data.status in ['approved', 'rejected'] &&
+          request.resource.data.awardedDoord is number &&
+          request.resource.data.awardedDocoin is number &&
+          request.resource.data.awardedCoins is number &&
+          request.resource.data.awardedDoord >= 0 &&
+          request.resource.data.awardedDoord <= 30000 &&
+          request.resource.data.awardedDocoin >= 0 &&
+          request.resource.data.awardedDocoin <= 30 &&
+          request.resource.data.awardedCoins == request.resource.data.awardedDoord
+        )
       );
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isSupportStaff();
     }
 
     // 伺服器建立申請（使用者申請，管理員審核後建立）
@@ -359,12 +389,13 @@ service cloud.firestore {
 
       allow read: if request.auth != null && (
         isAdmin() ||
+        isSupportStaff() ||
         resource.data.userId == request.auth.uid
       );
 
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isSupportStaff();
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isSupportStaff();
     }
 
     // 客服工單
@@ -394,7 +425,11 @@ service cloud.firestore {
         request.resource.data.status in ['open', 'replied', 'closed']
       );
 
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || isSupportStaff() || (
+        request.auth != null &&
+        resource.data.userId == request.auth.uid &&
+        resource.data.status == 'closed'
+      );
 
       match /messages/{messageId} {
         function ticketOwner() {
@@ -425,7 +460,12 @@ service cloud.firestore {
           )
         );
 
-        allow update, delete: if isAdmin() || isSupportStaff();
+        allow update: if isAdmin() || isSupportStaff();
+        allow delete: if isAdmin() || isSupportStaff() || (
+          request.auth != null &&
+          ticketOwner().userId == request.auth.uid &&
+          ticketOwner().status == 'closed'
+        );
       }
     }
   }

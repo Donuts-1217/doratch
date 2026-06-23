@@ -2629,20 +2629,70 @@
         const chatQuery = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
         const chatSnap = await getDocs(chatQuery);
         let existingChatId = null;
+        let existingChatData = null;
         chatSnap.forEach(docSnap => {
             const data = docSnap.data();
             if (data.type === 'private' && data.participants.includes(targetUid)) {
                 existingChatId = docSnap.id;
+                existingChatData = data;
             }
         });
-        return existingChatId;
+        return { id: existingChatId, data: existingChatData };
+    }
+
+    async function autoAcceptReverseFriendRequest(targetUid, targetEmail) {
+        if (!targetUid || !currentUser) return false;
+        if (isFriendWithUid(targetUid)) return true;
+        const reverseId = friendDocId(targetUid, currentUser.uid);
+        const reverseRef = doc(db, "friend_requests", reverseId);
+        const reverseSnap = await getDoc(reverseRef);
+        if (reverseSnap.exists() && (reverseSnap.data().status || "pending") === "pending") {
+            await updateDoc(reverseRef, {
+                status: "accepted",
+                acceptedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            return true;
+        }
+        const reqId = friendDocId(currentUser.uid, targetUid);
+        const reqRef = doc(db, "friend_requests", reqId);
+        await setDoc(reqRef, {
+            fromUid: currentUser.uid,
+            toUid: targetUid,
+            fromEmail: currentUser.email || "",
+            toEmail: String(targetEmail || "").toLowerCase(),
+            participants: [currentUser.uid, targetUid],
+            status: "accepted",
+            acceptedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+        return true;
     }
 
     async function openOrCreatePrivateChat(targetUid, targetEmail) {
-        const existingChatId = await findExistingPrivateChat(targetUid);
+        const existing = await findExistingPrivateChat(targetUid);
         const label = String(targetEmail || "").split('@')[0] || "私訊";
-        if (existingChatId) {
-            openChat(existingChatId, label, '👤', 'private', null);
+        if (existing.id) {
+            const d = existing.data || {};
+            const isMutualMessageRequest =
+                d.type === "private" &&
+                d.requestStatus === "pending" &&
+                d.requestTo === currentUser.uid &&
+                d.requestFrom === targetUid;
+            if (isMutualMessageRequest) {
+                await updateDoc(doc(db, "chats", existing.id), {
+                    requestStatus: "accepted",
+                    acceptedAt: serverTimestamp(),
+                    lastMessage: "✅ 雙方互發訊息請求，已自動成為好友",
+                    updatedAt: serverTimestamp()
+                });
+                try {
+                    await autoAcceptReverseFriendRequest(targetUid, targetEmail);
+                } catch (_) {}
+                alert("✅ 雙方互發訊息請求，已自動加為好友");
+            }
+            openChat(existing.id, label, '👤', 'private', null);
             return;
         }
         const targetUser = await fetchUserByUid(targetUid);
@@ -2763,9 +2813,12 @@
         const relation = friendRelationWithUid(targetUid);
         if (relation.state === "friend") throw new Error("ALREADY_FRIEND");
         if (relation.state === "outgoing") throw new Error("REQUEST_ALREADY_SENT");
-        if (relation.state === "incoming") throw new Error("REQUEST_ALREADY_SENT_REVERSE");
         const target = await fetchUserByUid(targetUid);
         if (!target || !target.email) throw new Error("USER_NOT_FOUND");
+        if (relation.state === "incoming") {
+            await acceptFriendRequest(relation.requestId, true);
+            return { autoAccepted: true, target: target };
+        }
         const reqId = friendDocId(currentUser.uid, targetUid);
         const reqRef = doc(db, "friend_requests", reqId);
         await setDoc(reqRef, {
@@ -2778,6 +2831,7 @@
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         }, { merge: true });
+        return { autoAccepted: false, target: target };
     }
 
     window.startPrivateByUid = async (uid) => {
@@ -2792,14 +2846,14 @@
 
     window.sendFriendRequestToUid = async (uid) => {
         try {
-            await sendFriendRequestToUid(uid);
-            alert("好友請求已送出！");
+            const result = await sendFriendRequestToUid(uid);
+            if (result && result.autoAccepted) alert("✅ 你們互送請求，已自動成為好友");
+            else alert("好友請求已送出！");
         } catch (e) {
             const code = String(e && e.message || "");
             if (code === "SELF_REQUEST") alert("不能送好友請求給自己。");
             else if (code === "ALREADY_FRIEND") alert("你們已經是好友。");
             else if (code === "REQUEST_ALREADY_SENT") alert("你已送出好友請求，等待對方回應。");
-            else if (code === "REQUEST_ALREADY_SENT_REVERSE") alert("對方已送出好友請求給你，請直接接受。");
             else if (code === "USER_NOT_FOUND") alert("找不到該使用者。");
             else alert("送出好友請求失敗：" + (e.message || e));
         }
@@ -2837,7 +2891,14 @@
         if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") throw new Error("REQUEST_ALREADY_SENT");
         if (revSnap.exists()) {
             const status = revSnap.data().status || "pending";
-            if (status === "pending") throw new Error("REQUEST_ALREADY_SENT_REVERSE");
+            if (status === "pending") {
+                await updateDoc(revRef, {
+                    status: "accepted",
+                    acceptedAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+                return { autoAccepted: true, target: target };
+            }
             if (status === "accepted") throw new Error("ALREADY_FRIEND");
         }
 
@@ -2851,9 +2912,10 @@
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
         }, { merge: true });
+        return { autoAccepted: false, target: target };
     }
 
-    window.acceptFriendRequest = async (requestId) => {
+    window.acceptFriendRequest = async (requestId, silent) => {
         try {
             const ref = doc(db, "friend_requests", requestId);
             const snap = await getDoc(ref);
@@ -2865,7 +2927,7 @@
                 acceptedAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
-            alert("✅ 已成為好友");
+            if (!silent) alert("✅ 已成為好友");
         } catch (e) {
             alert("接受好友失敗：" + (e.message || e));
         }
@@ -4882,15 +4944,15 @@
                 await openOrCreatePrivateChat(target.uid, target.email || targetEmail);
             } else if (modalMode === 'friendRequest') {
                 try {
-                    await sendFriendRequestByEmail(inputVal);
-                    alert("好友請求已送出！");
+                    const result = await sendFriendRequestByEmail(inputVal);
+                    if (result && result.autoAccepted) alert("✅ 雙方互送請求，已自動成為好友");
+                    else alert("好友請求已送出！");
                 } catch (e) {
                     if (e.message === "USER_CANCELLED") { /* user backed out */ }
                     else if (e.message === "SELF_REQUEST") alert("不能送好友請求給自己。");
                     else if (e.message === "INVALID_EMAIL") { /* already alerted */ }
                     else if (e.message === "USER_NOT_FOUND") { /* already alerted */ }
                     else if (e.message === "ALREADY_FRIEND") alert("你們已經是好友。");
-                    else if (e.message === "REQUEST_ALREADY_SENT_REVERSE") alert("對方已送出好友請求給你，請直接在「好友請求」中接受。");
                     else if (e.message === "REQUEST_ALREADY_SENT") alert("你已送出請求，或對方已向你發出請求。");
                     else alert("送出好友請求失敗：" + (e.message || e));
                     if (e.message !== "USER_CANCELLED") throw e;
@@ -5011,7 +5073,7 @@
                 e.message !== "Bot inactive" && e.message !== "Already connected" &&
                 e.message !== "Not friend" && e.message !== "SELF_REQUEST" &&
                 e.message !== "USER_NOT_FOUND" && e.message !== "ALREADY_FRIEND" &&
-                e.message !== "REQUEST_ALREADY_SENT" && e.message !== "REQUEST_ALREADY_SENT_REVERSE" &&
+                e.message !== "REQUEST_ALREADY_SENT" &&
                 e.message !== "USER_CANCELLED" && e.message !== "INVALID_EMAIL" && e.message !== "Invalid email") {
                 alert("操作失敗，請檢查資料庫權限或網路連線！\n" + e.message);
             }
