@@ -52,6 +52,7 @@
         "game-pet.html": "game",
         "game-mine.html": "game",
         "profile.html": "profile",
+        "support.html": "support",
         "admin.html": "admin"
     };
 

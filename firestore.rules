@@ -40,6 +40,7 @@ service cloud.firestore {
     function selfTouchesProtectedUserFields() {
       return request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'role',
+        'subscription',
         'cloudStorageLimitMB',
         'cloudStorageMaxFiles',
         'reviewUploadDailyLimit',
@@ -344,6 +345,28 @@ service cloud.firestore {
         request.resource.data.serverName is string &&
         request.resource.data.serverName.size() >= 2 &&
         request.resource.data.serverName.size() <= 40;
+
+      allow read: if request.auth != null && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+
+      allow update: if isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // 客服工單
+    match /support_tickets/{ticketId} {
+      allow create: if request.auth != null &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'open' &&
+        request.resource.data.subject is string &&
+        request.resource.data.subject.size() >= 2 &&
+        request.resource.data.subject.size() <= 80 &&
+        request.resource.data.message is string &&
+        request.resource.data.message.size() >= 5 &&
+        request.resource.data.message.size() <= 2000;
 
       allow read: if request.auth != null && (
         isAdmin() ||

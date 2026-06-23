@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
+    <link rel="stylesheet" href="doratch-subscription.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>個人檔案 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -447,6 +448,7 @@
                         <div class="dc-name-row">
                             <div id="profile-display-name" class="profile-name">載入中...</div>
                             <span id="profile-staff-role-pill" style="display:none;"></span>
+                            <span id="profile-sub-tier-pill" style="display:none;"></span>
                         </div>
                         <div id="profile-custom-status-view" class="dc-custom-status empty">設定自訂狀態…</div>
                         <div class="dc-meta-line">
@@ -500,6 +502,12 @@
                         <div class="stat-box"><span id="count-coins" class="stat-value">0</span><span class="stat-label">🪙 Doord</span></div>
                         <div class="stat-box"><span id="count-lv" class="stat-value">1</span><span class="stat-label">⭐ 等級</span></div>
                     </div>
+                    <div id="profile-subscription-card" class="action-card" style="margin-top:16px; display:none;">
+                        <h3 id="profile-subscription-title">💫 訂閱方案</h3>
+                        <p id="profile-subscription-desc" style="font-size:13px;color:#94a3b8;margin:0 0 10px;"></p>
+                        <a href="shop.html" class="action-btn" id="profile-subscription-cta">🛒 查看 Plus / Pro</a>
+                        <a href="support.html" class="action-btn">🎧 聯絡客服</a>
+                    </div>
                     <div class="action-card" style="margin-top:16px;">
                         <h3>🚀 快捷操作</h3>
                         <a href="create.html" class="action-btn">🎨 前往創作空間</a>
@@ -549,6 +557,7 @@
 </div>
 
 <script src="doratch-staff-cosmetics.js"></script>
+<script src="doratch-subscription.js"></script>
 <script src="shared/doratch-docoin-catalog.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -642,6 +651,16 @@
             bindStaffFallback();
         }
     }
+    if (window.DoratchSubscription && window.DoratchSubscription.enhanceGrants && window.DoratchRoleCosmetics) {
+        window.DoratchSubscription.enhanceGrants(window.DoratchRoleCosmetics);
+        bindStaffModule(window.DoratchRoleCosmetics);
+    }
+    const subscriptionBadgeHtml = (window.DoratchSubscription && window.DoratchSubscription.subscriptionBadgeHtml)
+        ? window.DoratchSubscription.subscriptionBadgeHtml.bind(window.DoratchSubscription)
+        : () => "";
+    const getActiveSubscriptionTier = (data) => (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+        ? window.DoratchSubscription.getActiveTier(data)
+        : "";
 
     const DocoinCatalog = window.DoratchDocoinCatalog || {};
     const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
@@ -1009,6 +1028,7 @@
         aurora_pulse: "name-effect-aurora-pulse",
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
+        soft_glow: "name-effect-soft-glow",
         sparkle: "name-effect-sparkle",
         glitch: "name-effect-glitch",
         chaos_prism: "name-effect-chaos-prism",
@@ -1251,11 +1271,29 @@
                 staffPill.textContent = "";
             }
         }
+        const subPill = document.getElementById("profile-sub-tier-pill");
+        const subTier = getActiveSubscriptionTier(data);
+        if (subPill) {
+            if (subTier && !staffRole) {
+                subPill.style.display = "inline-flex";
+                subPill.innerHTML = subscriptionBadgeHtml(subTier);
+            } else {
+                subPill.style.display = "none";
+                subPill.innerHTML = "";
+            }
+        }
         const profileWrap = document.querySelector(".dc-profile-wrap");
+        const dcBanner = document.getElementById("dc-banner");
         if (profileWrap) {
-            profileWrap.classList.remove("staff-aura-developer", "staff-aura-admin");
+            profileWrap.classList.remove("staff-aura-developer", "staff-aura-admin", "sub-pro-aura");
             if (staffRole === "developer") profileWrap.classList.add("staff-aura-developer");
             else if (staffRole === "admin") profileWrap.classList.add("staff-aura-admin");
+            else if (subTier === "pro" && window.DoratchSubscription && window.DoratchSubscription.isProAura(data)) {
+                profileWrap.classList.add("sub-pro-aura");
+            }
+        }
+        if (dcBanner) {
+            dcBanner.classList.toggle("sub-pro-aura", subTier === "pro" && !staffRole);
         }
         const avWrap = document.querySelector(".dc-avatar-wrap");
         if (avWrap) {
@@ -1398,6 +1436,13 @@
     const btnEditProfileInfo = document.getElementById("btn-edit-profile-info");
     if (btnEditProfileInfo && profileInfoModal) {
         btnEditProfileInfo.addEventListener("click", function () {
+            const sub = window.DoratchSubscription;
+            const statusMax = sub ? sub.getCustomStatusMaxLen(userData) : 60;
+            const bioMax = sub ? sub.getProfileBioMaxLen(userData) : 300;
+            const statusInput = document.getElementById("input-custom-status");
+            const bioInput = document.getElementById("input-profile-bio");
+            if (statusInput) statusInput.maxLength = statusMax;
+            if (bioInput) bioInput.maxLength = bioMax;
             document.getElementById("input-custom-status").value = String(userData.customStatus || "").trim();
             document.getElementById("input-profile-bio").value = String(userData.profileBio || "").trim();
             document.getElementById("profile-form-msg").textContent = "";
@@ -1427,8 +1472,11 @@
     if (btnProfileInfoSave) {
         btnProfileInfoSave.addEventListener("click", async function () {
         if (!userRef) return;
-        const status = String(document.getElementById("input-custom-status").value || "").trim().slice(0, 60);
-        const bio = String(document.getElementById("input-profile-bio").value || "").trim().slice(0, 300);
+        const sub = window.DoratchSubscription;
+        const statusMax = sub ? sub.getCustomStatusMaxLen(userData) : 60;
+        const bioMax = sub ? sub.getProfileBioMaxLen(userData) : 300;
+        const status = String(document.getElementById("input-custom-status").value || "").trim().slice(0, statusMax);
+        const bio = String(document.getElementById("input-profile-bio").value || "").trim().slice(0, bioMax);
         const msg = document.getElementById("profile-form-msg");
         const btn = document.getElementById("btn-profile-info-save");
         btn.disabled = true;
@@ -1563,6 +1611,24 @@
             document.getElementById("count-coins").innerText = Math.floor(getDoordValue(userData));
             document.getElementById("count-lv").innerText = userData.lv || 1;
             document.getElementById("side-coins").innerText = `Doord ${Math.floor(getDoordValue(userData))} · Docoin ${Math.floor(getDocoinValue(userData))}`;
+
+            const subCard = document.getElementById("profile-subscription-card");
+            const subTitle = document.getElementById("profile-subscription-title");
+            const subDesc = document.getElementById("profile-subscription-desc");
+            const subTier = getActiveSubscriptionTier(userData);
+            if (subCard && subTitle && subDesc) {
+                subCard.style.display = "block";
+                if (subTier === "pro") {
+                    subTitle.innerHTML = "💎 Doratch Pro";
+                    subDesc.textContent = "已啟用 Pro 權益 · " + (window.DoratchSubscription ? window.DoratchSubscription.formatSubscriptionExpiry(userData) : "");
+                } else if (subTier === "plus") {
+                    subTitle.innerHTML = "✨ Doratch Plus";
+                    subDesc.textContent = "已啟用 Plus 權益 · " + (window.DoratchSubscription ? window.DoratchSubscription.formatSubscriptionExpiry(userData) : "");
+                } else {
+                    subTitle.innerHTML = "💫 升級 Doratch Plus / Pro";
+                    subDesc.textContent = "解鎖專屬外觀、更多雲端空間與商城折扣。";
+                }
+            }
 
             let role = userData.role || "student";
             if (user.email === "chianghansen0302@gmail.com") role = "admin";

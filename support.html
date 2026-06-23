@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Doratch">
+    <link rel="icon" type="image/png" href="Doratch.png">
+    <link rel="apple-touch-icon" href="Doratch.png">
+    <link rel="stylesheet" href="doratch-mobile-shell.css">
+    <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
+    <title>客服中心 - Doratch</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4C97FF;
+            --accent: #855CD6;
+            --bg: #F0F2F5;
+            --card: #fff;
+            --text: #0f172a;
+            --muted: #64748b;
+        }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        .support-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 48px; }
+        .support-hero {
+            background: linear-gradient(135deg, #4C97FF, #855CD6);
+            color: #fff;
+            border-radius: 24px;
+            padding: 36px 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 16px 40px rgba(76, 151, 255, 0.25);
+        }
+        .support-hero h1 { margin: 0 0 8px; font-size: 2rem; font-weight: 900; }
+        .support-hero p { margin: 0; opacity: 0.92; line-height: 1.6; }
+        .support-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 800px) { .support-grid { grid-template-columns: 1fr; } }
+        .support-card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            border: 1px solid rgba(15,23,42,0.06);
+        }
+        .support-card h2 { margin: 0 0 14px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .faq-item { border-bottom: 1px solid #e2e8f0; }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-q {
+            width: 100%; text-align: left; background: none; border: none;
+            padding: 14px 0; font-weight: 800; font-size: 14px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            font-family: inherit; color: var(--text);
+        }
+        .faq-a { display: none; padding: 0 0 14px; font-size: 13px; color: var(--muted); line-height: 1.65; }
+        .faq-item.open .faq-a { display: block; }
+        .faq-item.open .faq-caret { transform: rotate(90deg); }
+        .faq-caret { color: var(--primary); transition: transform 0.15s; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1;
+            border-radius: 12px; padding: 11px 14px; font-size: 14px; font-family: inherit;
+        }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .btn-primary {
+            background: linear-gradient(135deg, #4C97FF, #6366f1);
+            color: #fff; border: none; border-radius: 12px;
+            padding: 12px 20px; font-weight: 900; font-size: 14px; cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+        .btn-ghost {
+            background: #f1f5f9; color: #334155; border: none; border-radius: 12px;
+            padding: 10px 16px; font-weight: 800; font-size: 13px; cursor: pointer; font-family: inherit;
+        }
+        .quick-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .quick-links a {
+            text-decoration: none; background: #eef2ff; color: #4338ca;
+            padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 800;
+        }
+        .ticket-list { display: flex; flex-direction: column; gap: 12px; }
+        .ticket-item {
+            border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px;
+            background: #fafafa;
+        }
+        .ticket-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+        .ticket-subject { font-weight: 900; font-size: 14px; }
+        .ticket-meta { font-size: 12px; color: var(--muted); line-height: 1.5; }
+        .status-pill {
+            font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+        }
+        .status-open { background: #dbeafe; color: #1d4ed8; }
+        .status-replied { background: #dcfce7; color: #15803d; }
+        .status-closed { background: #e2e8f0; color: #475569; }
+        .admin-reply {
+            margin-top: 10px; padding: 10px 12px; background: #f0fdf4;
+            border-left: 3px solid #22c55e; border-radius: 8px; font-size: 13px; line-height: 1.55;
+        }
+        .empty-hint { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 12px; }
+        #form-msg { font-size: 13px; margin-top: 10px; min-height: 1.2em; }
+        #form-msg.ok { color: #15803d; }
+        #form-msg.err { color: #dc2626; }
+        .guest-banner {
+            background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412;
+            border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; font-size: 13px;
+        }
+        .guest-banner a { color: #c2410c; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar-main" data-doratch-active="support">
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="" alt="" style="width:32px;height:32px;border-radius:50%;">
+                <div style="flex:1;overflow:hidden;">
+                    <div id="side-username" style="font-size:12px;font-weight:bold;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">載入中...</div>
+                    <div style="font-size:10px;color:#64748B;">💳 <span id="side-coins">Doord 0 · Docoin 0</span></div>
+                </div>
+                <button type="button" onclick="handleLogout()" style="background:none;border:none;color:#64748B;cursor:pointer;">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="support-wrap">
+            <div class="support-hero">
+                <h1>🎧 客服中心</h1>
+                <p>帳號、商城、Plus / Pro 訂閱、聊天或程式問題，都可以在這裡找到解答或提交工單。我們會盡快回覆。</p>
+            </div>
+
+            <div id="guest-banner" class="guest-banner" style="display:none;">
+                請先 <a href="login.html" id="guest-login-link">登入</a> 後才能提交工單與查看回覆紀錄。
+            </div>
+
+            <div class="support-grid">
+                <div class="support-card">
+                    <h2>❓ 常見問題</h2>
+                    <div id="faq-list"></div>
+                    <div class="quick-links">
+                        <a href="shop.html">🛒 創意商城</a>
+                        <a href="profile.html">👤 個人檔案</a>
+                        <a href="chat.html">💬 交流大廳</a>
+                        <a href="projects.html">📂 我的作品</a>
+                    </div>
+                </div>
+
+                <div class="support-card">
+                    <h2>📝 提交工單</h2>
+                    <form id="ticket-form">
+                        <div class="form-group">
+                            <label for="ticket-category">問題類型</label>
+                            <select id="ticket-category" required>
+                                <option value="account">帳號 / 登入 / 驗證信</option>
+                                <option value="subscription">Plus / Pro 訂閱</option>
+                                <option value="shop">商城 / Doord / Docoin</option>
+                                <option value="chat">聊天 / 私訊 / 伺服器</option>
+                                <option value="project">作品 / 雲端空間</option>
+                                <option value="bug">程式錯誤 / 畫面異常</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticket-subject">主旨（2～80 字）</label>
+                            <input type="text" id="ticket-subject" maxlength="80" required placeholder="簡短描述你的問題">
+                        </div>
+                        <div class="form-group">
+                            <label for="ticket-message">詳細說明</label>
+                            <textarea id="ticket-message" maxlength="2000" required placeholder="請描述發生時間、操作步驟、錯誤訊息等，方便我們協助"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-submit-ticket">送出工單</button>
+                        <div id="form-msg"></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="support-card" style="margin-top:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                    <h2 style="margin:0;">📋 我的工單</h2>
+                    <button type="button" class="btn-ghost" id="btn-refresh-tickets">重新整理</button>
+                </div>
+                <div id="ticket-list" class="ticket-list">
+                    <div class="empty-hint">載入中…</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="doratch-shell.js"></script>
+<script src="doratch-mobile-shell.js" defer></script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
+        authDomain: "chat-52c0d.firebaseapp.com",
+        projectId: "chat-52c0d",
+        appId: "1:449329325475:web:75f255c4055360dc9e6616"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let userData = {};
+
+    const FAQ = [
+        { q: "驗證信沒收到怎麼辦？", a: "請先檢查垃圾郵件資料夾。若仍沒有，可在登入頁使用「重發驗證信」。Email 打錯需重新註冊正確信箱，或聯絡客服協助。" },
+        { q: "如何開通 Doratch Plus / Pro？", a: "目前訂閱由管理員後台開通。請至創意商城查看方案內容，並在此提交「Plus / Pro 訂閱」工單，附上你的帳號 Email。" },
+        { q: "Doord 要怎麼獲得？", a: "在商城頁提交程式作品送審，管理員核准後會核發 Doord。Docoin 僅能由管理員發放，可單向兌換成 Doord。" },
+        { q: "聊天私訊或好友請求有問題？", a: "請確認對方 Email 是否正確、是否已完成信箱驗證。若仍異常，請提交工單並附上對方顯示名稱或 Email。" },
+        { q: "雲端作品空間不夠？", a: "免費、Plus、Pro 會員有不同的預設容量。Plus / Pro 會自動提升額度，也可透過工單申請額外空間。" }
+    ];
+
+    const CATEGORY_LABELS = {
+        account: "帳號",
+        subscription: "訂閱",
+        shop: "商城",
+        chat: "聊天",
+        project: "作品",
+        bug: "錯誤回報",
+        other: "其他"
+    };
+
+    const STATUS_LABELS = { open: "待處理", replied: "已回覆", closed: "已結案" };
+
+    function appAwareHref(path) {
+        const params = new URLSearchParams(location.search);
+        return params.get("app") === "1" ? path + (path.includes("?") ? "&" : "?") + "app=1" : path;
+    }
+
+    function esc(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function getDoord(data) {
+        if (Number.isFinite(data && data.doord)) return Number(data.doord);
+        return Number.isFinite(data && data.coins) ? Number(data.coins) : 0;
+    }
+
+    function getDocoin(data) {
+        return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
+
+    function renderFaq() {
+        const host = document.getElementById("faq-list");
+        if (!host) return;
+        host.innerHTML = FAQ.map(function (item, i) {
+            return '<div class="faq-item" data-faq="' + i + '">' +
+                '<button type="button" class="faq-q">' + esc(item.q) + '<span class="faq-caret">▸</span></button>' +
+                '<div class="faq-a">' + esc(item.a) + "</div></div>";
+        }).join("");
+        host.querySelectorAll(".faq-q").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const wrap = btn.closest(".faq-item");
+                if (!wrap) return;
+                const open = wrap.classList.contains("open");
+                host.querySelectorAll(".faq-item").forEach(function (el) { el.classList.remove("open"); });
+                if (!open) wrap.classList.add("open");
+            });
+        });
+    }
+
+    function applySidebar(user, data) {
+        const name = (data && data.displayName) || (user && user.email) || "訪客";
+        const av = document.getElementById("side-avatar");
+        const un = document.getElementById("side-username");
+        const coins = document.getElementById("side-coins");
+        if (av) av.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=4C97FF&color=fff";
+        if (un) un.textContent = name;
+        if (coins) coins.textContent = "Doord " + Math.floor(getDoord(data)) + " · Docoin " + Math.floor(getDocoin(data));
+    }
+
+    function setGuestUi() {
+        document.getElementById("guest-banner").style.display = "";
+        const link = document.getElementById("guest-login-link");
+        if (link) link.href = appAwareHref("login.html");
+        document.getElementById("btn-submit-ticket").disabled = true;
+        document.getElementById("ticket-form").querySelectorAll("input,select,textarea").forEach(function (el) { el.disabled = true; });
+        document.getElementById("ticket-list").innerHTML = '<div class="empty-hint">登入後可查看工單紀錄</div>';
+        applySidebar(null, {});
+    }
+
+    async function loadTickets() {
+        const host = document.getElementById("ticket-list");
+        if (!currentUser) return;
+        host.innerHTML = '<div class="empty-hint">載入中…</div>';
+        try {
+            const q = query(
+                collection(db, "support_tickets"),
+                where("userId", "==", currentUser.uid)
+            );
+            const snap = await getDocs(q);
+            const docs = snap.docs.slice().sort(function (a, b) {
+                const am = a.data().createdAt && a.data().createdAt.toMillis ? a.data().createdAt.toMillis() : 0;
+                const bm = b.data().createdAt && b.data().createdAt.toMillis ? b.data().createdAt.toMillis() : 0;
+                return bm - am;
+            });
+            if (!docs.length) {
+                host.innerHTML = '<div class="empty-hint">尚無工單。若有問題請在上方提交。</div>';
+                return;
+            }
+            host.innerHTML = "";
+            docs.forEach(function (d) {
+                const t = d.data() || {};
+                const status = t.status || "open";
+                const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate().toLocaleString("zh-TW") : "剛剛";
+                const cat = CATEGORY_LABELS[t.category] || t.category || "其他";
+                const div = document.createElement("div");
+                div.className = "ticket-item";
+                div.innerHTML =
+                    '<div class="ticket-head">' +
+                    '<div class="ticket-subject">[' + esc(cat) + "] " + esc(t.subject || "（無主旨）") + "</div>" +
+                    '<span class="status-pill status-' + esc(status) + '">' + esc(STATUS_LABELS[status] || status) + "</span>" +
+                    "</div>" +
+                    '<div class="ticket-meta">提交時間：' + esc(created) + "</div>" +
+                    '<div class="ticket-meta" style="margin-top:6px;white-space:pre-wrap;">' + esc(t.message || "") + "</div>" +
+                    (t.adminReply ? '<div class="admin-reply"><strong>客服回覆：</strong><br>' + esc(t.adminReply) + "</div>" : "");
+                host.appendChild(div);
+            });
+        } catch (e) {
+            console.error(e);
+            host.innerHTML = '<div class="empty-hint">載入失敗：' + esc(e.message || e) + "</div>";
+        }
+    }
+
+    document.getElementById("ticket-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        if (!currentUser) return;
+        const msg = document.getElementById("form-msg");
+        const btn = document.getElementById("btn-submit-ticket");
+        const category = document.getElementById("ticket-category").value;
+        const subject = String(document.getElementById("ticket-subject").value || "").trim();
+        const message = String(document.getElementById("ticket-message").value || "").trim();
+        if (subject.length < 2) {
+            msg.className = "err";
+            msg.textContent = "主旨至少 2 個字";
+            return;
+        }
+        if (message.length < 5) {
+            msg.className = "err";
+            msg.textContent = "請至少輸入 5 個字的說明";
+            return;
+        }
+        btn.disabled = true;
+        msg.textContent = "送出中…";
+        msg.className = "";
+        try {
+            await addDoc(collection(db, "support_tickets"), {
+                userId: currentUser.uid,
+                userEmail: currentUser.email || "",
+                displayName: (userData.displayName || "").trim(),
+                category,
+                subject,
+                message,
+                status: "open",
+                adminReply: "",
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            document.getElementById("ticket-subject").value = "";
+            document.getElementById("ticket-message").value = "";
+            msg.className = "ok";
+            msg.textContent = "✅ 工單已送出，我們會盡快回覆。";
+            await loadTickets();
+        } catch (err) {
+            console.error(err);
+            msg.className = "err";
+            msg.textContent = "送出失敗：" + (err.message || err);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+
+    document.getElementById("btn-refresh-tickets").addEventListener("click", function () {
+        if (currentUser) loadTickets();
+    });
+
+    const params = new URLSearchParams(location.search);
+    const prefill = params.get("category");
+    if (prefill && document.getElementById("ticket-category").querySelector('option[value="' + prefill + '"]')) {
+        document.getElementById("ticket-category").value = prefill;
+    }
+
+    renderFaq();
+
+    onAuthStateChanged(auth, async function (user) {
+        currentUser = user;
+        window.__DORATCH_AUTH_EMAIL__ = (user && user.email) || "";
+        if (!user) {
+            setGuestUi();
+            return;
+        }
+        document.getElementById("guest-banner").style.display = "none";
+        document.getElementById("btn-submit-ticket").disabled = false;
+        document.getElementById("ticket-form").querySelectorAll("input,select,textarea").forEach(function (el) { el.disabled = false; });
+        try {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            userData = snap.exists() ? snap.data() : {};
+            userData.email = user.email || userData.email || "";
+        } catch (_) {
+            userData = { email: user.email || "" };
+        }
+        applySidebar(user, userData);
+        await loadTickets();
+    });
+</script>
+</body>
+</html>

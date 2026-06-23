@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
+    <link rel="stylesheet" href="doratch-subscription.css">
     <title>創意商城 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -362,6 +363,12 @@
     </div>
     </details>
 
+    <section id="shop-subscription-section" class="subscription-plans-wrap" style="display:none;">
+        <h2 class="category-title">💫 訂閱方案 <span style="font-size:14px;font-weight:700;color:#64748B;">類 Discord Basic / Nitro</span></h2>
+        <p class="sub-plans-intro" id="sub-plans-intro">升級帳號解鎖專屬外觀、更多雲端空間與商城折扣。目前由管理員開通，金流串接後可自助訂閱。</p>
+        <div class="subscription-plans" id="subscription-plans"></div>
+    </section>
+
     <section id="shop-staff-section" class="shop-staff-section" style="display:none;">
         <h2>✨ 身份專屬</h2>
         <p class="shop-staff-sub" id="shop-staff-sub"></p>
@@ -386,6 +393,7 @@
             <button type="button" class="shop-filter-tab" data-filter="badge">徽章</button>
             <button type="button" class="shop-filter-tab" data-filter="name">名稱</button>
             <button type="button" class="shop-filter-tab" data-filter="effect">面板特效</button>
+            <button type="button" class="shop-filter-tab" data-filter="subscription">💫 訂閱</button>
             <button type="button" class="shop-filter-tab" data-filter="bundle">組合包</button>
         </div>
     </div>
@@ -399,6 +407,7 @@
 </div>
 
 <script src="doratch-staff-cosmetics.js"></script>
+<script src="doratch-subscription.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -805,6 +814,7 @@
         currentUserData = { doord: 0, docoin: 0, coins: 0, inventory: [] };
         restoreCoinReviewDraft();
         renderStaffSection();
+        renderSubscriptionPlans();
         renderItems();
     }
 
@@ -904,15 +914,60 @@
         applySidebarUserUi(user, currentUserData);
         const reviewStatus = document.getElementById('review-status');
         if (reviewStatus) {
-            const lim = Number.isFinite(currentUserData.reviewUploadDailyLimit) ? currentUserData.reviewUploadDailyLimit : 1;
+            const sub = window.DoratchSubscription;
+            const baseLim = Number.isFinite(currentUserData.reviewUploadDailyLimit)
+                ? currentUserData.reviewUploadDailyLimit
+                : (sub ? sub.getDefaultReviewDailyLimit(currentUserData) : 1);
             const bonus = Number.isFinite(currentUserData.reviewUploadBonusToday) ? currentUserData.reviewUploadBonusToday : 0;
-            reviewStatus.innerText = `今日審核上傳上限：${Math.max(0, lim + bonus)} 次（含管理員加次）`;
+            const tier = sub ? sub.getActiveTier(currentUserData) : "";
+            const tierNote = tier ? " · " + sub.subscriptionLabel(tier) + " 會員" : "";
+            reviewStatus.innerText = `今日審核上傳上限：${Math.max(0, baseLim + bonus)} 次（含管理員加次）${tierNote}`;
         }
         await loadOnlineProjects(user);
         restoreCoinReviewDraft();
         renderStaffSection();
+        renderSubscriptionPlans();
         renderItems();
     };
+
+    function renderSubscriptionPlans() {
+        const sub = window.DoratchSubscription;
+        const section = document.getElementById("shop-subscription-section");
+        const container = document.getElementById("subscription-plans");
+        if (!sub || !section || !container) return;
+        const active = sub.getActiveTier(currentUserData || {});
+        const plans = sub.SUBSCRIPTION_PLANS;
+        container.innerHTML = "";
+        ["plus", "pro"].forEach(function (tierKey) {
+            const plan = plans[tierKey];
+            if (!plan) return;
+            const isActive = active === tierKey || (tierKey === "plus" && active === "pro");
+            const isOwnedTier = active === tierKey;
+            const card = document.createElement("div");
+            card.className = "sub-plan-card " + tierKey;
+            let statusHtml = "";
+            if (isOwnedTier) {
+                statusHtml = '<div class="sub-plan-status active-' + tierKey + '">✓ 目前方案 · ' + sub.formatSubscriptionExpiry(currentUserData) + "</div>";
+            } else if (tierKey === "plus" && active === "pro") {
+                statusHtml = '<div class="sub-plan-status active-pro">已由 Pro 涵蓋 Plus 權益</div>';
+            }
+            const perks = (plan.perks || []).map(function (p) { return "<li>" + p + "</li>"; }).join("");
+            const ctaLabel = isOwnedTier ? "使用中" : "前往客服開通";
+            card.innerHTML =
+                '<div class="sub-plan-head"><span class="sub-plan-icon">' + plan.icon + '</span><h3 class="sub-plan-name">' + plan.name + "</h3></div>" +
+                '<p class="sub-plan-tagline">' + plan.tagline + "</p>" +
+                statusHtml +
+                "<ul class=\"sub-plan-perks\">" + perks + "</ul>" +
+                '<button type="button" class="sub-plan-cta ' + tierKey + (isOwnedTier ? " owned" : "") + '" ' + (isOwnedTier ? "disabled" : "") + ">" + ctaLabel + "</button>";
+            const btn = card.querySelector(".sub-plan-cta");
+            if (btn && !isOwnedTier) {
+                btn.addEventListener("click", function () {
+                    location.href = appAwareHref("support.html?category=subscription");
+                });
+            }
+            container.appendChild(card);
+        });
+    }
 
     async function loadOnlineProjects(user) {
         const select = document.getElementById('review-project-id');
@@ -1050,6 +1105,10 @@
         const canBuy = !!currentUser && !isOwned;
         const isDocoin = item.currency === "docoin";
         const isLegendary = LEGENDARY_IDS.has(item.id);
+        const sub = window.DoratchSubscription;
+        const listPrice = Number(item.price) || 0;
+        const salePrice = (currency === "doord" && sub) ? sub.applyShopDiscount(listPrice, currentUserData || {}) : listPrice;
+        const hasDiscount = salePrice < listPrice;
         const div = document.createElement("div");
         div.className = "item-card" + (isLegendary ? " legendary" : "") + (isDocoin ? " docoin-mythic" : "");
         const metaTags = [];
@@ -1064,7 +1123,10 @@
             '<span class="item-icon">' + item.icon + "</span>" +
             '<div class="item-name">' + item.name + "</div>" +
             '<div class="item-desc">' + item.desc + "</div>" +
-            '<div class="item-price ' + (currency === "docoin" ? "docoin" : "") + '">' + currencyIcon + " " + item.price + " " + currencyName + "</div>" +
+            '<div class="item-price ' + (currency === "docoin" ? "docoin" : "") + '">' +
+            currencyIcon + " " + (hasDiscount ? ('<s style="opacity:0.55;font-weight:700;">' + listPrice + "</s> " + salePrice) : listPrice) + " " + currencyName +
+            (hasDiscount ? ' <span style="font-size:10px;color:#7c3aed;">會員價</span>' : "") +
+            "</div>" +
             '<button class="btn-buy ' + (isOwned ? "owned" : (canBuy ? "available" : "disabled")) + '" onclick="buyItem(\'' + item.id + '\')">' +
             (isOwned ? "已擁有" : (canBuy ? "立即購買" : "請先登入")) + "</button>";
         return div;
@@ -1138,7 +1200,21 @@
 
     function renderItems() {
         const grid = document.getElementById("shop-items-grid");
+        const subSection = document.getElementById("shop-subscription-section");
         if (!grid) return;
+        if (subSection) {
+            subSection.style.display = (shopFilter === "all" || shopFilter === "subscription") ? "" : "none";
+        }
+        renderSubscriptionPlans();
+        if (shopFilter === "subscription") {
+            grid.innerHTML = '<div class="shop-empty">上方為 Doratch Plus / Pro 訂閱方案<br><span style="font-size:12px;font-weight:400;">開通後自動解鎖專屬外觀與平台權益</span></div>';
+            const countEl = document.getElementById("shop-result-count");
+            const pageEl = document.getElementById("shop-page-info");
+            if (countEl) countEl.textContent = "訂閱方案";
+            if (pageEl) pageEl.textContent = "Plus · Pro";
+            renderPagination(1);
+            return;
+        }
         const filtered = getFilteredShopItems();
         const totalPages = Math.max(1, Math.ceil(filtered.length / SHOP_PAGE_SIZE));
         if (shopPage > totalPages) shopPage = totalPages;
@@ -1167,14 +1243,18 @@
         }
         const item = itemsBank.find((x) => x.id === id);
         if (!item) return alert("道具不存在。");
-        const price = Number(item.price) || 0;
+        const listPrice = Number(item.price) || 0;
         const currency = item.currency === 'docoin' ? 'docoin' : 'doord';
+        const sub = window.DoratchSubscription;
+        const price = (currency === 'doord' && sub) ? sub.applyShopDiscount(listPrice, currentUserData || {}) : listPrice;
         const alreadyOwned = itemOwned(item, currentUserData.inventory || []);
         if (alreadyOwned) return alert("此道具已擁有。");
         if (currency === 'docoin' && getDocoin(currentUserData) < price) return alert("Docoin 不足！此道具只能使用 Docoin 購買。");
         if (currency !== 'docoin' && getDoord(currentUserData) < price) return alert("Doord 不足！可提交作品等待核發，或先用 Docoin 兌換。");
 
-        const spendLabel = currency === 'docoin' ? `💎 ${price} Docoin` : `🪙 ${price} Doord`;
+        const spendLabel = currency === 'docoin'
+            ? `💎 ${price} Docoin`
+            : `🪙 ${price} Doord${price < listPrice ? `（原價 ${listPrice}，會員價）` : ''}`;
         if(!confirm(`確定要花費 ${spendLabel} 購買「${item.name}」嗎？`)) return;
 
         try {

@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="doratch-shell.css">
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
+    <link rel="stylesheet" href="doratch-subscription.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>聊天室 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -1194,6 +1195,7 @@
     <script src="chat-discord-ui.js"></script>
     <script src="shared/doratch-docoin-catalog.js"></script>
     <script src="doratch-staff-cosmetics.js"></script>
+    <script src="doratch-subscription.js"></script>
     <script src="doratch-staff-cinematic.js"></script>
 
 <script type="module">
@@ -1294,6 +1296,16 @@
             bindStaffFallback();
         }
     }
+    if (window.DoratchSubscription && window.DoratchSubscription.enhanceGrants && window.DoratchRoleCosmetics) {
+        window.DoratchSubscription.enhanceGrants(window.DoratchRoleCosmetics);
+        bindStaffModule(window.DoratchRoleCosmetics);
+    }
+    const subscriptionBadgeHtml = (window.DoratchSubscription && window.DoratchSubscription.subscriptionBadgeHtml)
+        ? window.DoratchSubscription.subscriptionBadgeHtml.bind(window.DoratchSubscription)
+        : () => "";
+    const subscriptionTierForSnapshot = (data) => (window.DoratchSubscription && window.DoratchSubscription.subscriptionTierForSnapshot)
+        ? window.DoratchSubscription.subscriptionTierForSnapshot(data)
+        : "";
 
     const DocoinCatalog = window.DoratchDocoinCatalog || {};
     const isDocoinProfileEffect = DocoinCatalog.isDocoinProfileEffect || (() => false);
@@ -1990,6 +2002,7 @@
         aurora_pulse: "name-effect-aurora-pulse",
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
+        soft_glow: "name-effect-soft-glow",
         sparkle: "name-effect-sparkle",
         glitch: "name-effect-glitch",
         chaos_prism: "name-effect-chaos-prism",
@@ -2055,6 +2068,7 @@
             nameEffect: pickOwnedEquipped(currentUserData, "nameEffect"),
             profileEffect: resolveVisualCosmetic(currentUserData, "profileEffect"),
             staffRole: staffRoleForSnapshot({ ...(currentUserData || {}), email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || "" }),
+            subscriptionTier: subscriptionTierForSnapshot({ ...(currentUserData || {}), email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || "" }),
             customStatus: String(currentUserData && currentUserData.customStatus || "").trim(),
             profileBio: String(currentUserData && currentUserData.profileBio || "").trim()
         };
@@ -3028,7 +3042,7 @@
             const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
             const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
                 ? msg.senderCosmetics
-                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "", staffRole: "" };
+                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "", staffRole: "", subscriptionTier: "" };
             const senderName = isBotMsg
                 ? (msg.botName || "Bot")
                 : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
@@ -3068,8 +3082,10 @@
             const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect) ? nameEffectClass(senderCosmetics.nameEffect) : "";
             const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
             const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
+            const msgSubTier = !isBotMsg ? String(senderCosmetics.subscriptionTier || "").trim() : "";
             const rowClass = isBotMsg ? 'message-row bot-msg' : ('message-row' + (msgStaffRole === 'developer' ? ' staff-dev-glow' : msgStaffRole === 'admin' ? ' staff-admin-glow' : ''));
             const staffRoleBadge = (!isBotMsg && msgStaffRole) ? staffBadgeHtml(msgStaffRole) : '';
+            const subTierBadge = (!isBotMsg && !msgStaffRole && msgSubTier) ? subscriptionBadgeHtml(msgSubTier) : '';
             const staffAvatarHalo = msgStaffRole === 'developer' ? ' staff-avatar-halo-dev' : (msgStaffRole === 'admin' ? ' staff-avatar-halo-admin' : '');
             const staffBubbleCls = msgStaffRole === 'developer' ? ' staff-msg-bubble-dev' : (msgStaffRole === 'admin' ? ' staff-msg-bubble-admin' : '');
             const staffNameGlow = (!isBotMsg && msgStaffRole === 'developer') ? ' staff-author-dev' : ((!isBotMsg && msgStaffRole === 'admin') ? ' staff-author-admin' : '');
@@ -3107,7 +3123,7 @@
                         <div class="msg-content${staffBubbleCls}">
                             ${quickActionsHtml}
                             <div class="msg-header">
-                                <span class="msg-author${staffNameGlow}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
+                                <span class="msg-author${staffNameGlow}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${subTierBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
@@ -3544,6 +3560,13 @@
         const popStaffRole = c.staffRole || getStaffRole(senderData);
         if (popStaffRole) {
             rolePills.unshift(`<span class="profile-pop-role-pill staff-role-${popStaffRole}">${popStaffRole === "developer" ? "⚡" : "👑"} ${escHtml(staffRoleLabel(popStaffRole))}</span>`);
+        } else {
+            const popSubTier = String(c.subscriptionTier || subscriptionTierForSnapshot(senderData) || "").trim();
+            if (popSubTier === "pro") {
+                rolePills.unshift('<span class="profile-pop-role-pill sub-tier-pill-pro">💎 Doratch Pro</span>');
+            } else if (popSubTier === "plus") {
+                rolePills.unshift('<span class="profile-pop-role-pill sub-tier-pill-plus">✨ Doratch Plus</span>');
+            }
         }
         const resolvedBanner = resolveCosmeticForDisplay(senderData, "banner", c.banner);
         const resolvedProfileFx = resolveCosmeticForDisplay(senderData, "profileEffect", c.profileEffect);

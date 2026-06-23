@@ -1,4 +1,4 @@
-const CACHE = "doratch-app-v11";
+const CACHE = "doratch-app-v13";
 const SHELL = [
   "./app.html",
   "./doratch-mobile-shell.js",

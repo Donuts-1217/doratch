@@ -293,6 +293,7 @@
             <div id="menu-questions" class="nav-item" onclick="showTab('questions')">❓ 題庫管理</div>
             <div id="menu-coin-reviews" class="nav-item" onclick="showTab('coin-reviews')">🪙 Doord 審核</div>
             <div id="menu-server-requests" class="nav-item" onclick="showTab('server-requests')">🖥️ 伺服器申請</div>
+            <div id="menu-support-tickets" class="nav-item" onclick="showTab('support-tickets')">🎧 客服工單</div>
             <div id="menu-announcements" class="nav-item" onclick="showTab('announcements')">📢 公告管理</div>
             <div id="menu-logs" class="nav-item" onclick="showTab('logs')">📜 管理日誌</div>
         </nav>
@@ -455,6 +456,17 @@
         </div>
     </div>
 
+    <div id="tab-support-tickets" style="display:none;">
+        <div class="header">
+            <h1>客服工單</h1>
+            <button class="btn btn-primary" onclick="loadSupportTickets()">🔄 重新整理</button>
+        </div>
+        <div class="card">
+            <p style="margin-top:0; color:#94A3B8; font-size:13px;">使用者從「客服中心」提交的問題。回覆後狀態會改為「已回覆」，使用者可在工單列表看到內容。</p>
+            <div id="support-ticket-list"></div>
+        </div>
+    </div>
+
     <div id="tab-announcements" style="display:none;">
         <div class="header">
             <h1>公告管理</h1>
@@ -537,6 +549,28 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>訂閱方案 (Plus / Pro)</label>
+                <select id="u-sub-tier">
+                    <option value="">無訂閱</option>
+                    <option value="plus">✨ Doratch Plus</option>
+                    <option value="pro">💎 Doratch Pro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>訂閱到期（留空＝永久）</label>
+                <input type="datetime-local" id="u-sub-expires">
+            </div>
+            <div class="form-group full">
+                <label>快速開通</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" class="btn" style="background:#5b21b6;color:white;" onclick="quickGrantSubscription('plus', 30)">Plus 30 天</button>
+                    <button type="button" class="btn" style="background:#7c3aed;color:white;" onclick="quickGrantSubscription('pro', 30)">Pro 30 天</button>
+                    <button type="button" class="btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('plus', 0)">Plus 永久</button>
+                    <button type="button" class="btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('pro', 0)">Pro 永久</button>
+                    <button type="button" class="btn" style="background:#7F1D1D;color:white;" onclick="revokeSubscription()">取消訂閱</button>
+                </div>
+            </div>
+            <div class="form-group">
                 <label>帳號狀態</label>
                 <select id="u-banned">
                     <option value="false">正常</option>
@@ -608,6 +642,7 @@
     </div>
 </div>
 
+<script src="doratch-subscription.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -706,6 +741,7 @@
             document.getElementById('menu-announcements').style.display = 'none';
             document.getElementById('menu-coin-reviews').style.display = 'none';
             document.getElementById('menu-server-requests').style.display = 'none';
+            document.getElementById('menu-support-tickets').style.display = 'none';
             document.getElementById('menu-logs').style.display = 'none';
             showTab('questions');
             loadQuestions();
@@ -714,6 +750,7 @@
             loadQuestions();
             loadCoinReviews();
             loadServerRequests();
+            loadSupportTickets();
             loadAnnouncements();
             loadLogs();
             loadSystemStorageSettings();
@@ -736,6 +773,7 @@
         document.getElementById('tab-questions').style.display = tab === 'questions' ? 'block' : 'none';
         document.getElementById('tab-coin-reviews').style.display = tab === 'coin-reviews' ? 'block' : 'none';
         document.getElementById('tab-server-requests').style.display = tab === 'server-requests' ? 'block' : 'none';
+        document.getElementById('tab-support-tickets').style.display = tab === 'support-tickets' ? 'block' : 'none';
         document.getElementById('tab-announcements').style.display = tab === 'announcements' ? 'block' : 'none';
         document.getElementById('tab-logs').style.display = tab === 'logs' ? 'block' : 'none';
         
@@ -747,6 +785,7 @@
         if(tab === 'questions') loadQuestions();
         if(tab === 'coin-reviews') loadCoinReviews();
         if(tab === 'server-requests') loadServerRequests();
+        if(tab === 'support-tickets') loadSupportTickets();
         if(tab === 'announcements') loadAnnouncements();
         if(tab === 'logs') loadLogs();
         if(tab === 'dashboard') {
@@ -1059,6 +1098,12 @@
             const email = escapeHtml(u.email || '—');
             const uidShort = escapeHtml((u.id || '').slice(0, 10) + '…');
             const role = u.role || 'student';
+            const subTier = (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+                ? window.DoratchSubscription.getActiveTier(u)
+                : ((u.subscription && u.subscription.tier) ? String(u.subscription.tier).toLowerCase() : '');
+            const subBadge = subTier === 'pro'
+                ? '<span class="stat-pill badge-sub-pro">💎 Pro</span>'
+                : (subTier === 'plus' ? '<span class="stat-pill badge-sub-plus">✨ Plus</span>' : '');
             const nowMs = Date.now();
             const graceMs = getMillis(u.cloudStorageGraceUntilMs);
             const graceActive = graceMs > nowMs;
@@ -1076,6 +1121,7 @@
                     <span class="stat-pill">💎 ${Math.floor(getDocoinValue(u))} Docoin</span>
                     <span class="stat-pill">LV.${u.lv ?? 1}</span>
                     <span class="stat-pill" style="color:#64748B;">${u.xp ?? 0} XP</span>
+                    ${subBadge}
                 </td>
                 <td><span class="badge badge-${role}">${role}</span></td>
                 <td>${isBanned ? '<span style="color:#EF4444; font-weight:bold;">已封鎖</span>' : '<span style="color:#10B981;">正常</span>'}</td>
@@ -1127,6 +1173,20 @@
         document.getElementById('u-lv').value = u.lv ?? 1;
         document.getElementById('u-xp').value = u.xp ?? 0;
         document.getElementById('u-role').value = u.role || 'student';
+        const sub = u.subscription || {};
+        const subTier = String(sub.tier || '').toLowerCase();
+        document.getElementById('u-sub-tier').value = (subTier === 'plus' || subTier === 'pro') ? subTier : '';
+        const subExpMs = getMillis(sub.expiresAtMs != null ? sub.expiresAtMs : sub.expiresAt);
+        const subExpInput = document.getElementById('u-sub-expires');
+        if (subExpInput) {
+            if (subTier && subExpMs > 0) {
+                const d = new Date(subExpMs);
+                const pad = (n) => String(n).padStart(2, '0');
+                subExpInput.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            } else {
+                subExpInput.value = '';
+            }
+        }
         document.getElementById('u-banned').value = u.isBanned ? 'true' : 'false';
         document.getElementById('u-cloud-storage-limit-mb').value = Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : defaultCloudStorageMB;
         document.getElementById('u-cloud-storage-max-files').value = Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1
@@ -1243,6 +1303,52 @@
         }
     };
 
+    function buildSubscriptionPayload(tier, expiresAtMs) {
+        const t = String(tier || '').trim().toLowerCase();
+        if (t !== 'plus' && t !== 'pro') return null;
+        const exp = Number(expiresAtMs) || 0;
+        return {
+            tier: t,
+            expiresAtMs: exp > 0 ? exp : 0,
+            source: 'admin',
+            grantedAtMs: Date.now()
+        };
+    }
+
+    function parseSubExpiresInput() {
+        const raw = String(document.getElementById('u-sub-expires')?.value || '').trim();
+        if (!raw) return 0;
+        const ms = new Date(raw).getTime();
+        return Number.isFinite(ms) ? ms : 0;
+    }
+
+    window.quickGrantSubscription = (tier, days) => {
+        const t = String(tier || '').toLowerCase();
+        if (t !== 'plus' && t !== 'pro') return;
+        document.getElementById('u-sub-tier').value = t;
+        const d = Math.max(0, Number(days) || 0);
+        const expInput = document.getElementById('u-sub-expires');
+        if (!d) {
+            if (expInput) expInput.value = '';
+            showToast(`已填入 ${t === 'pro' ? 'Pro' : 'Plus'} 永久，請按「儲存變更」`);
+            return;
+        }
+        const exp = Date.now() + d * 24 * 60 * 60 * 1000;
+        if (expInput) {
+            const dt = new Date(exp);
+            const pad = (n) => String(n).padStart(2, '0');
+            expInput.value = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+        }
+        showToast(`已填入 ${t === 'pro' ? 'Pro' : 'Plus'} ${d} 天，請按「儲存變更」`);
+    };
+
+    window.revokeSubscription = () => {
+        document.getElementById('u-sub-tier').value = '';
+        const expInput = document.getElementById('u-sub-expires');
+        if (expInput) expInput.value = '';
+        showToast('已清除訂閱欄位，請按「儲存變更」');
+    };
+
     window.saveUserSettings = async () => {
         if (!editingUserId) return;
         const u = allUsers.find(x => x.id === editingUserId);
@@ -1264,6 +1370,9 @@
         const cloudStorageMaxFiles = parseInt(document.getElementById('u-cloud-storage-max-files').value, 10);
         const reviewDailyLimit = parseInt(document.getElementById('u-review-daily-limit').value, 10);
         const reviewTodayBonus = parseInt(document.getElementById('u-review-today-bonus').value, 10);
+        const subTierSel = String(document.getElementById('u-sub-tier')?.value || '').trim().toLowerCase();
+        const subExpiresMs = parseSubExpiresInput();
+        const nextSubscription = subTierSel ? buildSubscriptionPayload(subTierSel, subExpiresMs) : null;
 
         if (isNaN(doord) || doord < 0) return showToast('Doord 必須為 0 以上的整數', 'error');
         if (isNaN(docoin) || docoin < 0) return showToast('Docoin 必須為 0 以上的整數', 'error');
@@ -1288,6 +1397,14 @@
         if (cloudStorageMaxFiles !== (Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1 ? u.cloudStorageMaxFiles : defaultCloudStorageMaxFiles)) changes.push(`雲端作品數上限 → ${cloudStorageMaxFiles}`);
         if (reviewDailyLimit !== (Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1)) changes.push(`審核每日上限 → ${reviewDailyLimit}`);
         if (reviewTodayBonus !== (Number.isFinite(u.reviewUploadBonusToday) ? u.reviewUploadBonusToday : 0)) changes.push(`今日審核加次 → ${reviewTodayBonus}`);
+        const prevSub = u.subscription || {};
+        const prevTier = String(prevSub.tier || '').toLowerCase();
+        const prevExp = getMillis(prevSub.expiresAtMs != null ? prevSub.expiresAtMs : prevSub.expiresAt);
+        const nextTier = nextSubscription ? nextSubscription.tier : '';
+        const nextExp = nextSubscription ? nextSubscription.expiresAtMs : 0;
+        if (nextTier !== prevTier || nextExp !== prevExp) {
+            changes.push(nextTier ? `訂閱 → ${nextTier}${nextExp ? '（到期 ' + new Date(nextExp).toLocaleString('zh-TW') + '）' : '（永久）'}` : '取消訂閱');
+        }
 
         if (!changes.length) {
             showToast('沒有變更需要儲存', 'error');
@@ -1310,7 +1427,8 @@
                 cloudStorageLimitMB: cloudStorageLimitMB,
                 cloudStorageMaxFiles: cloudStorageMaxFiles,
                 reviewUploadDailyLimit: reviewDailyLimit,
-                reviewUploadBonusToday: reviewTodayBonus
+                reviewUploadBonusToday: reviewTodayBonus,
+                subscription: nextSubscription
             });
             await logAction("編輯使用者", `${u.email || editingUserId}：${changes.join('、')}`);
             const idx = allUsers.findIndex(x => x.id === editingUserId);
@@ -1322,7 +1440,8 @@
                     cloudStorageLimitMB: cloudStorageLimitMB,
                     cloudStorageMaxFiles: cloudStorageMaxFiles,
                     reviewUploadDailyLimit: reviewDailyLimit,
-                    reviewUploadBonusToday: reviewTodayBonus
+                    reviewUploadBonusToday: reviewTodayBonus,
+                    subscription: nextSubscription
                 };
             }
             closeUserModal();
@@ -1525,6 +1644,99 @@
             host.innerHTML = `<div class="empty-state">載入失敗：${escapeHtml(e.message || e)}</div>`;
         }
     }
+
+    const SUPPORT_CATEGORY_LABELS = {
+        account: '帳號', subscription: '訂閱', shop: '商城', chat: '聊天',
+        project: '作品', bug: '錯誤', other: '其他'
+    };
+
+    window.loadSupportTickets = async function () {
+        const host = document.getElementById('support-ticket-list');
+        if (!host) return;
+        host.innerHTML = '<div style="color:#94A3B8; font-size:13px;">載入中...</div>';
+        try {
+            const snap = await getDocs(query(collection(db, 'support_tickets'), orderBy('createdAt', 'desc')));
+            if (snap.empty) {
+                host.innerHTML = '<div class="empty-state">目前沒有客服工單</div>';
+                return;
+            }
+            host.innerHTML = '';
+            snap.forEach(d => {
+                const t = d.data() || {};
+                const status = t.status || 'open';
+                const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate().toLocaleString('zh-TW') : '剛剛';
+                const cat = SUPPORT_CATEGORY_LABELS[t.category] || t.category || '其他';
+                const canReply = (myRole === 'admin' || myRole === 'developer') && status !== 'closed';
+                const item = document.createElement('div');
+                item.style.cssText = 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:12px; background:#111827;';
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px;">
+                        <div style="font-weight:900;">[${escapeHtml(cat)}] ${escapeHtml(t.subject || '（無主旨）')}</div>
+                        <span class="badge badge-${status === 'replied' ? 'teacher' : status === 'closed' ? 'admin' : 'student'}">${escapeHtml(status)}</span>
+                    </div>
+                    <div style="font-size:12px; color:#94A3B8; line-height:1.6;">
+                        使用者：${escapeHtml(t.displayName || t.userEmail || t.userId || '未知')}<br>
+                        Email：${escapeHtml(t.userEmail || '-')}<br>
+                        提交時間：${created}<br>
+                    </div>
+                    <pre style="margin-top:8px; white-space:pre-wrap; background:#0b1220; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; color:#cbd5e1; font-size:12px;">${escapeHtml(t.message || '')}</pre>
+                    ${t.adminReply ? `<div style="margin-top:8px; padding:10px; background:#052e16; border-radius:8px; font-size:12px; color:#bbf7d0;">已回覆：${escapeHtml(t.adminReply)}</div>` : ''}
+                    ${canReply ? `
+                        <div style="margin-top:10px;">
+                            <textarea id="support-reply-${d.id}" rows="3" placeholder="輸入回覆內容…" style="width:100%; box-sizing:border-box; background:#0b1220; border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:8px; padding:10px; font-family:inherit;"></textarea>
+                            <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                                <button class="btn btn-success" onclick="replySupportTicket('${d.id}')">送出回覆</button>
+                                <button class="btn" style="background:#334155;color:#fff;" onclick="closeSupportTicket('${d.id}')">結案</button>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+                host.appendChild(item);
+            });
+        } catch (e) {
+            console.error(e);
+            host.innerHTML = `<div class="empty-state">載入失敗：${escapeHtml(e.message || e)}</div>`;
+        }
+    };
+
+    window.replySupportTicket = async (ticketId) => {
+        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員可以回覆', 'error');
+        const input = document.getElementById('support-reply-' + ticketId);
+        const reply = String((input && input.value) || '').trim();
+        if (reply.length < 2) return showToast('回覆至少 2 個字', 'error');
+        try {
+            await updateDoc(doc(db, 'support_tickets', ticketId), {
+                adminReply: reply,
+                status: 'replied',
+                repliedBy: auth.currentUser.email || 'admin',
+                repliedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            await logAction('客服回覆', `ticket=${ticketId}`);
+            showToast('已回覆工單');
+            loadSupportTickets();
+        } catch (e) {
+            console.error(e);
+            showToast('回覆失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.closeSupportTicket = async (ticketId) => {
+        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員可以結案', 'error');
+        if (!confirm('確定將此工單標記為已結案？')) return;
+        try {
+            await updateDoc(doc(db, 'support_tickets', ticketId), {
+                status: 'closed',
+                updatedAt: serverTimestamp()
+            });
+            await logAction('客服結案', `ticket=${ticketId}`);
+            showToast('已結案');
+            loadSupportTickets();
+        } catch (e) {
+            console.error(e);
+            showToast('結案失敗：' + (e.message || e), 'error');
+        }
+    };
 
     window.approveServerRequest = async (requestId) => {
         if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員/開發者可以核准', 'error');
