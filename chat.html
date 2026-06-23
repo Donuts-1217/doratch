@@ -996,6 +996,90 @@
         .member-item:hover .kick-btn { opacity: 1; }
         .kick-btn.bot-disconnect { opacity: 0.7; background: rgba(255,255,255,0.1); color: #fca5a5; }
         .member-item--bot:hover .bot-disconnect { opacity: 1; }
+        .member-private-card {
+            background: linear-gradient(180deg, rgba(30,41,59,0.9), rgba(15,23,42,0.94));
+            border: 1px solid rgba(148,163,184,0.24);
+            border-radius: 14px;
+            padding: 14px;
+            color: #e2e8f0;
+        }
+        .member-private-head {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .member-private-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            object-fit: cover;
+        }
+        .member-private-name {
+            font-size: 15px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .member-private-handle {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        .member-private-status {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        .member-private-bio {
+            margin-top: 10px;
+            background: rgba(15,23,42,0.75);
+            border: 1px solid rgba(148,163,184,0.22);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 12px;
+            color: #cbd5e1;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .member-private-bio.empty { color: #64748b; }
+        .member-private-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .member-private-btn {
+            border: none;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            background: #5865f2;
+            color: #fff;
+            font-family: inherit;
+        }
+        .member-private-btn.secondary {
+            background: rgba(148,163,184,0.18);
+            color: #e2e8f0;
+        }
+        .member-private-btn.ok {
+            background: #22c55e;
+            color: #052e16;
+        }
+        .member-private-btn.warn {
+            background: #f59e0b;
+            color: #1c1917;
+        }
+        .member-private-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
 
         .app-container { flex: 1; min-height: 0; height: 100%; max-height: 100vh; overflow: hidden; }
         body.doratch-app-mode.chat-app .app-container { max-height: none; height: 100%; }
@@ -1386,6 +1470,8 @@
     let currentUserData = {};
     let replyToMessage = null;
     let incomingMessageRequestCount = -1;
+    let currentPrivatePeerUid = "";
+    let currentPrivatePeerData = null;
 
     function isMobileChatShell() {
         return window.DoratchMobile
@@ -1453,6 +1539,9 @@
 
     function buildChatHeaderActionsHtml(chatId, chatType, teacherId) {
         const items = [];
+        if (chatType === "private") {
+            items.push({ label: "👤 個人檔案", onclick: "toggleMemberSidebar()" });
+        }
         if (chatType === "server") {
             items.push({ label: "🚀 加成", onclick: "openServerBoostModal()" });
         }
@@ -2304,6 +2393,29 @@
         };
     }
 
+    function cosmeticSnapshotForUser(data) {
+        const src = data || {};
+        const nameApp = resolveNameAppearanceForUser(src);
+        const userEmail = String(src.email || "").trim();
+        return {
+            avatar: pickOwnedEquipped(src, "avatar"),
+            frame: pickOwnedEquipped(src, "frame"),
+            banner: resolveVisualCosmetic(src, "banner"),
+            title: pickOwnedEquipped(src, "title"),
+            badge: pickOwnedEquipped(src, "badge"),
+            nameColor: nameApp.color || pickOwnedEquipped(src, "nameColor"),
+            nameEffect: nameApp.effect || pickOwnedEquipped(src, "nameEffect"),
+            nameFont: nameApp.font || "default",
+            nameFontClass: nameApp.fontClass || "",
+            nameEffectClass: nameApp.effectClass || nameEffectClass(nameApp.effect),
+            profileEffect: resolveVisualCosmetic(src, "profileEffect"),
+            staffRole: staffRoleForSnapshot({ ...src, email: userEmail }),
+            subscriptionTier: subscriptionTierForSnapshot({ ...src, email: userEmail }),
+            customStatus: String(src.customStatus || "").trim(),
+            profileBio: String(src.profileBio || "").trim()
+        };
+    }
+
     function getEquipped(data) {
         return (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
     }
@@ -2620,6 +2732,90 @@
                    (r.toUid === currentUser.uid && r.fromUid === uid);
         });
     }
+
+    function friendRelationWithUid(uid) {
+        const out = { state: "none", requestId: "" };
+        if (!uid || !currentUser || uid === currentUser.uid) {
+            out.state = "self";
+            return out;
+        }
+        for (const r of friendLinks) {
+            const status = r.status || "pending";
+            const samePair = (r.fromUid === currentUser.uid && r.toUid === uid) || (r.toUid === currentUser.uid && r.fromUid === uid);
+            if (!samePair) continue;
+            if (status === "accepted") {
+                out.state = "friend";
+                out.requestId = r.id || "";
+                return out;
+            }
+            if (status === "pending") {
+                out.state = r.fromUid === currentUser.uid ? "outgoing" : "incoming";
+                out.requestId = r.id || "";
+                return out;
+            }
+        }
+        return out;
+    }
+
+    async function sendFriendRequestToUid(targetUid) {
+        if (!targetUid || !currentUser) throw new Error("INVALID_TARGET");
+        if (targetUid === currentUser.uid) throw new Error("SELF_REQUEST");
+        const relation = friendRelationWithUid(targetUid);
+        if (relation.state === "friend") throw new Error("ALREADY_FRIEND");
+        if (relation.state === "outgoing") throw new Error("REQUEST_ALREADY_SENT");
+        if (relation.state === "incoming") throw new Error("REQUEST_ALREADY_SENT_REVERSE");
+        const target = await fetchUserByUid(targetUid);
+        if (!target || !target.email) throw new Error("USER_NOT_FOUND");
+        const reqId = friendDocId(currentUser.uid, targetUid);
+        const reqRef = doc(db, "friend_requests", reqId);
+        await setDoc(reqRef, {
+            fromUid: currentUser.uid,
+            toUid: targetUid,
+            fromEmail: currentUser.email || "",
+            toEmail: String(target.email || "").toLowerCase(),
+            participants: [currentUser.uid, targetUid],
+            status: "pending",
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    }
+
+    window.startPrivateByUid = async (uid) => {
+        try {
+            const target = await fetchUserByUid(uid);
+            if (!target) throw new Error("USER_NOT_FOUND");
+            await openOrCreatePrivateChat(uid, target.email || "");
+        } catch (e) {
+            alert("開啟私訊失敗：" + (e.message || e));
+        }
+    };
+
+    window.sendFriendRequestToUid = async (uid) => {
+        try {
+            await sendFriendRequestToUid(uid);
+            alert("好友請求已送出！");
+        } catch (e) {
+            const code = String(e && e.message || "");
+            if (code === "SELF_REQUEST") alert("不能送好友請求給自己。");
+            else if (code === "ALREADY_FRIEND") alert("你們已經是好友。");
+            else if (code === "REQUEST_ALREADY_SENT") alert("你已送出好友請求，等待對方回應。");
+            else if (code === "REQUEST_ALREADY_SENT_REVERSE") alert("對方已送出好友請求給你，請直接接受。");
+            else if (code === "USER_NOT_FOUND") alert("找不到該使用者。");
+            else alert("送出好友請求失敗：" + (e.message || e));
+        }
+    };
+
+    window.acceptFriendByUid = async (uid) => {
+        const relation = friendRelationWithUid(uid);
+        if (relation.state !== "incoming" || !relation.requestId) return;
+        await acceptFriendRequest(relation.requestId);
+    };
+
+    window.cancelFriendRequestToUid = async (uid) => {
+        const relation = friendRelationWithUid(uid);
+        if (relation.state !== "outgoing" || !relation.requestId) return;
+        await cancelFriendRequest(relation.requestId);
+    };
 
     async function sendFriendRequestByEmail(targetEmailRaw) {
         const targetEmail = normalizeEmailInput(targetEmailRaw);
@@ -2948,11 +3144,13 @@
                 let displayName = chat.name || "未命名";
                 let rawName = displayName;
                 let icon = '💬';
+                let privatePeerUid = "";
                 if (chat.type === 'private') {
                     icon = '👤';
                     displayName = (chat.participantEmails || []).find(e => e !== currentUser.email) || "未知使用者";
                     displayName = displayName.split('@')[0];
                     rawName = displayName;
+                    privatePeerUid = (chat.participants || []).find((uid) => uid && uid !== currentUser.uid) || "";
                 } else if (chat.type === 'server') {
                     icon = '🏫';
                     const SB = serverBoostApi();
@@ -3010,9 +3208,12 @@
                 const privateRemoveBtn = (chat.type === "private" && !isIncomingReq)
                     ? `<div class="mini-actions"><button type="button" class="mini-btn cancel" onclick="event.stopPropagation();${isOutgoingReq ? `cancelMessageRequest('${chat.id}')` : `removePrivateChat('${chat.id}')`}">${isOutgoingReq ? "取消請求" : "移除私訊"}</button></div>`
                     : "";
+                const privateAvatarHtml = (chat.type === "private" && privatePeerUid)
+                    ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(rawName || "User")}&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,'${privatePeerUid}')">`
+                    : "";
 
                 item.innerHTML = `
-                    <div class="chat-name">${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
+                    <div class="chat-name" style="display:flex; align-items:center; gap:8px;">${privateAvatarHtml}${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
                     <div class="chat-preview">${isOutgoingReq ? '你已送出訊息請求，等待對方回應' : (chat.lastMessage || '開始聊天吧！')}</div>
                     ${privateRemoveBtn}
                 `;
@@ -3235,6 +3436,8 @@
         currentChatName = chatName;
         currentChatIcon = icon || "💬";
         currentChatDocData = null;
+        currentPrivatePeerUid = "";
+        currentPrivatePeerData = null;
         if (typingPulseTimer) {
             clearTimeout(typingPulseTimer);
             typingPulseTimer = null;
@@ -3304,6 +3507,10 @@
                 renderTypingIndicator(data.typingUsers || {});
                 if (currentChatType === "private") {
                     applyPrivateRequestState(data);
+                    const sidebar = document.getElementById("member-sidebar");
+                    if (sidebar && sidebar.classList.contains("active")) {
+                        loadMembers();
+                    }
                 }
                 if (currentChatType === "server") {
                     applyServerBoostHeader(data);
@@ -3462,9 +3669,10 @@
             if (sendBtn) sendBtn.onclick = () => window.sendMessage();
             refreshChatBotsMeta();
             const memberSidebar = document.getElementById('member-sidebar');
-            if (chatType === 'group' || chatType === 'server') {
+            if (chatType === 'group' || chatType === 'server' || chatType === 'private') {
                 if (!isMobileChatShell()) {
                     memberSidebar.classList.add('active');
+                    loadMembers();
                 } else {
                     memberSidebar.classList.remove('active');
                 }
@@ -3577,10 +3785,113 @@
         syncMobileChatChrome();
     };
 
+    function privateFriendActionBtnHtml(uid) {
+        const relation = friendRelationWithUid(uid);
+        if (relation.state === "self") {
+            return '<button type="button" class="member-private-btn secondary" disabled>這是你自己</button>';
+        }
+        if (relation.state === "friend") {
+            return '<button type="button" class="member-private-btn ok" disabled>✅ 已是好友</button>';
+        }
+        if (relation.state === "incoming") {
+            return `<button type="button" class="member-private-btn warn" onclick="acceptFriendByUid('${uid}')">接受好友請求</button>`;
+        }
+        if (relation.state === "outgoing") {
+            return `<button type="button" class="member-private-btn secondary" onclick="cancelFriendRequestToUid('${uid}')">取消好友請求</button>`;
+        }
+        return `<button type="button" class="member-private-btn" onclick="sendFriendRequestToUid('${uid}')">➕ 加好友</button>`;
+    }
+
+    async function loadPrivateProfileSidebar() {
+        const listDiv = document.getElementById('member-list');
+        const headerText = document.getElementById("member-sidebar-header-text");
+        if (headerText) headerText.textContent = "個人檔案";
+        if (!currentChatId || !currentUser) {
+            listDiv.innerHTML = '<div class="member-empty-hint">尚未開啟私訊</div>';
+            return;
+        }
+        listDiv.innerHTML = '<div class="member-empty-hint">載入對方個人檔案中…</div>';
+        try {
+            const chatData = currentChatDocData || {};
+            const participants = Array.isArray(chatData.participants) ? chatData.participants : currentChatParticipants;
+            const otherUid = (participants || []).find((uid) => uid && uid !== currentUser.uid);
+            if (!otherUid) {
+                currentPrivatePeerUid = "";
+                currentPrivatePeerData = null;
+                listDiv.innerHTML = '<div class="member-empty-hint">找不到對方帳號資料</div>';
+                return;
+            }
+            const otherUser = await fetchUserByUid(otherUid);
+            if (!otherUser) {
+                currentPrivatePeerUid = "";
+                currentPrivatePeerData = null;
+                listDiv.innerHTML = '<div class="member-empty-hint">找不到對方帳號資料</div>';
+                return;
+            }
+            currentPrivatePeerUid = otherUid;
+            currentPrivatePeerData = otherUser;
+            const displayName = displayNameFromUser(otherUser);
+            const handle = popHandleFromEmail(otherUser.email || displayName);
+            const isOnline = isOnlineUser(otherUser);
+            const c = getEquipped(otherUser);
+            const avatarUrl = avatarFromCosmetics(otherUser.email || displayName, c.avatar || "");
+            const frameCls = frameClass(c.frame || "");
+            const nameApp = resolveNameAppearanceForUser(otherUser);
+            const nameFxCls = nameApp.effectClass || "";
+            const nameFontCls = nameApp.fontClass ? (" " + nameApp.fontClass) : "";
+            const nameStyle = nameApp.color && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? ` style="color:${escHtml(nameApp.color)}"` : "";
+            const bio = String(otherUser.profileBio || "").trim();
+            const statusText = String(otherUser.customStatus || "").trim();
+            const since = formatPopMemberSince(otherUser);
+            const lv = Number.isFinite(otherUser.lv) ? ("Lv." + Math.floor(otherUser.lv)) : "";
+            const role = getStaffRole(otherUser);
+            const tier = role ? "" : subscriptionTierForSnapshot(otherUser);
+            const roleBadge = role
+                ? `<span class="profile-pop-role-pill staff-role-${role}">${role === "developer" ? "⚡" : "👑"} ${escHtml(staffRoleLabel(role))}</span>`
+                : (tier === "pro"
+                    ? '<span class="profile-pop-role-pill sub-tier-pill-pro">💎 Doratch Pro</span>'
+                    : (tier === "plus" ? '<span class="profile-pop-role-pill sub-tier-pill-plus">✨ Doratch Plus</span>' : ""));
+            const friendBtn = privateFriendActionBtnHtml(otherUid);
+            listDiv.innerHTML = `
+                <div class="member-private-card">
+                    <div class="member-private-head">
+                        <img src="${avatarUrl}" class="member-private-avatar ${frameCls}" alt="" style="cursor:pointer;" onclick="openProfileByUid(event,'${otherUid}')">
+                        <div style="min-width:0; flex:1;">
+                            <div class="member-private-name${nameFontCls}"><span class="name-fx-text ${nameFxCls}"${nameStyle}>${escHtml(displayName)}</span></div>
+                            <div class="member-private-handle">${escHtml(handle)}</div>
+                            <div class="member-private-handle">${isOnline ? "🟢 在線" : "⚪ 離線"}</div>
+                        </div>
+                    </div>
+                    ${roleBadge ? `<div class="profile-pop-role-row" style="margin:0 0 8px;">${roleBadge}</div>` : ""}
+                    <div class="member-private-status">
+                        ${statusText ? "💬 " + escHtml(statusText) + "<br>" : ""}
+                        ${(since || lv) ? escHtml([since, lv].filter(Boolean).join(" · ")) : "尚未設定更多資訊"}
+                    </div>
+                    <div class="member-private-bio${bio ? "" : " empty"}">${bio ? escHtml(bio) : "尚未設定自我介紹"}</div>
+                    <div class="member-private-actions">
+                        ${friendBtn}
+                        <button type="button" class="member-private-btn secondary" onclick="startPrivateByUid('${otherUid}')">💬 私訊</button>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            console.error("載入私訊個人檔案失敗", e);
+            listDiv.innerHTML = '<div class="member-empty-hint" style="color:#fca5a5;">載入失敗</div>';
+        }
+    }
+
     window.loadMembers = async () => {
         if (!currentChatId) return;
         const listDiv = document.getElementById('member-list');
         listDiv.innerHTML = '<div class="member-empty-hint">載入成員中…</div>';
+
+        if (currentChatType === "private") {
+            await loadPrivateProfileSidebar();
+            return;
+        }
+
+        const headerText = document.getElementById("member-sidebar-header-text");
+        if (headerText) headerText.textContent = "成員";
 
         try {
             const members = [];
@@ -3789,6 +4100,32 @@
         return "@" + em.split("@")[0];
     }
 
+    window.openProfileByUid = async (ev, uid) => {
+        if (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+        }
+        if (!uid) return;
+        try {
+            const userData = uid === currentUser.uid ? currentUserData : await fetchUserByUid(uid);
+            if (!userData) return;
+            const pseudoId = "__profile_preview_" + uid;
+            if (!window.currentMessages) window.currentMessages = {};
+            window.currentMessages[pseudoId] = {
+                senderId: uid,
+                senderEmail: userData.email || "",
+                senderDisplayName: displayNameFromUser(userData),
+                senderCosmetics: cosmeticSnapshotForUser(userData),
+                type: "text",
+                text: ""
+            };
+            const fakeEv = ev || { preventDefault() {}, clientX: Math.max(24, Math.floor(window.innerWidth * 0.6)), clientY: Math.max(24, Math.floor(window.innerHeight * 0.3)) };
+            await openProfileByMessage(fakeEv, pseudoId);
+        } catch (e) {
+            console.warn("openProfileByUid failed", e);
+        }
+    };
+
     window.openProfileByMessage = async (ev, msgId) => {
         ev.preventDefault();
         hideMessageMenu();
@@ -3901,10 +4238,28 @@
                 ? "profile.html?app=1"
                 : "profile.html"
         );
+        const relation = (!isBot && msg.senderId) ? friendRelationWithUid(msg.senderId) : { state: "none" };
+        let friendActionHtml = "";
+        if (!isBot && msg.senderId && msg.senderId !== currentUser.uid) {
+            if (relation.state === "friend") {
+                friendActionHtml = '<button type="button" class="profile-pop-action secondary" disabled>✅ 已是好友</button>';
+            } else if (relation.state === "incoming") {
+                friendActionHtml = `<button type="button" class="profile-pop-action" onclick="acceptFriendByUid('${msg.senderId}')">接受好友請求</button>`;
+            } else if (relation.state === "outgoing") {
+                friendActionHtml = `<button type="button" class="profile-pop-action secondary" onclick="cancelFriendRequestToUid('${msg.senderId}')">取消好友請求</button>`;
+            } else {
+                friendActionHtml = `<button type="button" class="profile-pop-action" onclick="sendFriendRequestToUid('${msg.senderId}')">➕ 加好友</button>`;
+            }
+        }
+        const dmActionHtml = (!isBot && msg.senderId && msg.senderId !== currentUser.uid)
+            ? `<button type="button" class="profile-pop-action secondary" onclick="startPrivateByUid('${msg.senderId}')">💬 發起私訊</button>`
+            : "";
         const profileBtn = isBot
             ? ""
             : `<div class="profile-pop-actions">
-                <a class="profile-pop-action" href="${profileHref}">查看個人檔案</a>
+                ${friendActionHtml}
+                ${dmActionHtml}
+                <a class="profile-pop-action secondary" href="${profileHref}">我的個人檔案</a>
                 <button type="button" class="profile-pop-action secondary" data-profile-pop-close>關閉</button>
                </div>`;
         const docoinPanelLux = isDocoinProfileEffect(c.profileEffect) || isDocoinBanner(c.banner);
