@@ -2194,11 +2194,13 @@
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-            if(role === 'admin' || role === 'teacher') {
+            if(role === 'admin' || role === 'teacher' || role === 'support') {
                 const adminLink = document.getElementById('admin-link-main');
                 if(adminLink) {
                     adminLink.style.display = 'flex';
-                    adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
+                    adminLink.innerText = role === 'admin'
+                        ? '🛠️ 管理面板'
+                        : (role === 'support' ? '🎧 客服後台' : '❓ 題庫管理');
                 }
             }
         }

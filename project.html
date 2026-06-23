@@ -183,9 +183,14 @@
             document.getElementById('side-avatar').src = `https://ui-avatars.com/api/?name=${u.email}&background=random`;
             let role = data.role || 'student';
             if (u.email === 'chianghansen0302@gmail.com') role = 'admin';
-            if (role === 'admin' || role === 'teacher') {
+            if (role === 'admin' || role === 'teacher' || role === 'support') {
                 const al = document.getElementById('admin-link-main');
-                if (al) { al.style.display = 'flex'; al.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理'; }
+                if (al) {
+                    al.style.display = 'flex';
+                    al.innerText = role === 'admin'
+                        ? '🛠️ 管理面板'
+                        : (role === 'support' ? '🎧 客服後台' : '❓ 題庫管理');
+                }
             }
         }
         loadProject();
