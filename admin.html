@@ -566,9 +566,9 @@
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     <button type="button" class="btn" style="background:#5b21b6;color:white;" onclick="quickGrantSubscription('plus', 30)">Plus 30 天</button>
                     <button type="button" class="btn" style="background:#7c3aed;color:white;" onclick="quickGrantSubscription('pro', 30)">Pro 30 天</button>
-                    <button type="button" class="btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('plus', 0)">Plus 永久</button>
-                    <button type="button" class="btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('pro', 0)">Pro 永久</button>
-                    <button type="button" class="btn" style="background:#7F1D1D;color:white;" onclick="revokeSubscription()">取消訂閱</button>
+                    <button type="button" class="btn" id="sub-plus-perm-btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('plus', 0)">Plus 永久</button>
+                    <button type="button" class="btn" id="sub-pro-perm-btn" style="background:#334155;color:white;" onclick="quickGrantSubscription('pro', 0)">Pro 永久</button>
+                    <button type="button" class="btn" id="sub-revoke-btn" style="background:#7F1D1D;color:white;" onclick="revokeSubscription()">取消訂閱</button>
                 </div>
             </div>
             <div class="form-group">
@@ -748,7 +748,6 @@
             loadQuestions();
         } else if (myRole === 'support') {
             document.getElementById('menu-dashboard').style.display = 'none';
-            document.getElementById('menu-users').style.display = 'none';
             document.getElementById('menu-questions').style.display = 'none';
             document.getElementById('menu-announcements').style.display = 'none';
             document.getElementById('menu-logs').style.display = 'none';
@@ -1214,6 +1213,26 @@
         document.getElementById('u-grace-status').innerHTML = isGraceActive
             ? `<span style="color:#F59E0B; font-weight:bold;">寬限中</span>，到期：${escapeHtml(formatTime(graceMs))}`
             : '<span style="color:#64748B;">未啟用</span>';
+        const supportOnly = myRole === 'support';
+        [
+            'u-displayName', 'u-doord', 'u-docoin', 'u-lv', 'u-xp', 'u-role', 'u-banned',
+            'u-cloud-storage-limit-mb', 'u-cloud-storage-max-files', 'u-review-daily-limit', 'u-review-today-bonus'
+        ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = supportOnly;
+        });
+        ['u-sub-tier', 'u-sub-expires'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = false;
+        });
+        const permPlusBtn = document.getElementById('sub-plus-perm-btn');
+        const permProBtn = document.getElementById('sub-pro-perm-btn');
+        const revokeBtn = document.getElementById('sub-revoke-btn');
+        if (permPlusBtn) permPlusBtn.style.display = supportOnly ? 'none' : '';
+        if (permProBtn) permProBtn.style.display = supportOnly ? 'none' : '';
+        if (revokeBtn) revokeBtn.style.display = supportOnly ? 'none' : '';
         document.getElementById('user-modal').classList.add('open');
     };
 
@@ -1314,14 +1333,20 @@
         }
     };
 
-    function buildSubscriptionPayload(tier, expiresAtMs) {
+    function buildSubscriptionPayload(tier, expiresAtMs, actorRole = 'admin') {
         const t = String(tier || '').trim().toLowerCase();
         if (t !== 'plus' && t !== 'pro') return null;
-        const exp = Number(expiresAtMs) || 0;
+        let exp = Number(expiresAtMs) || 0;
+        const supportMode = actorRole === 'support';
+        if (supportMode) {
+            const now = Date.now();
+            const maxExp = now + (30 * 24 * 60 * 60 * 1000);
+            exp = Math.min(Math.max(exp, now + 60 * 1000), maxExp);
+        }
         return {
             tier: t,
             expiresAtMs: exp > 0 ? exp : 0,
-            source: 'admin',
+            source: supportMode ? 'support_staff' : 'admin',
             grantedAtMs: Date.now()
         };
     }
@@ -1337,7 +1362,16 @@
         const t = String(tier || '').toLowerCase();
         if (t !== 'plus' && t !== 'pro') return;
         document.getElementById('u-sub-tier').value = t;
-        const d = Math.max(0, Number(days) || 0);
+        const supportMode = myRole === 'support';
+        let d = Math.max(0, Number(days) || 0);
+        if (supportMode && d > 30) {
+            d = 30;
+            showToast('客服發放上限為 30 天，已自動調整', 'error');
+        }
+        if (supportMode && d === 0) {
+            d = 30;
+            showToast('客服不可發放永久方案，已改為 30 天', 'error');
+        }
         const expInput = document.getElementById('u-sub-expires');
         if (!d) {
             if (expInput) expInput.value = '';
@@ -1383,7 +1417,7 @@
         const reviewTodayBonus = parseInt(document.getElementById('u-review-today-bonus').value, 10);
         const subTierSel = String(document.getElementById('u-sub-tier')?.value || '').trim().toLowerCase();
         const subExpiresMs = parseSubExpiresInput();
-        const nextSubscription = subTierSel ? buildSubscriptionPayload(subTierSel, subExpiresMs) : null;
+        const nextSubscription = subTierSel ? buildSubscriptionPayload(subTierSel, subExpiresMs, myRole) : null;
 
         if (isNaN(doord) || doord < 0) return showToast('Doord 必須為 0 以上的整數', 'error');
         if (isNaN(docoin) || docoin < 0) return showToast('Docoin 必須為 0 以上的整數', 'error');
@@ -1419,6 +1453,49 @@
 
         if (!changes.length) {
             showToast('沒有變更需要儲存', 'error');
+            return;
+        }
+
+        if (myRole === 'support') {
+            const nextTier = nextSubscription ? nextSubscription.tier : '';
+            const nextExp = nextSubscription ? nextSubscription.expiresAtMs : 0;
+            const now = Date.now();
+            const maxExp = now + (30 * 24 * 60 * 60 * 1000);
+            if (!nextTier || (nextTier !== 'plus' && nextTier !== 'pro')) {
+                return showToast('客服只能發放 Plus 或 Pro（30 天）', 'error');
+            }
+            if (!Number.isFinite(nextExp) || nextExp <= now || nextExp > maxExp) {
+                return showToast('客服發放訂閱最長只能 30 天', 'error');
+            }
+            const changedOther =
+                (nameCheck.name !== (u.displayName || '').trim()) ||
+                (doord !== Math.floor(getDoordValue(u))) ||
+                (docoin !== Math.floor(getDocoinValue(u))) ||
+                (lv !== (u.lv ?? 1)) ||
+                (xp !== (u.xp ?? 0)) ||
+                (role !== (u.role || 'student')) ||
+                (isBanned !== !!(u.isBanned)) ||
+                (cloudStorageLimitMB !== (Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : defaultCloudStorageMB)) ||
+                (cloudStorageMaxFiles !== (Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1 ? u.cloudStorageMaxFiles : defaultCloudStorageMaxFiles)) ||
+                (reviewDailyLimit !== (Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1)) ||
+                (reviewTodayBonus !== (Number.isFinite(u.reviewUploadBonusToday) ? u.reviewUploadBonusToday : 0));
+            if (changedOther) {
+                return showToast('客服僅可調整 Plus/Pro 30 天，其他欄位不可修改', 'error');
+            }
+            const summary = `確定要發放 ${nextTier.toUpperCase()} 30 天內方案給 ${label}（${u.email || editingUserId}）？`;
+            if (!confirm(summary)) return;
+            try {
+                await updateDoc(doc(db, "users", editingUserId), { subscription: nextSubscription });
+                await logAction("客服發放訂閱", `${u.email || editingUserId}：${nextTier} 至 ${new Date(nextExp).toLocaleString('zh-TW')}`);
+                const idx = allUsers.findIndex(x => x.id === editingUserId);
+                if (idx >= 0) allUsers[idx] = { ...allUsers[idx], subscription: nextSubscription };
+                closeUserModal();
+                runUserSearch();
+                showToast('已發放訂閱（30 天內）');
+            } catch (e) {
+                console.error(e);
+                showToast('儲存失敗：' + (e.message || e), 'error');
+            }
             return;
         }
 
