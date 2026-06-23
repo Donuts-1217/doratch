@@ -473,14 +473,23 @@
                 setTimeout(() => redirectAfterLogin(freshUser), 500);
             }
         } catch (error) {
-            let errorMsg = "認證失敗，請檢查帳密";
-            if (error.code === 'auth/email-already-in-use') errorMsg = "此 Email 已被註冊";
-            if (error.code === 'auth/invalid-credential') errorMsg = "帳號或密碼錯誤";
-            if (error.code === 'auth/weak-password') errorMsg = "密碼至少需要 6 位數";
-            if (error.code === 'auth/invalid-email') errorMsg = "Email 格式不正確";
-            if (error.code === 'auth/user-disabled') errorMsg = "此帳號已停用，請聯絡管理員";
-            if (error.code === 'auth/too-many-requests') errorMsg = "嘗試次數過多，請稍後再試";
-            if (error.code === 'auth/network-request-failed') errorMsg = "網路連線失敗，請檢查網路後重試";
+            const code = (error && error.code) || "";
+            console.error("[Auth Error]", code, error);
+
+            let errorMsg = mode === "reg"
+                ? "註冊失敗，請確認資料後重試"
+                : "登入失敗，請檢查帳號密碼";
+
+            if (code === "auth/email-already-in-use") errorMsg = "此 Email 已被註冊";
+            if (code === "auth/invalid-credential") errorMsg = "帳號或密碼錯誤";
+            if (code === "auth/weak-password") errorMsg = "密碼至少需要 6 位數";
+            if (code === "auth/invalid-email") errorMsg = "Email 格式不正確";
+            if (code === "auth/user-disabled") errorMsg = "此帳號已停用，請聯絡管理員";
+            if (code === "auth/too-many-requests") errorMsg = "嘗試次數過多，請稍後再試";
+            if (code === "auth/network-request-failed") errorMsg = "網路連線失敗，請檢查網路後重試";
+            if (code === "auth/operation-not-allowed") errorMsg = "Firebase 尚未啟用 Email/Password 登入";
+            if (code === "auth/missing-password") errorMsg = "請輸入密碼";
+            if (code === "auth/missing-email") errorMsg = "請輸入 Email";
             showMsg(errorMsg, "error");
         } finally {
             authBusy = false;
