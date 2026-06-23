@@ -127,10 +127,14 @@
         .item-price { font-weight: 900; color: #F57C00; font-size: 1.2rem; margin-bottom: 15px; }
         .item-price.docoin { color: #6d28d9; }
         
+        .item-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .btn-buy { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-buy.available { background: var(--scratch-orange); color: white; }
         .btn-buy.owned { background: #EEE; color: #999; cursor: default; }
+        .btn-gift { width: 100%; padding: 12px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #6366f1; color: #fff; }
+        .btn-gift.disabled { background: #E2E8F0; color: #64748b; cursor: not-allowed; }
         .btn-buy:active { transform: scale(0.95); }
+        .btn-gift:active { transform: scale(0.95); }
 
         .category-title { font-weight: 900; font-size: 1.5rem; margin: 40px 0 20px; display: flex; align-items: center; gap: 10px; }
         .btn-nav { text-decoration:none; background: rgba(0,0,0,0.05); color: #444; border: 1px solid rgba(0,0,0,0.1); padding: 8px 18px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
@@ -263,6 +267,38 @@
             grid-column: 1 / -1; text-align: center; padding: 48px 20px;
             color: #94a3b8; font-weight: 700;
         }
+        .gift-modal-overlay {
+            position: fixed; inset: 0; z-index: 1200; background: rgba(15, 23, 42, 0.72);
+            display: none; align-items: center; justify-content: center; padding: 16px;
+        }
+        .gift-modal-overlay.open { display: flex; }
+        .gift-modal {
+            width: min(520px, 96vw); background: #fff; border-radius: 18px;
+            border: 1px solid #E2E8F0; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+            padding: 18px;
+        }
+        .gift-modal h3 { margin: 0 0 12px; color: #0f172a; font-size: 1.08rem; }
+        .gift-item-preview {
+            display: flex; gap: 10px; align-items: center; margin-bottom: 12px;
+            border: 1px solid #E2E8F0; background: #F8FAFC; border-radius: 12px; padding: 10px;
+        }
+        .gift-item-preview .icon { font-size: 1.5rem; }
+        .gift-item-preview .meta { color: #475569; font-size: 13px; }
+        .gift-field { margin-bottom: 10px; }
+        .gift-field label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: #475569; }
+        .gift-field input, .gift-field textarea {
+            width: 100%; box-sizing: border-box; border: 1px solid #CBD5E1; border-radius: 10px;
+            padding: 10px 12px; font-size: 14px; outline: none; font-family: inherit;
+        }
+        .gift-field textarea { min-height: 86px; resize: vertical; }
+        .gift-field input:focus, .gift-field textarea:focus { border-color: #6366f1; }
+        .gift-modal-status { min-height: 18px; color: #475569; font-size: 12px; }
+        .gift-modal-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+        .gift-modal-actions button {
+            border: none; border-radius: 10px; padding: 10px 14px; font-weight: 800; cursor: pointer;
+        }
+        .gift-modal-actions .cancel { background: #E2E8F0; color: #334155; }
+        .gift-modal-actions .confirm { background: #6366f1; color: #fff; }
     
         
         @media (max-width: 1024px) {
@@ -407,6 +443,25 @@
     </div>
     <div class="shop-grid" id="shop-items-grid"></div>
     <div class="shop-pagination" id="shop-pagination"></div>
+    <div id="gift-modal-overlay" class="gift-modal-overlay" onclick="closeGiftModal()">
+        <div class="gift-modal" onclick="event.stopPropagation()">
+            <h3>🎁 贈送商品</h3>
+            <div id="gift-item-preview" class="gift-item-preview"></div>
+            <div class="gift-field">
+                <label for="gift-target-email">對方 Email</label>
+                <input id="gift-target-email" type="email" placeholder="example@gmail.com">
+            </div>
+            <div class="gift-field">
+                <label for="gift-note">禮物留言（會顯示在私訊）</label>
+                <textarea id="gift-note" maxlength="220" placeholder="輸入一段祝福留言..."></textarea>
+            </div>
+            <div id="gift-modal-status" class="gift-modal-status"></div>
+            <div class="gift-modal-actions">
+                <button type="button" class="cancel" onclick="closeGiftModal()">取消</button>
+                <button type="button" class="confirm" onclick="confirmSendGift()">確認贈送</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="doratch-staff-cosmetics.js"></script>
@@ -414,7 +469,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, query, orderBy, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, setDoc, addDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     let getStaffRole = () => "";
     let staffRoleLabel = () => "";
     let staffGrantedItems = () => [];
@@ -656,6 +711,7 @@
 
     let currentUserData = null;
     let currentUser = null;
+    let giftingItemId = "";
     const DOCOIN_TO_DOORD_RATE = 100;
 
     function getDoord(data) {
@@ -665,6 +721,14 @@
 
     function getDocoin(data) {
         return Number.isFinite(data && data.docoin) ? Number(data.docoin) : 0;
+    }
+    function escHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
     }
 
     const AVATAR_URLS = {
@@ -1132,8 +1196,12 @@
             currencyIcon + " " + (hasDiscount ? ('<s style="opacity:0.55;font-weight:700;">' + listPrice + "</s> " + salePrice) : listPrice) + " " + currencyName +
             (hasDiscount ? ' <span style="font-size:10px;color:#7c3aed;">會員價</span>' : "") +
             "</div>" +
+            '<div class="item-actions">' +
             '<button class="btn-buy ' + (isOwned ? "owned" : (canBuy ? "available" : "disabled")) + '" onclick="buyItem(\'' + item.id + '\')">' +
-            (isOwned ? "已擁有" : (canBuy ? "立即購買" : "請先登入")) + "</button>";
+            (isOwned ? "已擁有" : (canBuy ? "立即購買" : "請先登入")) + "</button>" +
+            '<button class="btn-gift ' + (currentUser ? "" : "disabled") + '" onclick="openGiftModal(\'' + item.id + '\')">' +
+            (currentUser ? "🎁 贈送" : "請先登入") + "</button>" +
+            "</div>";
         return div;
     }
 
@@ -1300,6 +1368,195 @@
             if (String(e && e.message) === "INSUFFICIENT_DOCOIN") return alert("Docoin 不足，無法購買此傳奇道具。");
             if (String(e && e.message) === "INSUFFICIENT_DOORD") return alert("Doord 不足，請先提交作品或用 Docoin 兌換。");
             alert("購買失敗：" + (e.message || e));
+        }
+    };
+
+    async function fetchUserByEmail(email) {
+        const targetEmail = String(email || "").trim().toLowerCase();
+        if (!targetEmail || !targetEmail.includes("@")) return null;
+        const q = query(collection(db, "users"), where("email", "==", targetEmail));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        return { uid: snap.docs[0].id, ...snap.docs[0].data(), email: targetEmail };
+    }
+
+    async function findOrCreatePrivateChatForGift(targetUid, targetEmail) {
+        const q = query(collection(db, "chats"), where("participants", "array-contains", currentUser.uid));
+        const snap = await getDocs(q);
+        for (const d of snap.docs) {
+            const data = d.data() || {};
+            const ps = Array.isArray(data.participants) ? data.participants : [];
+            if (data.type === "private" && ps.includes(targetUid)) {
+                return { id: d.id, data };
+            }
+        }
+        const created = await addDoc(collection(db, "chats"), {
+            type: "private",
+            participants: [currentUser.uid, targetUid],
+            participantEmails: [String(currentUser.email || "").toLowerCase(), String(targetEmail || "").toLowerCase()],
+            name: "",
+            requestStatus: "accepted",
+            requestFrom: "",
+            requestTo: "",
+            lastMessage: "🎁 收到一份禮物",
+            updatedAt: serverTimestamp()
+        });
+        return { id: created.id, data: null };
+    }
+
+    function currentCosmeticSnapshotForGift() {
+        const eq = currentUserData && currentUserData.equippedCosmetics && typeof currentUserData.equippedCosmetics === "object"
+            ? currentUserData.equippedCosmetics
+            : {};
+        return {
+            avatar: eq.avatar || "",
+            frame: eq.frame || "",
+            title: eq.title || "",
+            badge: eq.badge || "",
+            nameColor: eq.nameColor || "",
+            nameEffect: eq.nameEffect || "",
+            profileEffect: eq.profileEffect || "",
+            banner: eq.banner || "",
+            nameFontClass: eq.nameFontClass || "",
+            customStatus: currentUserData && currentUserData.customStatus ? String(currentUserData.customStatus) : "",
+            profileBio: currentUserData && currentUserData.profileBio ? String(currentUserData.profileBio) : "",
+            subscriptionTier: (window.DoratchSubscription && typeof window.DoratchSubscription.getActiveTier === "function")
+                ? window.DoratchSubscription.getActiveTier(currentUserData || {})
+                : ""
+        };
+    }
+
+    window.openGiftModal = (itemId) => {
+        if (!currentUser) {
+            alert("請先登入後再贈送。");
+            location.href = appAwareHref("login.html");
+            return;
+        }
+        const item = itemsBank.find((x) => x.id === itemId);
+        if (!item) return alert("找不到商品。");
+        giftingItemId = itemId;
+        const currency = item.currency === "docoin" ? "docoin" : "doord";
+        const listPrice = Number(item.price) || 0;
+        const sub = window.DoratchSubscription;
+        const price = (currency === "doord" && sub) ? sub.applyShopDiscount(listPrice, currentUserData || {}) : listPrice;
+        const currencyText = currency === "docoin" ? `💎 ${price} Docoin` : `🪙 ${price} Doord`;
+        const preview = document.getElementById("gift-item-preview");
+        const emailEl = document.getElementById("gift-target-email");
+        const noteEl = document.getElementById("gift-note");
+        const statusEl = document.getElementById("gift-modal-status");
+        if (preview) {
+            preview.innerHTML = `<div class="icon">${escHtml(item.icon || "🎁")}</div><div><div style="font-weight:800;color:#0f172a;">${escHtml(item.name || "商品")}</div><div class="meta">${currencyText}</div></div>`;
+        }
+        if (emailEl) emailEl.value = "";
+        if (noteEl) noteEl.value = "";
+        if (statusEl) statusEl.textContent = "送出後會直接出現在你們私訊，對方按「領取」才會獲得。";
+        const modal = document.getElementById("gift-modal-overlay");
+        if (modal) modal.classList.add("open");
+    };
+
+    window.closeGiftModal = () => {
+        giftingItemId = "";
+        const modal = document.getElementById("gift-modal-overlay");
+        if (modal) modal.classList.remove("open");
+    };
+
+    window.confirmSendGift = async () => {
+        if (!currentUser) return;
+        const item = itemsBank.find((x) => x.id === giftingItemId);
+        if (!item) return alert("禮物商品不存在。");
+        const emailEl = document.getElementById("gift-target-email");
+        const noteEl = document.getElementById("gift-note");
+        const statusEl = document.getElementById("gift-modal-status");
+        const targetEmail = String(emailEl && emailEl.value || "").trim().toLowerCase();
+        const giftNote = String(noteEl && noteEl.value || "").trim().slice(0, 220);
+        if (!targetEmail || !targetEmail.includes("@")) {
+            if (statusEl) statusEl.textContent = "請輸入正確的 Email。";
+            return;
+        }
+        if (targetEmail === String(currentUser.email || "").toLowerCase()) {
+            if (statusEl) statusEl.textContent = "不能送給自己。";
+            return;
+        }
+        const targetUser = await fetchUserByEmail(targetEmail);
+        if (!targetUser || !targetUser.uid) {
+            if (statusEl) statusEl.textContent = "找不到這個 Email 對應的使用者。";
+            return;
+        }
+        const currency = item.currency === "docoin" ? "docoin" : "doord";
+        const listPrice = Number(item.price) || 0;
+        const sub = window.DoratchSubscription;
+        const price = (currency === "doord" && sub) ? sub.applyShopDiscount(listPrice, currentUserData || {}) : listPrice;
+        const spendLabel = currency === "docoin" ? `💎 ${price} Docoin` : `🪙 ${price} Doord`;
+        if (!confirm(`確認要贈送「${item.name}」給 ${targetEmail}？\n會先扣除 ${spendLabel}。`)) return;
+        try {
+            if (statusEl) statusEl.textContent = "送禮中...";
+            const senderRef = doc(db, "users", currentUser.uid);
+            const privateChat = await findOrCreatePrivateChatForGift(targetUser.uid, targetEmail);
+            const chatRef = doc(db, "chats", privateChat.id);
+            const msgRef = doc(collection(db, "chats", privateChat.id, "messages"));
+            const unlockIds = getUnlockIds(item);
+            await runTransaction(db, async (tx) => {
+                const senderSnap = await tx.get(senderRef);
+                const senderData = senderSnap.exists() ? (senderSnap.data() || {}) : {};
+                const currentDoord = getDoord(senderData);
+                const currentDocoin = getDocoin(senderData);
+                if (currency === "docoin") {
+                    if (currentDocoin < price) throw new Error("INSUFFICIENT_DOCOIN");
+                    tx.set(senderRef, {
+                        docoin: currentDocoin - price,
+                        lastGiftAt: serverTimestamp()
+                    }, { merge: true });
+                } else {
+                    if (currentDoord < price) throw new Error("INSUFFICIENT_DOORD");
+                    tx.set(senderRef, {
+                        doord: currentDoord - price,
+                        coins: currentDoord - price,
+                        lastGiftAt: serverTimestamp()
+                    }, { merge: true });
+                }
+                tx.set(msgRef, {
+                    senderId: currentUser.uid,
+                    senderEmail: currentUser.email || "",
+                    senderDisplayName: getDisplayLabel(currentUserData || {}, currentUser.email || ""),
+                    senderCosmetics: currentCosmeticSnapshotForGift(),
+                    text: giftNote || `送你一份 ${item.name}，記得領取 🎁`,
+                    type: "gift",
+                    gift: {
+                        status: "pending",
+                        itemId: item.id,
+                        itemName: item.name,
+                        itemIcon: item.icon || "🎁",
+                        itemCurrency: currency,
+                        itemPrice: price,
+                        unlockIds: unlockIds,
+                        senderUid: currentUser.uid,
+                        senderEmail: String(currentUser.email || "").toLowerCase(),
+                        recipientUid: targetUser.uid,
+                        recipientEmail: targetEmail,
+                        note: giftNote
+                    },
+                    createdAt: serverTimestamp()
+                });
+                tx.set(chatRef, {
+                    lastMessage: `🎁 ${getDisplayLabel(currentUserData || {}, currentUser.email || "")} 送出了一份禮物`,
+                    updatedAt: serverTimestamp(),
+                    lastSenderId: currentUser.uid,
+                    [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
+                }, { merge: true });
+            });
+            closeGiftModal();
+            await loadMallData(currentUser);
+            alert("禮物已送出！對方會在你們私訊看到可領取的禮物卡。");
+        } catch (e) {
+            if (String(e && e.message) === "INSUFFICIENT_DOCOIN") {
+                if (statusEl) statusEl.textContent = "Docoin 不足，無法送禮。";
+                return;
+            }
+            if (String(e && e.message) === "INSUFFICIENT_DOORD") {
+                if (statusEl) statusEl.textContent = "Doord 不足，無法送禮。";
+                return;
+            }
+            if (statusEl) statusEl.textContent = "送禮失敗：" + (e.message || e);
         }
     };
 

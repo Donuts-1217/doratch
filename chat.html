@@ -522,6 +522,26 @@
         .file-info { flex: 1; overflow: hidden; }
         .file-name { font-weight: 900; color: var(--primary); font-size: 15px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; margin-bottom: 4px; }
         .file-sub { font-size: 12px; color: var(--text-muted); }
+        .msg-gift-card {
+            margin-top: 10px; border-radius: 16px; border: 1px solid rgba(168,85,247,0.5);
+            background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(168,85,247,0.22));
+            padding: 14px; max-width: 420px;
+        }
+        .msg-gift-head { font-weight: 900; color: #e9d5ff; margin-bottom: 8px; }
+        .msg-gift-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .msg-gift-item .gift-icon { font-size: 1.5rem; }
+        .msg-gift-item .gift-name { font-weight: 800; color: #fff; font-size: 14px; }
+        .msg-gift-item .gift-price { font-size: 12px; color: #c4b5fd; }
+        .msg-gift-note {
+            font-size: 12px; color: #f5f3ff; background: rgba(15,23,42,0.32);
+            border-radius: 8px; padding: 8px; margin-bottom: 8px; white-space: pre-wrap;
+        }
+        .msg-gift-state { font-size: 12px; color: #ddd6fe; margin-bottom: 8px; }
+        .msg-gift-claim-btn {
+            border: none; border-radius: 10px; background: #22c55e; color: #052e16;
+            font-weight: 900; padding: 8px 12px; cursor: pointer;
+        }
+        .msg-gift-claim-btn:disabled { opacity: 0.6; cursor: default; }
 
         /* 輸入區 */
         .input-area { padding: 0 30px 30px 30px; flex-shrink: 0; position: relative; }
@@ -3668,6 +3688,8 @@
                         <div class="file-download-icon">⬇️</div>
                     </div>
                 `;
+            } else if (msg.type === 'gift') {
+                contentHtml = renderGiftMessageCard(docSnap.id, msg);
             } else {
                 contentHtml = isBotMsg ? renderBotMessageBody(msg) : `<div class="msg-text">${escHtml(msg.text || "")}</div>`;
             }
@@ -4803,6 +4825,104 @@
             inputElem.value = ""; // 重置 input
         };
         reader.readAsText(file);
+    };
+
+    function renderGiftMessageCard(msgId, msg) {
+        const gift = (msg && msg.gift && typeof msg.gift === "object") ? msg.gift : {};
+        const itemName = String(gift.itemName || "神秘禮物");
+        const itemIcon = String(gift.itemIcon || "🎁");
+        const currency = String(gift.itemCurrency || "doord") === "docoin" ? "docoin" : "doord";
+        const amount = Math.max(0, Math.floor(Number(gift.itemPrice) || 0));
+        const priceLabel = currency === "docoin" ? `💎 ${amount} Docoin` : `🪙 ${amount} Doord`;
+        const recipientUid = String(gift.recipientUid || "");
+        const claimedBy = String(gift.claimedBy || "");
+        const isPending = String(gift.status || "pending") !== "claimed";
+        const canClaim = !!currentUser && currentUser.uid === recipientUid && isPending;
+        const note = String(gift.note || msg.text || "").trim();
+        let stateLabel = "";
+        if (isPending) {
+            if (canClaim) stateLabel = "⏳ 你收到一份禮物，按下領取即可入帳。";
+            else if (currentUser && currentUser.uid === String(gift.senderUid || "")) stateLabel = "📦 已送出，等待對方領取。";
+            else stateLabel = "📦 待對方領取。";
+        } else {
+            const claimedAt = gift.claimedAt && typeof gift.claimedAt.toDate === "function"
+                ? gift.claimedAt.toDate()
+                : null;
+            const when = claimedAt ? claimedAt.toLocaleString("zh-TW") : "已領取";
+            stateLabel = claimedBy && currentUser && claimedBy === currentUser.uid
+                ? `✅ 你已領取（${when}）`
+                : `✅ 已領取（${when}）`;
+        }
+        const claimButton = canClaim
+            ? `<button type="button" class="msg-gift-claim-btn" onclick="claimGiftMessage('${msgId}')">領取禮物</button>`
+            : "";
+        const noteHtml = note ? `<div class="msg-gift-note">${escHtml(note)}</div>` : "";
+        return `
+            <div class="msg-gift-card">
+                <div class="msg-gift-head">🎁 禮物卡片</div>
+                <div class="msg-gift-item">
+                    <div class="gift-icon">${escHtml(itemIcon)}</div>
+                    <div>
+                        <div class="gift-name">${escHtml(itemName)}</div>
+                        <div class="gift-price">${priceLabel}</div>
+                    </div>
+                </div>
+                ${noteHtml}
+                <div class="msg-gift-state">${escHtml(stateLabel)}</div>
+                ${claimButton}
+            </div>
+        `;
+    }
+
+    window.claimGiftMessage = async (msgId) => {
+        if (!currentChatId || !msgId || !currentUser) return;
+        try {
+            const msgRef = doc(db, "chats", currentChatId, "messages", msgId);
+            const userRef = doc(db, "users", currentUser.uid);
+            const chatRef = doc(db, "chats", currentChatId);
+            await runTransaction(db, async (tx) => {
+                const msgSnap = await tx.get(msgRef);
+                if (!msgSnap.exists()) throw new Error("GIFT_NOT_FOUND");
+                const msgData = msgSnap.data() || {};
+                const gift = (msgData.gift && typeof msgData.gift === "object") ? msgData.gift : {};
+                if (String(gift.status || "pending") === "claimed") throw new Error("GIFT_ALREADY_CLAIMED");
+                if (String(gift.recipientUid || "") !== currentUser.uid) throw new Error("GIFT_NOT_FOR_YOU");
+                const userSnap = await tx.get(userRef);
+                const userData = userSnap.exists() ? (userSnap.data() || {}) : {};
+                const inv = Array.isArray(userData.inventory) ? userData.inventory.slice() : [];
+                const unlockIds = Array.isArray(gift.unlockIds) ? gift.unlockIds.filter((x) => typeof x === "string" && x) : [];
+                let added = 0;
+                unlockIds.forEach((id) => {
+                    if (!inv.includes(id)) {
+                        inv.push(id);
+                        added += 1;
+                    }
+                });
+                tx.set(userRef, {
+                    inventory: inv,
+                    lastGiftClaimAt: serverTimestamp()
+                }, { merge: true });
+                tx.update(msgRef, {
+                    "gift.status": "claimed",
+                    "gift.claimedBy": currentUser.uid,
+                    "gift.claimedAt": serverTimestamp(),
+                    "gift.claimedUnlockCount": added
+                });
+                tx.set(chatRef, {
+                    lastMessage: "✅ 禮物已被領取",
+                    updatedAt: serverTimestamp(),
+                    lastSenderId: currentUser.uid,
+                    [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
+                }, { merge: true });
+            });
+            alert("禮物領取成功！");
+        } catch (e) {
+            const code = String(e && e.message || "");
+            if (code === "GIFT_ALREADY_CLAIMED") return alert("這份禮物已經被領取。");
+            if (code === "GIFT_NOT_FOR_YOU") return alert("這份禮物不是給你的。");
+            if (code === "GIFT_NOT_FOUND") return alert("找不到這份禮物。");
+            alert("領取失敗：" + (e.message || e));
+        }
     };
 
     // 下載檔案
