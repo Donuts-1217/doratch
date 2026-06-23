@@ -73,6 +73,12 @@
         return PAGE_KEYS[currentFile()] || "";
     }
 
+    function tabActiveKey() {
+        const key = pageKey();
+        if (key === "support") return "profile";
+        return key;
+    }
+
     function isStandalone() {
         return window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
     }
@@ -279,7 +285,7 @@
         if (isAppMode()) {
             document.body.classList.add("doratch-app-mode");
             if (key === "chat") document.body.classList.add("chat-app");
-            renderTabbar(key);
+            renderTabbar(tabActiveKey());
             patchLinks(document.body);
             registerServiceWorker();
             syncAppModalOpen();

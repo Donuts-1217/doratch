@@ -1,0 +1,97 @@
+/* Doratch 伺服器加成 — 類 Discord Server Boost */
+
+.server-boost-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+}
+
+.server-boost-badge.lv1 {
+    color: #5b21b6;
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+}
+
+.server-boost-badge.lv2 {
+    color: #fff;
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    border: 1px solid rgba(99, 102, 241, 0.5);
+}
+
+.server-boost-badge.lv3 {
+    color: #fff;
+    background: linear-gradient(135deg, #a855f7, #ec4899, #f59e0b);
+    background-size: 200% auto;
+    animation: serverBoostShimmer 2.4s linear infinite;
+    border: 1px solid rgba(251, 191, 36, 0.55);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.35);
+}
+
+@keyframes serverBoostShimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+.chat-item.server-boosted {
+    border-left: 3px solid #8b5cf6;
+}
+
+.chat-header.server-boost-active {
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.12), transparent);
+}
+
+.chat-header.server-boost-active.lv3 {
+    box-shadow: inset 0 -2px 0 rgba(168, 85, 247, 0.35);
+}
+
+.server-boost-panel {
+    font-size: 13px;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.server-boost-panel ul {
+    margin: 10px 0 0;
+    padding-left: 18px;
+}
+
+.server-boost-stat {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 13px;
+}
+
+.server-boost-progress {
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin: 8px 0 14px;
+}
+
+.server-boost-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #8b5cf6, #ec4899);
+    transition: width 0.25s ease;
+}
+
+.boost-btn-plus {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1) !important;
+}
+
+.boost-btn-remove {
+    background: #475569 !important;
+}

@@ -86,6 +86,42 @@
         .btn-primary:hover { background: #357ABD; transform: translateY(-2px); box-shadow: 0 8px 25px rgba(76, 151, 255, 0.4); }
         .btn-primary:active { transform: translateY(0); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 0 4px;
+            color: #64748B;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.12);
+        }
+        .btn-google {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(255,255,255,0.04);
+            color: #E2E8F0;
+            font-weight: 800;
+            font-size: 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: 0.2s;
+        }
+        .btn-google:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.28); }
+        .btn-google:disabled { opacity: 0.6; cursor: not-allowed; }
+        .google-icon { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 
         .toggle-link { margin-top: 25px; font-size: 14px; color: #94A3B8; }
         .toggle-link span { color: var(--primary); cursor: pointer; font-weight: bold; transition: 0.2s; }
@@ -186,6 +222,11 @@
     </div>
     
     <button type="button" id="main-btn" class="btn btn-primary">登入</button>
+    <div class="auth-divider">或</div>
+    <button type="button" id="google-btn" class="btn-google">
+        <img class="google-icon" src="GOOGLE.webp" alt="Google" onerror="this.onerror=null;this.src='GOOGLE';">
+        使用 Google 登入
+    </button>
 
     <div class="toggle-link" id="toggle-area">
         還沒有帳號嗎？ <span onclick="switchMode('reg')">立即註冊</span>
@@ -201,6 +242,10 @@
         signInWithEmailAndPassword, 
         createUserWithEmailAndPassword, 
         sendEmailVerification,
+        GoogleAuthProvider,
+        getRedirectResult,
+        signInWithPopup,
+        signInWithRedirect,
         signOut 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -249,6 +294,43 @@
             ? window.DoratchDevice.postLoginDestination({ needDisplayName: needName })
             : (needName ? "profile.html?needDisplayName=1" : "main.html");
         location.href = dest;
+    }
+
+    function fallbackDisplayNameFromEmail(email) {
+        const em = String(email || "").trim();
+        if (em.includes("@")) return em.split("@")[0];
+        return em || "使用者";
+    }
+
+    async function ensureUserDocAfterLogin(user) {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+        const current = snap.exists() ? snap.data() : {};
+        const autoDisplayName = normalizeDisplayName(
+            current.displayName ||
+            user.displayName ||
+            fallbackDisplayNameFromEmail(user.email)
+        );
+        const userPayload = {
+            uid: user.uid,
+            email: user.email || "",
+            displayName: autoDisplayName,
+            xp: Number.isFinite(current.xp) ? current.xp : 0,
+            lv: Number.isFinite(current.lv) ? current.lv : 1,
+            coins: Number.isFinite(current.coins) ? current.coins : 0,
+            lastSeen: serverTimestamp()
+        };
+        if (!snap.exists()) {
+            userPayload.role = "student";
+            userPayload.createdAt = serverTimestamp();
+        }
+        await setDoc(userRef, userPayload, { merge: true });
+    }
+
+    async function handleGoogleLoginSuccess(user) {
+        await ensureUserDocAfterLogin(user);
+        showMsg("🎉 Google 登入成功，正在導向...", "success");
+        setTimeout(() => redirectAfterLogin(user), 350);
     }
 
     function showMsg(text, type) {
@@ -385,24 +467,7 @@
                     await signOut(auth);
                     return;
                 }
-
-                const userRef = doc(db, "users", freshUser.uid);
-                const snap = await getDoc(userRef);
-                const current = snap.exists() ? snap.data() : {};
-                const userPayload = {
-                    uid: freshUser.uid,
-                    email: freshUser.email || email,
-                    displayName: current.displayName || "",
-                    xp: Number.isFinite(current.xp) ? current.xp : 0,
-                    lv: Number.isFinite(current.lv) ? current.lv : 1,
-                    coins: Number.isFinite(current.coins) ? current.coins : 0,
-                    lastSeen: serverTimestamp()
-                };
-                if (!snap.exists()) {
-                    userPayload.role = "student";
-                    userPayload.createdAt = serverTimestamp();
-                }
-                await setDoc(userRef, userPayload, { merge: true });
+                await ensureUserDocAfterLogin(freshUser);
 
                 showMsg("🎉 登入成功，正在導向...", "success");
                 setTimeout(() => redirectAfterLogin(freshUser), 500);
@@ -428,6 +493,59 @@
         e.preventDefault();
         handleAuth();
     });
+
+    document.getElementById("google-btn").addEventListener("click", async function (e) {
+        e.preventDefault();
+        if (authBusy) return;
+        const googleBtn = document.getElementById("google-btn");
+        authBusy = true;
+        googleBtn.disabled = true;
+        try {
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: "select_account" });
+            const res = await signInWithPopup(auth, provider);
+            const user = res.user;
+            // Google 登入視為已驗證，不需走 email 驗證流程
+            await handleGoogleLoginSuccess(user);
+        } catch (error) {
+            const code = (error && error.code) || "";
+            if (code === "auth/popup-closed-by-user" || code === "auth/popup-blocked" || code === "auth/cancelled-popup-request") {
+                try {
+                    const provider = new GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: "select_account" });
+                    showMsg("正在切換為 Google 重新導向登入…", "success");
+                    await signInWithRedirect(auth, provider);
+                    return;
+                } catch (_) {
+                    // fall through to message below
+                }
+            }
+            let errorMsg = "Google 登入失敗，請稍後再試";
+            if (code === "auth/popup-closed-by-user") errorMsg = "你已取消 Google 登入";
+            if (code === "auth/popup-blocked") errorMsg = "瀏覽器阻擋彈窗，已嘗試改為重新導向登入";
+            if (code === "auth/account-exists-with-different-credential") errorMsg = "此 Email 已使用其他登入方式註冊";
+            if (code === "auth/unauthorized-domain") errorMsg = "此網域尚未加入 Firebase 授權網域";
+            showMsg(errorMsg, "error");
+        } finally {
+            authBusy = false;
+            googleBtn.disabled = false;
+        }
+    });
+
+    (async function handleGoogleRedirectResult() {
+        try {
+            const result = await getRedirectResult(auth);
+            if (result && result.user) {
+                await handleGoogleLoginSuccess(result.user);
+            }
+        } catch (error) {
+            const code = (error && error.code) || "";
+            let errorMsg = "Google 登入失敗，請稍後再試";
+            if (code === "auth/unauthorized-domain") errorMsg = "此網域尚未加入 Firebase 授權網域";
+            if (code === "auth/account-exists-with-different-credential") errorMsg = "此 Email 已使用其他登入方式註冊";
+            showMsg(errorMsg, "error");
+        }
+    })();
 
     ["email", "password", "display-name"].forEach((id) => {
         const el = document.getElementById(id);

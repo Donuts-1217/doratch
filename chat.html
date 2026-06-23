@@ -15,9 +15,11 @@
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="doratch-subscription.css">
+    <link rel="stylesheet" href="doratch-server-boost.css">
+    <link rel="stylesheet" href="doratch-member-theme.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>聊天室 - Creative Blocks</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Nunito:wght@700;900&family=Outfit:wght@700;800&family=Noto+Serif+TC:ital,wght@0,600;1,600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root { 
             --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
@@ -602,13 +604,29 @@
         .slash-picker-empty { padding: 20px; text-align: center; color: #949ba4; font-size: 13px; line-height: 1.6; }
         
         /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 10100; }
-        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 400px; color: white; border: 1px solid rgba(255,255,255,0.1); }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 10100; padding: 12px; box-sizing: border-box; overflow-y: auto; }
+        .modal-content { background: var(--card-bg); padding: 40px; border-radius: 24px; width: 400px; color: white; border: 1px solid rgba(255,255,255,0.1); max-height: calc(100vh - 24px); overflow-y: auto; }
         #cosmetic-modal .modal-content {
             max-height: min(90vh, 680px);
             overflow-x: visible;
             overflow-y: auto;
         }
+        #chat-prefs-modal .modal-content {
+            width: min(460px, calc(100vw - 24px));
+            max-height: min(92vh, 760px);
+            padding: 22px;
+            overflow-y: auto;
+        }
+        #chat-prefs-modal .modal-actions {
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            gap: 10px;
+            padding-top: 10px;
+            margin-top: 12px;
+            background: linear-gradient(to top, var(--card-bg) 72%, transparent);
+        }
+        #chat-prefs-modal .modal-actions .btn-modal { flex: 1; }
         .modal-content input { width: 100%; padding: 15px; margin: 20px 0; background: var(--bg); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; outline: none; }
         .btn-modal { padding: 12px 25px; border: none; border-radius: 12px; cursor: pointer; font-weight: 900; }
         .message-menu {
@@ -1107,6 +1125,17 @@
     </div>
 </div>
 
+<div id="server-boost-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width:480px;">
+        <h3>🚀 伺服器加成</h3>
+        <div id="server-boost-panel" class="server-boost-panel"></div>
+        <div class="modal-actions">
+            <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeServerBoostModal()">關閉</button>
+            <button class="btn-modal boost-btn-plus" style="color:white;" id="server-boost-action-btn" onclick="toggleServerBoost()">加成此伺服器</button>
+        </div>
+    </div>
+</div>
+
 <div id="chat-prefs-modal" class="modal-overlay">
     <div class="modal-content">
         <h3>⚙️ 聊天個人設定</h3>
@@ -1168,6 +1197,15 @@
                     <option value="on">開啟</option>
                 </select></div>
             </div>
+            <div class="chat-pref-row" style="margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+                <label for="chat-pref-theme">🎨 Plus / Pro 色彩主題</label>
+                <div class="select-wrap"><select id="chat-pref-theme" class="pretty-select"></select></div>
+                <div id="chat-pref-accent-wrap" class="chat-pref-theme-row" style="display:none;">
+                    <label for="chat-pref-accent">自訂強調色（Pro）</label>
+                    <input type="color" id="chat-pref-accent" value="#a855f7">
+                </div>
+                <p id="chat-pref-theme-lock" class="chat-pref-plus-lock" style="display:none;">需要 <a href="shop.html">Doratch Plus</a> 或 <a href="support.html?category=subscription">聯絡客服</a> 開通後才能使用色彩主題。</p>
+            </div>
         </div>
         <div class="modal-actions">
             <button class="btn-modal" style="background:#35373c; color:white;" onclick="closeChatPrefsModal()">取消</button>
@@ -1196,12 +1234,14 @@
     <script src="shared/doratch-docoin-catalog.js"></script>
     <script src="doratch-staff-cosmetics.js"></script>
     <script src="doratch-subscription.js"></script>
+    <script src="doratch-member-style.js"></script>
+    <script src="doratch-server-boost.js"></script>
     <script src="doratch-staff-cinematic.js"></script>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     let STAFF_COSMETIC_ITEMS = [];
     let STAFF_AVATAR_URLS = {};
     let ownedItemsBySlotWithStaff;
@@ -1413,6 +1453,9 @@
 
     function buildChatHeaderActionsHtml(chatId, chatType, teacherId) {
         const items = [];
+        if (chatType === "server") {
+            items.push({ label: "🚀 加成", onclick: "openServerBoostModal()" });
+        }
         if (chatType === "group" || chatType === "server") {
             items.push({ label: "➕ 邀請", onclick: "openModal('invite')" });
             items.push({ label: "🤖 Bot", onclick: "openModal('connectBot')" });
@@ -1446,6 +1489,7 @@
             let bg = "#4e5058";
             if (it.label.includes("邀請")) bg = "#5865F2";
             else if (it.label.includes("Bot")) bg = "#23a559";
+            else if (it.label.includes("加成")) bg = "#a855f7";
             else if (it.danger) bg = it.label.includes("解散") ? "#FF4D4D" : "#f47f24";
             return `<button type="button" class="btn-icon" style="margin-left:8px; background:${bg};" onclick="${it.onclick}" title="${it.label}">${it.label}</button>`;
         }).join("");
@@ -1503,7 +1547,7 @@
 
     function syncMobileModalOpen() {
         if (!document.body.classList.contains("doratch-app-mode")) return;
-        const open = ["modal", "cosmetic-modal", "chat-prefs-modal"].some((id) => {
+        const open = ["modal", "cosmetic-modal", "chat-prefs-modal", "server-boost-modal"].some((id) => {
             const el = document.getElementById(id);
             return el && el.style.display === "flex";
         });
@@ -1527,6 +1571,161 @@
     let incomingFriendRequestCount = -1;
     const chatUpdatedAtCache = {};
     let chatMaxMessages = 300;
+    let currentChatDocData = null;
+
+    function serverBoostApi() {
+        return window.DoratchServerBoost || null;
+    }
+
+    function getActiveSubTier() {
+        return (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+            ? window.DoratchSubscription.getActiveTier(currentUserData || {})
+            : "";
+    }
+
+    function effectiveChatMessageLimit(chatData) {
+        const SB = serverBoostApi();
+        if (SB && chatData && chatData.type === "server") {
+            return SB.getServerMessageLimit(chatData, chatMaxMessages);
+        }
+        return Math.max(50, Math.floor(chatMaxMessages) || 300);
+    }
+
+    function applyServerBoostHeader(chatData) {
+        const header = document.querySelector(".chat-header");
+        if (!header) return;
+        const SB = serverBoostApi();
+        const lv = SB && chatData && chatData.type === "server" ? SB.getServerBoostLevel(chatData) : 0;
+        header.classList.remove("server-boost-active", "lv1", "lv2", "lv3");
+        if (lv > 0) {
+            header.classList.add("server-boost-active", "lv" + lv);
+        }
+        const nameEl = document.getElementById("current-chat-name");
+        if (nameEl && SB && chatData && chatData.type === "server") {
+            const badge = SB.serverBoostBadgeHtml(lv);
+            const base = nameEl.getAttribute("data-base-title") || nameEl.innerHTML;
+            if (!nameEl.getAttribute("data-base-title")) nameEl.setAttribute("data-base-title", base);
+            nameEl.innerHTML = nameEl.getAttribute("data-base-title") + (badge || "");
+        }
+    }
+
+    window.openServerBoostModal = () => {
+        if (currentChatType !== "server" || !currentChatId) return;
+        const SB = serverBoostApi();
+        const panel = document.getElementById("server-boost-panel");
+        const btn = document.getElementById("server-boost-action-btn");
+        if (!SB || !panel || !btn) return;
+        const tier = getActiveSubTier();
+        const chatData = Object.assign({ type: "server", boosters: (currentChatDocData && currentChatDocData.boosters) || {} }, currentChatDocData || {});
+        const pts = SB.getServerBoostPoints(chatData);
+        const lv = SB.getServerBoostLevel(chatData);
+        const info = SB.getBoostLevelInfo(lv);
+        const next = SB.BOOST_LEVELS.find((x) => x.level === lv + 1);
+        const progressPct = next ? Math.min(100, Math.round((pts / next.points) * 100)) : 100;
+        const check = SB.canUserBoostServer(currentUserData || {}, currentChatId, tier);
+        panel.innerHTML =
+            "<p>類似 Discord 的伺服器加成。Plus 有 <strong>1</strong> 點、Pro 有 <strong>2</strong> 點可分配到已加入的伺服器。</p>" +
+            '<div class="server-boost-stat"><span>目前等級</span><strong>' + escHtml(info.label) + "（" + pts + " 點）</strong></div>" +
+            '<div class="server-boost-stat"><span>訊息上限</span><strong>' + effectiveChatMessageLimit(chatData) + " 則</strong></div>" +
+            '<div class="server-boost-stat"><span>成員上限加成</span><strong>+' + SB.getServerMemberBonus(chatData) + " 人</strong></div>" +
+            (next ? ('<div style="font-size:12px;color:#94a3b8;">距離 ' + escHtml(next.label) + " 還需 " + Math.max(0, next.points - pts) + " 點</div>" +
+            '<div class="server-boost-progress"><span style="width:' + progressPct + '%"></span></div>') : "") +
+            "<ul>" + SB.listBoostPerksHtml() + "</ul>";
+        if (!tier) {
+            btn.disabled = true;
+            btn.textContent = "需要 Plus / Pro";
+            btn.className = "btn-modal";
+        } else if (check.action === "unboost") {
+            btn.disabled = false;
+            btn.textContent = "取消我的加成（" + check.onServer + " 點）";
+            btn.className = "btn-modal boost-btn-remove";
+        } else if (!check.ok) {
+            btn.disabled = true;
+            btn.textContent = check.reason || "無法加成";
+            btn.className = "btn-modal";
+        } else {
+            btn.disabled = false;
+            btn.textContent = "加成此伺服器（+" + check.assign + " 點）";
+            btn.className = "btn-modal boost-btn-plus";
+        }
+        document.getElementById("server-boost-modal").style.display = "flex";
+        syncMobileModalOpen();
+    };
+
+    window.closeServerBoostModal = () => {
+        const el = document.getElementById("server-boost-modal");
+        if (el) el.style.display = "none";
+        syncMobileModalOpen();
+    };
+
+    window.toggleServerBoost = async () => {
+        const SB = serverBoostApi();
+        if (!SB || !currentUser || !currentChatId || currentChatType !== "server") return;
+        const tier = getActiveSubTier();
+        const check = SB.canUserBoostServer(currentUserData || {}, currentChatId, tier);
+        if (!check.ok) return alert(check.reason || "無法加成");
+        const confirmMsg = check.action === "unboost"
+            ? "確定取消你在此伺服器的加成？"
+            : "確定花費 " + check.assign + " 點加成「" + (currentChatName || currentChatId) + "」？";
+        if (!confirm(confirmMsg)) return;
+        const userRef = doc(db, "users", currentUser.uid);
+        const chatRef = doc(db, "chats", currentChatId);
+        try {
+            await runTransaction(db, async (tx) => {
+                const userSnap = await tx.get(userRef);
+                const chatSnap = await tx.get(chatRef);
+                if (!chatSnap.exists()) throw new Error("伺服器不存在");
+                const u = userSnap.exists() ? userSnap.data() : {};
+                const c = chatSnap.data() || {};
+                if (c.type !== "server") throw new Error("僅伺服器可加成");
+                const alloc = SB.getUserBoostAllocations(u);
+                const boosters = SB.normalizeBoosters(c.boosters);
+                const newAlloc = Object.assign({}, alloc);
+                if (check.action === "unboost") {
+                    delete boosters[currentUser.uid];
+                    delete newAlloc[currentChatId];
+                } else {
+                    boosters[currentUser.uid] = { tier: tier, points: check.assign };
+                    newAlloc[currentChatId] = check.assign;
+                }
+                tx.set(userRef, { boostedServers: newAlloc }, { merge: true });
+                tx.set(chatRef, { boosters: boosters, updatedAt: serverTimestamp() }, { merge: true });
+            });
+            const freshUser = await getDoc(userRef);
+            if (freshUser.exists()) currentUserData = Object.assign({}, currentUserData || {}, freshUser.data());
+            closeServerBoostModal();
+            alert(check.action === "unboost" ? "已取消伺服器加成" : "🚀 伺服器加成成功！");
+        } catch (e) {
+            console.error(e);
+            alert("加成失敗：" + (e.message || e));
+        }
+    };
+
+    async function clearUserBoostOnServer(chatId) {
+        const SB = serverBoostApi();
+        if (!SB || !currentUser || !chatId) return;
+        const alloc = SB.getUserBoostAllocations(currentUserData || {});
+        if (!alloc[chatId]) return;
+        const userRef = doc(db, "users", currentUser.uid);
+        const chatRef = doc(db, "chats", chatId);
+        try {
+            await runTransaction(db, async (tx) => {
+                const chatSnap = await tx.get(chatRef);
+                const userSnap = await tx.get(userRef);
+                if (!chatSnap.exists()) return;
+                const boosters = SB.normalizeBoosters((chatSnap.data() || {}).boosters);
+                delete boosters[currentUser.uid];
+                const newAlloc = SB.getUserBoostAllocations(userSnap.exists() ? userSnap.data() : {});
+                delete newAlloc[chatId];
+                tx.set(chatRef, { boosters: boosters }, { merge: true });
+                tx.set(userRef, { boostedServers: newAlloc }, { merge: true });
+            });
+            const freshUser = await getDoc(userRef);
+            if (freshUser.exists()) currentUserData = Object.assign({}, currentUserData || {}, freshUser.data());
+        } catch (e) {
+            console.warn("clear boost failed", e);
+        }
+    }
 
     let chatPrefs = {
         enterToSend: true,
@@ -1853,6 +2052,12 @@
     function sanitizeChatPrefs(raw) {
         const p = (raw && typeof raw === "object") ? raw : {};
         const density = ["normal", "compact", "comfortable"].includes(p.density) ? p.density : "normal";
+        const tier = (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+            ? window.DoratchSubscription.getActiveTier(currentUserData || {})
+            : "";
+        const themePrefs = (window.DoratchMemberStyle && window.DoratchMemberStyle.sanitizeColorThemePrefs)
+            ? window.DoratchMemberStyle.sanitizeColorThemePrefs(p, tier)
+            : { colorTheme: "default", accentColor: "" };
         return {
             enterToSend: p.enterToSend !== false,
             density: density,
@@ -1861,7 +2066,9 @@
             notifyMessage: p.notifyMessage !== false,
             notifyFriendRequest: p.notifyFriendRequest !== false,
             notifyMessageRequest: p.notifyMessageRequest !== false,
-            desktopNotification: p.desktopNotification === true
+            desktopNotification: p.desktopNotification === true,
+            colorTheme: themePrefs.colorTheme,
+            accentColor: themePrefs.accentColor
         };
     }
 
@@ -1869,6 +2076,24 @@
         document.body.classList.remove("chat-density-compact", "chat-density-comfortable");
         if (chatPrefs.density === "compact") document.body.classList.add("chat-density-compact");
         if (chatPrefs.density === "comfortable") document.body.classList.add("chat-density-comfortable");
+        if (window.DoratchMemberStyle && window.DoratchMemberStyle.applyColorThemeToBody) {
+            window.DoratchMemberStyle.applyColorThemeToBody(chatPrefs.colorTheme, chatPrefs.accentColor);
+        }
+    }
+
+    function resolveNameAppearanceForUser(data) {
+        if (window.DoratchMemberStyle && window.DoratchMemberStyle.resolveNameAppearance) {
+            return window.DoratchMemberStyle.resolveNameAppearance(data, getEquipped(data));
+        }
+        const eq = getEquipped(data);
+        return {
+            font: "default",
+            color: String(eq.nameColor || "").trim(),
+            effect: String(eq.nameEffect || "").trim(),
+            fontClass: "",
+            effectClass: nameEffectClass(eq.nameEffect),
+            fromStyle: false
+        };
     }
 
     function timeOptions(showSeconds) {
@@ -2003,6 +2228,7 @@
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
         soft_glow: "name-effect-soft-glow",
+        gentle_ripple: "name-effect-gentle-ripple",
         sparkle: "name-effect-sparkle",
         glitch: "name-effect-glitch",
         chaos_prism: "name-effect-chaos-prism",
@@ -2058,14 +2284,18 @@
 
     function currentCosmeticSnapshot() {
         const eq = getEquipped(currentUserData);
+        const nameApp = resolveNameAppearanceForUser(currentUserData);
         return {
             avatar: pickOwnedEquipped(currentUserData, "avatar"),
             frame: pickOwnedEquipped(currentUserData, "frame"),
             banner: resolveVisualCosmetic(currentUserData, "banner"),
             title: pickOwnedEquipped(currentUserData, "title"),
             badge: pickOwnedEquipped(currentUserData, "badge"),
-            nameColor: pickOwnedEquipped(currentUserData, "nameColor"),
-            nameEffect: pickOwnedEquipped(currentUserData, "nameEffect"),
+            nameColor: nameApp.color || pickOwnedEquipped(currentUserData, "nameColor"),
+            nameEffect: nameApp.effect || pickOwnedEquipped(currentUserData, "nameEffect"),
+            nameFont: nameApp.font || "default",
+            nameFontClass: nameApp.fontClass || "",
+            nameEffectClass: nameApp.effectClass || nameEffectClass(nameApp.effect),
             profileEffect: resolveVisualCosmetic(currentUserData, "profileEffect"),
             staffRole: staffRoleForSnapshot({ ...(currentUserData || {}), email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || "" }),
             subscriptionTier: subscriptionTierForSnapshot({ ...(currentUserData || {}), email: (currentUser && currentUser.email) || (currentUserData && currentUserData.email) || "" }),
@@ -2106,7 +2336,14 @@
             sideAvatar.classList.toggle("docoin-avatar-lux", isDocoinAvatar(c.avatar));
         }
         applyAvatarFrameToElement(sideAvatar, c.frame);
-        if (sideName) sideName.style.color = c.nameColor || "";
+        const nameApp = resolveNameAppearanceForUser(currentUserData);
+        if (sideName) {
+            if (window.DoratchMemberStyle && window.DoratchMemberStyle.NAME_FONTS) {
+                window.DoratchMemberStyle.NAME_FONTS.forEach((f) => { if (f.className) sideName.classList.remove(f.className); });
+            }
+            if (nameApp.fontClass) sideName.classList.add(nameApp.fontClass);
+            sideName.style.color = nameApp.color || "";
+        }
         const badgeText = c.title || c.badge;
         if (sideBadge) {
             sideBadge.style.display = badgeText ? "block" : "none";
@@ -2181,8 +2418,39 @@
         }
     };
 
+    function fillThemeSelect(tier, selectedTheme) {
+        const sel = document.getElementById("chat-pref-theme");
+        if (!sel || !window.DoratchMemberStyle) return;
+        const themes = window.DoratchMemberStyle.getAllowedThemes(tier);
+        sel.innerHTML = "";
+        themes.forEach((t) => {
+            const opt = document.createElement("option");
+            opt.value = t.id;
+            opt.textContent = t.label;
+            sel.appendChild(opt);
+        });
+        sel.value = themes.some((t) => t.id === selectedTheme) ? selectedTheme : "default";
+        const hasPlus = tier === "plus" || tier === "pro";
+        sel.disabled = !hasPlus;
+        const lockEl = document.getElementById("chat-pref-theme-lock");
+        if (lockEl) lockEl.style.display = hasPlus ? "none" : "block";
+    }
+
+    function syncChatPrefAccentRow() {
+        const themeSel = document.getElementById("chat-pref-theme");
+        const wrap = document.getElementById("chat-pref-accent-wrap");
+        const tier = (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+            ? window.DoratchSubscription.getActiveTier(currentUserData || {})
+            : "";
+        if (wrap) wrap.style.display = (themeSel && themeSel.value === "custom" && tier === "pro") ? "flex" : "none";
+    }
+
     window.openChatPrefsModal = () => {
         const p = sanitizeChatPrefs(chatPrefs);
+        const tier = (window.DoratchSubscription && window.DoratchSubscription.getActiveTier)
+            ? window.DoratchSubscription.getActiveTier(currentUserData || {})
+            : "";
+        fillThemeSelect(tier, p.colorTheme);
         const enterSel = document.getElementById("chat-pref-enter");
         const densitySel = document.getElementById("chat-pref-density");
         const secondsSel = document.getElementById("chat-pref-seconds");
@@ -2199,6 +2467,13 @@
         if (notifyFriendSel) notifyFriendSel.value = p.notifyFriendRequest ? "on" : "off";
         if (notifyReqSel) notifyReqSel.value = p.notifyMessageRequest ? "on" : "off";
         if (desktopSel) desktopSel.value = p.desktopNotification ? "on" : "off";
+        const accentInput = document.getElementById("chat-pref-accent");
+        if (accentInput && p.accentColor) accentInput.value = p.accentColor;
+        const themeSel = document.getElementById("chat-pref-theme");
+        if (themeSel) {
+            themeSel.onchange = syncChatPrefAccentRow;
+            syncChatPrefAccentRow();
+        }
         const modal = document.getElementById("chat-prefs-modal");
         if (modal) modal.style.display = "flex";
         syncMobileModalOpen();
@@ -2220,7 +2495,9 @@
             notifyMessage: (document.getElementById("chat-pref-notify-message")?.value || "on") === "on",
             notifyFriendRequest: (document.getElementById("chat-pref-notify-friend")?.value || "on") === "on",
             notifyMessageRequest: (document.getElementById("chat-pref-notify-request")?.value || "on") === "on",
-            desktopNotification: (document.getElementById("chat-pref-desktop")?.value || "off") === "on"
+            desktopNotification: (document.getElementById("chat-pref-desktop")?.value || "off") === "on",
+            colorTheme: document.getElementById("chat-pref-theme")?.value || "default",
+            accentColor: document.getElementById("chat-pref-accent")?.value || ""
         });
         try {
             if (nextPrefs.desktopNotification && typeof Notification !== "undefined" && Notification.permission === "default") {
@@ -2585,11 +2862,13 @@
             
             let role = data.role || 'student';
             if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-            if(role === 'admin' || role === 'teacher') {
+            if(role === 'admin' || role === 'teacher' || role === 'support') {
                 const adminLink = document.getElementById('admin-link-main');
                 if(adminLink) {
                     adminLink.style.display = 'flex';
-                    adminLink.innerText = role === 'admin' ? '🛠️ 管理面板' : '❓ 題庫管理';
+                    adminLink.innerText = role === 'admin'
+                        ? '🛠️ 管理面板'
+                        : (role === 'support' ? '🎧 客服後台' : '❓ 題庫管理');
                 }
             }
         } else {
@@ -2676,13 +2955,20 @@
                     rawName = displayName;
                 } else if (chat.type === 'server') {
                     icon = '🏫';
-                    displayName += ` <span style="font-size:10px; opacity:0.7; font-weight:normal;">(代碼: ${chat.id})</span>`;
+                    const SB = serverBoostApi();
+                    const boostLv = SB ? SB.getServerBoostLevel(chat) : 0;
+                    const boostBadge = SB ? SB.serverBoostBadgeHtml(boostLv) : "";
+                    displayName += boostBadge + ` <span style="font-size:10px; opacity:0.7; font-weight:normal;">(代碼: ${chat.id})</span>`;
                 } else {
                     icon = '👥';
                 }
 
                 const item = document.createElement('div');
                 item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
+                if (chat.type === 'server') {
+                    const SB = serverBoostApi();
+                    if (SB && SB.getServerBoostLevel(chat) > 0) item.classList.add("server-boosted");
+                }
                 item.onclick = () => openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
                 
                 const timeStr = chat.updatedAt ? formatMsgTime(chat.updatedAt.toDate()) : '';
@@ -2948,6 +3234,7 @@
         currentChatType = chatType;
         currentChatName = chatName;
         currentChatIcon = icon || "💬";
+        currentChatDocData = null;
         if (typingPulseTimer) {
             clearTimeout(typingPulseTimer);
             typingPulseTimer = null;
@@ -3010,12 +3297,16 @@
         unsubscribeChatDoc = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
+                currentChatDocData = data;
                 currentChatParticipants = data.participants || [];
                 currentChatAttachedBots = data.attachedBots || [];
                 refreshChatBotsMeta();
                 renderTypingIndicator(data.typingUsers || {});
                 if (currentChatType === "private") {
                     applyPrivateRequestState(data);
+                }
+                if (currentChatType === "server") {
+                    applyServerBoostHeader(data);
                 }
             }
         });
@@ -3079,7 +3370,10 @@
                 : '';
             const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="${badgeCls}">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
             const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? nameColorStyleAttr(senderCosmetics.nameColor, senderCosmetics.nameEffect) : '';
-            const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect) ? nameEffectClass(senderCosmetics.nameEffect) : "";
+            const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect)
+                ? (senderCosmetics.nameEffectClass || nameEffectClass(senderCosmetics.nameEffect))
+                : "";
+            const nameFontCls = (!isBotMsg && senderCosmetics.nameFontClass) ? (" " + senderCosmetics.nameFontClass) : "";
             const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
             const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
             const msgSubTier = !isBotMsg ? String(senderCosmetics.subscriptionTier || "").trim() : "";
@@ -3123,7 +3417,7 @@
                         <div class="msg-content${staffBubbleCls}">
                             ${quickActionsHtml}
                             <div class="msg-header">
-                                <span class="msg-author${staffNameGlow}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${subTierBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
+                                <span class="msg-author${staffNameGlow}${nameFontCls}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${subTierBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
                                 <span class="msg-time">${fullTimeStr}${editedMark}</span>
                             </div>
                             ${replyHtml}${contentHtml}
@@ -3212,6 +3506,7 @@
     window.leaveChat = async (chatId) => {
         if (!confirm("確定要退出這個聊天室嗎？退出後需要重新受邀才能進入。")) return;
         try {
+            if (currentChatType === "server") await clearUserBoostOnServer(chatId);
             await updateDoc(doc(db, "chats", chatId), {
                 participants: arrayRemove(currentUser.uid)
             });
@@ -3338,7 +3633,7 @@
     // 聊天室訊息上限清理（預設 300，可在 admin 設定）
     async function trimChatMessages(chatId) {
         if (!chatId) return;
-        const limit = Math.max(50, Math.floor(chatMaxMessages) || 300);
+        const limit = effectiveChatMessageLimit(currentChatDocData);
         try {
             const msgsQuery = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
             const msgsSnap = await getDocs(msgsQuery);
@@ -3576,6 +3871,7 @@
         if (resolvedNameFx) c.nameEffect = resolvedNameFx;
         if (c.nameColor) c.nameColor = resolveCosmeticForDisplay(senderData, "nameColor", c.nameColor) || c.nameColor;
         const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : "";
+        const popNameFontCls = c.nameFontClass ? (" " + c.nameFontClass) : "";
         if (!badgeShelf.length && c.badge) {
             const mythic = isMythicBadge(c.badge);
             badgeShelf = [`<span class="profile-pop-badge-chip${isLegendaryBadge(c.badge) ? " legend" : ""}${mythic ? " docoin-mythic" : ""}">✨ ${escHtml(c.badge)}</span>`];
@@ -3622,7 +3918,7 @@
                     <span class="profile-pop-status-dot${isBot ? " bot" : ""}"></span>
                 </div>
                 <div class="profile-pop-identity">
-                    <div class="profile-pop-name ${nameFxCls}">${c.nameColor && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? `<span class="name-fx-text" style="color:${escHtml(c.nameColor)}">` : `<span class="name-fx-text">`}${escHtml(name)}</span></div>
+                    <div class="profile-pop-name ${nameFxCls}${popNameFontCls}">${c.nameColor && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? `<span class="name-fx-text ${nameFxCls}" style="color:${escHtml(c.nameColor)}">` : `<span class="name-fx-text ${nameFxCls}">`}${escHtml(name)}</span></div>
                     <div class="profile-pop-handle">${escHtml(handle)}</div>
                     ${statusBlock}
                     ${rolePills.length ? `<div class="profile-pop-role-row">${rolePills.join("")}</div>` : ""}
@@ -4158,7 +4454,7 @@
         syncMobileModalOpen();
     };
     (function bindModalClickGuards() {
-        ["modal", "cosmetic-modal", "chat-prefs-modal"].forEach((id) => {
+        ["modal", "cosmetic-modal", "chat-prefs-modal", "server-boost-modal"].forEach((id) => {
             const root = document.getElementById(id);
             if (!root) return;
             const card = root.querySelector(".modal-content");
@@ -4186,6 +4482,7 @@
         if (t && t.id === "modal") closeModal();
         if (t && t.id === "cosmetic-modal") closeCosmeticModal();
         if (t && t.id === "chat-prefs-modal") closeChatPrefsModal();
+        if (t && t.id === "server-boost-modal") closeServerBoostModal();
         const menu = document.getElementById("message-menu");
         if (menu && t && !menu.contains(t)) hideMessageMenu();
         const pop = document.getElementById("profile-pop");
@@ -4280,6 +4577,16 @@
                 const chatSnap = await getDoc(chatRef);
                 
                 if (chatSnap.exists() && chatSnap.data().type === 'server') {
+                    const serverData = chatSnap.data();
+                    const SB = serverBoostApi();
+                    const memberBonus = SB ? SB.getServerMemberBonus(serverData) : 0;
+                    const maxMembers = 50 + memberBonus;
+                    const memberCount = Array.isArray(serverData.participants) ? serverData.participants.length : 0;
+                    if (memberCount >= maxMembers) {
+                        alert("此伺服器成員已滿（上限 " + maxMembers + " 人，含加成）。");
+                        closeModal();
+                        return;
+                    }
                     const groupCount = await checkGroupLimit();
                     if (groupCount >= 20) {
                         alert("加入失敗：您最多只能加入 20 個群組或伺服器！");

@@ -24,6 +24,11 @@ service cloud.firestore {
       );
     }
 
+    // 客服人員：專門處理客服工單
+    function isSupportStaff() {
+      return request.auth != null && currentRole() == 'support';
+    }
+
     // 輔助函式：檢查是否為老師
     function isTeacher() {
       return request.auth != null && (
@@ -64,7 +69,7 @@ service cloud.firestore {
           isAdmin() &&
           (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
-            request.resource.data.role in ['student', 'teacher', 'admin']
+            request.resource.data.role in ['student', 'teacher', 'support', 'admin']
           )
         ) ||
         (
@@ -213,6 +218,12 @@ service cloud.firestore {
           request.auth.uid in resource.data.participants &&
           request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['attachedBots', 'lastMessage', 'updatedAt'])
+        ) ||
+        (
+          resource.data.type == 'server' &&
+          request.auth.uid in resource.data.participants &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['boosters', 'lastMessage', 'updatedAt'])
         )
       );
       allow delete: if isAdmin() || (resource.data.type == 'server' && request.auth.uid == resource.data.teacherId) ||
@@ -275,7 +286,7 @@ service cloud.firestore {
     }
     // 兼容舊版命名
     match /admin_logs/{logId} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAdmin() || isSupportStaff();
     }
 
     // 6. 挑戰區全服榜（固定地圖題組 + 各使用者分數）
@@ -370,12 +381,52 @@ service cloud.firestore {
 
       allow read: if request.auth != null && (
         isAdmin() ||
+        isSupportStaff() ||
         resource.data.userId == request.auth.uid
       );
 
-      allow update: if isAdmin();
+      allow update: if isAdmin() || isSupportStaff() || (
+        request.auth != null &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(
+          ['updatedAt', 'lastMessageAt', 'lastMessagePreview', 'status']
+        ) &&
+        request.resource.data.status in ['open', 'replied', 'closed']
+      );
 
       allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        function ticketOwner() {
+          return get(/databases/$(database)/documents/support_tickets/$(ticketId)).data;
+        }
+
+        allow read: if request.auth != null && (
+          isAdmin() ||
+          isSupportStaff() ||
+          ticketOwner().userId == request.auth.uid
+        );
+
+        allow create: if request.auth != null && (
+          (
+            (isAdmin() || isSupportStaff()) &&
+            request.resource.data.from == 'staff' &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 2000
+          ) || (
+            ticketOwner().userId == request.auth.uid &&
+            ticketOwner().status != 'closed' &&
+            request.resource.data.from == 'user' &&
+            request.resource.data.senderId == request.auth.uid &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() >= 1 &&
+            request.resource.data.text.size() <= 2000
+          )
+        );
+
+        allow update, delete: if isAdmin() || isSupportStaff();
+      }
     }
   }
 }

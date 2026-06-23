@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="shared/doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="doratch-subscription.css">
+    <link rel="stylesheet" href="doratch-member-theme.css">
     <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
     <title>個人檔案 - Doratch</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&family=Nunito:wght@700;900&family=Noto+Serif+TC:ital,wght@0,600;1,600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
         :root { 
             --primary: #4C97FF; --secondary: #FFAB19; --accent: #855CD6;
@@ -164,9 +165,18 @@
             -webkit-text-fill-color: #e2e8f0 !important;
             animation: profileNameFxGlowBurst 2.2s ease-in-out infinite;
         }
+        .profile-name.name-effect-soft-glow > .name-fx-text {
+            --profile-name-glow: 0 0 12px rgba(96,165,250,0.75), 0 0 24px rgba(168,85,247,0.45);
+            animation: profileNameFxGlowBurst 1.6s ease-in-out infinite;
+        }
         .profile-name.name-effect-sparkle > .name-fx-text {
             --profile-name-glow: 0 0 8px rgba(250,204,21,0.65), 0 0 14px rgba(251,191,36,0.4);
             animation: profileNameFxGlowBurst 2.2s ease-in-out infinite;
+        }
+        .profile-name.name-effect-gentle-ripple > .name-fx-text {
+            --profile-name-glow: 0 0 8px rgba(59,130,246,0.6);
+            display: inline-block;
+            animation: profileNameFxGlowBurst 1.7s ease-in-out infinite;
         }
         .profile-name.name-effect-glitch > .name-fx-text {
             animation: profileNameFxGlowBurst 2.4s ease-in-out infinite;
@@ -493,6 +503,31 @@
                     </div>
                     <button type="button" class="btn-save-cosmetic" id="btn-save-cosmetic">儲存外觀設定</button>
                     <div id="cosmetic-msg"></div>
+
+                    <div id="member-style-section" class="member-style-section">
+                        <h3>✨ Plus / Pro 顯示名稱樣式</h3>
+                        <p style="font-size:13px;color:#94a3b8;margin:0 0 12px;">透過字型、顏色與效果自訂聊天室與個人頁的顯示名稱。會覆蓋商城裝備的名稱顏色／特效設定。</p>
+                        <div class="member-style-preview">
+                            <span id="member-style-preview-name" class="name-fx-text">預覽名稱</span>
+                        </div>
+                        <div class="member-style-grid">
+                            <div>
+                                <label for="style-name-font">字型</label>
+                                <select id="style-name-font"></select>
+                            </div>
+                            <div>
+                                <label for="style-name-color">名稱顏色</label>
+                                <select id="style-name-color"></select>
+                            </div>
+                            <div>
+                                <label for="style-name-effect">名稱效果</label>
+                                <select id="style-name-effect"></select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-save-cosmetic" id="btn-save-name-style" style="margin-top:12px;">儲存名稱樣式</button>
+                        <p id="member-style-lock" class="chat-pref-plus-lock" style="display:none;margin-top:10px;">需要 <a href="shop.html">Doratch Plus</a> 或 <a href="support.html?category=subscription">聯絡客服</a> 開通後才能自訂顯示名稱樣式。</p>
+                        <div id="member-style-msg"></div>
+                    </div>
                 </div>
 
                 <div class="dc-panel" id="dc-panel-account">
@@ -558,6 +593,7 @@
 
 <script src="doratch-staff-cosmetics.js"></script>
 <script src="doratch-subscription.js"></script>
+<script src="doratch-member-style.js"></script>
 <script src="shared/doratch-docoin-catalog.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1029,6 +1065,7 @@
         rainbow: "name-effect-rainbow",
         neon_flicker: "name-effect-neon-flicker",
         soft_glow: "name-effect-soft-glow",
+        gentle_ripple: "name-effect-gentle-ripple",
         sparkle: "name-effect-sparkle",
         glitch: "name-effect-glitch",
         chaos_prism: "name-effect-chaos-prism",
@@ -1209,8 +1246,7 @@
         const frame = pickOwnedEquipped(data, "frame");
         const title = pickOwnedEquipped(data, "title");
         const badge = pickOwnedEquipped(data, "badge");
-        const nameColor = pickOwnedEquipped(data, "nameColor");
-        const nameEffect = pickOwnedEquipped(data, "nameEffect");
+        const nameApp = resolveNameAppearanceForUser(data);
         const profileEffect = resolveVisualCosmetic(data, "profileEffect");
         const banner = resolveVisualCosmetic(data, "banner");
 
@@ -1227,20 +1263,24 @@
         const nameEl = document.getElementById("profile-display-name");
         if (nameEl) {
             const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
-            const nameSpan = ensureNameFxSpan(nameEl, label);
-            nameEl.classList.remove("name-effect-wave", "name-effect-prism", "name-effect-stardust", "name-effect-pulse-core", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-neon-flicker", "name-effect-sparkle", "name-effect-glitch", "name-effect-chaos-prism", "name-effect-code-storm", "name-effect-holy-radiance");
-            nameEl.style.color = "";
-            nameEl.style.background = "";
-            const cls = nameEffectClass(nameEffect);
-            if (cls) nameEl.classList.add(cls);
-            const gradientFx = ["name-effect-prism", "name-effect-aurora-pulse", "name-effect-rainbow", "name-effect-chaos-prism", "name-effect-holy-radiance"];
-            if (nameSpan) {
-                nameSpan.style.color = nameColor || "#f8fafc";
-                nameSpan.style.background = "";
+            ensureNameFxSpan(nameEl, label);
+            if (window.DoratchMemberStyle && window.DoratchMemberStyle.applyNameStyleToElement) {
+                window.DoratchMemberStyle.applyNameStyleToElement(nameEl, nameApp);
+            } else {
+                const nameSpan = nameEl.querySelector(".name-fx-text");
+                const cls = nameEffectClass(nameApp.effect);
+                if (cls) nameEl.classList.add(cls);
+                if (nameSpan) nameSpan.style.color = nameApp.color || "#f8fafc";
             }
         }
         const sideNameEl = document.getElementById("side-username");
-        if (sideNameEl) sideNameEl.style.color = nameColor || "";
+        if (sideNameEl) {
+            if (window.DoratchMemberStyle && window.DoratchMemberStyle.NAME_FONTS) {
+                window.DoratchMemberStyle.NAME_FONTS.forEach((f) => { if (f.className) sideNameEl.classList.remove(f.className); });
+            }
+            if (nameApp.fontClass) sideNameEl.classList.add(nameApp.fontClass);
+            sideNameEl.style.color = nameApp.color || "";
+        }
 
         const titleEl = document.getElementById("profile-title-chip");
         const badgeEl = document.getElementById("profile-badge-chip");
@@ -1304,7 +1344,7 @@
         const nameElStaff = document.getElementById("profile-display-name");
         if (nameElStaff) {
             nameElStaff.classList.remove("staff-namecolor-dev-cyan", "staff-namecolor-dev-matrix", "staff-namecolor-admin-gold", "staff-namecolor-admin-crimson");
-            const nc = String(nameColor || "").trim().toLowerCase();
+            const nc = String(nameApp.color || "").trim().toLowerCase();
             if (nc === "#00f5ff") nameElStaff.classList.add("staff-namecolor-dev-cyan");
             else if (nc === "#00ff41") nameElStaff.classList.add("staff-namecolor-dev-matrix");
             else if (nc === "#ffd700") nameElStaff.classList.add("staff-namecolor-admin-gold");
@@ -1357,6 +1397,80 @@
         else sel.value = "";
     }
 
+    function resolveNameAppearanceForUser(data) {
+        if (window.DoratchMemberStyle && window.DoratchMemberStyle.resolveNameAppearance) {
+            return window.DoratchMemberStyle.resolveNameAppearance(data, getEquipped(data));
+        }
+        const eq = getEquipped(data);
+        return {
+            font: "default",
+            color: String(eq.nameColor || "").trim(),
+            effect: String(eq.nameEffect || "").trim(),
+            fontClass: "",
+            effectClass: nameEffectClass(eq.nameEffect),
+            fromStyle: false
+        };
+    }
+
+    function fillMemberStyleSelect(id, items, selectedId) {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = "";
+        items.forEach((it) => {
+            const opt = document.createElement("option");
+            opt.value = it.id;
+            opt.textContent = it.label;
+            sel.appendChild(opt);
+        });
+        if (items.some((it) => it.id === selectedId)) sel.value = selectedId;
+        else if (items.length) sel.value = items[0].id;
+    }
+
+    function previewMemberStyle() {
+        const preview = document.getElementById("member-style-preview-name");
+        const previewWrap = preview ? preview.parentElement : null;
+        if (!preview || !userData) return;
+        const tier = getActiveSubscriptionTier(userData);
+        const style = (window.DoratchMemberStyle && window.DoratchMemberStyle.sanitizeDisplayNameStyle)
+            ? window.DoratchMemberStyle.sanitizeDisplayNameStyle({
+                font: document.getElementById("style-name-font")?.value,
+                colorId: document.getElementById("style-name-color")?.value,
+                effectId: document.getElementById("style-name-effect")?.value
+            }, tier)
+            : null;
+        const label = getDisplayLabel(userData, currentUser ? currentUser.email : "");
+        preview.textContent = label;
+        preview.className = "name-fx-text";
+        preview.style.color = "";
+        preview.style.background = "";
+        if (previewWrap && window.DoratchMemberStyle) {
+            window.DoratchMemberStyle.NAME_FONTS.forEach((f) => { if (f.className) previewWrap.classList.remove(f.className); });
+        }
+        if (style && previewWrap && window.DoratchMemberStyle) {
+            const app = {
+                fontClass: window.DoratchMemberStyle.getNameFontClass(style.font),
+                effectClass: window.DoratchMemberStyle.getNameEffectClass(style.effect),
+                color: style.color
+            };
+            window.DoratchMemberStyle.applyNameStyleToElement(previewWrap, app);
+        }
+    }
+
+    function renderMemberStylePanel(data) {
+        const tier = getActiveSubscriptionTier(data);
+        const section = document.getElementById("member-style-section");
+        const lockEl = document.getElementById("member-style-lock");
+        const hasPlus = tier === "plus" || tier === "pro";
+        if (section) section.classList.toggle("locked", !hasPlus);
+        if (lockEl) lockEl.style.display = hasPlus ? "none" : "block";
+        if (!window.DoratchMemberStyle) return;
+        const style = window.DoratchMemberStyle.sanitizeDisplayNameStyle(data && data.displayNameStyle, tier) || { font: "default", colorId: "default", effectId: "" };
+        fillMemberStyleSelect("style-name-font", window.DoratchMemberStyle.getAllowedFonts(tier), style.font);
+        fillMemberStyleSelect("style-name-color", window.DoratchMemberStyle.getAllowedStyleColors(tier), style.colorId);
+        fillMemberStyleSelect("style-name-effect", window.DoratchMemberStyle.getAllowedStyleEffects(tier), style.effectId);
+        previewMemberStyle();
+    }
+
     function renderCosmeticPanel(data) {
         fillSelect("equip-avatar", ownedItemsBySlot(data, "avatar"), pickOwnedEquipped(data, "avatar"), "預設頭像");
         fillSelect("equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
@@ -1366,6 +1480,7 @@
         fillSelect("equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
         fillSelect("equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
         fillSelect("equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
+        renderMemberStylePanel(data);
     }
 
     function previewDcBannerFromForm() {
@@ -1585,6 +1700,47 @@
         }
     });
 
+    const btnSaveNameStyle = document.getElementById("btn-save-name-style");
+    if (btnSaveNameStyle) {
+        btnSaveNameStyle.addEventListener("click", async () => {
+            if (!userRef || !currentUser) return;
+            const tier = getActiveSubscriptionTier(userData);
+            if (tier !== "plus" && tier !== "pro") {
+                const lockMsg = document.getElementById("member-style-msg");
+                if (lockMsg) lockMsg.textContent = "需要 Plus 或 Pro 訂閱才能儲存名稱樣式。";
+                return;
+            }
+            const raw = {
+                font: (document.getElementById("style-name-font")?.value || "default"),
+                colorId: (document.getElementById("style-name-color")?.value || "default"),
+                effectId: (document.getElementById("style-name-effect")?.value || "")
+            };
+            const style = window.DoratchMemberStyle
+                ? window.DoratchMemberStyle.sanitizeDisplayNameStyle(raw, tier)
+                : raw;
+            const msg = document.getElementById("member-style-msg");
+            btnSaveNameStyle.disabled = true;
+            btnSaveNameStyle.textContent = "儲存中…";
+            try {
+                await updateDoc(userRef, { displayNameStyle: style });
+                userData = { ...userData, displayNameStyle: style };
+                applyDisplayUI(currentUser, userData);
+                if (msg) msg.textContent = "顯示名稱樣式已儲存。";
+            } catch (e) {
+                console.error(e);
+                if (msg) msg.textContent = "儲存失敗，請稍後再試。";
+            } finally {
+                btnSaveNameStyle.disabled = false;
+                btnSaveNameStyle.textContent = "儲存名稱樣式";
+            }
+        });
+    }
+
+    ["style-name-font", "style-name-color", "style-name-effect"].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", previewMemberStyle);
+    });
+
     ["equip-banner", "equip-profile-effect"].forEach(function (id) {
         const el = document.getElementById(id);
         if (el) el.addEventListener("change", previewDcBannerFromForm);
@@ -1632,11 +1788,13 @@
 
             let role = userData.role || "student";
             if (user.email === "chianghansen0302@gmail.com") role = "admin";
-            if (role === "admin" || role === "teacher") {
+            if (role === "admin" || role === "teacher" || role === "support") {
                 const adminLink = document.getElementById("admin-link-main");
                 if (adminLink) {
                     adminLink.style.display = "flex";
-                    adminLink.innerText = role === "admin" ? "🛠️ 管理面板" : "❓ 題庫管理";
+                    adminLink.innerText = role === "admin"
+                        ? "🛠️ 管理面板"
+                        : (role === "support" ? "🎧 客服後台" : "❓ 題庫管理");
                 }
             }
 

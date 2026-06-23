@@ -462,7 +462,7 @@
             <button class="btn btn-primary" onclick="loadSupportTickets()">🔄 重新整理</button>
         </div>
         <div class="card">
-            <p style="margin-top:0; color:#94A3B8; font-size:13px;">使用者從「客服中心」提交的問題。回覆後狀態會改為「已回覆」，使用者可在工單列表看到內容。</p>
+            <p style="margin-top:0; color:#94A3B8; font-size:13px;">與使用者多輪對話。回覆會即時顯示在客服中心工單對話中。</p>
             <div id="support-ticket-list"></div>
         </div>
     </div>
@@ -544,6 +544,7 @@
                 <select id="u-role">
                     <option value="student">學生 (Student)</option>
                     <option value="teacher">老師 (Teacher)</option>
+                    <option value="support">客服人員 (Support)</option>
                     <option value="admin">管理員 (Admin)</option>
                     <option value="developer">開發者 (Developer)</option>
                 </select>
@@ -729,7 +730,7 @@
         
         applyAdminSidebarUser(u, userData || {});
         
-        if(myRole !== 'developer' && myRole !== 'admin' && myRole !== 'teacher') {
+        if(myRole !== 'developer' && myRole !== 'admin' && myRole !== 'teacher' && myRole !== 'support') {
             alert("權限不足！請聯繫管理員。");
             location.href = "dashboard.html";
             return;
@@ -745,6 +746,16 @@
             document.getElementById('menu-logs').style.display = 'none';
             showTab('questions');
             loadQuestions();
+        } else if (myRole === 'support') {
+            document.getElementById('menu-dashboard').style.display = 'none';
+            document.getElementById('menu-users').style.display = 'none';
+            document.getElementById('menu-questions').style.display = 'none';
+            document.getElementById('menu-coin-reviews').style.display = 'none';
+            document.getElementById('menu-server-requests').style.display = 'none';
+            document.getElementById('menu-announcements').style.display = 'none';
+            document.getElementById('menu-logs').style.display = 'none';
+            showTab('support-tickets');
+            loadSupportTickets();
         } else {
             loadUsers();
             loadQuestions();
@@ -1650,6 +1661,45 @@
         project: '作品', bug: '錯誤', other: '其他'
     };
 
+    function supportFormatTime(ts) {
+        if (!ts) return '剛剛';
+        try {
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return isNaN(d.getTime()) ? '剛剛' : d.toLocaleString('zh-TW');
+        } catch (_) { return '剛剛'; }
+    }
+
+    function supportLegacyMessages(t) {
+        const out = [];
+        if (t.message) out.push({ from: 'user', senderName: t.displayName || t.userEmail || '使用者', text: t.message, createdAt: t.createdAt });
+        if (t.adminReply) out.push({ from: 'staff', senderName: '客服', text: t.adminReply, createdAt: t.repliedAt || t.updatedAt });
+        return out;
+    }
+
+    async function fetchSupportMessages(ticketId, ticket) {
+        try {
+            const snap = await getDocs(query(collection(db, 'support_tickets', ticketId, 'messages'), orderBy('createdAt', 'asc')));
+            if (!snap.empty) return snap.docs.map(d => d.data());
+        } catch (e) { console.warn(e); }
+        return supportLegacyMessages(ticket || {});
+    }
+
+    function renderSupportThreadHtml(messages) {
+        if (!messages.length) return '<div style="color:#64748b;font-size:12px;">尚無訊息</div>';
+        return messages.map(m => {
+            const who = m.from === 'staff' ? '客服' : (m.senderName || '使用者');
+            const bg = m.from === 'staff' ? '#052e16' : '#0b1220';
+            const color = m.from === 'staff' ? '#bbf7d0' : '#cbd5e1';
+            const align = m.from === 'staff' ? 'flex-end' : 'flex-start';
+            return `<div style="display:flex;justify-content:${align};margin-bottom:8px;">
+                <div style="max-width:88%;padding:8px 10px;border-radius:10px;background:${bg};color:${color};font-size:12px;line-height:1.55;white-space:pre-wrap;">
+                    <div style="font-size:10px;opacity:0.75;margin-bottom:4px;">${escapeHtml(who)} · ${escapeHtml(supportFormatTime(m.createdAt))}</div>
+                    ${escapeHtml(m.text || '')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
     window.loadSupportTickets = async function () {
         const host = document.getElementById('support-ticket-list');
         if (!host) return;
@@ -1661,12 +1711,14 @@
                 return;
             }
             host.innerHTML = '';
-            snap.forEach(d => {
+            for (const d of snap.docs) {
                 const t = d.data() || {};
                 const status = t.status || 'open';
-                const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate().toLocaleString('zh-TW') : '剛剛';
+                const created = supportFormatTime(t.createdAt);
                 const cat = SUPPORT_CATEGORY_LABELS[t.category] || t.category || '其他';
-                const canReply = (myRole === 'admin' || myRole === 'developer') && status !== 'closed';
+                const canReply = (myRole === 'admin' || myRole === 'developer' || myRole === 'support') && status !== 'closed';
+                const canReopen = (myRole === 'admin' || myRole === 'developer' || myRole === 'support') && status === 'closed';
+                const messages = await fetchSupportMessages(d.id, t);
                 const item = document.createElement('div');
                 item.style.cssText = 'border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:12px; background:#111827;';
                 item.innerHTML = `
@@ -1677,22 +1729,27 @@
                     <div style="font-size:12px; color:#94A3B8; line-height:1.6;">
                         使用者：${escapeHtml(t.displayName || t.userEmail || t.userId || '未知')}<br>
                         Email：${escapeHtml(t.userEmail || '-')}<br>
-                        提交時間：${created}<br>
+                        建立：${created} · 更新：${escapeHtml(supportFormatTime(t.updatedAt || t.createdAt))}<br>
                     </div>
-                    <pre style="margin-top:8px; white-space:pre-wrap; background:#0b1220; border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; color:#cbd5e1; font-size:12px;">${escapeHtml(t.message || '')}</pre>
-                    ${t.adminReply ? `<div style="margin-top:8px; padding:10px; background:#052e16; border-radius:8px; font-size:12px; color:#bbf7d0;">已回覆：${escapeHtml(t.adminReply)}</div>` : ''}
+                    <div id="support-thread-${d.id}" style="margin-top:10px; max-height:280px; overflow-y:auto; padding:10px; background:#0a0f1a; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        ${renderSupportThreadHtml(messages)}
+                    </div>
                     ${canReply ? `
                         <div style="margin-top:10px;">
-                            <textarea id="support-reply-${d.id}" rows="3" placeholder="輸入回覆內容…" style="width:100%; box-sizing:border-box; background:#0b1220; border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:8px; padding:10px; font-family:inherit;"></textarea>
+                            <textarea id="support-reply-${d.id}" rows="3" placeholder="輸入回覆，與使用者繼續對話…" style="width:100%; box-sizing:border-box; background:#0b1220; border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:8px; padding:10px; font-family:inherit;"></textarea>
                             <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
                                 <button class="btn btn-success" onclick="replySupportTicket('${d.id}')">送出回覆</button>
                                 <button class="btn" style="background:#334155;color:#fff;" onclick="closeSupportTicket('${d.id}')">結案</button>
                             </div>
                         </div>
-                    ` : ''}
+                    ` : (canReopen ? `
+                        <div style="margin-top:10px;">
+                            <button class="btn" style="background:#166534;color:#fff;" onclick="reopenSupportTicket('${d.id}')">重新開啟</button>
+                        </div>
+                    ` : '')}
                 `;
                 host.appendChild(item);
-            });
+            }
         } catch (e) {
             console.error(e);
             host.innerHTML = `<div class="empty-state">載入失敗：${escapeHtml(e.message || e)}</div>`;
@@ -1700,17 +1757,27 @@
     };
 
     window.replySupportTicket = async (ticketId) => {
-        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員可以回覆', 'error');
+        if (myRole !== 'admin' && myRole !== 'developer' && myRole !== 'support') return showToast('只有管理員/客服可以回覆', 'error');
         const input = document.getElementById('support-reply-' + ticketId);
         const reply = String((input && input.value) || '').trim();
-        if (reply.length < 2) return showToast('回覆至少 2 個字', 'error');
+        if (reply.length < 1) return showToast('回覆至少 1 個字', 'error');
         try {
+            await addDoc(collection(db, 'support_tickets', ticketId, 'messages'), {
+                from: 'staff',
+                senderId: auth.currentUser.uid,
+                senderEmail: auth.currentUser.email || 'admin',
+                senderName: '客服',
+                text: reply,
+                createdAt: serverTimestamp()
+            });
             await updateDoc(doc(db, 'support_tickets', ticketId), {
                 adminReply: reply,
                 status: 'replied',
                 repliedBy: auth.currentUser.email || 'admin',
                 repliedAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp(),
+                lastMessagePreview: reply.slice(0, 120)
             });
             await logAction('客服回覆', `ticket=${ticketId}`);
             showToast('已回覆工單');
@@ -1722,7 +1789,7 @@
     };
 
     window.closeSupportTicket = async (ticketId) => {
-        if (myRole !== 'admin' && myRole !== 'developer') return showToast('只有管理員可以結案', 'error');
+        if (myRole !== 'admin' && myRole !== 'developer' && myRole !== 'support') return showToast('只有管理員/客服可以結案', 'error');
         if (!confirm('確定將此工單標記為已結案？')) return;
         try {
             await updateDoc(doc(db, 'support_tickets', ticketId), {
@@ -1735,6 +1802,24 @@
         } catch (e) {
             console.error(e);
             showToast('結案失敗：' + (e.message || e), 'error');
+        }
+    };
+
+    window.reopenSupportTicket = async (ticketId) => {
+        if (myRole !== 'admin' && myRole !== 'developer' && myRole !== 'support') return showToast('只有管理員/客服可以重新開啟', 'error');
+        if (!confirm('確定重新開啟這張工單？')) return;
+        try {
+            await updateDoc(doc(db, 'support_tickets', ticketId), {
+                status: 'open',
+                updatedAt: serverTimestamp(),
+                lastMessagePreview: '（客服重新開啟工單）'
+            });
+            await logAction('客服重新開啟', `ticket=${ticketId}`);
+            showToast('已重新開啟');
+            loadSupportTickets();
+        } catch (e) {
+            console.error(e);
+            showToast('重新開啟失敗：' + (e.message || e), 'error');
         }
     };
 

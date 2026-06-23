@@ -23,7 +23,32 @@
             --text: #0f172a;
             --muted: #64748b;
         }
-        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+        body { font-family: "Noto Sans TC", sans-serif; background: var(--bg); margin: 0; color: var(--text); min-height: 100vh; }
+        .app-container > .main-content {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .support-mobile-top {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        body.doratch-app-mode .support-mobile-top { display: flex; }
+        .support-mobile-top a {
+            text-decoration: none;
+            color: #4C97FF;
+            font-weight: 800;
+            font-size: 14px;
+        }
+        .support-mobile-top span { font-weight: 900; font-size: 15px; }
         .support-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 48px; }
         .support-hero {
             background: linear-gradient(135deg, #4C97FF, #855CD6);
@@ -83,8 +108,10 @@
         .ticket-list { display: flex; flex-direction: column; gap: 12px; }
         .ticket-item {
             border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px 16px;
-            background: #fafafa;
+            background: #fafafa; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s;
         }
+        .ticket-item:hover { border-color: #93c5fd; box-shadow: 0 4px 14px rgba(76,151,255,0.12); }
+        .ticket-item.active { border-color: #4C97FF; background: #f8fbff; }
         .ticket-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
         .ticket-subject { font-weight: 900; font-size: 14px; }
         .ticket-meta { font-size: 12px; color: var(--muted); line-height: 1.5; }
@@ -98,7 +125,63 @@
             margin-top: 10px; padding: 10px 12px; background: #f0fdf4;
             border-left: 3px solid #22c55e; border-radius: 8px; font-size: 13px; line-height: 1.55;
         }
+        .ticket-preview { font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .ticket-open-hint { font-size: 12px; color: #4C97FF; font-weight: 800; margin-top: 8px; }
+
+        /* 工單對話 */
+        .ticket-thread-overlay {
+            display: none; position: fixed; inset: 0; z-index: 10050;
+            background: rgba(15,23,42,0.45); align-items: center; justify-content: center;
+            padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
+        }
+        .ticket-thread-overlay.open { display: flex; }
+        .ticket-thread-panel {
+            width: min(560px, 100%); max-height: min(88vh, 720px);
+            background: #fff; border-radius: 18px; display: flex; flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18); overflow: hidden;
+        }
+        .ticket-thread-head {
+            padding: 16px 18px; border-bottom: 1px solid #e2e8f0;
+            display: flex; justify-content: space-between; gap: 10px; align-items: flex-start;
+        }
+        .ticket-thread-head h3 { margin: 0; font-size: 1rem; line-height: 1.4; }
+        .ticket-thread-close {
+            background: #f1f5f9; border: none; border-radius: 8px; width: 32px; height: 32px;
+            cursor: pointer; font-size: 18px; line-height: 1; flex-shrink: 0;
+        }
+        .ticket-thread-messages {
+            flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+            background: #f8fafc; min-height: 200px;
+        }
+        .thread-msg {
+            max-width: 88%; padding: 10px 12px; border-radius: 14px; font-size: 13px; line-height: 1.55;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .thread-msg.user { align-self: flex-end; background: #dbeafe; color: #1e3a5f; border-bottom-right-radius: 4px; }
+        .thread-msg.staff { align-self: flex-start; background: #fff; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px; }
+        .thread-msg-meta { font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 700; }
+        .ticket-thread-compose {
+            padding: 12px 16px; border-top: 1px solid #e2e8f0; background: #fff;
+        }
+        .ticket-thread-compose textarea {
+            width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1;
+            border-radius: 12px; padding: 10px 12px; font-size: 14px; font-family: inherit;
+            min-height: 72px; resize: vertical;
+        }
+        .ticket-thread-compose .compose-actions {
+            display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;
+        }
+        .ticket-thread-closed {
+            padding: 12px 16px; background: #f1f5f9; color: #64748b; font-size: 13px; text-align: center;
+        }
         .empty-hint { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 12px; }
+        @media (max-width: 1024px) {
+            body:not(.doratch-app-mode) .app-container .sidebar-main {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
         #form-msg { font-size: 13px; margin-top: 10px; min-height: 1.2em; }
         #form-msg.ok { color: #15803d; }
         #form-msg.err { color: #dc2626; }
@@ -126,6 +209,10 @@
     </aside>
 
     <main class="main-content">
+        <div class="support-mobile-top">
+            <a href="profile.html" id="support-back-link">← 返回</a>
+            <span>🎧 客服中心</span>
+        </div>
         <div class="support-wrap">
             <div class="support-hero">
                 <h1>🎧 客服中心</h1>
@@ -190,12 +277,37 @@
     </main>
 </div>
 
+<div id="ticket-thread-overlay" class="ticket-thread-overlay" aria-hidden="true">
+    <div class="ticket-thread-panel" role="dialog">
+        <div class="ticket-thread-head">
+            <div>
+                <h3 id="thread-subject">工單</h3>
+                <div id="thread-meta" class="ticket-meta"></div>
+            </div>
+            <button type="button" class="ticket-thread-close" id="btn-close-thread" aria-label="關閉">×</button>
+        </div>
+        <div id="thread-messages" class="ticket-thread-messages"></div>
+        <div id="thread-compose" class="ticket-thread-compose">
+            <textarea id="thread-reply-input" maxlength="2000" placeholder="輸入訊息…"></textarea>
+            <div class="compose-actions">
+                <button type="button" class="btn-ghost" id="btn-close-thread-2">關閉</button>
+                <button type="button" class="btn-ghost" id="btn-close-ticket" style="background:#fee2e2;color:#991b1b;">結案</button>
+                <button type="button" class="btn-primary" id="btn-send-thread">送出</button>
+            </div>
+        </div>
+        <div id="thread-closed-bar" class="ticket-thread-closed" style="display:none;">
+            此工單已結案，無法繼續對話。
+            <button type="button" class="btn-ghost" id="btn-reopen-ticket" style="margin-left:8px;background:#dcfce7;color:#166534;">重新開啟</button>
+        </div>
+    </div>
+</div>
+
 <script src="doratch-shell.js"></script>
 <script src="doratch-mobile-shell.js" defer></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, getDocs, doc, getDoc, serverTimestamp, orderBy, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDwRdQFgQVn5Un8Od2nP4u5EbMx-dMOYoU",
@@ -210,6 +322,10 @@
 
     let currentUser = null;
     let userData = {};
+    let activeTicketId = null;
+    let activeTicketData = null;
+    let threadUnsub = null;
+    let ticketDocsCache = [];
 
     const FAQ = [
         { q: "驗證信沒收到怎麼辦？", a: "請先檢查垃圾郵件資料夾。若仍沒有，可在登入頁使用「重發驗證信」。Email 打錯需重新註冊正確信箱，或聯絡客服協助。" },
@@ -288,6 +404,216 @@
         applySidebar(null, {});
     }
 
+    function formatTime(ts) {
+        if (!ts) return "剛剛";
+        try {
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            if (isNaN(d.getTime())) return "剛剛";
+            return d.toLocaleString("zh-TW");
+        } catch (_) {
+            return "剛剛";
+        }
+    }
+
+    function legacyMessages(ticket) {
+        const out = [];
+        if (ticket.message) {
+            out.push({
+                from: "user",
+                senderName: ticket.displayName || ticket.userEmail || "使用者",
+                text: ticket.message,
+                createdAt: ticket.createdAt
+            });
+        }
+        if (ticket.adminReply) {
+            out.push({
+                from: "staff",
+                senderName: "客服",
+                text: ticket.adminReply,
+                createdAt: ticket.repliedAt || ticket.updatedAt
+            });
+        }
+        return out;
+    }
+
+    function renderThreadMessages(messages) {
+        const host = document.getElementById("thread-messages");
+        if (!host) return;
+        if (!messages.length) {
+            host.innerHTML = '<div class="empty-hint">尚無訊息</div>';
+            return;
+        }
+        host.innerHTML = messages.map(function (m) {
+            const who = m.from === "staff" ? "客服" : (m.senderName || "我");
+            const cls = m.from === "staff" ? "staff" : "user";
+            return '<div class="thread-msg ' + cls + '">' +
+                '<div class="thread-msg-meta">' + esc(who) + " · " + esc(formatTime(m.createdAt)) + "</div>" +
+                esc(m.text || "") + "</div>";
+        }).join("");
+        host.scrollTop = host.scrollHeight;
+    }
+
+    async function fetchTicketMessages(ticketId, ticket) {
+        try {
+            const snap = await getDocs(query(
+                collection(db, "support_tickets", ticketId, "messages"),
+                orderBy("createdAt", "asc")
+            ));
+            if (!snap.empty) {
+                return snap.docs.map(function (d) { return d.data(); });
+            }
+        } catch (e) {
+            console.warn("messages subcollection", e);
+        }
+        return legacyMessages(ticket || {});
+    }
+
+    function stopThreadListener() {
+        if (threadUnsub) {
+            threadUnsub();
+            threadUnsub = null;
+        }
+    }
+
+    async function openTicketThread(ticketId) {
+        const ticket = ticketDocsCache.find(function (d) { return d.id === ticketId; });
+        if (!ticket) return;
+        activeTicketId = ticketId;
+        activeTicketData = ticket.data;
+        const cat = CATEGORY_LABELS[ticket.data.category] || ticket.data.category || "其他";
+        const status = ticket.data.status || "open";
+        document.getElementById("thread-subject").textContent = "[" + cat + "] " + (ticket.data.subject || "（無主旨）");
+        document.getElementById("thread-meta").textContent =
+            "狀態：" + (STATUS_LABELS[status] || status) + " · 建立：" + formatTime(ticket.data.createdAt);
+        const overlay = document.getElementById("ticket-thread-overlay");
+        const compose = document.getElementById("thread-compose");
+        const closedBar = document.getElementById("thread-closed-bar");
+        const closeTicketBtn = document.getElementById("btn-close-ticket");
+        const reopenBtn = document.getElementById("btn-reopen-ticket");
+        const closed = status === "closed";
+        if (compose) compose.style.display = closed ? "none" : "";
+        if (closedBar) closedBar.style.display = closed ? "" : "none";
+        if (closeTicketBtn) closeTicketBtn.style.display = closed ? "none" : "";
+        if (reopenBtn) reopenBtn.style.display = closed ? "" : "none";
+        document.getElementById("thread-reply-input").value = "";
+        overlay.classList.add("open");
+        overlay.setAttribute("aria-hidden", "false");
+        document.body.classList.add("doratch-modal-open");
+        if (window.DoratchMobile && window.DoratchMobile.syncAppModalOpen) window.DoratchMobile.syncAppModalOpen();
+
+        stopThreadListener();
+        const msgCol = collection(db, "support_tickets", ticketId, "messages");
+        threadUnsub = onSnapshot(query(msgCol, orderBy("createdAt", "asc")), function (snap) {
+            if (!snap.empty) {
+                renderThreadMessages(snap.docs.map(function (d) { return d.data(); }));
+            } else {
+                renderThreadMessages(legacyMessages(ticket.data));
+            }
+        }, function () {
+            fetchTicketMessages(ticketId, ticket.data).then(renderThreadMessages);
+        });
+
+        document.querySelectorAll(".ticket-item").forEach(function (el) {
+            el.classList.toggle("active", el.getAttribute("data-ticket-id") === ticketId);
+        });
+    }
+
+    function closeTicketThread() {
+        stopThreadListener();
+        activeTicketId = null;
+        activeTicketData = null;
+        const overlay = document.getElementById("ticket-thread-overlay");
+        overlay.classList.remove("open");
+        overlay.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("doratch-modal-open");
+        if (window.DoratchMobile && window.DoratchMobile.syncAppModalOpen) window.DoratchMobile.syncAppModalOpen();
+        document.querySelectorAll(".ticket-item").forEach(function (el) { el.classList.remove("active"); });
+    }
+
+    async function sendThreadReply() {
+        if (!currentUser || !activeTicketId || !activeTicketData) return;
+        if ((activeTicketData.status || "") === "closed") return;
+        const input = document.getElementById("thread-reply-input");
+        const text = String((input && input.value) || "").trim();
+        if (text.length < 1) return;
+        const btn = document.getElementById("btn-send-thread");
+        if (btn) btn.disabled = true;
+        try {
+            await addDoc(collection(db, "support_tickets", activeTicketId, "messages"), {
+                from: "user",
+                senderId: currentUser.uid,
+                senderEmail: currentUser.email || "",
+                senderName: (userData.displayName || "").trim() || (currentUser.email || "使用者"),
+                text: text,
+                createdAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "support_tickets", activeTicketId), {
+                status: "open",
+                updatedAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp(),
+                lastMessagePreview: text.slice(0, 120)
+            });
+            if (input) input.value = "";
+            await loadTickets();
+        } catch (e) {
+            console.error(e);
+            alert("送出失敗：" + (e.message || e));
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function closeActiveTicketByUser() {
+        if (!currentUser || !activeTicketId || !activeTicketData) return;
+        if ((activeTicketData.status || "") === "closed") return;
+        if (!confirm("確定要將這張工單標記為已結案嗎？")) return;
+        const btn = document.getElementById("btn-close-ticket");
+        if (btn) btn.disabled = true;
+        try {
+            await updateDoc(doc(db, "support_tickets", activeTicketId), {
+                status: "closed",
+                updatedAt: serverTimestamp(),
+                lastMessagePreview: "（使用者已結案）"
+            });
+            activeTicketData = { ...activeTicketData, status: "closed", lastMessagePreview: "（使用者已結案）" };
+            const compose = document.getElementById("thread-compose");
+            const closedBar = document.getElementById("thread-closed-bar");
+            if (compose) compose.style.display = "none";
+            if (closedBar) closedBar.style.display = "";
+            await loadTickets();
+        } catch (e) {
+            console.error(e);
+            alert("結案失敗：" + (e.message || e));
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async function reopenActiveTicketByUser() {
+        if (!currentUser || !activeTicketId || !activeTicketData) return;
+        if ((activeTicketData.status || "") !== "closed") return;
+        const btn = document.getElementById("btn-reopen-ticket");
+        if (btn) btn.disabled = true;
+        try {
+            await updateDoc(doc(db, "support_tickets", activeTicketId), {
+                status: "open",
+                updatedAt: serverTimestamp(),
+                lastMessagePreview: "（使用者重新開啟工單）"
+            });
+            activeTicketData = { ...activeTicketData, status: "open", lastMessagePreview: "（使用者重新開啟工單）" };
+            const compose = document.getElementById("thread-compose");
+            const closedBar = document.getElementById("thread-closed-bar");
+            if (compose) compose.style.display = "";
+            if (closedBar) closedBar.style.display = "none";
+            await loadTickets();
+        } catch (e) {
+            console.error(e);
+            alert("重新開啟失敗：" + (e.message || e));
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
     async function loadTickets() {
         const host = document.getElementById("ticket-list");
         if (!currentUser) return;
@@ -299,10 +625,13 @@
             );
             const snap = await getDocs(q);
             const docs = snap.docs.slice().sort(function (a, b) {
-                const am = a.data().createdAt && a.data().createdAt.toMillis ? a.data().createdAt.toMillis() : 0;
-                const bm = b.data().createdAt && b.data().createdAt.toMillis ? b.data().createdAt.toMillis() : 0;
+                const am = a.data().updatedAt && a.data().updatedAt.toMillis ? a.data().updatedAt.toMillis()
+                    : (a.data().createdAt && a.data().createdAt.toMillis ? a.data().createdAt.toMillis() : 0);
+                const bm = b.data().updatedAt && b.data().updatedAt.toMillis ? b.data().updatedAt.toMillis()
+                    : (b.data().createdAt && b.data().createdAt.toMillis ? b.data().createdAt.toMillis() : 0);
                 return bm - am;
             });
+            ticketDocsCache = docs.map(function (d) { return { id: d.id, data: d.data() || {} }; });
             if (!docs.length) {
                 host.innerHTML = '<div class="empty-hint">尚無工單。若有問題請在上方提交。</div>';
                 return;
@@ -311,20 +640,27 @@
             docs.forEach(function (d) {
                 const t = d.data() || {};
                 const status = t.status || "open";
-                const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate().toLocaleString("zh-TW") : "剛剛";
+                const created = formatTime(t.createdAt);
                 const cat = CATEGORY_LABELS[t.category] || t.category || "其他";
+                const preview = t.lastMessagePreview || t.message || "";
                 const div = document.createElement("div");
                 div.className = "ticket-item";
+                div.setAttribute("data-ticket-id", d.id);
                 div.innerHTML =
                     '<div class="ticket-head">' +
                     '<div class="ticket-subject">[' + esc(cat) + "] " + esc(t.subject || "（無主旨）") + "</div>" +
                     '<span class="status-pill status-' + esc(status) + '">' + esc(STATUS_LABELS[status] || status) + "</span>" +
                     "</div>" +
-                    '<div class="ticket-meta">提交時間：' + esc(created) + "</div>" +
-                    '<div class="ticket-meta" style="margin-top:6px;white-space:pre-wrap;">' + esc(t.message || "") + "</div>" +
-                    (t.adminReply ? '<div class="admin-reply"><strong>客服回覆：</strong><br>' + esc(t.adminReply) + "</div>" : "");
+                    '<div class="ticket-meta">更新時間：' + esc(created) + "</div>" +
+                    '<div class="ticket-preview">' + esc(preview) + "</div>" +
+                    '<div class="ticket-open-hint">點擊查看對話 →</div>';
+                div.addEventListener("click", function () { openTicketThread(d.id); });
                 host.appendChild(div);
             });
+            if (activeTicketId) {
+                const active = ticketDocsCache.find(function (t) { return t.id === activeTicketId; });
+                if (active) activeTicketData = active.data;
+            }
         } catch (e) {
             console.error(e);
             host.innerHTML = '<div class="empty-hint">載入失敗：' + esc(e.message || e) + "</div>";
@@ -353,7 +689,7 @@
         msg.textContent = "送出中…";
         msg.className = "";
         try {
-            await addDoc(collection(db, "support_tickets"), {
+            const ticketRef = await addDoc(collection(db, "support_tickets"), {
                 userId: currentUser.uid,
                 userEmail: currentUser.email || "",
                 displayName: (userData.displayName || "").trim(),
@@ -362,8 +698,18 @@
                 message,
                 status: "open",
                 adminReply: "",
+                lastMessagePreview: message.slice(0, 120),
                 createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
+                updatedAt: serverTimestamp(),
+                lastMessageAt: serverTimestamp()
+            });
+            await addDoc(collection(db, "support_tickets", ticketRef.id, "messages"), {
+                from: "user",
+                senderId: currentUser.uid,
+                senderEmail: currentUser.email || "",
+                senderName: (userData.displayName || "").trim() || (currentUser.email || "使用者"),
+                text: message,
+                createdAt: serverTimestamp()
             });
             document.getElementById("ticket-subject").value = "";
             document.getElementById("ticket-message").value = "";
@@ -382,6 +728,37 @@
     document.getElementById("btn-refresh-tickets").addEventListener("click", function () {
         if (currentUser) loadTickets();
     });
+
+    document.getElementById("btn-close-thread").addEventListener("click", closeTicketThread);
+    document.getElementById("btn-close-thread-2").addEventListener("click", closeTicketThread);
+    document.getElementById("btn-close-ticket").addEventListener("click", closeActiveTicketByUser);
+    document.getElementById("btn-reopen-ticket").addEventListener("click", reopenActiveTicketByUser);
+    document.getElementById("btn-send-thread").addEventListener("click", sendThreadReply);
+    document.getElementById("ticket-thread-overlay").addEventListener("click", function (e) {
+        if (e.target === e.currentTarget) closeTicketThread();
+    });
+    document.getElementById("thread-reply-input").addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendThreadReply();
+        }
+    });
+
+    const backLink = document.getElementById("support-back-link");
+    if (backLink) {
+        backLink.href = appAwareHref("profile.html");
+    }
+
+    window.handleLogout = function () {
+        if (!auth.currentUser) {
+            location.href = appAwareHref("login.html");
+            return;
+        }
+        signOut(auth).then(function () {
+            location.href = (window.DoratchMobile && window.DoratchMobile.isAppMode && window.DoratchMobile.isAppMode())
+                ? "app.html?app=1" : "index.html";
+        });
+    };
 
     const params = new URLSearchParams(location.search);
     const prefill = params.get("category");

@@ -1,0 +1,360 @@
+/* Doratch Plus / Pro — 聊天色彩主題與顯示名稱字型 */
+
+/* ── 色彩主題（覆寫 chat 變數）── */
+body.chat-theme-amethyst {
+    --bg: #140f1f;
+    --sidebar-bg: #1a1028;
+    --card-bg: #221533;
+    --primary: #a855f7;
+    --primary-hover: #9333ea;
+    --border: rgba(168, 85, 247, 0.25);
+    --text-muted: #a78bfa;
+}
+
+body.chat-theme-ocean {
+    --bg: #0c1520;
+    --sidebar-bg: #0f1c2e;
+    --card-bg: #132238;
+    --primary: #0ea5e9;
+    --primary-hover: #0284c7;
+    --border: rgba(14, 165, 233, 0.25);
+    --text-muted: #7dd3fc;
+}
+
+body.chat-theme-sunset {
+    --bg: #1a1210;
+    --sidebar-bg: #241816;
+    --card-bg: #2d1f1a;
+    --primary: #f97316;
+    --primary-hover: #ea580c;
+    --border: rgba(249, 115, 22, 0.25);
+    --text-muted: #fdba74;
+}
+
+body.chat-theme-forest {
+    --bg: #0f1612;
+    --sidebar-bg: #141f18;
+    --card-bg: #1a2820;
+    --primary: #22c55e;
+    --primary-hover: #16a34a;
+    --border: rgba(34, 197, 94, 0.25);
+    --text-muted: #86efac;
+}
+
+body.chat-theme-midnight {
+    --bg: #050508;
+    --sidebar-bg: #0a0a10;
+    --card-bg: #101018;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --border: rgba(99, 102, 241, 0.3);
+    --text-muted: #a5b4fc;
+}
+
+body.chat-theme-neon {
+    --bg: #0a0a12;
+    --sidebar-bg: #0f0f1a;
+    --card-bg: #14142a;
+    --primary: #22d3ee;
+    --primary-hover: #06b6d4;
+    --border: rgba(34, 211, 238, 0.35);
+    --text-muted: #67e8f9;
+}
+
+body.chat-theme-sakura {
+    --bg: #1a1018;
+    --sidebar-bg: #241420;
+    --card-bg: #2d1a28;
+    --primary: #f472b6;
+    --primary-hover: #ec4899;
+    --border: rgba(244, 114, 182, 0.3);
+    --text-muted: #f9a8d4;
+}
+
+body.chat-theme-gold {
+    --bg: #14120a;
+    --sidebar-bg: #1c1810;
+    --card-bg: #252018;
+    --primary: #fbbf24;
+    --primary-hover: #f59e0b;
+    --border: rgba(251, 191, 36, 0.35);
+    --text-muted: #fde68a;
+}
+
+body.chat-theme-custom.chat-theme-custom-accent {
+    --bg: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 8%, #0c0c14);
+    --sidebar-bg: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 12%, #101018);
+    --card-bg: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 15%, #161620);
+    --primary: var(--chat-theme-accent, #a855f7);
+    --primary-hover: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 85%, #000);
+    --border: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 30%, transparent);
+    --text-muted: color-mix(in srgb, var(--chat-theme-accent, #a855f7) 70%, #fff);
+}
+
+/* ── 顯示名稱字型 ── */
+.name-font-rounded .name-fx-text,
+.name-font-rounded.msg-author .name-fx-text {
+    font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.name-font-bold .name-fx-text,
+.name-font-bold.msg-author .name-fx-text {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-weight: 900 !important;
+    letter-spacing: -0.015em !important;
+    filter: contrast(1.1);
+}
+
+.name-font-noto .name-fx-text,
+.name-font-noto.msg-author .name-fx-text {
+    font-family: "Noto Sans TC", "Segoe UI", sans-serif;
+    font-weight: 800 !important;
+    letter-spacing: 0.015em !important;
+}
+
+.name-font-mono .name-fx-text,
+.name-font-mono.msg-author .name-fx-text {
+    font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    font-weight: 700 !important;
+    letter-spacing: 0.055em !important;
+}
+
+.name-font-display .name-fx-text,
+.name-font-display.msg-author .name-fx-text {
+    font-family: "Outfit", "Segoe UI", sans-serif;
+    font-weight: 900 !important;
+    letter-spacing: 0.085em !important;
+    text-transform: uppercase;
+    font-size: 1em !important;
+    filter: saturate(1.15);
+}
+
+.name-font-elegant .name-fx-text,
+.name-font-elegant.msg-author .name-fx-text {
+    font-family: "Noto Serif TC", Georgia, serif;
+    font-weight: 700 !important;
+    font-style: italic;
+    letter-spacing: 0.02em !important;
+}
+
+/* 訊息作者列套用字型到外層 */
+.msg-author.name-font-rounded,
+.msg-author.name-font-bold,
+.msg-author.name-font-noto,
+.msg-author.name-font-mono,
+.msg-author.name-font-display,
+.msg-author.name-font-elegant {
+    font-family: inherit;
+}
+
+/* ── 會員樣式設定 UI ── */
+.member-style-section {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, rgba(255,255,255,0.1));
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.member-style-section.locked {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.member-style-section h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+}
+
+.member-style-preview {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    background: var(--card-bg, #1e1e2e);
+    text-align: center;
+}
+
+.member-style-preview .name-fx-text {
+    font-size: 1.25rem;
+}
+
+.member-style-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.member-style-grid label {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-muted, #aaa);
+}
+
+.member-style-grid select,
+.member-style-grid input[type="color"] {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border, rgba(255,255,255,0.15));
+    background: var(--bg, #0f0f1a);
+    color: inherit;
+}
+
+.chat-pref-theme-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.chat-pref-theme-row input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1px solid var(--border, rgba(255,255,255,0.15));
+    background: transparent;
+    cursor: pointer;
+}
+
+.chat-pref-plus-lock {
+    font-size: 0.8rem;
+    color: var(--text-muted, #888);
+    margin-top: 0.25rem;
+}
+
+.chat-pref-plus-lock a {
+    color: var(--primary, #5865f2);
+}
+
+/* 額外名稱效果 */
+.name-effect-soft-glow.name-fx-text {
+    animation: name-fx-soft-glow 1.6s ease-in-out infinite !important;
+    text-shadow: 0 0 12px currentColor, 0 0 24px currentColor !important;
+    filter: brightness(1.15) !important;
+}
+
+.name-effect-gentle-ripple.name-fx-text {
+    animation: name-fx-gentle-ripple 1.7s ease-in-out infinite !important;
+    display: inline-block !important;
+}
+
+.name-effect-sparkle.name-fx-text {
+    animation: name-fx-sparkle 1.25s ease-in-out infinite !important;
+}
+
+.msg-author .name-fx-text.name-effect-soft-glow,
+#profile-display-name .name-fx-text.name-effect-soft-glow {
+    text-shadow: 0 0 10px currentColor, 0 0 22px currentColor !important;
+}
+
+.msg-author .name-fx-text.name-effect-gentle-ripple,
+#profile-display-name .name-fx-text.name-effect-gentle-ripple {
+    animation: name-fx-gentle-ripple 1.6s ease-in-out infinite !important;
+}
+
+.msg-author .name-fx-text.name-effect-sparkle,
+#profile-display-name .name-fx-text.name-effect-sparkle {
+    animation: name-fx-sparkle 1.1s ease-in-out infinite !important;
+}
+
+.msg-author .name-fx-text.name-effect-neon-flicker,
+#profile-display-name .name-fx-text.name-effect-neon-flicker {
+    animation-duration: 1.05s !important;
+    text-shadow: 0 0 8px currentColor, 0 0 18px currentColor !important;
+}
+
+/* 強制可視：所有名稱效果都加粒子層 */
+.name-fx-text[class*="name-effect-"] {
+    position: relative !important;
+    display: inline-block !important;
+    isolation: isolate;
+}
+
+.name-fx-text[class*="name-effect-"]::before,
+.name-fx-text[class*="name-effect-"]::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    inset: -0.16em -0.25em;
+    border-radius: 999px;
+    z-index: -1;
+}
+
+/* 粒子閃點 */
+.name-fx-text[class*="name-effect-"]::before {
+    background:
+        radial-gradient(circle at 14% 38%, rgba(255,255,255,0.95) 0 1.6px, transparent 2.2px),
+        radial-gradient(circle at 82% 22%, rgba(255,255,255,0.9) 0 1.3px, transparent 2px),
+        radial-gradient(circle at 66% 78%, rgba(250,204,21,0.95) 0 1.8px, transparent 2.4px),
+        radial-gradient(circle at 26% 84%, rgba(34,211,238,0.9) 0 1.6px, transparent 2.3px),
+        radial-gradient(circle at 49% 16%, rgba(244,114,182,0.9) 0 1.4px, transparent 2px);
+    animation: name-fx-particle-drift 1.35s linear infinite;
+    opacity: 0.95;
+}
+
+/* 閃爍光暈層 */
+.name-fx-text[class*="name-effect-"]::after {
+    box-shadow:
+        0 0 10px currentColor,
+        0 0 22px color-mix(in srgb, currentColor 75%, white);
+    animation: name-fx-flicker-core 0.95s steps(8, end) infinite;
+    opacity: 0.75;
+}
+
+/* 指定特效再加強（你要的閃爍 + 粒子） */
+.name-fx-text.name-effect-neon-flicker::before,
+.name-fx-text.name-effect-sparkle::before,
+.name-fx-text.name-effect-stardust::before,
+.name-fx-text.name-effect-soft-glow::before,
+.name-fx-text.name-effect-prism::before,
+.name-fx-text.name-effect-rainbow::before {
+    animation-duration: 0.95s !important;
+    opacity: 1 !important;
+}
+
+.name-fx-text.name-effect-neon-flicker::after,
+.name-fx-text.name-effect-sparkle::after,
+.name-fx-text.name-effect-stardust::after {
+    animation-duration: 0.72s !important;
+    box-shadow:
+        0 0 12px currentColor,
+        0 0 28px color-mix(in srgb, currentColor 80%, white) !important;
+}
+
+@keyframes name-fx-soft-glow {
+    0%, 100% { opacity: 1; filter: brightness(1); }
+    50% { opacity: 0.75; filter: brightness(1.65); }
+}
+
+@keyframes name-fx-gentle-ripple {
+    0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+    50% { transform: scale(1.09) translateY(-1px); opacity: 0.75; }
+}
+
+@keyframes name-fx-sparkle {
+    0%, 100% { text-shadow: 0 0 5px currentColor; filter: brightness(1); }
+    25% { text-shadow: 0 0 14px #fff, 0 0 26px currentColor; filter: brightness(1.25); }
+    50% { text-shadow: 0 0 6px currentColor; filter: brightness(1); }
+    75% { text-shadow: 0 0 10px #fff, 0 0 20px currentColor; filter: brightness(1.18); }
+}
+
+@keyframes name-fx-particle-drift {
+    0%   { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
+    30%  { transform: translate3d(0.5px, -0.8px, 0) scale(1.03); filter: brightness(1.25); }
+    60%  { transform: translate3d(-0.7px, 0.6px, 0) scale(0.98); filter: brightness(0.95); }
+    100% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
+}
+
+@keyframes name-fx-flicker-core {
+    0%, 100% { opacity: 0.35; }
+    10% { opacity: 0.95; }
+    22% { opacity: 0.5; }
+    36% { opacity: 1; }
+    52% { opacity: 0.42; }
+    68% { opacity: 0.88; }
+    84% { opacity: 0.56; }
+}
