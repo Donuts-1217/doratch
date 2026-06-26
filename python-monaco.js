@@ -328,6 +328,7 @@
     global.PythonMonaco = {
         init: init,
         isReady: function () { return ready; },
+        getEditor: function () { return editor; },
         getValue: function () {
             return editor ? editor.getValue() : "";
         },

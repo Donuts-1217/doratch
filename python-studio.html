@@ -98,6 +98,37 @@
         }
         .engine-bar.ready { color: #86efac; }
         .engine-bar.error { color: #fca5a5; }
+        .ai-ide-panel {
+            padding: 10px 12px; background: #111827; border-bottom: 1px solid #334155;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .ai-ide-head {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 12px; color: #cbd5e1; font-weight: 800;
+        }
+        .ai-ide-row {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .ai-ide-input, .ai-ide-prompt {
+            width: 100%; box-sizing: border-box; border: 1px solid #334155; border-radius: 8px;
+            background: #0f172a; color: #e2e8f0; font-family: inherit;
+        }
+        .ai-ide-input { padding: 8px 10px; font-size: 12px; }
+        .ai-ide-prompt { min-height: 62px; resize: vertical; padding: 8px 10px; font-size: 12px; }
+        .ai-ide-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ai-ide-actions button {
+            border: none; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 800;
+            cursor: pointer; color: #fff; background: #475569; font-family: inherit;
+        }
+        .ai-ide-actions button.primary { background: #6366f1; }
+        .ai-ide-actions button.success { background: #16a34a; }
+        .ai-ide-status { font-size: 11px; color: #93c5fd; min-height: 16px; }
+        .ai-ide-status.error { color: #fca5a5; }
+        .ai-ide-output {
+            margin: 0; padding: 8px; border-radius: 8px; background: #020617;
+            border: 1px solid #1e293b; color: #cbd5e1; font-family: "JetBrains Mono", monospace;
+            font-size: 12px; line-height: 1.5; max-height: 180px; overflow: auto; white-space: pre-wrap;
+        }
         @media (max-width: 900px) {
             #main-workspace { flex-direction: column; }
             #side-pane { width: 100%; min-width: 0; max-height: 42vh; border-left: none; border-top: 2px solid #334155; }
@@ -171,6 +202,26 @@
             <button type="button" data-snippet="send_">send_ 斜線</button>
             <button type="button" data-snippet="ctx.send">ctx.send</button>
             <button type="button" data-snippet="ui.View">按鈕選單</button>
+        </div>
+        <div class="ai-ide-panel" id="ai-ide-panel">
+            <div class="ai-ide-head">
+                <span>✨ AI IDE 助手（Python）</span>
+                <span style="color:#94a3b8;">Gemini API</span>
+            </div>
+            <div class="ai-ide-row">
+                <input id="ai-api-key" class="ai-ide-input" type="password" placeholder="貼上 Gemini API Key（只存本機）">
+                <input id="ai-model" class="ai-ide-input" type="text" value="gemini-2.0-flash" style="max-width:150px;">
+            </div>
+            <textarea id="ai-prompt" class="ai-ide-prompt" placeholder="描述需求，例如：幫我寫一個 Flask 登入 API，含驗證與錯誤處理"></textarea>
+            <div class="ai-ide-actions">
+                <button type="button" class="primary" id="btn-ai-generate">✨ 產生</button>
+                <button type="button" id="btn-ai-explain">🧠 解釋</button>
+                <button type="button" id="btn-ai-fix">🛠 修正</button>
+                <button type="button" class="success" id="btn-ai-insert">⬇ 插入游標</button>
+                <button type="button" class="success" id="btn-ai-replace">🔁 覆蓋程式碼</button>
+            </div>
+            <div id="ai-ide-status" class="ai-ide-status"></div>
+            <pre id="ai-ide-output" class="ai-ide-output">AI 回覆會出現在這裡</pre>
         </div>
         <div class="monaco-shell">
             <div id="monaco-editor"></div>
@@ -258,6 +309,11 @@ print("Hello, Doratch!")
     const dedicatedBotScreen = qs.get("screen") === "bot";
     let draftSaveTimer = null;
     let modeProjectIds = { python: null, bot: null };
+    const AI_STORAGE_KEY = "doratch_py_ai_ide_v1";
+    const aiState = {
+        lastResponse: "",
+        busy: false
+    };
 
     if (dedicatedBotScreen) {
         document.title = "Discord Bot 工作室 - Doratch";
@@ -305,6 +361,152 @@ print("Hello, Doratch!")
         }
         if (useMonaco && window.PythonMonaco?.isReady()) window.PythonMonaco.setValue(code);
         else document.getElementById("editor-fallback").value = code;
+    }
+
+    function getSelectedCode() {
+        if ((window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) || (useMonaco && window.PythonMonaco?.isReady())) {
+            try {
+                const editor = window.PythonMonaco?.getEditor ? window.PythonMonaco.getEditor() : null;
+                if (!editor) return "";
+                const selection = editor.getSelection();
+                const model = editor.getModel();
+                return (selection && model) ? model.getValueInRange(selection) : "";
+            } catch (_) {
+                return "";
+            }
+        }
+        const el = document.getElementById("editor-fallback");
+        return el.value.slice(el.selectionStart, el.selectionEnd);
+    }
+
+    function insertAtCursor(text) {
+        if (!text) return;
+        if ((window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) || (useMonaco && window.PythonMonaco?.isReady())) {
+            const editor = window.PythonMonaco?.getEditor ? window.PythonMonaco.getEditor() : null;
+            if (!editor) return;
+            const selection = editor.getSelection();
+            editor.executeEdits("ai-ide", [{ range: selection, text: text, forceMoveMarkers: true }]);
+            editor.focus();
+            return;
+        }
+        const el = document.getElementById("editor-fallback");
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        el.value = el.value.slice(0, start) + text + el.value.slice(end);
+        el.selectionStart = el.selectionEnd = start + text.length;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.focus();
+    }
+
+    function extractCodeBlock(text) {
+        const mdBlock = text.match(/```(?:python)?\s*([\s\S]*?)```/i);
+        if (mdBlock && mdBlock[1]) return mdBlock[1].trim();
+        return text.trim();
+    }
+
+    function setAiStatus(msg, isError) {
+        const status = document.getElementById("ai-ide-status");
+        status.textContent = msg || "";
+        status.classList.toggle("error", !!isError);
+    }
+
+    function renderAiOutput(text) {
+        aiState.lastResponse = text || "";
+        document.getElementById("ai-ide-output").textContent = text || "（空回覆）";
+    }
+
+    function saveAiPrefs() {
+        try {
+            localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
+                apiKey: document.getElementById("ai-api-key").value.trim(),
+                model: document.getElementById("ai-model").value.trim(),
+                prompt: document.getElementById("ai-prompt").value
+            }));
+        } catch (_) {}
+    }
+
+    function loadAiPrefs() {
+        try {
+            const raw = localStorage.getItem(AI_STORAGE_KEY);
+            if (!raw) return;
+            const pref = JSON.parse(raw);
+            if (pref.apiKey) document.getElementById("ai-api-key").value = pref.apiKey;
+            if (pref.model) document.getElementById("ai-model").value = pref.model;
+            if (pref.prompt) document.getElementById("ai-prompt").value = pref.prompt;
+        } catch (_) {}
+    }
+
+    function createAiPrompt(mode) {
+        const customPrompt = document.getElementById("ai-prompt").value.trim();
+        const code = getCode();
+        const selected = getSelectedCode().trim();
+        if (mode === "explain") {
+            const target = selected || code;
+            return [
+                "你是 Python IDE 助手，請用繁體中文簡潔解釋下列程式碼的用途、流程與可改進點。",
+                "若有錯誤風險，請列出修正建議。",
+                "",
+                target
+            ].join("\n");
+        }
+        if (mode === "fix") {
+            const target = selected || code;
+            return [
+                "你是 Python IDE 助手，請修正以下 Python 程式碼中的語法/邏輯問題。",
+                "請直接回傳完整可執行的 Python 程式碼（可用 markdown code block）。",
+                customPrompt ? ("額外需求：" + customPrompt) : "",
+                "",
+                target
+            ].join("\n");
+        }
+        return [
+            "你是 Python IDE 助手，請依照需求產生 Python 程式碼。",
+            "請優先提供可直接執行的程式，必要時加少量註解。",
+            customPrompt || "請產生一段簡單且可執行的 Python 範例。"
+        ].join("\n");
+    }
+
+    async function runAi(mode) {
+        if (aiState.busy) return;
+        const apiKey = document.getElementById("ai-api-key").value.trim();
+        const model = document.getElementById("ai-model").value.trim() || "gemini-2.0-flash";
+        if (!apiKey) {
+            setAiStatus("請先貼上 Gemini API Key", true);
+            return;
+        }
+        aiState.busy = true;
+        setAiStatus("AI 產生中…", false);
+        renderAiOutput("（等待 AI 回覆中）");
+        saveAiPrefs();
+        try {
+            const promptText = createAiPrompt(mode);
+            const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+                encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(apiKey);
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: promptText }] }],
+                    generationConfig: { temperature: mode === "fix" ? 0.2 : 0.5 }
+                })
+            });
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error("Gemini API 錯誤：" + res.status + " " + errText);
+            }
+            const data = await res.json();
+            const text = (((data || {}).candidates || [])[0] || {}).content;
+            const parts = (text && text.parts) ? text.parts : [];
+            const merged = parts.map(function (p) { return p.text || ""; }).join("\n").trim();
+            if (!merged) throw new Error("AI 沒有回覆內容");
+            renderAiOutput(merged);
+            setAiStatus("AI 回覆完成", false);
+        } catch (err) {
+            renderAiOutput(String(err.message || err));
+            setAiStatus("AI 請求失敗", true);
+        } finally {
+            aiState.busy = false;
+        }
     }
 
     function showTextEditorFallback(code) {
@@ -803,6 +1005,32 @@ print("Hello, Doratch!")
     document.getElementById("is-public-check").addEventListener("change", markDirty);
     document.getElementById("is-public-check").addEventListener("change", queueDraftSave);
     document.getElementById("bot-name-input").addEventListener("input", queueDraftSave);
+    document.getElementById("ai-api-key").addEventListener("input", saveAiPrefs);
+    document.getElementById("ai-model").addEventListener("input", saveAiPrefs);
+    document.getElementById("ai-prompt").addEventListener("input", saveAiPrefs);
+    document.getElementById("btn-ai-generate").onclick = () => runAi("generate");
+    document.getElementById("btn-ai-explain").onclick = () => runAi("explain");
+    document.getElementById("btn-ai-fix").onclick = () => runAi("fix");
+    document.getElementById("btn-ai-insert").onclick = () => {
+        const text = extractCodeBlock(aiState.lastResponse);
+        if (!text) {
+            setAiStatus("目前沒有可插入內容", true);
+            return;
+        }
+        insertAtCursor(text);
+        markDirty();
+        setAiStatus("已插入到游標位置", false);
+    };
+    document.getElementById("btn-ai-replace").onclick = () => {
+        const text = extractCodeBlock(aiState.lastResponse);
+        if (!text) {
+            setAiStatus("目前沒有可覆蓋內容", true);
+            return;
+        }
+        setCode(text);
+        markDirty();
+        setAiStatus("已覆蓋目前程式碼", false);
+    };
 
     window.addEventListener("beforeunload", (ev) => {
         if (snapshot() !== savedSnapshot) {
@@ -887,6 +1115,7 @@ print("Hello, Doratch!")
             }
             });
         }
+        loadAiPrefs();
         engineReady = isEngineReady();
         await initMonaco();
         if (window.PythonMonaco && window.PythonMonaco.isReady()) {
