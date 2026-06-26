@@ -115,15 +115,23 @@
         }
         .ai-ide-input { padding: 8px 10px; font-size: 12px; }
         .ai-ide-prompt { min-height: 62px; resize: vertical; padding: 8px 10px; font-size: 12px; }
-        .ai-ide-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-        .ai-ide-actions button {
-            border: none; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 800;
-            cursor: pointer; color: #fff; background: #475569; font-family: inherit;
+        .ai-ide-shortcuts {
+            font-size: 11px; color: #94a3b8; line-height: 1.45;
+            border: 1px solid #1e293b; background: #020617; border-radius: 8px; padding: 8px;
         }
-        .ai-ide-actions button.primary { background: #6366f1; }
-        .ai-ide-actions button.success { background: #16a34a; }
         .ai-ide-status { font-size: 11px; color: #93c5fd; min-height: 16px; }
         .ai-ide-status.error { color: #fca5a5; }
+        .ai-ide-history {
+            max-height: 150px; overflow: auto; border: 1px solid #1e293b;
+            background: #020617; border-radius: 8px; padding: 8px; display: grid; gap: 8px;
+        }
+        .ai-ide-msg {
+            font-size: 12px; line-height: 1.45; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap;
+            border: 1px solid rgba(148,163,184,0.28);
+        }
+        .ai-ide-msg.user { background: rgba(30,41,59,0.62); color: #e2e8f0; }
+        .ai-ide-msg.assistant { background: rgba(67,56,202,0.18); color: #dbeafe; border-color: rgba(99,102,241,0.42); }
+        .ai-ide-msg .meta { display: block; font-size: 10px; opacity: 0.75; margin-bottom: 4px; }
         .ai-ide-output {
             margin: 0; padding: 8px; border-radius: 8px; background: #020617;
             border: 1px solid #1e293b; color: #cbd5e1; font-family: "JetBrains Mono", monospace;
@@ -212,14 +220,16 @@
                 <input id="ai-api-key" class="ai-ide-input" type="password" placeholder="貼上 Gemini API Key（只存本機）">
                 <input id="ai-model" class="ai-ide-input" type="text" value="gemini-2.0-flash" style="max-width:150px;">
             </div>
+            <label style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:6px;">
+                <input id="ai-remember-key" type="checkbox" style="width:auto;margin:0;">
+                記住 API Key（目前裝置）
+            </label>
             <textarea id="ai-prompt" class="ai-ide-prompt" placeholder="描述需求，例如：幫我寫一個 Flask 登入 API，含驗證與錯誤處理"></textarea>
-            <div class="ai-ide-actions">
-                <button type="button" class="primary" id="btn-ai-generate">✨ 產生</button>
-                <button type="button" id="btn-ai-explain">🧠 解釋</button>
-                <button type="button" id="btn-ai-fix">🛠 修正</button>
-                <button type="button" class="success" id="btn-ai-insert">⬇ 插入游標</button>
-                <button type="button" class="success" id="btn-ai-replace">🔁 覆蓋程式碼</button>
+            <div class="ai-ide-shortcuts">
+                Enter 送出（Shift+Enter 換行） · `/continue` `/explain` `/fix` `/runtime-fix`<br>
+                快捷鍵：Ctrl/Cmd+I 續寫 · Ctrl/Cmd+Shift+F 錯誤修正 · Alt+Enter 插入回覆 · Alt+Shift+Enter 覆蓋
             </div>
+            <div id="ai-ide-history" class="ai-ide-history"><div style="font-size:11px;color:#94a3b8;">尚無對話記錄</div></div>
             <div id="ai-ide-status" class="ai-ide-status"></div>
             <pre id="ai-ide-output" class="ai-ide-output">AI 回覆會出現在這裡</pre>
         </div>
@@ -310,9 +320,13 @@ print("Hello, Doratch!")
     let draftSaveTimer = null;
     let modeProjectIds = { python: null, bot: null };
     const AI_STORAGE_KEY = "doratch_py_ai_ide_v1";
+    const AI_CHAT_KEY = "doratch_py_ai_chat_v1";
     const aiState = {
         lastResponse: "",
-        busy: false
+        busy: false,
+        history: [],
+        lastRuntimeError: "",
+        lastRuntimeCode: ""
     };
 
     if (dedicatedBotScreen) {
@@ -404,6 +418,15 @@ print("Hello, Doratch!")
         return text.trim();
     }
 
+    function escHtml(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
     function setAiStatus(msg, isError) {
         const status = document.getElementById("ai-ide-status");
         status.textContent = msg || "";
@@ -415,10 +438,74 @@ print("Hello, Doratch!")
         document.getElementById("ai-ide-output").textContent = text || "（空回覆）";
     }
 
+    function aiChatStorageKey() {
+        const uid = auth && auth.currentUser && auth.currentUser.uid ? auth.currentUser.uid : "guest";
+        return AI_CHAT_KEY + ":" + uid;
+    }
+
+    function trimAiHistory(list) {
+        const clean = Array.isArray(list) ? list.filter(function (x) {
+            return x && (x.role === "user" || x.role === "model") && typeof x.text === "string" && x.text.trim();
+        }) : [];
+        return clean.slice(-20);
+    }
+
+    function renderAiHistory() {
+        const host = document.getElementById("ai-ide-history");
+        if (!host) return;
+        const list = trimAiHistory(aiState.history);
+        if (!list.length) {
+            host.innerHTML = '<div style="font-size:11px;color:#94a3b8;">尚無對話記錄</div>';
+            return;
+        }
+        host.innerHTML = list.map(function (m) {
+            const roleLabel = m.role === "user" ? "你" : "AI";
+            const cls = m.role === "user" ? "user" : "assistant";
+            const modeTag = m.mode ? (" · " + m.mode) : "";
+            return '<div class="ai-ide-msg ' + cls + '"><span class="meta">' + roleLabel + modeTag + '</span>' + escHtml(m.text) + "</div>";
+        }).join("");
+        host.scrollTop = host.scrollHeight;
+    }
+
+    function saveAiChat() {
+        try {
+            localStorage.setItem(aiChatStorageKey(), JSON.stringify(trimAiHistory(aiState.history)));
+        } catch (_) {}
+    }
+
+    function loadAiChat() {
+        try {
+            const raw = localStorage.getItem(aiChatStorageKey());
+            aiState.history = trimAiHistory(raw ? JSON.parse(raw) : []);
+        } catch (_) {
+            aiState.history = [];
+        }
+        renderAiHistory();
+    }
+
+    function pushAiHistory(role, text, mode) {
+        const clipped = String(text || "").trim().slice(0, 8000);
+        aiState.history = trimAiHistory((aiState.history || []).concat([{
+            role: role,
+            text: clipped,
+            mode: mode || ""
+        }]));
+        saveAiChat();
+        renderAiHistory();
+    }
+
+    function extractGeminiText(data) {
+        const candidate = (((data || {}).candidates || [])[0] || {}).content;
+        const parts = candidate && candidate.parts ? candidate.parts : [];
+        return parts.map(function (p) { return p && p.text ? p.text : ""; }).join("\n").trim();
+    }
+
     function saveAiPrefs() {
         try {
+            const rememberKey = !!document.getElementById("ai-remember-key").checked;
             localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
-                apiKey: document.getElementById("ai-api-key").value.trim(),
+                apiKey: rememberKey ? document.getElementById("ai-api-key").value.trim() : "",
+                rememberKey: rememberKey,
                 model: document.getElementById("ai-model").value.trim(),
                 prompt: document.getElementById("ai-prompt").value
             }));
@@ -430,16 +517,59 @@ print("Hello, Doratch!")
             const raw = localStorage.getItem(AI_STORAGE_KEY);
             if (!raw) return;
             const pref = JSON.parse(raw);
-            if (pref.apiKey) document.getElementById("ai-api-key").value = pref.apiKey;
+            document.getElementById("ai-remember-key").checked = !!pref.rememberKey;
+            if (pref.rememberKey && pref.apiKey) document.getElementById("ai-api-key").value = pref.apiKey;
             if (pref.model) document.getElementById("ai-model").value = pref.model;
             if (pref.prompt) document.getElementById("ai-prompt").value = pref.prompt;
         } catch (_) {}
+    }
+
+    function buildCursorContext() {
+        if ((window.DoratchUiBoot && window.DoratchUiBoot.isMonaco()) || (useMonaco && window.PythonMonaco?.isReady())) {
+            try {
+                const editor = window.PythonMonaco?.getEditor ? window.PythonMonaco.getEditor() : null;
+                const model = editor ? editor.getModel() : null;
+                const pos = editor ? editor.getPosition() : null;
+                if (!model || !pos) return "";
+                const startLine = Math.max(1, pos.lineNumber - 20);
+                const endLine = Math.min(model.getLineCount(), pos.lineNumber + 20);
+                const before = model.getValueInRange({
+                    startLineNumber: startLine,
+                    startColumn: 1,
+                    endLineNumber: pos.lineNumber,
+                    endColumn: pos.column
+                });
+                const after = model.getValueInRange({
+                    startLineNumber: pos.lineNumber,
+                    startColumn: pos.column,
+                    endLineNumber: endLine,
+                    endColumn: model.getLineMaxColumn(endLine)
+                });
+                return "【游標前】\n" + before + "\n【游標後】\n" + after;
+            } catch (_) {
+                return "";
+            }
+        }
+        const el = document.getElementById("editor-fallback");
+        if (!el) return "";
+        const code = el.value || "";
+        const at = Number.isFinite(el.selectionStart) ? el.selectionStart : code.length;
+        return "【游標前】\n" + code.slice(Math.max(0, at - 1800), at) + "\n【游標後】\n" + code.slice(at, Math.min(code.length, at + 1200));
     }
 
     function createAiPrompt(mode) {
         const customPrompt = document.getElementById("ai-prompt").value.trim();
         const code = getCode();
         const selected = getSelectedCode().trim();
+        if (mode === "continue") {
+            return [
+                "你是 VSCode Copilot 風格的 Python IDE 助手。",
+                "請根據游標上下文續寫程式碼，只回傳應該插入的程式碼片段，不要解釋。",
+                customPrompt ? ("需求：" + customPrompt) : "",
+                "",
+                buildCursorContext()
+            ].join("\n");
+        }
         if (mode === "explain") {
             const target = selected || code;
             return [
@@ -459,11 +589,96 @@ print("Hello, Doratch!")
                 target
             ].join("\n");
         }
+        if (mode === "runtime-fix") {
+            return [
+                "你是 VSCode Copilot 風格的 Python 除錯助手。",
+                "請依 traceback 修正程式碼，回傳完整可執行 Python（可用 markdown code block）。",
+                customPrompt ? ("額外需求：" + customPrompt) : "",
+                "",
+                "【Traceback】",
+                aiState.lastRuntimeError || "（無）",
+                "",
+                "【目前程式碼】",
+                aiState.lastRuntimeCode || code
+            ].join("\n");
+        }
         return [
             "你是 Python IDE 助手，請依照需求產生 Python 程式碼。",
-            "請優先提供可直接執行的程式，必要時加少量註解。",
-            customPrompt || "請產生一段簡單且可執行的 Python 範例。"
+            "請優先提供可直接執行的程式，必要時加少量註解；若我已有程式，請以增量修改思維輸出。",
+            customPrompt || "請產生一段簡單且可執行的 Python 範例。",
+            "",
+            "【目前程式碼】",
+            code
         ].join("\n");
+    }
+
+    async function callGeminiGenerate(apiKey, model, payload) {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+            encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(apiKey);
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error("Gemini API 錯誤：" + res.status + " " + errText);
+        }
+        const data = await res.json();
+        const merged = extractGeminiText(data);
+        if (!merged) throw new Error("AI 沒有回覆內容");
+        return merged;
+    }
+
+    async function callGeminiStream(apiKey, model, payload, onChunk) {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
+            encodeURIComponent(model) + ":streamGenerateContent?alt=sse&key=" + encodeURIComponent(apiKey);
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok || !res.body) {
+            const errText = await res.text();
+            throw new Error("Gemini 串流失敗：" + res.status + " " + errText);
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let whole = "";
+        let last = "";
+        while (true) {
+            const step = await reader.read();
+            if (step.done) break;
+            buffer += decoder.decode(step.value, { stream: true });
+            let idx = buffer.indexOf("\n");
+            while (idx !== -1) {
+                const line = buffer.slice(0, idx).trim();
+                buffer = buffer.slice(idx + 1);
+                if (line.startsWith("data:")) {
+                    const body = line.slice(5).trim();
+                    if (body && body !== "[DONE]") {
+                        try {
+                            const json = JSON.parse(body);
+                            const text = extractGeminiText(json);
+                            if (text) {
+                                if (text.startsWith(last)) {
+                                    whole += text.slice(last.length);
+                                } else if (!whole.endsWith(text)) {
+                                    whole += text;
+                                }
+                                last = text;
+                                onChunk(whole);
+                            }
+                        } catch (_) {}
+                    }
+                }
+                idx = buffer.indexOf("\n");
+            }
+        }
+        whole = whole.trim();
+        if (!whole) throw new Error("AI 沒有回覆內容");
+        return whole;
     }
 
     async function runAi(mode) {
@@ -474,32 +689,35 @@ print("Hello, Doratch!")
             setAiStatus("請先貼上 Gemini API Key", true);
             return;
         }
+        if (mode === "runtime-fix" && !String(aiState.lastRuntimeError || "").trim()) {
+            setAiStatus("先執行一次，讓 AI 取得 traceback 再修正", true);
+            return;
+        }
         aiState.busy = true;
-        setAiStatus("AI 產生中…", false);
+        setAiStatus("AI 串流產生中…", false);
         renderAiOutput("（等待 AI 回覆中）");
         saveAiPrefs();
         try {
             const promptText = createAiPrompt(mode);
-            const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
-                encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(apiKey);
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: promptText }] }],
-                    generationConfig: { temperature: mode === "fix" ? 0.2 : 0.5 }
-                })
+            const chatContext = trimAiHistory(aiState.history).slice(-10).map(function (m) {
+                return { role: m.role === "model" ? "model" : "user", parts: [{ text: m.text }] };
             });
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error("Gemini API 錯誤：" + res.status + " " + errText);
+            const payload = {
+                contents: chatContext.concat([{ role: "user", parts: [{ text: promptText }] }]),
+                generationConfig: { temperature: (mode === "fix" || mode === "runtime-fix") ? 0.2 : 0.5 }
+            };
+            let merged = "";
+            try {
+                merged = await callGeminiStream(apiKey, model, payload, function (chunked) {
+                    renderAiOutput(chunked);
+                });
+            } catch (_) {
+                setAiStatus("串流失敗，改用一般模式…", false);
+                merged = await callGeminiGenerate(apiKey, model, payload);
             }
-            const data = await res.json();
-            const text = (((data || {}).candidates || [])[0] || {}).content;
-            const parts = (text && text.parts) ? text.parts : [];
-            const merged = parts.map(function (p) { return p.text || ""; }).join("\n").trim();
-            if (!merged) throw new Error("AI 沒有回覆內容");
             renderAiOutput(merged);
+            pushAiHistory("user", promptText, mode);
+            pushAiHistory("model", merged, mode);
             setAiStatus("AI 回覆完成", false);
         } catch (err) {
             renderAiOutput(String(err.message || err));
@@ -828,9 +1046,20 @@ print("Hello, Doratch!")
                 onWrite: (text) => term.write(text),
                 onInput: (prompt) => term.readLine(prompt)
             });
-            if (error) term.writeError(error);
+            if (error) {
+                term.writeError(error);
+                aiState.lastRuntimeError = String(error);
+                aiState.lastRuntimeCode = code;
+                setAiStatus("已捕捉執行錯誤，可按「錯誤一鍵修正」", true);
+            } else {
+                aiState.lastRuntimeError = "";
+                aiState.lastRuntimeCode = code;
+            }
         } catch (e) {
             term.writeError(String(e.message || e));
+            aiState.lastRuntimeError = String(e && e.message ? e.message : e);
+            aiState.lastRuntimeCode = code;
+            setAiStatus("已捕捉執行錯誤，可按「錯誤一鍵修正」", true);
         } finally {
             term.setRunning(false);
             document.getElementById("btn-run").disabled = false;
@@ -1005,13 +1234,17 @@ print("Hello, Doratch!")
     document.getElementById("is-public-check").addEventListener("change", markDirty);
     document.getElementById("is-public-check").addEventListener("change", queueDraftSave);
     document.getElementById("bot-name-input").addEventListener("input", queueDraftSave);
+    document.getElementById("ai-remember-key").addEventListener("change", saveAiPrefs);
     document.getElementById("ai-api-key").addEventListener("input", saveAiPrefs);
     document.getElementById("ai-model").addEventListener("input", saveAiPrefs);
     document.getElementById("ai-prompt").addEventListener("input", saveAiPrefs);
-    document.getElementById("btn-ai-generate").onclick = () => runAi("generate");
-    document.getElementById("btn-ai-explain").onclick = () => runAi("explain");
-    document.getElementById("btn-ai-fix").onclick = () => runAi("fix");
-    document.getElementById("btn-ai-insert").onclick = () => {
+    function clearAiHistory() {
+        aiState.history = [];
+        saveAiChat();
+        renderAiHistory();
+        setAiStatus("已清空 AI 對話記憶", false);
+    }
+    function insertLastAiResponse() {
         const text = extractCodeBlock(aiState.lastResponse);
         if (!text) {
             setAiStatus("目前沒有可插入內容", true);
@@ -1020,8 +1253,8 @@ print("Hello, Doratch!")
         insertAtCursor(text);
         markDirty();
         setAiStatus("已插入到游標位置", false);
-    };
-    document.getElementById("btn-ai-replace").onclick = () => {
+    }
+    function replaceWithLastAiResponse() {
         const text = extractCodeBlock(aiState.lastResponse);
         if (!text) {
             setAiStatus("目前沒有可覆蓋內容", true);
@@ -1030,7 +1263,74 @@ print("Hello, Doratch!")
         setCode(text);
         markDirty();
         setAiStatus("已覆蓋目前程式碼", false);
+    }
+    function runAiFromPrompt() {
+        const el = document.getElementById("ai-prompt");
+        const raw = String(el && el.value || "").trim();
+        if (!raw) return runAi("generate");
+        const cmd = raw.match(/^\/([a-z-]+)\b/i);
+        if (cmd) {
+            const key = String(cmd[1] || "").toLowerCase();
+            if (key === "clear" || key === "reset") {
+                clearAiHistory();
+                return;
+            }
+            if (key === "insert") {
+                insertLastAiResponse();
+                return;
+            }
+            if (key === "replace") {
+                replaceWithLastAiResponse();
+                return;
+            }
+            if (key === "continue" || key === "c") return runAi("continue");
+            if (key === "explain" || key === "e") return runAi("explain");
+            if (key === "fix" || key === "f") return runAi("fix");
+            if (key === "runtime-fix" || key === "rf") return runAi("runtime-fix");
+            if (key === "generate" || key === "gen" || key === "g") return runAi("generate");
+        }
+        runAi("generate");
+    }
+    document.getElementById("ai-prompt").addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" || e.shiftKey) return;
+        e.preventDefault();
+        runAiFromPrompt();
     };
+
+    window.addEventListener("keydown", (e) => {
+        if (e.defaultPrevented) return;
+        const withCtrl = e.ctrlKey || e.metaKey;
+        const key = String(e.key || "").toLowerCase();
+        if (withCtrl && !e.altKey && key === "i" && !e.shiftKey) {
+            e.preventDefault();
+            runAi("continue");
+            return;
+        }
+        if (withCtrl && !e.altKey && key === "f" && e.shiftKey) {
+            e.preventDefault();
+            runAi("runtime-fix");
+            return;
+        }
+        if (withCtrl && !e.altKey && key === "e" && e.shiftKey) {
+            e.preventDefault();
+            runAi("explain");
+            return;
+        }
+        if (withCtrl && !e.altKey && key === "g" && e.shiftKey) {
+            e.preventDefault();
+            runAi("generate");
+            return;
+        }
+        if (!withCtrl && e.altKey && !e.shiftKey && key === "enter") {
+            e.preventDefault();
+            insertLastAiResponse();
+            return;
+        }
+        if (!withCtrl && e.altKey && e.shiftKey && key === "enter") {
+            e.preventDefault();
+            replaceWithLastAiResponse();
+        }
+    });
 
     window.addEventListener("beforeunload", (ev) => {
         if (snapshot() !== savedSnapshot) {
@@ -1116,6 +1416,7 @@ print("Hello, Doratch!")
             });
         }
         loadAiPrefs();
+        loadAiChat();
         engineReady = isEngineReady();
         await initMonaco();
         if (window.PythonMonaco && window.PythonMonaco.isReady()) {
