@@ -1634,6 +1634,7 @@
     let unreadDividerLabel = "";
     let markReadDebounceTimer = null;
     let newMessagesBelowCount = 0;
+    let pendingForceScrollChatId = null;
     const MSG_FULL_RENDER_CHUNK = 48;
 
     function draftStorageKey() {
@@ -1786,6 +1787,87 @@
         if (msgArea) msgArea.innerHTML = '<div class="messages-loading">載入訊息中…</div>';
     }
 
+    function scrollMessagesToBottomReliable(msgArea) {
+        if (!msgArea) return;
+        const run = function () {
+            const lastRow = msgArea.querySelector(".message-row:last-of-type, .messages-empty");
+            if (lastRow && typeof lastRow.scrollIntoView === "function") {
+                try {
+                    lastRow.scrollIntoView({ block: "end", behavior: "auto" });
+                } catch (_) {
+                    lastRow.scrollIntoView(false);
+                }
+            }
+            const h = msgArea.scrollHeight;
+            if (typeof msgArea.scrollTo === "function") {
+                msgArea.scrollTo({ top: h, behavior: "auto" });
+            } else {
+                msgArea.scrollTop = h;
+            }
+        };
+        run();
+        requestAnimationFrame(function () {
+            run();
+            requestAnimationFrame(run);
+        });
+        [40, 120, 280, 520].forEach(function (ms) {
+            setTimeout(run, ms);
+        });
+        msgArea.querySelectorAll("img.msg-avatar, .chat-peer-avatar-wrap img").forEach(function (img) {
+            if (!img.complete) img.addEventListener("load", run, { once: true });
+        });
+    }
+
+    let composerScrollRaf = 0;
+    function keepMessagesAtBottomForComposer() {
+        if (composerScrollRaf) cancelAnimationFrame(composerScrollRaf);
+        composerScrollRaf = requestAnimationFrame(function () {
+            composerScrollRaf = 0;
+            const msgArea = document.getElementById("messages-area");
+            if (!msgArea) return;
+            const run = function () {
+                const lastRow = msgArea.querySelector(".message-row:last-of-type, .messages-empty");
+                if (lastRow && typeof lastRow.scrollIntoView === "function") {
+                    try {
+                        lastRow.scrollIntoView({ block: "end", behavior: "auto" });
+                    } catch (_) {
+                        lastRow.scrollIntoView(false);
+                    }
+                }
+                const h = msgArea.scrollHeight;
+                if (typeof msgArea.scrollTo === "function") {
+                    msgArea.scrollTo({ top: h, behavior: "auto" });
+                } else {
+                    msgArea.scrollTop = h;
+                }
+            };
+            run();
+            hideNewMessagesPill();
+            requestAnimationFrame(run);
+        });
+    }
+
+    function bindComposerScrollHooks(input) {
+        if (!input || input._composerScrollBound) return;
+        input._composerScrollBound = true;
+        const onCompose = function () {
+            keepMessagesAtBottomForComposer();
+        };
+        input.addEventListener("input", onCompose);
+        input.addEventListener("focus", function () {
+            onCompose();
+            setTimeout(onCompose, 120);
+            setTimeout(onCompose, 320);
+        });
+        if (window.visualViewport && !window._chatViewportScrollBound) {
+            window._chatViewportScrollBound = true;
+            window.visualViewport.addEventListener("resize", function () {
+                const active = document.getElementById("msg-input");
+                if (active && document.activeElement === active) keepMessagesAtBottomForComposer();
+            });
+        }
+    }
+
     function isMsgAreaNearBottom(msgArea, threshold) {
         if (!msgArea) return true;
         const gap = typeof threshold === "number" ? threshold : 96;
@@ -1810,7 +1892,7 @@
     window.scrollMessagesToBottom = () => {
         const msgArea = document.getElementById("messages-area");
         if (!msgArea) return;
-        msgArea.scrollTop = msgArea.scrollHeight;
+        scrollMessagesToBottomReliable(msgArea);
         hideNewMessagesPill();
     };
 
@@ -1932,8 +2014,10 @@
     function expandChatComposer() {
         document.body.classList.remove("chat-composer-collapsed");
         syncMobileChatChrome();
+        keepMessagesAtBottomForComposer();
         focusChatInput();
         requestAnimationFrame(function () {
+            keepMessagesAtBottomForComposer();
             const input = document.getElementById("msg-input");
             if (input && typeof input.scrollIntoView === "function") {
                 input.scrollIntoView({ block: "nearest", behavior: "smooth" });
@@ -4577,9 +4661,12 @@
     }
 
     function finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight) {
-        if (stickToBottom) {
-            msgArea.scrollTop = msgArea.scrollHeight;
+        const forceBottom = !!(pendingForceScrollChatId && pendingForceScrollChatId === currentChatId);
+        const toBottom = stickToBottom || forceBottom;
+        if (toBottom) {
+            scrollMessagesToBottomReliable(msgArea);
             hideNewMessagesPill();
+            if (forceBottom) pendingForceScrollChatId = null;
         } else if (msgArea.scrollHeight > prevScrollHeight) {
             showNewMessagesPill();
         }
@@ -4759,11 +4846,10 @@
         trackPendingOutbound(optId, currentChatId, { type: "text", text: text });
         const empty = msgArea.querySelector(".messages-empty");
         if (empty) empty.remove();
-        const stickToBottom = isMsgAreaNearBottom(msgArea);
         const prevScrollHeight = msgArea.scrollHeight;
         msgArea.insertAdjacentHTML("beforeend", buildOptimisticOwnTextRow(optId, text, replyPayload));
         msgArea.dataset.messagesReady = "1";
-        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        finishMessagesScroll(msgArea, true, prevScrollHeight);
         return optId;
     }
 
@@ -4808,11 +4894,10 @@
         trackPendingOutbound(optId, currentChatId, { type: "file", fileName: fileName, text: label });
         const empty = msgArea.querySelector(".messages-empty");
         if (empty) empty.remove();
-        const stickToBottom = isMsgAreaNearBottom(msgArea);
         const prevScrollHeight = msgArea.scrollHeight;
         msgArea.insertAdjacentHTML("beforeend", buildOptimisticFileRow(optId, fileName));
         msgArea.dataset.messagesReady = "1";
-        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        finishMessagesScroll(msgArea, true, prevScrollHeight);
         return optId;
     }
 
@@ -4958,9 +5043,11 @@
         }
         if (!names.length) {
             el.textContent = "有人正在輸入...";
-            return;
+        } else {
+            el.textContent = names.join("、") + (activeUids.length > 2 ? " 等人" : "") + " 正在輸入...";
         }
-        el.textContent = names.join("、") + (activeUids.length > 2 ? " 等人" : "") + " 正在輸入...";
+        const input = document.getElementById("msg-input");
+        if (input && document.activeElement === input) keepMessagesAtBottomForComposer();
     }
 
     function clearMyTypingIndicator() {
@@ -5027,6 +5114,7 @@
         input.style.height = "24px";
         const next = Math.min(input.scrollHeight, 160);
         input.style.height = next + "px";
+        keepMessagesAtBottomForComposer();
     }
 
     function focusChatInput() {
@@ -5035,6 +5123,7 @@
         input.focus();
         const end = input.value.length;
         if (typeof input.setSelectionRange === "function") input.setSelectionRange(end, end);
+        keepMessagesAtBottomForComposer();
     }
 
     // 3. 開啟特定聊天室
@@ -5048,6 +5137,7 @@
             }).catch(function () {});
         }
         currentChatId = chatId;
+        pendingForceScrollChatId = chatId;
         currentChatTeacherId = teacherId;
         currentChatType = chatType;
         currentChatName = chatName;
@@ -5197,17 +5287,21 @@
                 const merged = appendPendingOptimisticToRender(html, ctx, chatId);
                 msgArea.innerHTML = merged.html;
                 msgArea.dataset.messagesReady = "1";
+                finishMessagesScroll(msgArea, true, 0);
             } else {
                 msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
                 delete msgArea.dataset.messagesReady;
                 window.currentMessages = {};
+                scrollMessagesToBottomReliable(msgArea);
             }
             hideNewMessagesPill();
+            if (pendingForceScrollChatId === chatId) pendingForceScrollChatId = null;
             setReplyBar();
             return;
         }
 
-        const stickToBottom = isMsgAreaNearBottom(msgArea);
+        const forceBottom = pendingForceScrollChatId === chatId;
+        const stickToBottom = forceBottom || isMsgAreaNearBottom(msgArea);
         const prevScrollHeight = msgArea.scrollHeight;
         const isReady = msgArea.dataset.messagesReady === "1";
         const changes = snapshot.docChanges();
@@ -5299,6 +5393,7 @@
                     });
                     input.addEventListener("blur", clearMyTypingIndicator);
                 }
+                bindComposerScrollHooks(input);
                 autoGrowInput(input);
             }
             restoreChatDraft(chatId);
@@ -5336,6 +5431,9 @@
                 if (msgAreaEl) {
                     msgAreaEl._scrollWatchBound = false;
                     bindMessagesScrollWatch();
+                    if (pendingForceScrollChatId === chatId || msgAreaEl.dataset.messagesReady === "1") {
+                        scrollMessagesToBottomReliable(msgAreaEl);
+                    }
                 }
             }
         }, 100);
@@ -5770,6 +5868,7 @@
             : (replyToMessage.text || "").slice(0, 90);
         text.textContent = `回覆 ${sender}：${body}`;
         bar.style.display = "flex";
+        keepMessagesAtBottomForComposer();
     }
 
     window.clearReplyTarget = () => {
