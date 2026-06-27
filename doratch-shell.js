@@ -328,6 +328,30 @@
         });
     }
 
+    function applyRoleAdminEntry(rawRole, email) {
+        const adminLink = document.getElementById("admin-link-main");
+        if (!adminLink) return;
+        const emailNorm = String(email || "").trim().toLowerCase();
+        let role = String(rawRole || "student").trim().toLowerCase();
+        if (emailNorm === "chianghansen0302@gmail.com") role = "admin";
+        if (role === "admin") {
+            adminLink.style.display = "flex";
+            adminLink.innerText = "🛠️ 管理面板";
+            return;
+        }
+        if (role === "support") {
+            adminLink.style.display = "flex";
+            adminLink.innerText = "🎧 客服後台";
+            return;
+        }
+        if (role === "teacher") {
+            adminLink.style.display = "flex";
+            adminLink.innerText = "❓ 題庫管理";
+            return;
+        }
+        adminLink.style.display = "none";
+    }
+
     function rebrandDocument() {
         document.title = document.title.replace(/Creative Blocks(\s*Pro)?/gi, "Doratch");
         document.querySelectorAll('meta[name="description"]').forEach(function (m) {
@@ -359,6 +383,10 @@
         mountTopNav();
         bindProfileEntryShortcut();
     }
+
+    window.DoratchShell = Object.assign({}, window.DoratchShell || {}, {
+        applyRoleAdminEntry: applyRoleAdminEntry
+    });
 
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", init);

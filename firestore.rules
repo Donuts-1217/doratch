@@ -46,6 +46,7 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasAny([
         'role',
         'subscription',
+        'aiIdeEnabled',
         'cloudStorageLimitMB',
         'cloudStorageMaxFiles',
         'reviewUploadDailyLimit',
@@ -67,12 +68,23 @@ service cloud.firestore {
         isDeveloper() ||
         (
           isSupportStaff() &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doord', 'coins', 'docoin']) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['doord', 'coins', 'docoin', 'subscription']) &&
           request.resource.data.doord >= (('doord' in resource.data) ? resource.data.doord : (('coins' in resource.data) ? resource.data.coins : 0)) &&
           request.resource.data.doord - (('doord' in resource.data) ? resource.data.doord : (('coins' in resource.data) ? resource.data.coins : 0)) <= 30000 &&
           request.resource.data.coins == request.resource.data.doord &&
           request.resource.data.docoin >= (('docoin' in resource.data) ? resource.data.docoin : 0) &&
-          request.resource.data.docoin - (('docoin' in resource.data) ? resource.data.docoin : 0) <= 30
+          request.resource.data.docoin - (('docoin' in resource.data) ? resource.data.docoin : 0) <= 30 &&
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['subscription']) ||
+            (
+              request.resource.data.subscription is map &&
+              request.resource.data.subscription.tier in ['plus', 'pro'] &&
+              request.resource.data.subscription.expiresAtMs is number &&
+              request.resource.data.subscription.expiresAtMs > request.time.toMillis() &&
+              request.resource.data.subscription.expiresAtMs <= request.time.toMillis() + (30 * 24 * 60 * 60 * 1000) &&
+              request.resource.data.subscription.source == 'support_staff'
+            )
+          )
         ) ||
         (
           isAdmin() &&

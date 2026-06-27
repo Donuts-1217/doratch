@@ -34,11 +34,17 @@
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         #editor-status { font-size: 12px; color: #94a3b8; white-space: nowrap; }
         #main-workspace { display: flex; flex: 1; min-height: 0; }
-        #editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #1e293b; min-height: 0; }
+        #editor-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; background: #1e1e1e; min-height: 0; }
         .pane-header {
-            padding: 10px 16px; font-size: 13px; font-weight: 800; color: #cbd5e1;
-            background: #0f172a; border-bottom: 1px solid #334155;
+            padding: 8px 14px; font-size: 12px; font-weight: 700; color: #cccccc;
+            background: #252526; border-bottom: 1px solid #3c3c3c;
+            display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0;
         }
+        .pane-header kbd {
+            font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600;
+            background: #3c3c3c; color: #ccc; padding: 2px 6px; border-radius: 4px; border: 1px solid #555;
+        }
+        .pane-header-hints { display: flex; flex-wrap: wrap; gap: 6px 10px; color: #858585; font-size: 11px; }
         .monaco-shell { flex: 1; min-height: 0; display: none; font-family: "JetBrains Mono", Consolas, "Courier New", monospace; }
         #monaco-editor { width: 100%; height: 100%; min-height: 200px; }
         .monaco-shell .monaco-editor,
@@ -53,13 +59,15 @@
             background: #1e1e1e; color: #d4d4d4; border: none; resize: none;
         }
         .monaco-editor .suggest-widget { max-height: min(280px, calc(100vh - 120px)) !important; z-index: 10000; }
-        #side-pane { width: min(420px, 40vw); min-width: 300px; background: #0f172a; display: flex; flex-direction: column; border-left: 2px solid #334155; min-height: 0; }
-        .side-tabs { display: flex; border-bottom: 1px solid #334155; flex-shrink: 0; }
+        #side-pane { width: min(440px, 42vw); min-width: 300px; background: #252526; display: flex; flex-direction: column; border-left: 1px solid #3c3c3c; min-height: 0; }
+        .side-tabs { display: flex; border-bottom: 1px solid #3c3c3c; flex-shrink: 0; background: #2d2d2d; }
         .side-tab {
-            flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8;
-            font-weight: 800; font-size: 12px; cursor: pointer; font-family: inherit;
+            flex: 1; padding: 9px 8px; border: none; background: transparent; color: #969696;
+            font-weight: 700; font-size: 11px; cursor: pointer; font-family: inherit;
         }
-        .side-tab.active { color: #fff; background: #1e293b; border-bottom: 2px solid #5865f2; }
+        .side-tab.active { color: #fff; background: #1e1e1e; border-bottom: 2px solid #007acc; }
+        .side-tab.hidden { display: none; }
+        .side-tab:disabled { cursor: not-allowed; }
         .side-pane-view { flex: 1; min-height: 0; display: none; flex-direction: column; }
         .side-pane-view.active { display: flex; }
         .bot-settings {
@@ -98,44 +106,59 @@
         }
         .engine-bar.ready { color: #86efac; }
         .engine-bar.error { color: #fca5a5; }
-        .ai-ide-panel {
-            padding: 10px 12px; background: #111827; border-bottom: 1px solid #334155;
-            display: flex; flex-direction: column; gap: 8px;
+        .ai-chat-panel {
+            flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1e1e1e;
         }
-        .ai-ide-head {
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 12px; color: #cbd5e1; font-weight: 800;
+        .ai-chat-head {
+            display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+            border-bottom: 1px solid #3c3c3c; background: #252526; flex-shrink: 0;
         }
-        .ai-ide-row {
-            display: flex; gap: 8px; align-items: center;
+        .ai-chat-head .title { font-size: 12px; font-weight: 800; color: #cccccc; flex: 1; }
+        .ai-backend-badge {
+            font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+            background: rgba(0,122,204,0.2); color: #4fc3f7; border: 1px solid rgba(0,122,204,0.35);
         }
-        .ai-ide-input, .ai-ide-prompt {
-            width: 100%; box-sizing: border-box; border: 1px solid #334155; border-radius: 8px;
-            background: #0f172a; color: #e2e8f0; font-family: inherit;
+        .ai-backend-badge.off { background: rgba(248,113,113,0.12); color: #fca5a5; border-color: rgba(248,113,113,0.35); }
+        .ai-chat-head button {
+            border: none; background: #3c3c3c; color: #ccc; font-size: 10px; font-weight: 700;
+            padding: 4px 8px; border-radius: 4px; cursor: pointer; font-family: inherit;
         }
-        .ai-ide-input { padding: 8px 10px; font-size: 12px; }
-        .ai-ide-prompt { min-height: 62px; resize: vertical; padding: 8px 10px; font-size: 12px; }
-        .ai-ide-shortcuts {
-            font-size: 11px; color: #94a3b8; line-height: 1.45;
-            border: 1px solid #1e293b; background: #020617; border-radius: 8px; padding: 8px;
+        .ai-chat-messages {
+            flex: 1; min-height: 0; overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;
         }
-        .ai-ide-status { font-size: 11px; color: #93c5fd; min-height: 16px; }
-        .ai-ide-status.error { color: #fca5a5; }
-        .ai-ide-history {
-            max-height: 150px; overflow: auto; border: 1px solid #1e293b;
-            background: #020617; border-radius: 8px; padding: 8px; display: grid; gap: 8px;
+        .ai-chat-composer {
+            flex-shrink: 0; padding: 10px; border-top: 1px solid #3c3c3c; background: #252526;
+            display: flex; flex-direction: column; gap: 6px;
         }
+        .ai-ide-prompt {
+            width: 100%; box-sizing: border-box; border: 1px solid #3c3c3c; border-radius: 6px;
+            background: #1e1e1e; color: #cccccc; font-family: inherit;
+            min-height: 72px; max-height: 160px; resize: vertical; padding: 10px; font-size: 12px; line-height: 1.45;
+        }
+        .ai-ide-prompt:focus { outline: 1px solid #007acc; border-color: #007acc; }
+        .ai-ide-prompt:disabled { opacity: 0.55; cursor: not-allowed; }
+        .ai-chat-hint { font-size: 10px; color: #858585; line-height: 1.5; }
+        .ai-ide-status { font-size: 11px; color: #4fc3f7; min-height: 16px; padding: 0 10px 8px; flex-shrink: 0; }
+        .ai-ide-status.error { color: #f87171; }
+        .ai-ide-history { display: contents; }
         .ai-ide-msg {
-            font-size: 12px; line-height: 1.45; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap;
-            border: 1px solid rgba(148,163,184,0.28);
+            font-size: 12px; line-height: 1.5; border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-break: break-word;
+            border: 1px solid #3c3c3c; max-width: 100%;
         }
-        .ai-ide-msg.user { background: rgba(30,41,59,0.62); color: #e2e8f0; }
-        .ai-ide-msg.assistant { background: rgba(67,56,202,0.18); color: #dbeafe; border-color: rgba(99,102,241,0.42); }
-        .ai-ide-msg .meta { display: block; font-size: 10px; opacity: 0.75; margin-bottom: 4px; }
-        .ai-ide-output {
-            margin: 0; padding: 8px; border-radius: 8px; background: #020617;
-            border: 1px solid #1e293b; color: #cbd5e1; font-family: "JetBrains Mono", monospace;
-            font-size: 12px; line-height: 1.5; max-height: 180px; overflow: auto; white-space: pre-wrap;
+        .ai-ide-msg.user { background: #2d2d2d; color: #e5e5e5; align-self: flex-end; border-color: #454545; }
+        .ai-ide-msg.assistant { background: #252526; color: #d4d4d4; border-color: #007acc55; }
+        .ai-ide-msg.streaming { border-color: #007acc; box-shadow: 0 0 0 1px rgba(0,122,204,0.25); }
+        .ai-ide-msg .meta { display: block; font-size: 10px; opacity: 0.7; margin-bottom: 4px; font-weight: 700; }
+        .ai-ide-output { display: none; }
+        .ai-admin-settings { display: none !important; }
+        #status-bar {
+            flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 4px 12px; background: #007acc; color: #fff; font-size: 11px; font-weight: 600;
+        }
+        #status-bar .status-left, #status-bar .status-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        #status-bar kbd {
+            font-family: "JetBrains Mono", monospace; font-size: 10px; background: rgba(0,0,0,0.2);
+            padding: 1px 5px; border-radius: 3px;
         }
         @media (max-width: 900px) {
             #main-workspace { flex-direction: column; }
@@ -192,7 +215,14 @@
 
 <div id="main-workspace">
     <div id="editor-pane">
-        <div class="pane-header">程式碼 · Ctrl+Enter 執行 · Ctrl+Space 語法輔助</div>
+        <div class="pane-header">
+            <span>main.py</span>
+            <div class="pane-header-hints">
+                <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> 執行</span>
+                <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> Copilot</span>
+                <span><kbd>Ctrl</kbd>+<kbd>Space</kbd> 提示</span>
+            </div>
+        </div>
         <div class="assist-bar" id="py-assist-bar">
             <span style="color:#94a3b8;font-weight:800;">🐍 快插：</span>
             <button type="button" data-snippet="print">print</button>
@@ -210,28 +240,6 @@
             <button type="button" data-snippet="send_">send_ 斜線</button>
             <button type="button" data-snippet="ctx.send">ctx.send</button>
             <button type="button" data-snippet="ui.View">按鈕選單</button>
-        </div>
-        <div class="ai-ide-panel" id="ai-ide-panel">
-            <div class="ai-ide-head">
-                <span>✨ AI IDE 助手（Python）</span>
-                <span style="color:#94a3b8;">Gemini API</span>
-            </div>
-            <div class="ai-ide-row">
-                <input id="ai-api-key" class="ai-ide-input" type="password" placeholder="貼上 Gemini API Key（只存本機）">
-                <input id="ai-model" class="ai-ide-input" type="text" value="gemini-2.0-flash" style="max-width:150px;">
-            </div>
-            <label style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:6px;">
-                <input id="ai-remember-key" type="checkbox" style="width:auto;margin:0;">
-                記住 API Key（目前裝置）
-            </label>
-            <textarea id="ai-prompt" class="ai-ide-prompt" placeholder="描述需求，例如：幫我寫一個 Flask 登入 API，含驗證與錯誤處理"></textarea>
-            <div class="ai-ide-shortcuts">
-                Enter 送出（Shift+Enter 換行） · `/continue` `/explain` `/fix` `/runtime-fix`<br>
-                快捷鍵：Ctrl/Cmd+I 續寫 · Ctrl/Cmd+Shift+F 錯誤修正 · Alt+Enter 插入回覆 · Alt+Shift+Enter 覆蓋
-            </div>
-            <div id="ai-ide-history" class="ai-ide-history"><div style="font-size:11px;color:#94a3b8;">尚無對話記錄</div></div>
-            <div id="ai-ide-status" class="ai-ide-status"></div>
-            <pre id="ai-ide-output" class="ai-ide-output">AI 回覆會出現在這裡</pre>
         </div>
         <div class="monaco-shell">
             <div id="monaco-editor"></div>
@@ -253,9 +261,10 @@ print("Hello, Doratch!")
                 <p style="margin:8px 0 0;color:#94a3b8;line-height:1.5;">你的 Token <strong>固定不變</strong>，寫在程式 <code>TOKEN = '…'</code> 與 <code>bot.run(TOKEN)</code>，和 VS Code 跑 <code>python main.py</code> 相同。上 Discord 時只需把 TOKEN 換成 Developer Portal 的真 Token。</p>
             </div>
         </div>
-        <div class="side-tabs" id="side-tabs" style="display:none;">
-            <button type="button" class="side-tab" data-view="terminal">▶ 終端</button>
-            <button type="button" class="side-tab active" data-view="botsim">🤖 模擬器</button>
+        <div class="side-tabs" id="side-tabs">
+            <button type="button" class="side-tab active" data-view="terminal">▶ 終端</button>
+            <button type="button" class="side-tab" data-view="ai" id="tab-ai">✨ Copilot</button>
+            <button type="button" class="side-tab hidden" data-view="botsim" id="tab-botsim">🤖 模擬器</button>
         </div>
         <div class="side-pane-view active" id="view-terminal">
             <div class="terminal-panel">
@@ -268,11 +277,48 @@ print("Hello, Doratch!")
                 </div>
             </div>
         </div>
+        <div class="side-pane-view" id="view-ai">
+            <div class="ai-chat-panel" id="ai-ide-panel">
+                <div class="ai-chat-head">
+                    <span class="title">✨ Copilot</span>
+                    <span class="ai-backend-badge off" id="ai-backend-badge">載入中…</span>
+                    <button type="button" id="btn-ai-clear" title="清空對話">清空</button>
+                </div>
+                <div class="ai-chat-messages" id="ai-chat-messages">
+                    <div id="ai-ide-history" class="ai-ide-history"><div style="font-size:11px;color:#858585;">輸入問題或按 Ctrl+Shift+I 開始</div></div>
+                </div>
+                <div id="ai-ide-status" class="ai-ide-status"></div>
+                <div class="ai-chat-composer">
+                    <textarea id="ai-prompt" class="ai-ide-prompt" placeholder="問 Copilot… 例如：幫我寫一個登入函式&#10;指令：/continue /explain /fix /runtime-fix /insert /replace"></textarea>
+                    <div class="ai-chat-hint">
+                        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> 開啟 · <kbd>Ctrl</kbd>+<kbd>I</kbd> 續寫 ·
+                        <kbd>Alt</kbd>+<kbd>Enter</kbd> 插入 · Enter 送出
+                    </div>
+                </div>
+                <pre id="ai-ide-output" class="ai-ide-output"></pre>
+                <div class="ai-admin-settings" aria-hidden="true">
+                    <input id="ai-api-key" type="hidden" value="">
+                    <input id="ai-model" type="hidden" value="gemini-2.5-flash-lite">
+                    <input id="ai-remember-key" type="checkbox" hidden>
+                </div>
+            </div>
+        </div>
         <div class="side-pane-view" id="view-botsim">
             <div id="bot-sim-host"><div id="bot-simulator"></div></div>
         </div>
     </div>
 </div>
+
+<footer id="status-bar">
+    <div class="status-left">
+        <span id="status-bar-engine">Python Studio</span>
+        <span id="status-bar-ai">Copilot：載入中…</span>
+    </div>
+    <div class="status-right">
+        <span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> AI</span>
+        <span><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run</span>
+    </div>
+</footer>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -439,21 +485,45 @@ print("Hello, Doratch!")
 
     function setAiIdeEnabled(enabled) {
         const panel = document.getElementById("ai-ide-panel");
+        const tabAi = document.getElementById("tab-ai");
         const disabled = !enabled;
         aiState.aiLocked = disabled;
-        if (!panel) return;
-        const controls = [
-            "ai-api-key", "ai-model", "ai-remember-key", "ai-prompt"
-        ];
-        controls.forEach(function (id) {
-            const el = document.getElementById(id);
-            if (el) el.disabled = disabled;
-        });
-        panel.style.opacity = disabled ? "0.58" : "1";
+        const prompt = document.getElementById("ai-prompt");
+        const clearBtn = document.getElementById("btn-ai-clear");
+        if (prompt) prompt.disabled = disabled;
+        if (clearBtn) clearBtn.disabled = disabled;
+        if (panel) panel.style.opacity = disabled ? "0.55" : "1";
+        if (tabAi) {
+            tabAi.disabled = disabled;
+            tabAi.style.opacity = disabled ? "0.45" : "1";
+            tabAi.title = disabled ? "AI IDE 已被管理員停用" : "";
+        }
         if (disabled) {
             setAiStatus("AI IDE 已被管理員停用", true);
-            renderAiOutput("此帳號目前沒有 AI IDE 使用權限，請聯絡管理員開啟。");
+            renderAiOutput("");
+            if (document.getElementById("view-ai")?.classList.contains("active")) {
+                showSideView("terminal");
+            }
         }
+    }
+
+    function updateAiBackendBadge(mode, label) {
+        const badge = document.getElementById("ai-backend-badge");
+        const barAi = document.getElementById("status-bar-ai");
+        if (badge) {
+            badge.textContent = label;
+            badge.classList.toggle("off", mode !== "gas");
+        }
+        if (barAi) barAi.textContent = "Copilot：" + label;
+    }
+
+    function focusAiChat() {
+        if (aiState.aiLocked) return;
+        showSideView("ai");
+        setTimeout(function () {
+            const el = document.getElementById("ai-prompt");
+            if (el) el.focus();
+        }, 30);
     }
 
     function normalizeTutorModel(name) {
@@ -472,8 +542,6 @@ print("Hello, Doratch!")
         aiState.proxyUrl = "";
         aiState.proxyModel = "";
         const modelInput = document.getElementById("ai-model");
-        const keyInput = document.getElementById("ai-api-key");
-        const remember = document.getElementById("ai-remember-key");
         try {
             const cfgSnap = await getDoc(doc(db, "system_config", "python_tutor"));
             const cfg = cfgSnap.exists() ? (cfgSnap.data() || {}) : {};
@@ -484,26 +552,38 @@ print("Hello, Doratch!")
                 aiState.proxyUrl = gasUrl;
                 aiState.proxyModel = normalizeTutorModel(cfg.model);
                 if (modelInput && aiState.proxyModel) modelInput.value = aiState.proxyModel;
-                if (keyInput) {
-                    keyInput.value = "";
-                    keyInput.placeholder = "已使用 admin 設定的 GAS 代理（不需貼 API Key）";
-                    keyInput.disabled = true;
-                }
-                if (remember) remember.disabled = true;
-                setAiStatus("AI 後端：GAS 代理（admin 設定）", false);
+                updateAiBackendBadge("gas", "GAS · admin");
+                setAiStatus("已連線 admin GAS 代理", false);
                 return;
             }
         } catch (_) {}
-        if (keyInput) {
-            keyInput.disabled = false;
-            keyInput.placeholder = "貼上 Gemini API Key（只存本機）";
-        }
-        if (remember) remember.disabled = false;
+        updateAiBackendBadge("off", "未設定");
+        setAiStatus("請管理員在 admin → Python 問答助教 啟用 GAS", true);
     }
 
     function renderAiOutput(text) {
         aiState.lastResponse = text || "";
-        document.getElementById("ai-ide-output").textContent = text || "（空回覆）";
+        const out = document.getElementById("ai-ide-output");
+        if (out) out.textContent = text || "";
+        const host = document.getElementById("ai-ide-history");
+        if (!host) return;
+        if (!text || text === "（等待 AI 回覆中）") {
+            const old = document.getElementById("ai-stream-bubble");
+            if (old) old.remove();
+            return;
+        }
+        let bubble = document.getElementById("ai-stream-bubble");
+        if (!bubble) {
+            bubble = document.createElement("div");
+            bubble.id = "ai-stream-bubble";
+            bubble.className = "ai-ide-msg assistant streaming";
+            bubble.innerHTML = '<span class="meta">AI</span><span class="ai-stream-body"></span>';
+            host.appendChild(bubble);
+        }
+        const body = bubble.querySelector(".ai-stream-body");
+        if (body) body.textContent = text;
+        const scrollHost = document.getElementById("ai-chat-messages");
+        if (scrollHost) scrollHost.scrollTop = scrollHost.scrollHeight;
     }
 
     function aiChatStorageKey() {
@@ -521,9 +601,11 @@ print("Hello, Doratch!")
     function renderAiHistory() {
         const host = document.getElementById("ai-ide-history");
         if (!host) return;
+        const stream = document.getElementById("ai-stream-bubble");
+        if (stream) stream.remove();
         const list = trimAiHistory(aiState.history);
         if (!list.length) {
-            host.innerHTML = '<div style="font-size:11px;color:#94a3b8;">尚無對話記錄</div>';
+            host.innerHTML = '<div style="font-size:11px;color:#858585;">輸入問題或按 Ctrl+Shift+I 開始</div>';
             return;
         }
         host.innerHTML = list.map(function (m) {
@@ -532,7 +614,8 @@ print("Hello, Doratch!")
             const modeTag = m.mode ? (" · " + m.mode) : "";
             return '<div class="ai-ide-msg ' + cls + '"><span class="meta">' + roleLabel + modeTag + '</span>' + escHtml(m.text) + "</div>";
         }).join("");
-        host.scrollTop = host.scrollHeight;
+        const scrollHost = document.getElementById("ai-chat-messages");
+        if (scrollHost) scrollHost.scrollTop = scrollHost.scrollHeight;
     }
 
     function saveAiChat() {
@@ -570,11 +653,7 @@ print("Hello, Doratch!")
 
     function saveAiPrefs() {
         try {
-            const rememberKey = !!document.getElementById("ai-remember-key").checked;
             localStorage.setItem(AI_STORAGE_KEY, JSON.stringify({
-                apiKey: rememberKey ? document.getElementById("ai-api-key").value.trim() : "",
-                rememberKey: rememberKey,
-                model: document.getElementById("ai-model").value.trim(),
                 prompt: document.getElementById("ai-prompt").value
             }));
         } catch (_) {}
@@ -585,9 +664,6 @@ print("Hello, Doratch!")
             const raw = localStorage.getItem(AI_STORAGE_KEY);
             if (!raw) return;
             const pref = JSON.parse(raw);
-            document.getElementById("ai-remember-key").checked = !!pref.rememberKey;
-            if (pref.rememberKey && pref.apiKey) document.getElementById("ai-api-key").value = pref.apiKey;
-            if (pref.model) document.getElementById("ai-model").value = pref.model;
             if (pref.prompt) document.getElementById("ai-prompt").value = pref.prompt;
         } catch (_) {}
     }
@@ -792,43 +868,24 @@ print("Hello, Doratch!")
             setAiStatus("AI IDE 已被管理員停用", true);
             return;
         }
-        const apiKey = document.getElementById("ai-api-key").value.trim();
-        const model = document.getElementById("ai-model").value.trim() || "gemini-2.0-flash";
-        if (!apiKey && aiState.proxyMode !== "gas") {
-            setAiStatus("請先貼上 Gemini API Key", true);
+        if (aiState.proxyMode !== "gas") {
+            setAiStatus("AI 尚未設定：請管理員在 admin → Python 問答助教 啟用 GAS", true);
+            focusAiChat();
             return;
         }
         if (mode === "runtime-fix" && !String(aiState.lastRuntimeError || "").trim()) {
             setAiStatus("先執行一次，讓 AI 取得 traceback 再修正", true);
+            focusAiChat();
             return;
         }
+        focusAiChat();
         aiState.busy = true;
-        setAiStatus("AI 串流產生中…", false);
+        setAiStatus("AI 產生中…", false);
         renderAiOutput("（等待 AI 回覆中）");
         saveAiPrefs();
         try {
             const promptText = createAiPrompt(mode);
-            const chatContext = trimAiHistory(aiState.history).slice(-10).map(function (m) {
-                return { role: m.role === "model" ? "model" : "user", parts: [{ text: m.text }] };
-            });
-            const payload = {
-                contents: chatContext.concat([{ role: "user", parts: [{ text: promptText }] }]),
-                generationConfig: { temperature: (mode === "fix" || mode === "runtime-fix") ? 0.2 : 0.5 }
-            };
-            let merged = "";
-            if (aiState.proxyMode === "gas") {
-                setAiStatus("AI 產生中（GAS 代理）…", false);
-                merged = await callGasProxy(promptText, mode);
-            } else {
-                try {
-                    merged = await callGeminiStream(apiKey, model, payload, function (chunked) {
-                        renderAiOutput(chunked);
-                    });
-                } catch (_) {
-                    setAiStatus("串流失敗，改用一般模式…", false);
-                    merged = await callGeminiGenerate(apiKey, model, payload);
-                }
-            }
+            const merged = await callGasProxy(promptText, mode);
             renderAiOutput(merged);
             pushAiHistory("user", promptText, mode);
             pushAiHistory("model", merged, mode);
@@ -988,7 +1045,9 @@ print("Hello, Doratch!")
     function updateBotUi() {
         var isBot = document.getElementById("is-bot-check").checked;
         document.getElementById("bot-fields").style.display = isBot ? "block" : "none";
-        document.getElementById("side-tabs").style.display = isBot ? "flex" : "none";
+        document.getElementById("side-tabs").style.display = "flex";
+        var botTab = document.getElementById("tab-botsim");
+        if (botTab) botTab.classList.toggle("hidden", !isBot);
         var assistBar = document.getElementById("bot-assist-bar");
         if (assistBar) assistBar.style.display = isBot ? "flex" : "none";
         window.__DORATCH_FORCE_BOT_ASSIST__ = isBot;
@@ -1017,7 +1076,10 @@ print("Hello, Doratch!")
     }
 
     document.querySelectorAll(".side-tab").forEach(function (btn) {
-        btn.onclick = function () { showSideView(btn.dataset.view); };
+        btn.onclick = function () {
+            if (btn.disabled) return;
+            showSideView(btn.dataset.view);
+        };
     });
 
     document.getElementById("is-bot-check").addEventListener("change", async function () {
@@ -1164,7 +1226,7 @@ print("Hello, Doratch!")
                 term.writeError(error);
                 aiState.lastRuntimeError = String(error);
                 aiState.lastRuntimeCode = code;
-                setAiStatus("已捕捉執行錯誤，可按「錯誤一鍵修正」", true);
+                setAiStatus("已捕捉執行錯誤，可按 Ctrl+Shift+F 一鍵修正", true);
             } else {
                 aiState.lastRuntimeError = "";
                 aiState.lastRuntimeCode = code;
@@ -1173,7 +1235,7 @@ print("Hello, Doratch!")
             term.writeError(String(e.message || e));
             aiState.lastRuntimeError = String(e && e.message ? e.message : e);
             aiState.lastRuntimeCode = code;
-            setAiStatus("已捕捉執行錯誤，可按「錯誤一鍵修正」", true);
+            setAiStatus("已捕捉執行錯誤，可按 Ctrl+Shift+F 一鍵修正", true);
         } finally {
             term.setRunning(false);
             document.getElementById("btn-run").disabled = false;
@@ -1228,6 +1290,8 @@ print("Hello, Doratch!")
             engineReady = true;
             bar.textContent = "Python 已就緒 · 自由創作模式";
             bar.className = "engine-bar ready";
+            const statusEngine = document.getElementById("status-bar-engine");
+            if (statusEngine) statusEngine.textContent = "Python 已就緒";
             document.getElementById("btn-run").disabled = false;
         } catch (e) {
             bar.textContent = e.message || String(e);
@@ -1348,10 +1412,10 @@ print("Hello, Doratch!")
     document.getElementById("is-public-check").addEventListener("change", markDirty);
     document.getElementById("is-public-check").addEventListener("change", queueDraftSave);
     document.getElementById("bot-name-input").addEventListener("input", queueDraftSave);
-    document.getElementById("ai-remember-key").addEventListener("change", saveAiPrefs);
-    document.getElementById("ai-api-key").addEventListener("input", saveAiPrefs);
-    document.getElementById("ai-model").addEventListener("input", saveAiPrefs);
     document.getElementById("ai-prompt").addEventListener("input", saveAiPrefs);
+    document.getElementById("btn-ai-clear").onclick = function () {
+        clearAiHistory();
+    };
     function clearAiHistory() {
         aiState.history = [];
         saveAiChat();
@@ -1413,13 +1477,25 @@ print("Hello, Doratch!")
         if (e.key !== "Enter" || e.shiftKey) return;
         e.preventDefault();
         runAiFromPrompt();
-    };
+    });
+
+    document.addEventListener("doratch-ai-focus", function () { focusAiChat(); });
+    document.addEventListener("doratch-ai-continue", function () { runAi("continue"); });
+    document.addEventListener("doratch-ai-runtime-fix", function () { runAi("runtime-fix"); });
+    document.addEventListener("doratch-ai-explain", function () { runAi("explain"); });
+    document.addEventListener("doratch-ai-generate", function () { focusAiChat(); runAi("generate"); });
 
     window.addEventListener("keydown", (e) => {
         if (e.defaultPrevented) return;
         const withCtrl = e.ctrlKey || e.metaKey;
         const key = String(e.key || "").toLowerCase();
-        if (withCtrl && !e.altKey && key === "i" && !e.shiftKey) {
+        const inAiPrompt = e.target && e.target.id === "ai-prompt";
+        if (withCtrl && !e.altKey && key === "i" && e.shiftKey) {
+            e.preventDefault();
+            focusAiChat();
+            return;
+        }
+        if (withCtrl && !e.altKey && key === "i" && !e.shiftKey && !inAiPrompt) {
             e.preventDefault();
             runAi("continue");
             return;
@@ -1436,6 +1512,7 @@ print("Hello, Doratch!")
         }
         if (withCtrl && !e.altKey && key === "g" && e.shiftKey) {
             e.preventDefault();
+            focusAiChat();
             runAi("generate");
             return;
         }
@@ -1447,6 +1524,10 @@ print("Hello, Doratch!")
         if (!withCtrl && e.altKey && e.shiftKey && key === "enter") {
             e.preventDefault();
             replaceWithLastAiResponse();
+        }
+        if (e.key === "Escape" && !inAiPrompt) {
+            const editor = window.PythonMonaco?.getEditor ? window.PythonMonaco.getEditor() : null;
+            if (editor) editor.focus();
         }
     });
 

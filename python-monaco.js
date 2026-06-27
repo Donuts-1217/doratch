@@ -185,6 +185,26 @@
             editor.trigger("manual", "editor.action.triggerSuggest", {});
         });
 
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyI, function () {
+            document.dispatchEvent(new CustomEvent("doratch-ai-focus"));
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI, function () {
+            document.dispatchEvent(new CustomEvent("doratch-ai-continue"));
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyF, function () {
+            document.dispatchEvent(new CustomEvent("doratch-ai-runtime-fix"));
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyE, function () {
+            document.dispatchEvent(new CustomEvent("doratch-ai-explain"));
+        });
+
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyG, function () {
+            document.dispatchEvent(new CustomEvent("doratch-ai-generate"));
+        });
+
         editor.onDidChangeModelContent(function () {
             document.dispatchEvent(new CustomEvent("doratch-editor-change"));
         });

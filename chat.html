@@ -1477,13 +1477,18 @@
     const userCache = {};
     let unsubscribeMessages = null;
     let unsubscribeChatDoc = null;
+    let unsubscribeChats = null;
+    let unsubscribeInvites = null;
     let unsubscribeFriendIncoming = null;
     let unsubscribeFriendOutgoing = null;
     let unsubscribeFriendLinks = null;
+    let giftClaimBusy = false;
     let modalMode = ''; // 'private' or 'group'
     let friendIncoming = [];
     let friendOutgoing = [];
     let friendLinks = [];
+    let friendPanelRenderToken = 0;
+    let friendRenderTimer = null;
     let typingPulseTimer = null;
     let lastTypingSentAt = 0;
     let isSendingMessage = false;
@@ -2667,11 +2672,7 @@
         const reverseRef = doc(db, "friend_requests", reverseId);
         const reverseSnap = await getDoc(reverseRef);
         if (reverseSnap.exists() && (reverseSnap.data().status || "pending") === "pending") {
-            await updateDoc(reverseRef, {
-                status: "accepted",
-                acceptedAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-            });
+            await acceptFriendRequest(reverseId, true);
             return true;
         }
         const reqId = friendDocId(currentUser.uid, targetUid);
@@ -2748,6 +2749,9 @@
                 lastMessage: "✅ 已接受訊息請求",
                 updatedAt: serverTimestamp()
             });
+            const otherEmail = (d.participantEmails || []).find((e) => e !== currentUser.email) || "未知";
+            const label = String(otherEmail).split("@")[0] || "私訊";
+            openChat(chatId, label, "👤", "private", null);
         } catch (e) {
             alert("接受訊息請求失敗：" + (e.message || e));
         }
@@ -2806,25 +2810,41 @@
     function friendRelationWithUid(uid) {
         const out = { state: "none", requestId: "" };
         if (!uid || !currentUser || uid === currentUser.uid) {
-            out.state = "self";
+            out.state = uid === currentUser.uid ? "self" : "none";
             return out;
         }
+        let pendingMatch = null;
         for (const r of friendLinks) {
             const status = r.status || "pending";
-            const samePair = (r.fromUid === currentUser.uid && r.toUid === uid) || (r.toUid === currentUser.uid && r.fromUid === uid);
+            const samePair = (r.fromUid === currentUser.uid && r.toUid === uid) ||
+                (r.toUid === currentUser.uid && r.fromUid === uid);
             if (!samePair) continue;
             if (status === "accepted") {
                 out.state = "friend";
                 out.requestId = r.id || "";
                 return out;
             }
-            if (status === "pending") {
-                out.state = r.fromUid === currentUser.uid ? "outgoing" : "incoming";
-                out.requestId = r.id || "";
-                return out;
+            if (status === "pending" && !pendingMatch) {
+                pendingMatch = {
+                    state: r.fromUid === currentUser.uid ? "outgoing" : "incoming",
+                    requestId: r.id || ""
+                };
             }
         }
+        if (pendingMatch) {
+            out.state = pendingMatch.state;
+            out.requestId = pendingMatch.requestId;
+        }
         return out;
+    }
+
+    async function cleanupReversePendingFriendRequest(fromUid, toUid) {
+        const reverseId = friendDocId(toUid, fromUid);
+        const reverseRef = doc(db, "friend_requests", reverseId);
+        const reverseSnap = await getDoc(reverseRef);
+        if (reverseSnap.exists() && (reverseSnap.data().status || "pending") === "pending") {
+            await deleteDoc(reverseRef);
+        }
     }
 
     async function sendFriendRequestToUid(targetUid) {
@@ -2835,12 +2855,29 @@
         if (relation.state === "outgoing") throw new Error("REQUEST_ALREADY_SENT");
         const target = await fetchUserByUid(targetUid);
         if (!target || !target.email) throw new Error("USER_NOT_FOUND");
-        if (relation.state === "incoming") {
+        if (relation.state === "incoming" && relation.requestId) {
             await acceptFriendRequest(relation.requestId, true);
             return { autoAccepted: true, target: target };
         }
+        const reverseId = friendDocId(targetUid, currentUser.uid);
+        const reverseSnap = await getDoc(doc(db, "friend_requests", reverseId));
+        if (reverseSnap.exists()) {
+            const revStatus = reverseSnap.data().status || "pending";
+            if (revStatus === "accepted") throw new Error("ALREADY_FRIEND");
+            if (revStatus === "pending") {
+                await acceptFriendRequest(reverseId, true);
+                return { autoAccepted: true, target: target };
+            }
+        }
         const reqId = friendDocId(currentUser.uid, targetUid);
         const reqRef = doc(db, "friend_requests", reqId);
+        const reqSnap = await getDoc(reqRef);
+        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") {
+            throw new Error("REQUEST_ALREADY_SENT");
+        }
+        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "accepted") {
+            throw new Error("ALREADY_FRIEND");
+        }
         await setDoc(reqRef, {
             fromUid: currentUser.uid,
             toUid: targetUid,
@@ -2881,7 +2918,10 @@
 
     window.acceptFriendByUid = async (uid) => {
         const relation = friendRelationWithUid(uid);
-        if (relation.state !== "incoming" || !relation.requestId) return;
+        if (relation.state !== "incoming" || !relation.requestId) {
+            alert("目前沒有可接受的好友請求。");
+            return;
+        }
         await acceptFriendRequest(relation.requestId);
     };
 
@@ -2908,19 +2948,20 @@
         const revRef = doc(db, "friend_requests", reverseId);
         const [reqSnap, revSnap] = await Promise.all([getDoc(reqRef), getDoc(revRef)]);
 
-        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") throw new Error("REQUEST_ALREADY_SENT");
         if (revSnap.exists()) {
             const status = revSnap.data().status || "pending";
             if (status === "pending") {
-                await updateDoc(revRef, {
-                    status: "accepted",
-                    acceptedAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                });
+                await acceptFriendRequest(reverseId, true);
+                if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") {
+                    await deleteDoc(reqRef);
+                }
                 return { autoAccepted: true, target: target };
             }
             if (status === "accepted") throw new Error("ALREADY_FRIEND");
         }
+
+        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "pending") throw new Error("REQUEST_ALREADY_SENT");
+        if (reqSnap.exists() && (reqSnap.data().status || "pending") === "accepted") throw new Error("ALREADY_FRIEND");
 
         await setDoc(reqRef, {
             fromUid: currentUser.uid,
@@ -2942,11 +2983,18 @@
             if (!snap.exists()) return;
             const data = snap.data() || {};
             if (data.toUid !== currentUser.uid) throw new Error("NOT_RECEIVER");
+            const status = data.status || "pending";
+            if (status === "accepted") {
+                if (!silent) alert("你們已經是好友。");
+                return;
+            }
+            if (status !== "pending") throw new Error("INVALID_STATUS");
             await updateDoc(ref, {
                 status: "accepted",
                 acceptedAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
             });
+            await cleanupReversePendingFriendRequest(data.fromUid, data.toUid);
             if (!silent) alert("✅ 已成為好友");
         } catch (e) {
             alert("接受好友失敗：" + (e.message || e));
@@ -2955,7 +3003,12 @@
 
     window.rejectFriendRequest = async (requestId) => {
         try {
-            await deleteDoc(doc(db, "friend_requests", requestId));
+            const ref = doc(db, "friend_requests", requestId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const data = snap.data() || {};
+            if (data.toUid !== currentUser.uid) throw new Error("NOT_RECEIVER");
+            await deleteDoc(ref);
         } catch (e) {
             alert("拒絕失敗：" + (e.message || e));
         }
@@ -2963,7 +3016,13 @@
 
     window.cancelFriendRequest = async (requestId) => {
         try {
-            await deleteDoc(doc(db, "friend_requests", requestId));
+            const ref = doc(db, "friend_requests", requestId);
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return;
+            const data = snap.data() || {};
+            if (data.fromUid !== currentUser.uid) throw new Error("NOT_SENDER");
+            if ((data.status || "pending") !== "pending") throw new Error("INVALID_STATUS");
+            await deleteDoc(ref);
         } catch (e) {
             alert("取消請求失敗：" + (e.message || e));
         }
@@ -2997,75 +3056,106 @@
         }
     };
 
+    function scheduleFriendPanelRender() {
+        if (friendRenderTimer) clearTimeout(friendRenderTimer);
+        friendRenderTimer = setTimeout(function () {
+            friendRenderTimer = null;
+            renderFriendPanels();
+        }, 40);
+    }
+
     async function renderFriendPanels() {
+        const token = ++friendPanelRenderToken;
         const listFriends = document.getElementById("list-friends");
         const listReq = document.getElementById("list-friend-requests");
         const listOut = document.getElementById("list-friend-outgoing");
         const catReq = document.getElementById("category-friend-requests");
         const catOut = document.getElementById("category-friend-outgoing");
+        if (!listFriends || !listReq || !listOut || !catReq || !catOut || !currentUser) return;
         listFriends.innerHTML = "";
         listReq.innerHTML = "";
         listOut.innerHTML = "";
 
-        const friendUids = [];
+        const friendUidSet = new Set();
         friendLinks.forEach((r) => {
             if ((r.status || "pending") !== "accepted") return;
-            if (r.fromUid === currentUser.uid) friendUids.push(r.toUid);
-            if (r.toUid === currentUser.uid) friendUids.push(r.fromUid);
+            if (r.fromUid === currentUser.uid) friendUidSet.add(r.toUid);
+            if (r.toUid === currentUser.uid) friendUidSet.add(r.fromUid);
         });
+        const friendUids = Array.from(friendUidSet);
 
         if (!friendUids.length) {
             listFriends.innerHTML = '<div style="padding:10px 20px;color:#64748b;font-size:12px;">尚無好友，可先送出好友請求</div>';
         } else {
             for (const uid of friendUids) {
+                if (token !== friendPanelRenderToken) return;
                 const u = await fetchUserByUid(uid);
                 if (!u) continue;
-                const n = displayNameFromUser(u);
+                const n = escHtml(displayNameFromUser(u));
+                const emailText = escHtml(u.email || "");
                 const online = isOnlineUser(u);
                 const item = document.createElement("div");
                 item.className = "chat-item friend-item";
+                item.onclick = (ev) => {
+                    if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
+                    openProfileByUid(ev, uid);
+                };
                 item.innerHTML = `
                     <div class="chat-name"><span class="user-presence-dot ${online ? "online" : "offline"}"></span> ❤️ ${n}</div>
-                    <div class="chat-preview">${u.email || ""} · ${online ? "在線" : "離線"}</div>
+                    <div class="chat-preview">${emailText} · ${online ? "在線" : "離線"}</div>
                     <div class="mini-actions">
-                        <button class="mini-btn dm" onclick="startPrivateWithFriend('${uid}')">私訊</button>
-                        <button class="mini-btn cancel" onclick="removeFriend('${uid}')">移除</button>
+                        <button class="mini-btn dm" onclick="event.stopPropagation();startPrivateWithFriend('${uid}')">私訊</button>
+                        <button class="mini-btn cancel" onclick="event.stopPropagation();removeFriend('${uid}')">移除</button>
                     </div>
                 `;
                 listFriends.appendChild(item);
             }
         }
 
-        catReq.style.display = friendIncoming.length ? "block" : "none";
-        for (const req of friendIncoming) {
+        const incomingVisible = friendIncoming.filter((req) => !friendUidSet.has(req.fromUid));
+        catReq.style.display = incomingVisible.length ? "block" : "none";
+        for (const req of incomingVisible) {
+            if (token !== friendPanelRenderToken) return;
             const fromUid = req.fromUid;
             const u = await fetchUserByUid(fromUid);
-            const n = u ? displayNameFromUser(u) : (req.fromEmail || "未知");
+            const n = escHtml(u ? displayNameFromUser(u) : (req.fromEmail || "未知"));
+            const emailPreview = escHtml((u && u.email) || req.fromEmail || "");
             const item = document.createElement("div");
             item.className = "chat-item friend-request";
+            item.onclick = (ev) => {
+                if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
+                openProfileByUid(ev, fromUid);
+            };
             item.innerHTML = `
                 <div class="chat-name">💌 ${n}</div>
-                <div class="chat-preview">${(u && u.email) || req.fromEmail || ""}</div>
+                <div class="chat-preview">${emailPreview}</div>
                 <div class="mini-actions">
-                    <button class="mini-btn accept" onclick="acceptFriendRequest('${req.id}')">接受</button>
-                    <button class="mini-btn reject" onclick="rejectFriendRequest('${req.id}')">拒絕</button>
+                    <button class="mini-btn accept" onclick="event.stopPropagation();acceptFriendRequest('${req.id}')">接受</button>
+                    <button class="mini-btn reject" onclick="event.stopPropagation();rejectFriendRequest('${req.id}')">拒絕</button>
                 </div>
             `;
             listReq.appendChild(item);
         }
 
-        catOut.style.display = friendOutgoing.length ? "block" : "none";
-        for (const req of friendOutgoing) {
+        const outgoingVisible = friendOutgoing.filter((req) => !friendUidSet.has(req.toUid));
+        catOut.style.display = outgoingVisible.length ? "block" : "none";
+        for (const req of outgoingVisible) {
+            if (token !== friendPanelRenderToken) return;
             const toUid = req.toUid;
             const u = await fetchUserByUid(toUid);
-            const n = u ? displayNameFromUser(u) : (req.toEmail || "未知");
+            const n = escHtml(u ? displayNameFromUser(u) : (req.toEmail || "未知"));
+            const emailPreview = escHtml((u && u.email) || req.toEmail || "");
             const item = document.createElement("div");
             item.className = "chat-item";
+            item.onclick = (ev) => {
+                if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
+                openProfileByUid(ev, toUid);
+            };
             item.innerHTML = `
                 <div class="chat-name">🕒 ${n}</div>
-                <div class="chat-preview">${(u && u.email) || req.toEmail || ""}</div>
+                <div class="chat-preview">${emailPreview}</div>
                 <div class="mini-actions">
-                    <button class="mini-btn cancel" onclick="cancelFriendRequest('${req.id}')">取消請求</button>
+                    <button class="mini-btn cancel" onclick="event.stopPropagation();cancelFriendRequest('${req.id}')">取消請求</button>
                 </div>
             `;
             listOut.appendChild(item);
@@ -3091,7 +3181,7 @@
                 maybeDesktopNotify("Doratch 好友請求", "你收到新的好友請求");
             }
             incomingFriendRequestCount = friendIncoming.length;
-            await renderFriendPanels();
+            scheduleFriendPanelRender();
         });
         unsubscribeFriendOutgoing = onSnapshot(qOutgoing, async (snap) => {
             friendOutgoing = [];
@@ -3099,11 +3189,11 @@
                 const data = d.data() || {};
                 if ((data.status || "pending") === "pending") friendOutgoing.push({ id: d.id, ...data });
             });
-            await renderFriendPanels();
+            scheduleFriendPanelRender();
         });
         unsubscribeFriendLinks = onSnapshot(qLinks, async (snap) => {
             friendLinks = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            await renderFriendPanels();
+            scheduleFriendPanelRender();
         });
     }
 
@@ -3139,16 +3229,7 @@
             applySidebarCosmetics(currentUserData);
             
             let role = data.role || 'student';
-            if (user.email === 'chianghansen0302@gmail.com') role = 'admin';
-            if(role === 'admin' || role === 'teacher' || role === 'support') {
-                const adminLink = document.getElementById('admin-link-main');
-                if(adminLink) {
-                    adminLink.style.display = 'flex';
-                    adminLink.innerText = role === 'admin'
-                        ? '🛠️ 管理面板'
-                        : (role === 'support' ? '🎧 客服後台' : '❓ 題庫管理');
-                }
-            }
+            window.DoratchShell?.applyRoleAdminEntry?.(role, user.email);
         } else {
             currentUserData = { uid: user.uid, email: user.email || "", doord: 0, docoin: 0 };
             chatPrefs = sanitizeChatPrefs(null);
@@ -3193,12 +3274,15 @@
 
     // 2. 監聽並渲染聊天室列表
     function loadChats() {
+        if (unsubscribeChats) unsubscribeChats();
+        if (unsubscribeInvites) unsubscribeInvites();
+
         const q = query(
             collection(db, "chats"),
             where("participants", "array-contains", currentUser.uid)
         );
 
-        onSnapshot(q, (snapshot) => {
+        unsubscribeChats = onSnapshot(q, (snapshot) => {
             document.getElementById('list-server').innerHTML = '';
             document.getElementById('list-group').innerHTML = '';
             document.getElementById('list-private').innerHTML = '';
@@ -3270,14 +3354,21 @@
                 if (isIncomingReq) {
                     incomingReqCount += 1;
                     if (msgReqList) {
+                        const reqPreview = chat.lastMessage
+                            ? escHtml(String(chat.lastMessage).slice(0, 120))
+                            : "等待你接受後才能開始聊天";
                         const reqItem = document.createElement("div");
                         reqItem.className = "chat-item message-request";
+                        reqItem.onclick = (ev) => {
+                            if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
+                            openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
+                        };
                         reqItem.innerHTML = `
-                            <div class="chat-name">📨 ${rawName}</div>
-                            <div class="chat-preview">等待你接受後才能開始聊天</div>
+                            <div class="chat-name">📨 ${escHtml(rawName)} ${unreadHtml}</div>
+                            <div class="chat-preview">${reqPreview}</div>
                             <div class="mini-actions">
-                                <button class="mini-btn accept" onclick="acceptMessageRequest('${chat.id}')">接受</button>
-                                <button class="mini-btn reject" onclick="rejectMessageRequest('${chat.id}')">拒絕</button>
+                                <button class="mini-btn accept" onclick="event.stopPropagation();acceptMessageRequest('${chat.id}')">接受</button>
+                                <button class="mini-btn reject" onclick="event.stopPropagation();rejectMessageRequest('${chat.id}')">拒絕</button>
                             </div>
                         `;
                         msgReqList.appendChild(reqItem);
@@ -3303,7 +3394,7 @@
                 if (chat.type === 'server') {
                     document.getElementById('list-server').appendChild(item);
                 } else if (chat.type === 'private') {
-                    document.getElementById('list-private').appendChild(item);
+                    if (!isIncomingReq) document.getElementById('list-private').appendChild(item);
                 } else {
                     document.getElementById('list-group').appendChild(item);
                 }
@@ -3321,7 +3412,7 @@
             where("pendingInvites", "array-contains", currentUser.uid)
         );
 
-        onSnapshot(qInvites, (snapshot) => {
+        unsubscribeInvites = onSnapshot(qInvites, (snapshot) => {
             const listDiv = document.getElementById('list-invites');
             const categoryDiv = document.getElementById('category-invite');
             listDiv.innerHTML = '';
@@ -3608,7 +3699,9 @@
     window.currentMessages = {}; // 全域暫存，供下載檔案用
 
     unsubscribeMessages = onSnapshot(q, (snapshot) => {
+        if (currentChatId !== chatId) return;
         const msgArea = document.getElementById('messages-area');
+        if (!msgArea) return;
         let html = '';
         let lastSenderId = null;
         let lastTimeStr = null;
@@ -3640,7 +3733,7 @@
             const mine = msg.senderId === currentUser.uid;
             let quickActionsHtml = `<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById('${docSnap.id}')">↩</button>`;
             if (mine && msg.type === "text") quickActionsHtml += `<button class="msg-quick-btn" title="編輯" onclick="editMessageById('${docSnap.id}')">✏️</button>`;
-            if (mine) quickActionsHtml += `<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById('${docSnap.id}')">🗑️</button>`;
+            if (mine && msg.type !== "gift") quickActionsHtml += `<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById('${docSnap.id}')">🗑️</button>`;
             quickActionsHtml += `</div>`;
             
             const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
@@ -3682,7 +3775,7 @@
                     <div class="msg-file-card ${(!isBotMsg && (isLegendaryFrame(senderCosmetics.frame || "") || isLegendaryTitle(senderCosmetics.title || "") || isLegendaryBadge(senderCosmetics.badge || ""))) ? "legendary-share" : ""}" onclick="downloadXml('${docSnap.id}')">
                         <div class="file-icon">📄</div>
                         <div class="file-info">
-                            <div class="file-name">${msg.fileName}</div>
+                            <div class="file-name">${escHtml(msg.fileName || "檔案")}</div>
                             <div class="file-sub">Blockly XML 專案檔 (點擊下載)</div>
                         </div>
                         <div class="file-download-icon">⬇️</div>
@@ -3889,6 +3982,7 @@
     async function loadPrivateProfileSidebar() {
         const listDiv = document.getElementById('member-list');
         const headerText = document.getElementById("member-sidebar-header-text");
+        if (!listDiv) return;
         if (headerText) headerText.textContent = "個人檔案";
         if (!currentChatId || !currentUser) {
             listDiv.innerHTML = '<div class="member-empty-hint">尚未開啟私訊</div>';
@@ -3967,6 +4061,7 @@
     window.loadMembers = async () => {
         if (!currentChatId) return;
         const listDiv = document.getElementById('member-list');
+        if (!listDiv) return;
         listDiv.innerHTML = '<div class="member-empty-hint">載入成員中…</div>';
 
         if (currentChatType === "private") {
@@ -4141,6 +4236,7 @@
     window.deleteMessageById = async (msgId) => {
         const msg = window.currentMessages && window.currentMessages[msgId];
         if (!msg || msg.senderId !== currentUser.uid) return;
+        if (msg.type === "gift") return alert("禮物訊息無法刪除，請等對方領取。");
         if (!confirm("確定刪除此訊息？")) return;
         try {
             await deleteDoc(doc(db, "chats", currentChatId, "messages", msgId));
@@ -4159,7 +4255,7 @@
         const mine = msg.senderId === currentUser.uid;
         let html = `<button onclick="replyMessageById('${msgId}');hideMessageMenu()">↩ 回覆</button>`;
         if (mine && msg.type === "text") html += `<button onclick="editMessageById('${msgId}');hideMessageMenu()">✏️ 編輯</button>`;
-        if (mine) html += `<button class="danger" onclick="deleteMessageById('${msgId}');hideMessageMenu()">🗑️ 刪除</button>`;
+        if (mine && msg.type !== "gift") html += `<button class="danger" onclick="deleteMessageById('${msgId}');hideMessageMenu()">🗑️ 刪除</button>`;
         menu.innerHTML = html;
         menu.style.left = Math.min(ev.clientX, window.innerWidth - 190) + "px";
         menu.style.top = Math.min(ev.clientY, window.innerHeight - 160) + "px";
@@ -4854,7 +4950,7 @@
                 : `✅ 已領取（${when}）`;
         }
         const claimButton = canClaim
-            ? `<button type="button" class="msg-gift-claim-btn" onclick="claimGiftMessage('${msgId}')">領取禮物</button>`
+            ? `<button type="button" class="msg-gift-claim-btn" onclick="claimGiftMessage('${msgId}')" ${giftClaimBusy ? "disabled" : ""}>領取禮物</button>`
             : "";
         const noteHtml = note ? `<div class="msg-gift-note">${escHtml(note)}</div>` : "";
         return `
@@ -4875,7 +4971,8 @@
     }
 
     window.claimGiftMessage = async (msgId) => {
-        if (!currentChatId || !msgId || !currentUser) return;
+        if (!currentChatId || !msgId || !currentUser || giftClaimBusy) return;
+        giftClaimBusy = true;
         try {
             const msgRef = doc(db, "chats", currentChatId, "messages", msgId);
             const userRef = doc(db, "users", currentUser.uid);
@@ -4884,7 +4981,7 @@
                 const msgSnap = await tx.get(msgRef);
                 if (!msgSnap.exists()) throw new Error("GIFT_NOT_FOUND");
                 const msgData = msgSnap.data() || {};
-                const gift = (msgData.gift && typeof msgData.gift === "object") ? msgData.gift : {};
+                const gift = (msgData.gift && typeof msgData.gift === "object") ? { ...msgData.gift } : {};
                 if (String(gift.status || "pending") === "claimed") throw new Error("GIFT_ALREADY_CLAIMED");
                 if (String(gift.recipientUid || "") !== currentUser.uid) throw new Error("GIFT_NOT_FOR_YOU");
                 const userSnap = await tx.get(userRef);
@@ -4898,16 +4995,15 @@
                         added += 1;
                     }
                 });
+                gift.status = "claimed";
+                gift.claimedBy = currentUser.uid;
+                gift.claimedAt = serverTimestamp();
+                gift.claimedUnlockCount = added;
                 tx.set(userRef, {
                     inventory: inv,
                     lastGiftClaimAt: serverTimestamp()
                 }, { merge: true });
-                tx.update(msgRef, {
-                    "gift.status": "claimed",
-                    "gift.claimedBy": currentUser.uid,
-                    "gift.claimedAt": serverTimestamp(),
-                    "gift.claimedUnlockCount": added
-                });
+                tx.update(msgRef, { gift: gift });
                 tx.set(chatRef, {
                     lastMessage: "✅ 禮物已被領取",
                     updatedAt: serverTimestamp(),
@@ -4922,6 +5018,8 @@
             if (code === "GIFT_NOT_FOR_YOU") return alert("這份禮物不是給你的。");
             if (code === "GIFT_NOT_FOUND") return alert("找不到這份禮物。");
             alert("領取失敗：" + (e.message || e));
+        } finally {
+            giftClaimBusy = false;
         }
     };
 
