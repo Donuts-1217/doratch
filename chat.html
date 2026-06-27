@@ -168,6 +168,8 @@
         .messages-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
         .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; position: relative; }
+        .message-row.msg-pending { opacity: 0.82; }
+        .message-row.msg-pending .msg-time { color: #949ba4; font-style: italic; }
         .message-row:hover { background: rgba(255,255,255,0.02); }
         .message-row.consecutive { margin-top: 2px; }
         .msg-avatar-container { width: 50px; margin-right: 20px; flex-shrink: 0; display: flex; justify-content: center; }
@@ -1012,6 +1014,16 @@
         /* 成員列表側邊欄 */
         .member-sidebar { width: 260px; background: var(--sidebar-bg); border-left: 1px solid rgba(255,255,255,0.05); display: none; flex-direction: column; flex-shrink: 0; }
         .member-sidebar.active { display: flex; }
+        .member-sidebar.profile-mode {
+            width: 340px;
+            background: #2b2d31;
+            border-left-color: rgba(0,0,0,0.24);
+        }
+        .member-sidebar.profile-mode .member-sidebar-header { display: none; }
+        .member-sidebar.profile-mode .member-list {
+            padding: 0;
+            overflow-x: hidden;
+        }
         .member-sidebar-header { height: 70px; padding: 0 16px 0 25px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; font-weight: 900; color: white; }
         .member-sidebar-close {
             display: none; width: 32px; height: 32px; border: none; border-radius: 8px;
@@ -1020,21 +1032,40 @@
         .member-sidebar-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
         .member-list { flex: 1; overflow-y: auto; padding: 12px 16px 20px; }
         .member-section-title {
-            font-size: 11px; font-weight: 900; color: #64748b; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 12px 8px 6px; margin-top: 4px;
+            font-size: 12px; font-weight: 700; color: #949ba4; text-transform: uppercase;
+            letter-spacing: 0.02em; padding: 16px 8px 4px; margin-top: 0;
         }
-        .member-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 10px; margin-bottom: 2px; transition: 0.2s; gap: 8px; }
-        .member-item:hover { background: rgba(255,255,255,0.04); }
+        .member-avatar-wrap {
+            position: relative;
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+        }
+        .member-avatar-wrap .member-status {
+            position: absolute;
+            right: -2px;
+            bottom: -2px;
+            width: 10px;
+            height: 10px;
+            border: 2px solid var(--sidebar-bg, #2b2d31);
+            margin-left: 0;
+        }
+        .member-sidebar.profile-mode ~ * .member-avatar-wrap .member-status,
+        .member-item .member-avatar-wrap .member-status {
+            border-color: var(--sidebar-bg, #2b2d31);
+        }
+        .member-item { display: flex; align-items: center; padding: 8px 10px; border-radius: 4px; margin-bottom: 2px; transition: 0.15s; gap: 8px; cursor: default; }
+        .member-item:hover { background: rgba(79,84,92,0.32); }
         .member-item--bot { border: 1px solid rgba(35,165,89,0.15); background: rgba(35,165,89,0.05); }
         .member-item--bot:hover { background: rgba(35,165,89,0.1); }
-        .member-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-left: 4px; }
-        .member-status.online { background: #23a559; box-shadow: 0 0 6px rgba(35,165,89,0.6); }
-        .member-status.offline { background: #6b7280; }
+        .member-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .member-status.online { background: #23a559; }
+        .member-status.offline { background: #80848e; }
         .member-status.bot { background: #5865f2; }
-        .member-avatar { width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; }
+        .member-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; object-fit: cover; }
         .member-info { flex: 1; min-width: 0; }
-        .member-name { font-size: 14px; color: #e2e8f0; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .member-role { font-size: 11px; color: #64748b; margin-top: 2px; }
+        .member-name { font-size: 14px; color: #dbdee1; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .member-role { font-size: 11px; color: #949ba4; margin-top: 2px; }
         .member-cmds { color: #5865f2 !important; line-height: 1.4; word-break: break-word; white-space: normal; }
         .member-tag { font-size: 10px; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 4px; font-weight: 800; }
         .member-tag.bot { background: rgba(35,165,89,0.25); color: #86efac; }
@@ -1043,89 +1074,90 @@
         .member-item:hover .kick-btn { opacity: 1; }
         .kick-btn.bot-disconnect { opacity: 0.7; background: rgba(255,255,255,0.1); color: #fca5a5; }
         .member-item--bot:hover .bot-disconnect { opacity: 1; }
-        .member-private-card {
-            background: linear-gradient(180deg, rgba(30,41,59,0.9), rgba(15,23,42,0.94));
-            border: 1px solid rgba(148,163,184,0.24);
-            border-radius: 14px;
-            padding: 14px;
-            color: #e2e8f0;
+
+        /* 私訊右側 — Discord 風格個人檔案 */
+        .member-profile-wrap {
+            position: relative;
+            min-height: 100%;
+            background: #2b2d31;
         }
-        .member-private-head {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 10px;
+        .member-profile-wrap .profile-pop-banner {
+            height: 105px;
+            border-radius: 0;
         }
-        .member-private-avatar {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            border: 2px solid rgba(255,255,255,0.2);
-            object-fit: cover;
+        .member-profile-wrap .profile-pop-sheet {
+            padding: 0 16px 20px;
+            min-height: calc(100% - 105px);
         }
-        .member-private-name {
-            font-size: 15px;
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.35;
-            word-break: break-word;
+        .member-profile-wrap .profile-pop-avatar-wrap {
+            top: -36px;
         }
-        .member-private-handle {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-top: 2px;
+        .member-profile-wrap .profile-pop-avatar {
+            width: 72px;
+            height: 72px;
+            border-width: 5px;
         }
-        .member-private-status {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-top: 8px;
-            line-height: 1.6;
+        .member-profile-wrap .profile-pop-status-dot {
+            width: 16px;
+            height: 16px;
+            border-width: 3px;
         }
-        .member-private-bio {
-            margin-top: 10px;
-            background: rgba(15,23,42,0.75);
-            border: 1px solid rgba(148,163,184,0.22);
-            border-radius: 10px;
-            padding: 10px;
-            font-size: 12px;
-            color: #cbd5e1;
-            line-height: 1.65;
-            white-space: pre-wrap;
-            word-break: break-word;
+        .member-profile-wrap .profile-pop-identity {
+            padding-top: 42px;
         }
-        .member-private-bio.empty { color: #64748b; }
-        .member-private-actions {
-            margin-top: 12px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        .member-profile-wrap .profile-pop-name {
+            font-size: 1.125rem;
         }
-        .member-private-btn {
+        .member-profile-sidebar-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 6;
+            width: 32px;
+            height: 32px;
             border: none;
-            border-radius: 10px;
-            padding: 8px 10px;
-            font-size: 12px;
-            font-weight: 900;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.45);
+            color: #f2f3f5;
             cursor: pointer;
-            background: #5865f2;
-            color: #fff;
-            font-family: inherit;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
         }
-        .member-private-btn.secondary {
-            background: rgba(148,163,184,0.18);
-            color: #e2e8f0;
+        .member-profile-sidebar-close:hover {
+            background: rgba(0,0,0,0.65);
         }
-        .member-private-btn.ok {
-            background: #22c55e;
-            color: #052e16;
+        .member-profile-note {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            background: #1e1f22;
+            border: none;
         }
-        .member-private-btn.warn {
-            background: #f59e0b;
-            color: #1c1917;
+        .member-profile-note-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #b5bac1;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
         }
-        .member-private-btn:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
+        .member-profile-note-text {
+            font-size: 12px;
+            color: #949ba4;
+            line-height: 1.5;
+        }
+        .member-profile-wrap .profile-pop-actions {
+            flex-direction: column;
+        }
+        .member-profile-wrap .profile-pop-action {
+            width: 100%;
+            flex: none;
+        }
+        .member-profile-wrap .profile-pop-role-pill {
+            border-radius: 3px;
         }
 
         .app-container { flex: 1; min-height: 0; height: 100%; max-height: 100vh; overflow: hidden; }
@@ -1240,7 +1272,7 @@
             <div class="select-wrap"><select id="chat-equip-banner" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">稱號</label>
             <div class="select-wrap"><select id="chat-equip-title" class="pretty-select"></select></div>
-            <label style="font-size:12px;color:#94a3b8;">徽章</label>
+            <label style="font-size:12px;color:#94a3b8;">榮耀（成就／商城）</label>
             <div class="select-wrap"><select id="chat-equip-badge" class="pretty-select"></select></div>
             <label style="font-size:12px;color:#94a3b8;">名稱顏色</label>
             <div class="select-wrap"><select id="chat-equip-name-color" class="pretty-select"></select></div>
@@ -1373,6 +1405,10 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limitToLast, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { DoratchHonor } from "./shared/doratch-honor-badges.js";
+    import { DoratchCustomAvatar } from "./shared/doratch-custom-avatar.js";
+    window.DoratchHonor = DoratchHonor;
+    window.DoratchCustomAvatar = DoratchCustomAvatar;
     let STAFF_COSMETIC_ITEMS = [];
     let STAFF_AVATAR_URLS = {};
     let ownedItemsBySlotWithStaff;
@@ -1526,6 +1562,7 @@
     let typingPulseTimer = null;
     let lastTypingSentAt = 0;
     let isSendingMessage = false;
+    const pendingOutboundMessages = [];
     let currentUserData = {};
     let replyToMessage = null;
     let incomingMessageRequestCount = -1;
@@ -2095,6 +2132,10 @@
         { id: "badge_pixel_master", slot: "badge", label: "像素大師", value: "像素大師" },
         { id: "badge_hackathon_winner", slot: "badge", label: "黑客松冠軍", value: "黑客松冠軍" },
         { id: "badge_quantum_flux", slot: "badge", label: "量子 flux", value: "量子 flux" },
+        { id: "badge_gift_star", slot: "badge", label: "送禮之星", value: "送禮之星" },
+        { id: "badge_gift_generous", slot: "badge", label: "慷慨大使", value: "慷慨大使" },
+        { id: "badge_gift_joy", slot: "badge", label: "收禮喜悅", value: "收禮喜悅" },
+        { id: "badge_gift_bond", slot: "badge", label: "情誼相傳", value: "情誼相傳" },
         { id: "profilefx_thunder_roll", slot: "profileEffect", label: "雷雲翻滾", value: "thunder_roll" },
         { id: "profilefx_candy_pop", slot: "profileEffect", label: "糖果爆彩", value: "candy_pop" },
         { id: "profilefx_digital_pulse", slot: "profileEffect", label: "數位脈衝", value: "digital_pulse" }
@@ -2290,10 +2331,16 @@
 
     function patchPrivateProfilePresence(uid) {
         if (!uid || uid !== currentPrivatePeerUid || currentChatType !== "private") return;
-        const el = document.querySelector(".member-private-online");
-        if (!el) return;
+        const wrap = document.querySelector(".member-profile-wrap[data-profile-uid]");
+        if (!wrap || wrap.getAttribute("data-profile-uid") !== uid) return;
         const online = isOnlineUser(userCache[uid]);
-        el.textContent = online ? "🟢 在線" : "⚪ 離線";
+        const dot = wrap.querySelector(".profile-pop-status-dot");
+        if (dot && !dot.classList.contains("bot")) {
+            dot.classList.toggle("online", online);
+            dot.classList.toggle("offline", !online);
+        }
+        const line = wrap.querySelector(".profile-pop-presence-line");
+        if (line) line.textContent = online ? "🟢 在線" : "⚪ 離線";
     }
 
     function scheduleMemberListPresenceRefresh() {
@@ -2422,6 +2469,10 @@
         if (avatarType === "docoin_phoenix") return `https://ui-avatars.com/api/?name=PHX&background=b91c1c&color=fbbf24&bold=true`;
         if (STAFF_AVATAR_URLS[avatarType]) return STAFF_AVATAR_URLS[avatarType];
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
+    }
+
+    function resolveAvatarForUser(userData, emailOrName, avatarType) {
+        return DoratchCustomAvatar.resolveAvatarUrl(userData, emailOrName, avatarType, avatarFromCosmetics);
     }
 
     function sanitizeChatPrefs(raw) {
@@ -2735,7 +2786,7 @@
         const sideCoins = document.getElementById("side-coins");
         const c = currentCosmeticSnapshot();
         if (sideAvatar) {
-            sideAvatar.src = avatarFromCosmetics((currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
+            sideAvatar.src = resolveAvatarForUser(currentUserData, (currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
             sideAvatar.classList.toggle("docoin-avatar-lux", isDocoinAvatar(c.avatar));
         }
         applyAvatarFrameToElement(sideAvatar, c.frame);
@@ -2776,6 +2827,13 @@
         const target = String(selectedValue || "");
         if (target && seenValues.has(target)) sel.value = target;
         else sel.value = "";
+        if (id === "chat-equip-avatar" && DoratchCustomAvatar.hasStoredCustomAvatar(currentUserData)) {
+            const opt = document.createElement("option");
+            opt.value = DoratchCustomAvatar.CUSTOM_AVATAR_TYPE;
+            opt.textContent = "📷 自訂上傳照片";
+            sel.appendChild(opt);
+            if (target === DoratchCustomAvatar.CUSTOM_AVATAR_TYPE) sel.value = DoratchCustomAvatar.CUSTOM_AVATAR_TYPE;
+        }
     }
 
     window.openCosmeticModal = () => {
@@ -2784,7 +2842,7 @@
         fillCosmeticSelect("chat-equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
         fillCosmeticSelect("chat-equip-banner", ownedItemsBySlot(data, "banner"), pickOwnedEquipped(data, "banner"), "預設橫幅");
         fillCosmeticSelect("chat-equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
-        fillCosmeticSelect("chat-equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
+        fillCosmeticSelect("chat-equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不顯示榮耀");
         fillCosmeticSelect("chat-equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
         fillCosmeticSelect("chat-equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
         fillCosmeticSelect("chat-equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
@@ -2800,9 +2858,10 @@
     window.saveChatCosmetics = async () => {
         if (!currentUser) return;
         const prev = getEquipped(currentUserData);
+        const newAvatar = (document.getElementById("chat-equip-avatar").value || "").trim();
         const equipped = {
             ...prev,
-            avatar: (document.getElementById("chat-equip-avatar").value || "").trim(),
+            avatar: newAvatar,
             frame: (document.getElementById("chat-equip-frame").value || "").trim(),
             banner: (document.getElementById("chat-equip-banner").value || "").trim(),
             title: (document.getElementById("chat-equip-title").value || "").trim(),
@@ -2812,8 +2871,21 @@
             profileEffect: (document.getElementById("chat-equip-profile-effect").value || "").trim()
         };
         try {
-            await updateDoc(doc(db, "users", currentUser.uid), { equippedCosmetics: equipped });
+            const patch = { equippedCosmetics: equipped };
+            if (DoratchCustomAvatar.shouldClearCustomAvatarOnEquip(newAvatar) && DoratchCustomAvatar.hasStoredCustomAvatar(currentUserData)) {
+                patch.customAvatarB64 = deleteField();
+                patch.customAvatarMime = deleteField();
+                patch.customAvatarBytes = deleteField();
+                patch.customAvatarUpdatedAt = deleteField();
+            }
+            await updateDoc(doc(db, "users", currentUser.uid), patch);
             currentUserData = { ...currentUserData, equippedCosmetics: equipped };
+            if (patch.customAvatarB64 === deleteField()) {
+                delete currentUserData.customAvatarB64;
+                delete currentUserData.customAvatarMime;
+                delete currentUserData.customAvatarBytes;
+                delete currentUserData.customAvatarUpdatedAt;
+            }
             applySidebarCosmetics(currentUserData);
             closeCosmeticModal();
         } catch (e) {
@@ -3520,7 +3592,7 @@
             document.getElementById('side-coins').innerText = `Doord ${Math.floor(getDoordValue(currentUserData))} · Docoin ${Math.floor(getDocoinValue(currentUserData))}`;
             document.getElementById('side-username').innerText = displayNameFromUser({ email: user.email, displayName: data.displayName });
             const c = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
-            document.getElementById('side-avatar').src = avatarFromCosmetics(user.email, c.avatar || "");
+            document.getElementById('side-avatar').src = resolveAvatarForUser(data, user.email, c.avatar || "");
             applySidebarCosmetics(currentUserData);
             
             let role = data.role || 'student';
@@ -3959,6 +4031,82 @@
         }
     }
 
+    function createOptimisticMessageId() {
+        return "opt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function trackPendingOutbound(optId, text, chatId) {
+        pendingOutboundMessages.push({
+            optId: optId,
+            text: String(text || "").trim(),
+            chatId: chatId,
+            ts: Date.now()
+        });
+        if (pendingOutboundMessages.length > 12) pendingOutboundMessages.shift();
+    }
+
+    function consumeOptimisticForIncoming(msgData, chatId) {
+        if (!msgData || msgData.senderId !== currentUser.uid) return null;
+        const text = String(msgData.text || "").trim();
+        if (!text || msgData.type !== "text") return null;
+        const idx = pendingOutboundMessages.findIndex(function (p) {
+            return p.chatId === chatId && p.text === text && (Date.now() - p.ts) < 45000;
+        });
+        if (idx < 0) return null;
+        return pendingOutboundMessages.splice(idx, 1)[0].optId;
+    }
+
+    function removeOptimisticMessageRow(optId) {
+        if (!optId) return;
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea) return;
+        const row = msgArea.querySelector('.message-row[data-msg-id="' + optId + '"]');
+        if (row) row.remove();
+        delete window.currentMessages[optId];
+        for (let i = pendingOutboundMessages.length - 1; i >= 0; i -= 1) {
+            if (pendingOutboundMessages[i].optId === optId) pendingOutboundMessages.splice(i, 1);
+        }
+        const empty = msgArea.querySelector(".messages-empty");
+        if (empty) empty.remove();
+    }
+
+    function appendOptimisticTextMessage(text, replyPayload) {
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea || !currentUser) return null;
+        const optId = createOptimisticMessageId();
+        const cosmetic = currentCosmeticSnapshot();
+        const msg = {
+            senderId: currentUser.uid,
+            senderEmail: currentUser.email || "",
+            senderDisplayName: displayNameFromUser(currentUserData),
+            senderCosmetics: cosmetic,
+            text: text,
+            replyTo: replyPayload,
+            type: "text",
+            createdAt: { toDate: function () { return new Date(); } },
+            _optimistic: true
+        };
+        window.currentMessages[optId] = msg;
+        trackPendingOutbound(optId, text, currentChatId);
+        const fakeDoc = { id: optId, data: function () { return msg; } };
+        const empty = msgArea.querySelector(".messages-empty");
+        if (empty) empty.remove();
+        const stickToBottom = isMsgAreaNearBottom(msgArea);
+        const prevScrollHeight = msgArea.scrollHeight;
+        let ctx = getMessagesRenderContext(msgArea);
+        const built = buildMessageRowHtml(fakeDoc, ctx);
+        msgArea.insertAdjacentHTML("beforeend", built.html);
+        msgArea.dataset.messagesReady = "1";
+        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        return optId;
+    }
+
+    function isPrivateSendBlocked() {
+        if (currentChatType !== "private") return false;
+        const chatData = currentChatDocData;
+        return !!(chatData && chatData.requestStatus === "pending");
+    }
+
     function buildMessageRowHtml(docSnap, ctx) {
         const msg = docSnap.data();
         const lastSenderId = ctx.lastSenderId;
@@ -3971,11 +4119,11 @@
             ? (msg.botName || "Bot")
             : (msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0]);
         const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
-        const timeStr = formatMsgTime(timeObj);
-        const fullTimeStr = formatMsgFullTime(timeObj);
+        const timeStr = msg._optimistic ? "…" : formatMsgTime(timeObj);
+        const fullTimeStr = msg._optimistic ? "傳送中" : formatMsgFullTime(timeObj);
         const avatarUrl = isBotMsg
             ? "https://ui-avatars.com/api/?name=" + encodeURIComponent(msg.botName || "Bot") + "&background=23a559&color=fff"
-            : avatarFromCosmetics(msg.senderEmail || senderName, senderCosmetics.avatar || "");
+            : resolveAvatarForUser(userCache[msg.senderId] || (msg.senderId === currentUser.uid ? currentUserData : null), msg.senderEmail || senderName, senderCosmetics.avatar || "");
         const baseFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
         const avatarFrame = (!isBotMsg && isLegendaryFrame(senderCosmetics.frame || ""))
             ? (baseFrame + " avatar-frame-legendary")
@@ -3983,8 +4131,8 @@
         const editedMark = msg.editedAt ? '<span class="msg-edited">(edited)</span>' : "";
         const mine = msg.senderId === currentUser.uid;
         let quickActionsHtml = '<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById(\'' + docSnap.id + "')\">↩</button>";
-        if (mine && msg.type === "text") quickActionsHtml += '<button class="msg-quick-btn" title="編輯" onclick="editMessageById(\'' + docSnap.id + "')\">✏️</button>";
-        if (mine && msg.type !== "gift") quickActionsHtml += '<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById(\'' + docSnap.id + "')\">🗑️</button>";
+        if (mine && msg.type === "text" && !msg._optimistic) quickActionsHtml += '<button class="msg-quick-btn" title="編輯" onclick="editMessageById(\'' + docSnap.id + "')\">✏️</button>";
+        if (mine && msg.type !== "gift" && !msg._optimistic) quickActionsHtml += '<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById(\'' + docSnap.id + "')\">🗑️</button>";
         quickActionsHtml += "</div>";
         const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
         const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
@@ -4009,7 +4157,7 @@
         const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
         const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
         const msgSubTier = !isBotMsg ? String(senderCosmetics.subscriptionTier || "").trim() : "";
-        const rowClass = isBotMsg ? "message-row bot-msg" : ("message-row" + (msgStaffRole === "developer" ? " staff-dev-glow" : msgStaffRole === "admin" ? " staff-admin-glow" : ""));
+        const rowClass = (isBotMsg ? "message-row bot-msg" : ("message-row" + (msgStaffRole === "developer" ? " staff-dev-glow" : msgStaffRole === "admin" ? " staff-admin-glow" : ""))) + (msg._optimistic ? " msg-pending" : "");
         const staffRoleBadge = (!isBotMsg && msgStaffRole) ? staffBadgeHtml(msgStaffRole) : "";
         const subTierBadge = (!isBotMsg && !msgStaffRole && msgSubTier) ? subscriptionBadgeHtml(msgSubTier) : "";
         const staffAvatarHalo = msgStaffRole === "developer" ? " staff-avatar-halo-dev" : (msgStaffRole === "admin" ? " staff-avatar-halo-admin" : "");
@@ -4297,6 +4445,8 @@
         if (isReady && changes.length && changes.every(function (c) { return c.type === "added"; })) {
             let ctx = getMessagesRenderContext(msgArea);
             changes.forEach(function (ch) {
+                const optId = consumeOptimisticForIncoming(ch.doc.data(), chatId);
+                if (optId) removeOptimisticMessageRow(optId);
                 window.currentMessages[ch.doc.id] = ch.doc.data();
                 const built = buildMessageRowHtml(ch.doc, ctx);
                 ctx = built.ctx;
@@ -4454,24 +4604,194 @@
     function privateFriendActionBtnHtml(uid) {
         const relation = friendRelationWithUid(uid);
         if (relation.state === "self") {
-            return '<button type="button" class="member-private-btn secondary" disabled>這是你自己</button>';
+            return '<button type="button" class="profile-pop-action secondary" disabled>這是你自己</button>';
         }
         if (relation.state === "friend") {
-            return '<button type="button" class="member-private-btn ok" disabled>✅ 已是好友</button>';
+            return '<button type="button" class="profile-pop-action secondary" disabled>✅ 已是好友</button>';
         }
         if (relation.state === "incoming") {
-            return `<button type="button" class="member-private-btn warn" onclick="acceptFriendByUid('${uid}')">接受好友請求</button>`;
+            return `<button type="button" class="profile-pop-action" onclick="acceptFriendByUid('${uid}')">接受好友請求</button>`;
         }
         if (relation.state === "outgoing") {
-            return `<button type="button" class="member-private-btn secondary" onclick="cancelFriendRequestToUid('${uid}')">取消好友請求</button>`;
+            return `<button type="button" class="profile-pop-action secondary" onclick="cancelFriendRequestToUid('${uid}')">取消好友請求</button>`;
         }
-        return `<button type="button" class="member-private-btn" onclick="sendFriendRequestToUid('${uid}')">➕ 加好友</button>`;
+        return `<button type="button" class="profile-pop-action" onclick="sendFriendRequestToUid('${uid}')">➕ 加好友</button>`;
+    }
+
+    function buildProfilePanelHtmlFromUser(userData, opts) {
+        opts = opts || {};
+        const uid = opts.uid || userData.uid || "";
+        const isBot = !!opts.isBot;
+        const context = opts.context || "popup";
+        const c = cosmeticSnapshotForUser(userData);
+        const displayName = isBot ? (opts.botName || "Bot") : displayNameFromUser(userData);
+        const email = userData.email || "";
+        const handle = isBot ? "bot" : popHandleFromEmail(email);
+
+        const resolvedBanner = resolveCosmeticForDisplay(userData, "banner", c.banner);
+        const resolvedProfileFx = resolveCosmeticForDisplay(userData, "profileEffect", c.profileEffect);
+        const resolvedNameFx = resolveCosmeticForDisplay(userData, "nameEffect", c.nameEffect);
+        if (resolvedBanner) c.banner = resolvedBanner;
+        if (resolvedProfileFx) c.profileEffect = resolvedProfileFx;
+        if (resolvedNameFx) c.nameEffect = resolvedNameFx;
+        if (c.nameColor) c.nameColor = resolveCosmeticForDisplay(userData, "nameColor", c.nameColor) || c.nameColor;
+
+        const profileFxCls = c.profileEffect ? profileEffectClass(c.profileEffect) : "";
+        const bannerVisualCls = profileFxCls || bannerClass(c.banner || "");
+        const nameFxCls = c.nameEffect ? nameEffectClass(c.nameEffect) : (c.nameEffectClass || "");
+        const nameFontCls = c.nameFontClass ? (" " + c.nameFontClass) : "";
+        const nameColorAttr = c.nameColor && !GRADIENT_NAME_EFFECTS.has(nameFxCls)
+            ? ` style="color:${escHtml(c.nameColor)}"`
+            : "";
+
+        const customStatus = String(userData.customStatus || c.customStatus || "").trim();
+        const profileBio = String(userData.profileBio || c.profileBio || "").trim();
+        const memberSince = formatPopMemberSince(userData);
+        const senderLv = Number.isFinite(userData.lv) ? ("Lv." + Math.floor(userData.lv)) : "";
+
+        const rolePills = [];
+        if (c.title) {
+            const leg = isLegendaryTitle(c.title);
+            const docoinTitle = isDocoinLegendaryTitle(c.title);
+            const staffLeg = isStaffLegendaryTitle(c.title);
+            rolePills.push(`<span class="profile-pop-role-pill${leg ? " legend" : ""}${staffLeg ? " staff-legendary" : ""}${docoinTitle ? " docoin-title-lux" : ""}">🏷️ ${escHtml(c.title)}</span>`);
+        }
+        if (isBot) {
+            rolePills.push('<span class="profile-pop-role-pill">🤖 BOT</span>');
+        } else if (uid === currentUser.uid) {
+            rolePills.push('<span class="profile-pop-role-pill">你</span>');
+        }
+        const popStaffRole = c.staffRole || getStaffRole(userData);
+        if (popStaffRole) {
+            rolePills.unshift(`<span class="profile-pop-role-pill staff-role-${popStaffRole}">${popStaffRole === "developer" ? "⚡" : "👑"} ${escHtml(staffRoleLabel(popStaffRole))}</span>`);
+        } else {
+            const popSubTier = String(c.subscriptionTier || subscriptionTierForSnapshot(userData) || "").trim();
+            if (popSubTier === "pro") {
+                rolePills.unshift('<span class="profile-pop-role-pill sub-tier-pill-pro">💎 Doratch Pro</span>');
+            } else if (popSubTier === "plus") {
+                rolePills.unshift('<span class="profile-pop-role-pill sub-tier-pill-plus">✨ Doratch Plus</span>');
+            }
+        }
+
+        const ownedBadges = ownedItemsBySlot(userData, "badge");
+        let badgeShelf = ownedBadges.slice(0, 10).map(function (b) {
+            const isLegend = isLegendaryBadge(b.value || "");
+            const isMythic = isMythicBadge(b.value || "");
+            const isStaffLeg = isStaffLegendaryBadge(b.value || "");
+            return `<span class="profile-pop-badge-chip${isLegend ? " legend" : ""}${isStaffLeg ? " staff-legendary" : ""}${isMythic ? " docoin-mythic" : ""}">✨ ${escHtml(b.label || b.value)}</span>`;
+        });
+        if (!badgeShelf.length && c.badge) {
+            const mythic = isMythicBadge(c.badge);
+            badgeShelf = [`<span class="profile-pop-badge-chip${isLegendaryBadge(c.badge) ? " legend" : ""}${mythic ? " docoin-mythic" : ""}">✨ ${escHtml(c.badge)}</span>`];
+        }
+
+        const popPresenceOnline = (!isBot && uid) ? isOnlineUser(userData) : false;
+        const avatarUrl = isBot
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=5865F2&color=fff`
+            : resolveAvatarForUser(userData, email || displayName, c.avatar || "");
+        const docoinPanelLux = isDocoinProfileEffect(c.profileEffect) || isDocoinBanner(c.banner);
+        const docoinAvatarLux = !isBot && isDocoinAvatar(c.avatar || "");
+        const frameCls = frameClass(c.frame || "");
+        const legendFrame = isLegendaryFrame(c.frame || "");
+
+        const statusBlock = customStatus
+            ? `<div class="profile-pop-status">${escHtml(customStatus)}</div>`
+            : "";
+        const presenceBlock = (!isBot && uid)
+            ? `<div class="profile-pop-presence-line">${popPresenceOnline ? "🟢 在線" : "⚪ 離線"}</div>`
+            : "";
+        const bioBlock = profileBio
+            ? `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio">${escHtml(profileBio)}</div></div>`
+            : `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio empty">尚未設定自我介紹</div></div>`;
+        const badgesBlock = badgeShelf.length
+            ? `<div class="profile-pop-badge-grid">${badgeShelf.join("")}</div>`
+            : `<div class="profile-pop-bio empty" style="font-size:12px;">尚未解鎖榮耀</div>`;
+        const memberSinceBlock = memberSince
+            ? `<div class="profile-pop-section"><div class="profile-pop-section-label">加入時間</div><div class="profile-pop-bio" style="font-size:13px;">${escHtml(memberSince.replace(/^加入 Doratch：/, ""))}</div></div><div class="profile-pop-divider"></div>`
+            : "";
+        const metaParts = [senderLv].filter(Boolean);
+        const metaBlock = metaParts.length ? `<div class="profile-pop-meta">${escHtml(metaParts.join(" · "))}</div>` : "";
+
+        let actionsHtml = "";
+        if (!isBot && uid && uid !== currentUser.uid) {
+            const friendBtn = privateFriendActionBtnHtml(uid);
+            const profileHref = (window.DoratchDevice && window.DoratchDevice.isMobileDevice())
+                ? "profile.html?app=1"
+                : "profile.html";
+            actionsHtml = `<div class="profile-pop-actions">
+                ${friendBtn}
+                <button type="button" class="profile-pop-action secondary" onclick="startPrivateByUid('${uid}')">💬 發起私訊</button>
+                <a class="profile-pop-action secondary" href="${profileHref}">查看完整檔案</a>
+            </div>`;
+        } else if (!isBot && uid === currentUser.uid) {
+            const profileHref = (window.DoratchDevice && window.DoratchDevice.isMobileDevice())
+                ? "profile.html?app=1"
+                : "profile.html";
+            actionsHtml = `<div class="profile-pop-actions">
+                <a class="profile-pop-action" href="${profileHref}">編輯個人檔案</a>
+            </div>`;
+        }
+
+        const sheetHtml = `
+            <div class="profile-pop-sheet">
+                <div class="profile-pop-avatar-wrap${docoinAvatarLux ? " docoin-avatar-lux" : ""}">
+                    <img src="${avatarUrl}" alt="" class="profile-pop-avatar ${frameCls} ${legendFrame ? "avatar-frame-legendary" : ""}"${!isBot && uid ? ` style="cursor:pointer;" onclick="openProfileByUid(event,'${uid}')"` : ""}>
+                    <span class="profile-pop-status-dot${isBot ? " bot" : (popPresenceOnline ? " online" : " offline")}"></span>
+                </div>
+                <div class="profile-pop-identity">
+                    <div class="profile-pop-name ${nameFxCls}${nameFontCls}"><span class="name-fx-text ${nameFxCls}"${nameColorAttr}>${escHtml(displayName)}</span></div>
+                    <div class="profile-pop-handle">${escHtml(handle)}</div>
+                    ${presenceBlock}
+                    ${statusBlock}
+                    ${rolePills.length ? `<div class="profile-pop-role-row">${rolePills.join("")}</div>` : ""}
+                </div>
+                <div class="profile-pop-divider"></div>
+                ${bioBlock}
+                <div class="profile-pop-divider"></div>
+                ${memberSinceBlock}
+                <div class="profile-pop-section">
+                    <div class="profile-pop-section-label">榮耀</div>
+                    ${badgesBlock}
+                </div>
+                ${metaBlock}
+                ${actionsHtml}
+            </div>
+        `;
+
+        if (context === "sidebar") {
+            const wrapCls = ["member-profile-wrap"];
+            if (profileFxCls) wrapCls.push(profileFxCls);
+            if (docoinPanelLux) wrapCls.push("docoin-panel-lux");
+            return {
+                html: `<div class="${wrapCls.join(" ")}" data-profile-uid="${escHtml(uid)}">
+                    <button type="button" class="member-profile-sidebar-close" onclick="closeMemberSidebar()" title="關閉">✕</button>
+                    <div class="profile-pop-banner ${bannerVisualCls}"></div>
+                    ${sheetHtml}
+                </div>`,
+                profileFxCls: profileFxCls,
+                docoinPanelLux: docoinPanelLux
+            };
+        }
+
+        return {
+            html: `<div class="profile-pop-sheet-handle" aria-hidden="true"></div>
+                <div class="profile-pop-banner ${bannerVisualCls}"></div>
+                ${sheetHtml}`,
+            profileFxCls: profileFxCls,
+            docoinPanelLux: docoinPanelLux
+        };
+    }
+
+    function syncMemberSidebarProfileMode(isProfile) {
+        const sidebar = document.getElementById("member-sidebar");
+        if (sidebar) sidebar.classList.toggle("profile-mode", !!isProfile);
     }
 
     async function loadPrivateProfileSidebar() {
         const listDiv = document.getElementById('member-list');
         const headerText = document.getElementById("member-sidebar-header-text");
         if (!listDiv) return;
+        syncMemberSidebarProfileMode(true);
         if (headerText) headerText.textContent = "個人檔案";
         if (!currentChatId || !currentUser) {
             listDiv.innerHTML = '<div class="member-empty-hint">尚未開啟私訊</div>';
@@ -4498,50 +4818,8 @@
             currentPrivatePeerUid = otherUid;
             currentPrivatePeerData = otherUser;
             syncPresenceWatchers();
-            const displayName = displayNameFromUser(otherUser);
-            const handle = popHandleFromEmail(otherUser.email || displayName);
-            const isOnline = isOnlineUser(otherUser);
-            const c = getEquipped(otherUser);
-            const avatarUrl = avatarFromCosmetics(otherUser.email || displayName, c.avatar || "");
-            const frameCls = frameClass(c.frame || "");
-            const nameApp = resolveNameAppearanceForUser(otherUser);
-            const nameFxCls = nameApp.effectClass || "";
-            const nameFontCls = nameApp.fontClass ? (" " + nameApp.fontClass) : "";
-            const nameStyle = nameApp.color && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? ` style="color:${escHtml(nameApp.color)}"` : "";
-            const bio = String(otherUser.profileBio || "").trim();
-            const statusText = String(otherUser.customStatus || "").trim();
-            const since = formatPopMemberSince(otherUser);
-            const lv = Number.isFinite(otherUser.lv) ? ("Lv." + Math.floor(otherUser.lv)) : "";
-            const role = getStaffRole(otherUser);
-            const tier = role ? "" : subscriptionTierForSnapshot(otherUser);
-            const roleBadge = role
-                ? `<span class="profile-pop-role-pill staff-role-${role}">${role === "developer" ? "⚡" : "👑"} ${escHtml(staffRoleLabel(role))}</span>`
-                : (tier === "pro"
-                    ? '<span class="profile-pop-role-pill sub-tier-pill-pro">💎 Doratch Pro</span>'
-                    : (tier === "plus" ? '<span class="profile-pop-role-pill sub-tier-pill-plus">✨ Doratch Plus</span>' : ""));
-            const friendBtn = privateFriendActionBtnHtml(otherUid);
-            listDiv.innerHTML = `
-                <div class="member-private-card">
-                    <div class="member-private-head">
-                        <img src="${avatarUrl}" class="member-private-avatar ${frameCls}" alt="" style="cursor:pointer;" onclick="openProfileByUid(event,'${otherUid}')">
-                        <div style="min-width:0; flex:1;">
-                            <div class="member-private-name${nameFontCls}"><span class="name-fx-text ${nameFxCls}"${nameStyle}>${escHtml(displayName)}</span></div>
-                            <div class="member-private-handle">${escHtml(handle)}</div>
-                            <div class="member-private-handle member-private-online">${isOnline ? "🟢 在線" : "⚪ 離線"}</div>
-                        </div>
-                    </div>
-                    ${roleBadge ? `<div class="profile-pop-role-row" style="margin:0 0 8px;">${roleBadge}</div>` : ""}
-                    <div class="member-private-status">
-                        ${statusText ? "💬 " + escHtml(statusText) + "<br>" : ""}
-                        ${(since || lv) ? escHtml([since, lv].filter(Boolean).join(" · ")) : "尚未設定更多資訊"}
-                    </div>
-                    <div class="member-private-bio${bio ? "" : " empty"}">${bio ? escHtml(bio) : "尚未設定自我介紹"}</div>
-                    <div class="member-private-actions">
-                        ${friendBtn}
-                        <button type="button" class="member-private-btn secondary" onclick="startPrivateByUid('${otherUid}')">💬 私訊</button>
-                    </div>
-                </div>
-            `;
+            const built = buildProfilePanelHtmlFromUser(otherUser, { uid: otherUid, context: "sidebar" });
+            listDiv.innerHTML = built.html;
         } catch (e) {
             console.error("載入私訊個人檔案失敗", e);
             listDiv.innerHTML = '<div class="member-empty-hint" style="color:#fca5a5;">載入失敗</div>';
@@ -4558,6 +4836,8 @@
             await loadPrivateProfileSidebar();
             return;
         }
+
+        syncMemberSidebarProfileMode(false);
 
         const headerText = document.getElementById("member-sidebar-header-text");
         if (headerText) headerText.textContent = "成員";
@@ -4892,7 +5172,7 @@
         }
         const avatarUrl = isBot
             ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=5865F2&color=fff`
-            : avatarFromCosmetics(email || name, c.avatar || "");
+            : resolveAvatarForUser(senderData, email || name, c.avatar || "");
         const profileFxCls = c.profileEffect ? profileEffectClass(c.profileEffect) : "";
         const bannerCls = bannerClass(c.banner || "");
         const bannerVisualCls = profileFxCls
@@ -4911,7 +5191,7 @@
             : `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio empty">尚未設定自我介紹</div></div><div class="profile-pop-divider"></div>`;
         const badgesBlock = badgeShelf.length
             ? `<div class="profile-pop-badge-grid">${badgeShelf.join("")}</div>`
-            : `<div class="profile-pop-bio empty" style="font-size:12px;">尚未裝備徽章</div>`;
+            : `<div class="profile-pop-bio empty" style="font-size:12px;">尚未解鎖榮耀</div>`;
         const metaParts = [memberSince, senderLv].filter(Boolean);
         const metaBlock = metaParts.length ? `<div class="profile-pop-meta">${escHtml(metaParts.join(" · "))}</div>` : "";
         const profileHref = isBot ? "#" : (
@@ -4963,7 +5243,7 @@
                 <div class="profile-pop-divider"></div>
                 ${bioBlock}
                 <div class="profile-pop-section">
-                    <div class="profile-pop-section-label">徽章</div>
+                    <div class="profile-pop-section-label">榮耀</div>
                     ${badgesBlock}
                 </div>
                 ${metaBlock}
@@ -5306,7 +5586,7 @@
         }
     }
 
-    // 4. 傳送文字訊息
+    // 4. 傳送文字訊息（樂觀更新：先顯示氣泡，背景寫入 Firestore）
     window.sendMessage = async () => {
         if (!currentChatId) return;
         if (isSendingMessage) return;
@@ -5314,18 +5594,23 @@
         const rawText = String(input && input.value || "").replace(/\r\n/g, "\n");
         const text = rawText.trim();
         if (!text) return;
-        isSendingMessage = true;
-        if (currentChatType === "private") {
+
+        if (isPrivateSendBlocked()) {
+            applyPrivateRequestState(currentChatDocData);
+            return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
+        }
+        if (currentChatType === "private" && !currentChatDocData) {
             try {
                 const chatSnap = await getDoc(doc(db, "chats", currentChatId));
-                const chatData = chatSnap.exists() ? chatSnap.data() : null;
-                if (chatData && chatData.requestStatus === "pending") {
-                    applyPrivateRequestState(chatData);
-                    isSendingMessage = false;
+                currentChatDocData = chatSnap.exists() ? chatSnap.data() : null;
+                if (isPrivateSendBlocked()) {
+                    applyPrivateRequestState(currentChatDocData);
                     return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
                 }
             } catch {}
         }
+
+        isSendingMessage = true;
         const replyPayload = replyToMessage ? {
             id: replyToMessage.id,
             senderName: replyToMessage.senderName || "",
@@ -5336,13 +5621,26 @@
         } : null;
 
         const savedDraft = rawText;
+        const savedReply = replyToMessage;
+        const chatId = currentChatId;
         if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
+        clearMyTypingIndicator();
+
+        const optId = appendOptimisticTextMessage(text, replyPayload);
+        input.value = '';
+        autoGrowInput(input);
+        patchSidebarPreviewForChat(chatId, text);
+        replyToMessage = null;
+        setReplyBar();
+        focusChatInput();
+
         const sendBtn = document.getElementById("btn-send-msg");
-        if (sendBtn) sendBtn.disabled = true;
+        isSendingMessage = false;
+        if (sendBtn) sendBtn.disabled = false;
 
         try {
             const cosmetic = currentCosmeticSnapshot();
-            await addDoc(collection(db, "chats", currentChatId, "messages"), {
+            const messagePayload = {
                 senderId: currentUser.uid,
                 senderEmail: currentUser.email,
                 senderDisplayName: displayNameFromUser(currentUserData),
@@ -5351,31 +5649,28 @@
                 replyTo: replyPayload,
                 type: "text",
                 createdAt: serverTimestamp()
-            });
-
-            await updateDoc(doc(db, "chats", currentChatId), {
+            };
+            const chatPatch = {
                 lastMessage: text,
                 updatedAt: serverTimestamp(),
                 lastSenderId: currentUser.uid,
                 [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
                 [`typingUsers.${currentUser.uid}`]: deleteField()
-            });
-
-            input.value = '';
-            autoGrowInput(input);
-            patchSidebarPreviewForChat(currentChatId, text);
-            
-            trimChatMessages(currentChatId);
-            await processAttachedBots(text);
-            replyToMessage = null;
-            setReplyBar();
+            };
+            await Promise.all([
+                addDoc(collection(db, "chats", chatId, "messages"), messagePayload),
+                updateDoc(doc(db, "chats", chatId), chatPatch)
+            ]);
+            trimChatMessages(chatId);
+            processAttachedBots(text).catch(function (e) { console.warn("Bot 處理失敗", e); });
         } catch (e) {
+            if (optId) removeOptimisticMessageRow(optId);
             input.value = savedDraft;
             autoGrowInput(input);
+            replyToMessage = savedReply;
+            setReplyBar();
+            patchSidebarPreviewForChat(chatId, "");
             alert("傳送失敗: " + e.message);
-        } finally {
-            isSendingMessage = false;
-            if (sendBtn) sendBtn.disabled = false;
         }
     };
 
@@ -5484,6 +5779,7 @@
     window.claimGiftMessage = async (msgId) => {
         if (!currentChatId || !msgId || !currentUser || giftClaimBusy) return;
         giftClaimBusy = true;
+        let honorUnlocked = [];
         try {
             const msgRef = doc(db, "chats", currentChatId, "messages", msgId);
             const userRef = doc(db, "users", currentUser.uid);
@@ -5506,12 +5802,17 @@
                         added += 1;
                     }
                 });
+                const honorPatch = DoratchHonor.applyHonorProgress(inv, userData.honorStats, {
+                    giftsClaimed: DoratchHonor.normalizeHonorStats(userData.honorStats).giftsClaimed + 1
+                });
+                honorUnlocked = honorPatch.addedIds.slice();
                 gift.status = "claimed";
                 gift.claimedBy = currentUser.uid;
                 gift.claimedAt = serverTimestamp();
                 gift.claimedUnlockCount = added;
                 tx.set(userRef, {
-                    inventory: inv,
+                    inventory: honorPatch.inventory,
+                    honorStats: honorPatch.honorStats,
                     lastGiftClaimAt: serverTimestamp()
                 }, { merge: true });
                 tx.update(msgRef, { gift: gift });
@@ -5522,7 +5823,14 @@
                     [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
                 }, { merge: true });
             });
-            alert("禮物領取成功！");
+            if (honorUnlocked.length) {
+                alert("禮物領取成功！解鎖榮耀：" + honorUnlocked.map(function (id) {
+                    const meta = DoratchHonor.getHonorBadgeMeta(id);
+                    return meta ? meta.value : id;
+                }).join("、"));
+            } else {
+                alert("禮物領取成功！");
+            }
         } catch (e) {
             const code = String(e && e.message || "");
             if (code === "GIFT_ALREADY_CLAIMED") return alert("這份禮物已經被領取。");

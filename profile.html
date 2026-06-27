@@ -348,6 +348,34 @@
             font-size: 14px; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap; word-break: break-word;
         }
         .dc-about-preview.empty { color: #64748b; font-style: italic; }
+        .honor-wall-desc { font-size: 12px; color: #94a3b8; margin: 0 0 10px; line-height: 1.55; }
+        .honor-wall-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        .honor-wall-item {
+            border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(15,23,42,0.45); min-height: 72px;
+        }
+        .honor-wall-item.owned { border-color: rgba(88,101,242,0.45); background: rgba(88,101,242,0.12); }
+        .honor-wall-item.locked { opacity: 0.72; }
+        .honor-wall-item .honor-icon { font-size: 1.25rem; margin-bottom: 4px; }
+        .honor-wall-item .honor-name { font-size: 12px; font-weight: 800; color: #e2e8f0; line-height: 1.35; }
+        .honor-wall-item .honor-hint { font-size: 10px; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+        .pro-custom-avatar-box {
+            margin: 0 0 16px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(168,85,247,0.35);
+            background: rgba(88,28,135,0.12);
+        }
+        .pro-custom-avatar-box h3 { margin: 0 0 6px; font-size: 14px; color: #e9d5ff; }
+        .pro-custom-avatar-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .pro-custom-avatar-btn {
+            border: none; border-radius: 10px; padding: 9px 14px; font-weight: 800; font-size: 12px;
+            cursor: pointer; font-family: inherit;
+        }
+        .pro-custom-avatar-btn.primary { background: #5865f2; color: #fff; }
+        .pro-custom-avatar-btn.secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .pro-custom-avatar-meta { font-size: 11px; color: #94a3b8; margin-top: 8px; line-height: 1.5; }
+        #custom-avatar-input { display: none; }
         .dc-member-info { font-size: 12px; color: #64748b; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .btn-save-profile {
             margin-top: 12px; border: none; border-radius: 12px; padding: 12px 18px;
@@ -483,6 +511,11 @@
                         <label>關於我</label>
                         <div id="profile-bio-view" class="dc-about-preview empty">尚未撰寫自我介紹…</div>
                     </div>
+                    <div class="dc-field">
+                        <label>榮耀</label>
+                        <p class="honor-wall-desc">榮耀代表成就與紀念。多數需完成特定行為（例如送禮、領禮）或活動授予；少數可在商城購買。</p>
+                        <div id="honor-wall-grid" class="honor-wall-grid"></div>
+                    </div>
                     <div class="dc-member-info">
                         <div id="display-uid">帳號：---</div>
                         <div id="member-since">加入時間：---</div>
@@ -491,12 +524,23 @@
 
                 <div class="dc-panel" id="dc-panel-appearance">
                     <p style="font-size:13px;color:#94a3b8;margin:0 0 12px;">商城購買的道具可在這裡裝備，聊天室與個人面板會同步顯示。</p>
+                    <div id="pro-custom-avatar-section" class="pro-custom-avatar-box" style="display:none;">
+                        <h3>💎 Pro 自訂頭像</h3>
+                        <p style="font-size:12px;color:#c4b5fd;margin:0;line-height:1.55;">上傳照片會自動壓縮為小尺寸 JPEG 並存入帳號；換新照片會覆寫舊檔，切換商城頭像則會刪除自訂照片。</p>
+                        <div class="pro-custom-avatar-actions">
+                            <input type="file" id="custom-avatar-input" accept="image/jpeg,image/png,image/webp,image/gif">
+                            <button type="button" class="pro-custom-avatar-btn primary" id="btn-pick-custom-avatar">📷 上傳照片</button>
+                            <button type="button" class="pro-custom-avatar-btn secondary" id="btn-remove-custom-avatar" style="display:none;">🗑️ 移除自訂</button>
+                        </div>
+                        <div id="custom-avatar-meta" class="pro-custom-avatar-meta"></div>
+                        <div id="custom-avatar-msg" class="pro-custom-avatar-meta" style="color:#93c5fd;"></div>
+                    </div>
                     <div class="cosmetic-grid">
                         <div><label for="equip-avatar">頭像樣式</label><select id="equip-avatar"></select></div>
                         <div><label for="equip-frame">頭像框</label><select id="equip-frame"></select></div>
                         <div><label for="equip-banner">個人橫幅</label><select id="equip-banner"></select></div>
                         <div><label for="equip-title">稱號</label><select id="equip-title"></select></div>
-                        <div><label for="equip-badge">徽章</label><select id="equip-badge"></select></div>
+                        <div><label for="equip-badge">榮耀</label><select id="equip-badge"></select></div>
                         <div><label for="equip-name-color">名稱顏色</label><select id="equip-name-color"></select></div>
                         <div><label for="equip-name-effect">名稱特效</label><select id="equip-name-effect"></select></div>
                         <div><label for="equip-profile-effect">個人面板特效</label><select id="equip-profile-effect"></select></div>
@@ -598,7 +642,11 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { DoratchHonor } from "./shared/doratch-honor-badges.js";
+    import { DoratchCustomAvatar } from "./shared/doratch-custom-avatar.js";
+    window.DoratchHonor = DoratchHonor;
+    window.DoratchCustomAvatar = DoratchCustomAvatar;
     let STAFF_COSMETIC_ITEMS = [];
     let STAFF_AVATAR_URLS = {};
     let ownedItemsBySlotWithStaff;
@@ -987,6 +1035,10 @@
         { id: "badge_pixel_master", slot: "badge", label: "像素大師", value: "像素大師" },
         { id: "badge_hackathon_winner", slot: "badge", label: "黑客松冠軍", value: "黑客松冠軍" },
         { id: "badge_quantum_flux", slot: "badge", label: "量子 flux", value: "量子 flux" },
+        { id: "badge_gift_star", slot: "badge", label: "送禮之星", value: "送禮之星" },
+        { id: "badge_gift_generous", slot: "badge", label: "慷慨大使", value: "慷慨大使" },
+        { id: "badge_gift_joy", slot: "badge", label: "收禮喜悅", value: "收禮喜悅" },
+        { id: "badge_gift_bond", slot: "badge", label: "情誼相傳", value: "情誼相傳" },
         { id: "profilefx_thunder_roll", slot: "profileEffect", label: "雷雲翻滾", value: "thunder_roll" },
         { id: "profilefx_candy_pop", slot: "profileEffect", label: "糖果爆彩", value: "candy_pop" },
         { id: "profilefx_digital_pulse", slot: "profileEffect", label: "數位脈衝", value: "digital_pulse" }
@@ -1253,7 +1305,7 @@
         applyDcBannerVisuals(banner, profileEffect, data);
         applyAvatarFrame(frame);
         const label = getDisplayLabel(data, currentUser ? currentUser.email : "");
-        const avatarUrl = avatarFromType(avatar, label);
+        const avatarUrl = DoratchCustomAvatar.resolveAvatarUrl(data, label, avatar, avatarFromType);
         const profileAvatar = document.getElementById("profile-avatar");
         const sideAvatar = document.getElementById("side-avatar");
         if (profileAvatar) profileAvatar.src = avatarUrl;
@@ -1395,6 +1447,46 @@
         const target = String(selectedValue || "");
         if (target && seenValues.has(target)) sel.value = target;
         else sel.value = "";
+        if (id === "equip-avatar" && window.DoratchCustomAvatar && userData && DoratchCustomAvatar.hasStoredCustomAvatar(userData)) {
+            const opt = document.createElement("option");
+            opt.value = DoratchCustomAvatar.CUSTOM_AVATAR_TYPE;
+            opt.textContent = "📷 自訂上傳照片";
+            sel.appendChild(opt);
+            if (target === DoratchCustomAvatar.CUSTOM_AVATAR_TYPE) sel.value = DoratchCustomAvatar.CUSTOM_AVATAR_TYPE;
+        }
+    }
+
+    function renderProCustomAvatarSection(data) {
+        const box = document.getElementById("pro-custom-avatar-section");
+        const removeBtn = document.getElementById("btn-remove-custom-avatar");
+        const meta = document.getElementById("custom-avatar-meta");
+        if (!box || !window.DoratchCustomAvatar) return;
+        const can = DoratchCustomAvatar.canUploadCustomAvatar(data);
+        box.style.display = can ? "block" : "none";
+        if (!can) return;
+        const has = DoratchCustomAvatar.hasStoredCustomAvatar(data);
+        if (removeBtn) removeBtn.style.display = has ? "inline-flex" : "none";
+        if (meta) {
+            if (!has) meta.textContent = "尚未上傳 · 建議使用正方形照片，系統會壓縮至約 96×96 JPEG。";
+            else {
+                const kb = Math.max(1, Math.round((Number(data.customAvatarBytes) || 0) / 1024));
+                meta.textContent = "已設定自訂頭像 · 約 " + kb + " KB · 上傳新照片會覆寫舊檔。";
+            }
+        }
+    }
+
+    async function clearCustomAvatarFromFirestore() {
+        await updateDoc(userRef, {
+            customAvatarB64: deleteField(),
+            customAvatarMime: deleteField(),
+            customAvatarBytes: deleteField(),
+            customAvatarUpdatedAt: deleteField()
+        });
+        userData = { ...userData };
+        delete userData.customAvatarB64;
+        delete userData.customAvatarMime;
+        delete userData.customAvatarBytes;
+        delete userData.customAvatarUpdatedAt;
     }
 
     function resolveNameAppearanceForUser(data) {
@@ -1476,11 +1568,41 @@
         fillSelect("equip-frame", ownedItemsBySlot(data, "frame"), pickOwnedEquipped(data, "frame"), "不使用頭像框");
         fillSelect("equip-banner", ownedItemsBySlot(data, "banner"), pickOwnedEquipped(data, "banner"), "預設橫幅");
         fillSelect("equip-title", ownedItemsBySlot(data, "title"), pickOwnedEquipped(data, "title"), "不使用稱號");
-        fillSelect("equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不使用徽章");
+        fillSelect("equip-badge", ownedItemsBySlot(data, "badge"), pickOwnedEquipped(data, "badge"), "不顯示榮耀");
         fillSelect("equip-name-color", ownedItemsBySlot(data, "nameColor"), pickOwnedEquipped(data, "nameColor"), "預設名稱顏色");
         fillSelect("equip-name-effect", ownedItemsBySlot(data, "nameEffect"), pickOwnedEquipped(data, "nameEffect"), "不使用名稱特效");
         fillSelect("equip-profile-effect", ownedItemsBySlot(data, "profileEffect"), pickOwnedEquipped(data, "profileEffect"), "不使用個人面板特效");
+        renderHonorWall(data);
+        renderProCustomAvatarSection(data);
         renderMemberStylePanel(data);
+    }
+
+    function renderHonorWall(data) {
+        const grid = document.getElementById("honor-wall-grid");
+        if (!grid || !window.DoratchHonor) return;
+        const inv = Array.isArray(data && data.inventory) ? data.inventory : [];
+        const labelMap = Object.fromEntries(COSMETIC_ITEMS.filter(function (it) { return it.slot === "badge"; }).map(function (it) { return [it.id, it.label || it.value]; }));
+        const entries = DoratchHonor.listHonorWallEntries(inv).map(function (row) {
+            if (labelMap[row.id]) row.value = labelMap[row.id];
+            return row;
+        });
+        if (!entries.length) {
+            grid.innerHTML = '<div class="honor-wall-item locked"><div class="honor-hint">尚無榮耀資料</div></div>';
+            return;
+        }
+        grid.innerHTML = entries.map(function (row) {
+            const cls = row.owned ? "owned" : "locked";
+            const status = row.owned ? "已解鎖" : "未解鎖";
+            return `<div class="honor-wall-item ${cls}" title="${escHtml(row.hint)}">
+                <div class="honor-icon">${escHtml(row.icon || "🏅")}</div>
+                <div class="honor-name">${escHtml(row.value)}</div>
+                <div class="honor-hint">${escHtml(status)} · ${escHtml(row.hint)}</div>
+            </div>`;
+        }).join("");
+    }
+
+    function escHtml(s) {
+        return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
     function previewDcBannerFromForm() {
@@ -1519,14 +1641,15 @@
 
     function applyDisplayUI(user, data) {
         const label = getDisplayLabel(data, user.email);
-        const avatar = avatarUrlFor(data, user.email, 128);
+        const avatarType = pickOwnedEquipped(data, "avatar");
+        const avatar = DoratchCustomAvatar.resolveAvatarUrl(data, label, avatarType, (em, type) => avatarFromType(type, em));
         const nameEl = document.getElementById("profile-display-name");
         ensureNameFxSpan(nameEl, label);
         document.getElementById("display-uid").innerText = `帳號：${user.email}`;
         const memberEl = document.getElementById("member-since");
         if (memberEl) memberEl.textContent = formatMemberSince(data);
         document.getElementById("profile-avatar").src = avatar;
-        document.getElementById("side-avatar").src = avatarUrlFor(data, user.email, 32);
+        document.getElementById("side-avatar").src = avatar;
         document.getElementById("side-username").innerText = label;
         document.getElementById("side-coins").innerText = `Doord ${Math.floor(getDoordValue(data))} · Docoin ${Math.floor(getDocoinValue(data))}`;
         const missing = needsDisplayName(data);
@@ -1672,8 +1795,9 @@
 
     document.getElementById("btn-save-cosmetic").addEventListener("click", async () => {
         if (!userRef || !currentUser) return;
+        const newAvatar = (document.getElementById("equip-avatar").value || "").trim();
         const equipped = {
-            avatar: (document.getElementById("equip-avatar").value || "").trim(),
+            avatar: newAvatar,
             frame: (document.getElementById("equip-frame").value || "").trim(),
             banner: (document.getElementById("equip-banner").value || "").trim(),
             title: (document.getElementById("equip-title").value || "").trim(),
@@ -1687,8 +1811,21 @@
         btn.disabled = true;
         btn.textContent = "儲存中…";
         try {
-            await updateDoc(userRef, { equippedCosmetics: equipped });
+            const patch = { equippedCosmetics: equipped };
+            if (DoratchCustomAvatar.shouldClearCustomAvatarOnEquip(newAvatar) && DoratchCustomAvatar.hasStoredCustomAvatar(userData)) {
+                patch.customAvatarB64 = deleteField();
+                patch.customAvatarMime = deleteField();
+                patch.customAvatarBytes = deleteField();
+                patch.customAvatarUpdatedAt = deleteField();
+            }
+            await updateDoc(userRef, patch);
             userData = { ...userData, equippedCosmetics: equipped };
+            if (patch.customAvatarB64 === deleteField()) {
+                delete userData.customAvatarB64;
+                delete userData.customAvatarMime;
+                delete userData.customAvatarBytes;
+                delete userData.customAvatarUpdatedAt;
+            }
             applyDisplayUI(currentUser, userData);
             if (msg) msg.textContent = "外觀設定已儲存並套用。";
         } catch (e) {
@@ -1699,6 +1836,60 @@
             btn.textContent = "儲存外觀設定";
         }
     });
+
+    const btnPickCustomAvatar = document.getElementById("btn-pick-custom-avatar");
+    const customAvatarInput = document.getElementById("custom-avatar-input");
+    const btnRemoveCustomAvatar = document.getElementById("btn-remove-custom-avatar");
+    if (btnPickCustomAvatar && customAvatarInput) {
+        btnPickCustomAvatar.addEventListener("click", () => customAvatarInput.click());
+        customAvatarInput.addEventListener("change", async () => {
+            const file = customAvatarInput.files && customAvatarInput.files[0];
+            customAvatarInput.value = "";
+            const status = document.getElementById("custom-avatar-msg");
+            if (!file || !userRef || !currentUser) return;
+            if (!DoratchCustomAvatar.canUploadCustomAvatar(userData)) {
+                if (status) status.textContent = "需要 Doratch Pro 才能上傳自訂頭像。";
+                return;
+            }
+            if (status) status.textContent = "壓縮並上傳中…";
+            btnPickCustomAvatar.disabled = true;
+            try {
+                const compressed = await DoratchCustomAvatar.compressImageFile(file);
+                const payload = DoratchCustomAvatar.buildCustomAvatarFirestorePayload(compressed);
+                const eq = { ...(getEquipped(userData)), avatar: DoratchCustomAvatar.CUSTOM_AVATAR_TYPE };
+                await updateDoc(userRef, { ...payload, equippedCosmetics: eq });
+                userData = { ...userData, ...payload, equippedCosmetics: eq };
+                applyDisplayUI(currentUser, userData);
+                if (status) status.textContent = "自訂頭像已更新（舊照片已覆寫刪除）。";
+            } catch (e) {
+                console.error(e);
+                if (status) status.textContent = DoratchCustomAvatar.formatCompressError(e && e.message);
+            } finally {
+                btnPickCustomAvatar.disabled = false;
+            }
+        });
+    }
+    if (btnRemoveCustomAvatar) {
+        btnRemoveCustomAvatar.addEventListener("click", async () => {
+            if (!userRef || !DoratchCustomAvatar.hasStoredCustomAvatar(userData)) return;
+            const status = document.getElementById("custom-avatar-msg");
+            btnRemoveCustomAvatar.disabled = true;
+            try {
+                await clearCustomAvatarFromFirestore();
+                const eq = { ...(getEquipped(userData)) };
+                if (eq.avatar === DoratchCustomAvatar.CUSTOM_AVATAR_TYPE) eq.avatar = "";
+                await updateDoc(userRef, { equippedCosmetics: eq });
+                userData = { ...userData, equippedCosmetics: eq };
+                applyDisplayUI(currentUser, userData);
+                if (status) status.textContent = "已移除自訂頭像。";
+            } catch (e) {
+                console.error(e);
+                if (status) status.textContent = "移除失敗，請稍後再試。";
+            } finally {
+                btnRemoveCustomAvatar.disabled = false;
+            }
+        });
+    }
 
     const btnSaveNameStyle = document.getElementById("btn-save-name-style");
     if (btnSaveNameStyle) {
@@ -1762,6 +1953,11 @@
             }
             userData = userSnap.exists() ? userSnap.data() : {};
             userData = { ...userData, email: user.email || userData.email || "" };
+            const honorSync = DoratchHonor.syncHonorInventory(userData.inventory, userData.honorStats, userData);
+            if (honorSync.addedIds.length || JSON.stringify(honorSync.honorStats) !== JSON.stringify(DoratchHonor.normalizeHonorStats(userData.honorStats))) {
+                await updateDoc(userRef, { inventory: honorSync.inventory, honorStats: honorSync.honorStats });
+                userData = { ...userData, inventory: honorSync.inventory, honorStats: honorSync.honorStats };
+            }
             applyDisplayUI(user, userData);
 
             document.getElementById("count-coins").innerText = Math.floor(getDoordValue(userData));
