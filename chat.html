@@ -1728,9 +1728,9 @@
 
     function chatInputPlaceholder() {
         if (chatPrefs.enterToSend) {
-            return "傳送訊息，@ 艾特成員，Shift+Enter 換行，/ 斜線指令…";
+            return "傳送訊息，@ 艾特顯示名稱，Shift+Enter 換行，/ 斜線指令…";
         }
-        return "傳送訊息，@ 艾特成員，Enter 換行，Ctrl+Enter 送出，/ 斜線指令…";
+        return "傳送訊息，@ 艾特顯示名稱，Enter 換行，Ctrl+Enter 送出，/ 斜線指令…";
     }
 
     function saveChatDraft(chatId) {
@@ -4053,11 +4053,11 @@
     function lastMessageMentionsMe(chat) {
         const text = String((chat && chat.lastMessage) || "");
         if (!text.includes("@") || !currentUser) return false;
-        const email = String((currentUserData && currentUserData.email) || currentUser.email || "");
-        const handle = email.includes("@") ? email.split("@")[0].toLowerCase() : "";
-        const label = currentUserData ? String(displayNameFromUser(currentUserData) || "").toLowerCase() : "";
-        if (handle && text.toLowerCase().includes("@" + handle)) return true;
+        const label = currentUserData ? String(displayNameFromUser(currentUserData) || "").trim().toLowerCase() : "";
         if (label && text.toLowerCase().includes("@" + label)) return true;
+        const email = String((currentUserData && currentUserData.email) || currentUser.email || "");
+        const emailAlias = email.includes("@") ? email.split("@")[0].toLowerCase() : "";
+        if (emailAlias && text.toLowerCase().includes("@" + emailAlias)) return true;
         return false;
     }
 
@@ -4071,55 +4071,108 @@
             if (!uid || uid === currentUser.uid) return;
             const u = userCache[uid];
             const email = u ? String(u.email || "").trim() : "";
-            const label = u ? displayNameFromUser(u) : "使用者";
-            let handle = email.includes("@") ? email.split("@")[0] : label;
-            handle = String(handle || "user").trim();
-            out.push({ uid: uid, label: label, handle: handle, email: email });
+            const label = String(u ? displayNameFromUser(u) : "使用者").trim() || "使用者";
+            const emailAlias = email.includes("@") ? email.split("@")[0] : "";
+            out.push({
+                uid: uid,
+                label: label,
+                handle: label,
+                emailAlias: emailAlias,
+                email: email
+            });
         });
         return out;
+    }
+
+    function mentionBoundaryOk(nextChar) {
+        return !nextChar || !/[\w\u4e00-\u9fff\u3400-\u4dbf.-]/.test(nextChar);
+    }
+
+    function findMentionMatchAt(text, atIndex, candidates) {
+        if (String(text || "")[atIndex] !== "@") return null;
+        const rest = String(text).slice(atIndex + 1);
+        const list = (candidates || []).slice().sort(function (a, b) {
+            return String(b.label || "").length - String(a.label || "").length;
+        });
+        for (let i = 0; i < list.length; i += 1) {
+            const c = list[i];
+            const aliases = [c.label, c.emailAlias].filter(Boolean);
+            for (let j = 0; j < aliases.length; j += 1) {
+                const alias = String(aliases[j]);
+                if (!rest.toLowerCase().startsWith(alias.toLowerCase())) continue;
+                if (!mentionBoundaryOk(rest[alias.length])) continue;
+                return { candidate: c, matched: alias, length: 1 + alias.length };
+            }
+        }
+        const word = rest.match(/^([\w\u4e00-\u9fff\u3400-\u4dbf.-]+)/);
+        if (word) {
+            const token = word[1];
+            const hit = (candidates || []).find(function (c) {
+                return String(c.label || "").toLowerCase() === token.toLowerCase()
+                    || (c.emailAlias && String(c.emailAlias).toLowerCase() === token.toLowerCase());
+            });
+            if (hit) return { candidate: hit, matched: token, length: 1 + token.length };
+        }
+        return null;
     }
 
     function resolveMentionsFromText(text, candidates) {
         const mentions = [];
         const seen = new Set();
-        const re = /@([\w\u4e00-\u9fff\u3400-\u4dbf.-]+)/g;
-        let m;
         const list = candidates || getChatMentionCandidates();
-        while ((m = re.exec(String(text || ""))) !== null) {
-            const token = m[1].toLowerCase();
-            const hit = list.find(function (c) {
-                return c.handle.toLowerCase() === token || c.label.toLowerCase() === token;
+        const raw = String(text || "");
+        for (let i = 0; i < raw.length; i += 1) {
+            if (raw[i] !== "@") continue;
+            const hit = findMentionMatchAt(raw, i, list);
+            if (!hit || seen.has(hit.candidate.uid)) continue;
+            seen.add(hit.candidate.uid);
+            mentions.push({
+                uid: hit.candidate.uid,
+                handle: hit.candidate.label,
+                label: hit.candidate.label
             });
-            if (hit && !seen.has(hit.uid)) {
-                seen.add(hit.uid);
-                mentions.push({ uid: hit.uid, handle: hit.handle, label: hit.label });
-            }
+            i += hit.length - 1;
         }
         return mentions;
     }
 
     function formatMentionTextHtml(text, mentions, myUid) {
-        const mentionMap = {};
+        const byUid = {};
         (mentions || []).forEach(function (m) {
-            mentionMap[String(m.handle || "").toLowerCase()] = m;
-            mentionMap[String(m.label || "").toLowerCase()] = m;
+            if (m && m.uid) byUid[m.uid] = m;
         });
-        const re = /@([\w\u4e00-\u9fff\u3400-\u4dbf.-]+)/g;
+        const list = getChatMentionCandidates().map(function (c) {
+            const stored = byUid[c.uid];
+            if (!stored) return c;
+            return {
+                uid: c.uid,
+                label: stored.label || stored.handle || c.label,
+                handle: stored.label || stored.handle || c.label,
+                emailAlias: c.emailAlias || ""
+            };
+        });
+        (mentions || []).forEach(function (m) {
+            if (!m || !m.uid || list.some(function (c) { return c.uid === m.uid; })) return;
+            list.push({
+                uid: m.uid,
+                label: m.label || m.handle || "使用者",
+                handle: m.label || m.handle || "使用者",
+                emailAlias: ""
+            });
+        });
         let out = "";
         let last = 0;
-        let m;
         const raw = String(text || "");
-        while ((m = re.exec(raw)) !== null) {
-            out += escHtml(raw.slice(last, m.index));
-            const token = m[1];
-            const hit = mentionMap[token.toLowerCase()];
-            if (hit) {
-                const isMe = myUid && hit.uid === myUid;
-                out += '<span class="msg-mention' + (isMe ? " msg-mention-me" : "") + '" data-uid="' + escHtml(hit.uid) + '" onclick="openProfileByUid(event,\'' + escHtml(hit.uid) + "')\">@" + escHtml(token) + "</span>";
-            } else {
-                out += '<span class="msg-mention">@' + escHtml(token) + "</span>";
-            }
-            last = m.index + m[0].length;
+        for (let i = 0; i < raw.length; i += 1) {
+            if (raw[i] !== "@") continue;
+            const hit = findMentionMatchAt(raw, i, list);
+            if (!hit) continue;
+            out += escHtml(raw.slice(last, i));
+            const isMe = myUid && hit.candidate.uid === myUid;
+            const showName = hit.candidate.label || hit.matched;
+            out += '<span class="msg-mention' + (isMe ? " msg-mention-me" : "") + '" data-uid="' + escHtml(hit.candidate.uid) + '" onclick="openProfileByUid(event,\'' + escHtml(hit.candidate.uid) + "')\">@" + escHtml(showName) + "</span>";
+            last = i + hit.length;
+            i = last - 1;
         }
         out += escHtml(raw.slice(last));
         return out;

@@ -125,17 +125,19 @@
         filtered = items;
         pickerIndex = 0;
         if (!items.length) {
-            pickerEl.innerHTML = '<div class="slash-picker-empty">沒有符合的成員<br><small>輸入 @ 可艾特聊天室成員</small></div>';
+            pickerEl.innerHTML = '<div class="slash-picker-empty">沒有符合的成員<br><small>輸入 @ 可艾特對方顯示名稱</small></div>';
             pickerEl.style.display = "block";
             return;
         }
         pickerEl.innerHTML = items.map(function (member, idx) {
             var avatar = "https://ui-avatars.com/api/?name=" + encodeURIComponent(member.label || member.handle || "U") + "&background=5865F2&color=fff";
+            var sub = member.emailAlias ? ("帳號 " + member.emailAlias) : "";
             return (
                 '<button type="button" class="slash-picker-item mention-picker-item' + (idx === 0 ? " active" : "") + '" data-idx="' + idx + '">' +
                 '<img src="' + avatar + '" alt="" class="mention-avatar">' +
                 '<span class="mention-name">' + esc(member.label || member.handle) + "</span>" +
-                '<span class="mention-handle">@' + esc(member.handle || "") + "</span>" +
+                '<span class="mention-handle">@' + esc(member.label || member.handle || "") + "</span>" +
+                (sub ? ('<span class="slash-cmd-bot">' + esc(sub) + "</span>") : "") +
                 "</button>"
             );
         }).join("");
@@ -164,7 +166,7 @@
         var val = inputEl.value || "";
         var pos = typeof inputEl.selectionStart === "number" ? inputEl.selectionStart : val.length;
         var before = val.slice(0, pos);
-        var m = before.match(/(?:^|\s)@([\w\u4e00-\u9fff\u3400-\u4dbf.-]*)$/);
+        var m = before.match(/(?:^|\s)@([^@\n]*)$/);
         if (!m) return null;
         var atPos = before.length - m[0].length + (m[0].charAt(0) === " " ? 1 : 0);
         return { query: (m[1] || "").toLowerCase(), atPos: atPos, cursorPos: pos };
@@ -175,8 +177,8 @@
         var ctx = getMentionQueryAtCursor();
         if (!ctx) return;
         var val = inputEl.value || "";
-        var handle = String(member.handle || member.label || "user");
-        var insert = "@" + handle + " ";
+        var displayName = String(member.label || member.handle || "使用者").trim();
+        var insert = "@" + displayName + " ";
         var next = val.slice(0, ctx.atPos) + insert + val.slice(ctx.cursorPos);
         inputEl.value = next;
         hidePicker();
@@ -197,9 +199,9 @@
             var q = mentionCtx.query;
             var items = candidates.filter(function (c) {
                 if (!q) return true;
-                var handle = String(c.handle || "").toLowerCase();
-                var label = String(c.label || "").toLowerCase();
-                return handle.indexOf(q) === 0 || label.indexOf(q) === 0;
+                var label = String(c.label || c.handle || "").toLowerCase();
+                var alias = String(c.emailAlias || "").toLowerCase();
+                return label.indexOf(q) >= 0 || (alias && alias.indexOf(q) === 0);
             });
             showMentionPicker(items);
             return;
