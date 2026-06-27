@@ -124,7 +124,7 @@
 
 /* ── Name effects ── */
 .name-effect-chaos-prism > .name-fx-text,
-.msg-author .name-fx-text.name-effect-chaos-prism {
+.msg-author.name-effect-chaos-prism {
     background: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6, #22d3ee) !important;
     background-size: 300% auto !important;
     -webkit-background-clip: text !important;
@@ -134,13 +134,13 @@
     animation: staffChaosPrism 2.5s linear infinite !important;
 }
 .name-effect-code-storm > .name-fx-text,
-.msg-author .name-fx-text.name-effect-code-storm {
+.msg-author.name-effect-code-storm {
     color: #22c55e !important;
     text-shadow: 0 0 8px rgba(34,197,94,0.8), 0 0 16px rgba(34,211,238,0.5) !important;
     animation: staffCodeStorm 0.15s steps(2) infinite !important;
 }
 .name-effect-holy-radiance > .name-fx-text,
-.msg-author .name-fx-text.name-effect-holy-radiance {
+.msg-author.name-effect-holy-radiance {
     background: linear-gradient(90deg, #ffd700, #fff7ed, #fca5a5, #ffd700) !important;
     background-size: 250% auto !important;
     -webkit-background-clip: text !important;
@@ -448,20 +448,20 @@
 
 /* ── 名稱特效：加強 ── */
 .name-effect-chaos-prism > .name-fx-text,
-.msg-author .name-fx-text.name-effect-chaos-prism {
+.msg-author.name-effect-chaos-prism {
     background: linear-gradient(90deg, #22d3ee, #6366f1, #f472b6, #fde68a, #22d3ee) !important;
     background-size: 400% auto !important;
     animation: staffChaosPrism 1.8s linear infinite, staffGlitchFlicker 6s steps(1) infinite !important;
     filter: drop-shadow(0 0 8px rgba(34,211,238,0.6)) drop-shadow(0 0 16px rgba(167,139,250,0.4));
 }
 .name-effect-code-storm > .name-fx-text,
-.msg-author .name-fx-text.name-effect-code-storm {
+.msg-author.name-effect-code-storm {
     color: #4ade80 !important;
     text-shadow: 0 0 10px rgba(74,222,128,1), 0 0 20px rgba(34,211,238,0.7), 0 0 40px rgba(34,197,94,0.4) !important;
     animation: staffCodeStorm 0.12s steps(3) infinite !important;
 }
 .name-effect-holy-radiance > .name-fx-text,
-.msg-author .name-fx-text.name-effect-holy-radiance {
+.msg-author.name-effect-holy-radiance {
     background: linear-gradient(90deg, #ffd700, #fff, #fca5a5, #fbbf24, #ffd700) !important;
     background-size: 300% auto !important;
     animation: staffHolyRadiance 2s ease infinite !important;
@@ -512,7 +512,8 @@
     text-shadow: 0 0 8px currentColor;
 }
 .legendary-badge.staff-legendary,
-.profile-chip.badge.staff-legendary {
+.legendary-title.staff-legendary,
+.profile-chip.staff-legendary {
     background: linear-gradient(135deg, rgba(34,211,238,0.15), rgba(251,191,36,0.2)) !important;
     border: 1px solid rgba(167,139,250,0.6) !important;
     animation: staffLegendBurst 1.5s ease-in-out infinite !important;
@@ -617,11 +618,8 @@
 .dc-profile-wrap.staff-aura-admin::after {
     content: "";
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 148px;
-    border-radius: 16px 16px 0 0;
+    inset: 0;
+    border-radius: 16px;
     pointer-events: none;
     z-index: 1;
     opacity: 0.55;
@@ -833,77 +831,23 @@
     mix-blend-mode: screen;
 }
 
-/* ── 傳奇稱號/徽章：浮動光環（不遮文字） ── */
+/* ── 傳奇稱號/徽章：浮動光環 ── */
 .legendary-title.staff-legendary,
-.legendary-badge.staff-legendary,
-.profile-chip.staff-legendary {
+.legendary-badge.staff-legendary {
     position: relative;
-    z-index: 3;
-    isolation: isolate;
-    overflow: visible;
     animation: staffLegendBurst 1.2s ease-in-out infinite, staffFloatY 2.8s ease-in-out infinite !important;
 }
 .legendary-title.staff-legendary::before,
-.legendary-badge.staff-legendary::before,
-.profile-chip.staff-legendary::before {
+.legendary-badge.staff-legendary::before {
     content: "";
     position: absolute;
-    inset: -3px;
+    inset: -4px;
     border-radius: inherit;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.75;
-    animation: staffBorderFlow 3s linear infinite;
-    background: linear-gradient(90deg, #22d3ee, #6366f1, #fbbf24, #a78bfa, #22d3ee);
-    background-size: 300% 100%;
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    padding: 2px;
-}
-.profile-chip.staff-legendary.legendary-title,
-.user-title-badge.legendary-title.staff-legendary {
-    background: linear-gradient(135deg, rgba(34,211,238,0.18), rgba(99,102,241,0.14), rgba(251,191,36,0.12)) !important;
-    border: 1px solid rgba(34,211,238,0.55) !important;
-    box-shadow: 0 0 18px rgba(34,211,238,0.35), 0 0 32px rgba(99,102,241,0.2), inset 0 0 14px rgba(34,211,238,0.1) !important;
-    color: #67e8f9 !important;
-}
-.profile-chip.staff-legendary.legendary-title .chip-label,
-.user-title-badge.legendary-title.staff-legendary .chip-label {
-    background: linear-gradient(90deg, #22d3ee, #a78bfa, #fbbf24, #22d3ee) !important;
-    background-size: 300% auto !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-    animation: staffChaosPrism 2s linear infinite !important;
-    filter: drop-shadow(0 0 6px rgba(34,211,238,0.55));
-}
-.profile-chip.staff-legendary.legendary-title .chip-icon,
-.user-title-badge.legendary-title.staff-legendary .chip-icon {
-    color: #67e8f9 !important;
-    -webkit-text-fill-color: #67e8f9 !important;
-    text-shadow: 0 0 10px rgba(34,211,238,0.85) !important;
-    animation: staffNeonFlicker 4s ease-in-out infinite;
-}
-.profile-chip.staff-legendary.legendary-title::after,
-.user-title-badge.legendary-title.staff-legendary::after {
-    content: "";
-    position: absolute;
-    inset: -8px;
-    border-radius: inherit;
-    pointer-events: none;
+    background: conic-gradient(from 0deg, #22d3ee, #fbbf24, #a78bfa, #ef4444, #22d3ee);
+    opacity: 0.35;
+    animation: staffAuraRotate 3s linear infinite;
     z-index: -1;
-    background: radial-gradient(circle, rgba(34,211,238,0.35) 0, transparent 70%);
-    animation: staffOrbitPulse 2s ease-in-out infinite;
-    filter: blur(6px);
-}
-.user-title-badge.legendary-title.staff-legendary {
-    padding: 3px 8px !important;
-}
-.profile-chip.badge.staff-legendary {
-    box-shadow: 0 0 16px rgba(251,191,36,0.35), inset 0 0 10px rgba(239,68,68,0.08) !important;
+    filter: blur(4px);
 }
 
 /* ── 個人面板特效追加層 ── */
@@ -992,517 +936,3 @@
 #side-avatar[src^="data:image/svg"] {
     box-shadow: 0 0 12px rgba(99,102,241,0.45), 0 0 24px rgba(34,211,238,0.25);
 }
-
-/* ══════════════════════════════════════════════════════════
-   TITLES TIER — 稱號專屬強化（確保可見 + 更華麗）
-   ══════════════════════════════════════════════════════════ */
-
-.dc-meta-line .profile-chip,
-.msg-header .user-title-badge {
-    flex-shrink: 0;
-    max-width: 100%;
-    white-space: nowrap;
-}
-
-/* 一般傳奇稱號加強（非 staff 也受益） */
-.profile-chip.legendary-title:not(.staff-legendary),
-.user-title-badge.legendary-title:not(.staff-legendary) {
-    animation: staffLegendBurst 2s ease-in-out infinite, staffFloatY 3s ease-in-out infinite;
-}
-.profile-chip.legendary-title:not(.staff-legendary)::after,
-.user-title-badge.legendary-title:not(.staff-legendary)::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: inherit;
-    pointer-events: none;
-    z-index: -1;
-    background: radial-gradient(circle, rgba(251,191,36,0.25) 0, transparent 72%);
-    animation: staffOrbitPulse 2.5s ease-in-out infinite;
-}
-
-/* 開發者身份：稱號區域額外光帶 */
-.dc-profile-wrap.staff-aura-developer .dc-meta-line::before {
-    content: "";
-    position: absolute;
-    left: -8px;
-    right: -8px;
-    top: -4px;
-    bottom: -4px;
-    border-radius: 12px;
-    background: linear-gradient(90deg, transparent, rgba(34,211,238,0.08), transparent);
-    animation: staffShimmer 3s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-.dc-profile-wrap.staff-aura-admin .dc-meta-line::before {
-    content: "";
-    position: absolute;
-    left: -8px;
-    right: -8px;
-    top: -4px;
-    bottom: -4px;
-    border-radius: 12px;
-    background: linear-gradient(90deg, transparent, rgba(251,191,36,0.1), rgba(239,68,68,0.06), transparent);
-    animation: staffHolyBeam 2.8s ease-in-out infinite;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* 聊天稱號列：不被訊息光效蓋住 */
-.msg-header {
-    position: relative;
-    z-index: 2;
-}
-.message-row.staff-dev-glow .msg-header .user-title-badge,
-.message-row.staff-admin-glow .msg-header .user-title-badge {
-    position: relative;
-    z-index: 3;
-}
-
-/* Docoin 傳奇稱號保持可見 */
-.profile-chip.docoin-title-lux .chip-icon,
-.user-title-badge.docoin-title-lux .chip-icon {
-    color: #fde68a !important;
-    -webkit-text-fill-color: #fde68a !important;
-}
-.profile-chip.docoin-title-lux .chip-label,
-.user-title-badge.docoin-title-lux .chip-label {
-    background: linear-gradient(90deg, #fbbf24, #f43f5e, #60a5fa, #a855f7, #fbbf24) !important;
-    background-size: 250% auto !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    color: transparent !important;
-    -webkit-text-fill-color: transparent !important;
-}
-
-/* 訊息列右側光點改到不擋 header */
-.message-row.staff-dev-glow::after,
-.message-row.staff-admin-glow::after {
-    top: auto;
-    bottom: 8px;
-    transform: none;
-}
-
-/* ══════════════════════════════════════════════════════════
-   CINEMATIC — 全版面爆發 → 收回（identity takeover）
-   ══════════════════════════════════════════════════════════ */
-
-@keyframes staffCineBurstExpand {
-    0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0.95;
-        filter: blur(0px) brightness(1.4);
-    }
-    22% {
-        transform: translate(-50%, -50%) scale(5.5);
-        opacity: 1;
-        filter: blur(2px) brightness(1.8);
-    }
-    45% {
-        transform: translate(-50%, -50%) scale(6.2);
-        opacity: 0.92;
-        filter: blur(4px) brightness(1.5);
-    }
-    72% {
-        transform: translate(-50%, -50%) scale(2.2);
-        opacity: 0.55;
-        filter: blur(8px) brightness(1.2);
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-        filter: blur(14px) brightness(1);
-    }
-}
-
-@keyframes staffCineRingPulse {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-    25% { opacity: 0.95; }
-    55% { transform: translate(-50%, -50%) scale(4.8); opacity: 0.65; }
-    100% { transform: translate(-50%, -50%) scale(0.15); opacity: 0; }
-}
-
-@keyframes staffCineFlash {
-    0%, 100% { opacity: 0; }
-    18% { opacity: 0.85; }
-    35% { opacity: 0.15; }
-    48% { opacity: 0.55; }
-    62% { opacity: 0; }
-}
-
-@keyframes staffCineLabel {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); letter-spacing: 0.5em; }
-    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); letter-spacing: 0.22em; }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1); letter-spacing: 0.14em; }
-    78% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.92); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); letter-spacing: 0.08em; }
-}
-
-@keyframes staffCineScan {
-    0% { transform: translateY(-100%); opacity: 0; }
-    15% { opacity: 0.35; }
-    100% { transform: translateY(100%); opacity: 0; }
-}
-
-@keyframes staffCineVignette {
-    0%, 100% { opacity: 0; }
-    25% { opacity: 1; }
-    70% { opacity: 0.85; }
-}
-
-@keyframes staffCineBodyDev {
-    0%, 100% { filter: none; }
-    28% { filter: saturate(1.35) hue-rotate(-8deg) brightness(1.08); }
-    55% { filter: saturate(1.15) brightness(1.03); }
-}
-
-@keyframes staffCineBodyAdmin {
-    0%, 100% { filter: none; }
-    28% { filter: saturate(1.4) sepia(0.15) brightness(1.1); }
-    55% { filter: saturate(1.2) brightness(1.04); }
-}
-
-@keyframes staffCineAnchorHit {
-    0%, 100% { transform: scale(1); filter: none; }
-    30% { transform: scale(1.12); filter: brightness(1.35) saturate(1.4); }
-    60% { transform: scale(1.04); }
-}
-
-@keyframes staffLayoutBreatheDev {
-    0%, 100% { box-shadow: 0 0 0 rgba(34,211,238,0), 0 0 0 rgba(99,102,241,0); transform: scale(1); }
-    50% { box-shadow: 0 0 80px rgba(34,211,238,0.35), 0 0 160px rgba(99,102,241,0.18); transform: scale(1.008); }
-}
-
-@keyframes staffLayoutBreatheAdmin {
-    0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0), 0 0 0 rgba(239,68,68,0); transform: scale(1); }
-    50% { box-shadow: 0 0 80px rgba(251,191,36,0.4), 0 0 160px rgba(239,68,68,0.2); transform: scale(1.008); }
-}
-
-.staff-cinematic-root {
-    position: fixed;
-    inset: 0;
-    z-index: 99990;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.staff-cinematic-vignette {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-}
-.staff-cinematic-developer .staff-cinematic-vignette {
-    background:
-        radial-gradient(circle at var(--cx) var(--cy), rgba(34,211,238,0.55) 0, transparent 42%),
-        radial-gradient(circle at 50% 50%, rgba(99,102,241,0.35) 0, rgba(2,6,23,0.92) 72%);
-}
-.staff-cinematic-admin .staff-cinematic-vignette {
-    background:
-        radial-gradient(circle at var(--cx) var(--cy), rgba(251,191,36,0.55) 0, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(239,68,68,0.38) 0, rgba(28,25,23,0.94) 70%);
-}
-
-.staff-cinematic-burst,
-.staff-cinematic-ring,
-.staff-cinematic-flash,
-.staff-cinematic-label,
-.staff-cinematic-scan,
-.staff-cinematic-particles {
-    position: absolute;
-    left: var(--tx);
-    top: var(--ty);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-.staff-cinematic-burst {
-    width: min(42vmax, 520px);
-    height: min(42vmax, 520px);
-    border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-}
-.staff-cinematic-developer .staff-cinematic-burst {
-    background:
-        radial-gradient(circle, rgba(34,211,238,0.55) 0%, rgba(99,102,241,0.35) 35%, transparent 68%);
-    box-shadow: 0 0 80px rgba(34,211,238,0.45), 0 0 140px rgba(99,102,241,0.25);
-}
-.staff-cinematic-admin .staff-cinematic-burst {
-    background:
-        radial-gradient(circle, rgba(251,191,36,0.5) 0%, rgba(239,68,68,0.3) 38%, transparent 68%);
-    box-shadow: 0 0 80px rgba(251,191,36,0.45), 0 0 140px rgba(239,68,68,0.22);
-}
-.staff-cinematic-burst-2 {
-    mix-blend-mode: screen;
-    filter: hue-rotate(25deg);
-}
-
-.staff-cinematic-ring {
-    width: min(36vmax, 440px);
-    height: min(36vmax, 440px);
-    border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.55);
-    transform: translate(-50%, -50%) scale(0.2);
-    opacity: 0;
-}
-.staff-cinematic-developer .staff-cinematic-ring {
-    border-color: rgba(34,211,238,0.75);
-    box-shadow: 0 0 40px rgba(34,211,238,0.65), inset 0 0 30px rgba(34,211,238,0.25);
-}
-.staff-cinematic-admin .staff-cinematic-ring {
-    border-color: rgba(251,191,36,0.8);
-    box-shadow: 0 0 40px rgba(251,191,36,0.7), inset 0 0 30px rgba(239,68,68,0.2);
-}
-.staff-cinematic-ring-2 { border-width: 2px; filter: blur(1px); }
-.staff-cinematic-ring-3 { border-width: 1px; border-style: dashed; opacity: 0.7; }
-
-.staff-cinematic-flash {
-    inset: 0;
-    left: 0;
-    top: 0;
-    transform: none;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-}
-.staff-cinematic-developer .staff-cinematic-flash {
-    background: linear-gradient(135deg, rgba(34,211,238,0.45), rgba(99,102,241,0.35), rgba(167,139,250,0.25));
-}
-.staff-cinematic-admin .staff-cinematic-flash {
-    background: linear-gradient(135deg, rgba(251,191,36,0.5), rgba(239,68,68,0.35), rgba(254,240,138,0.25));
-}
-
-.staff-cinematic-scan {
-    inset: 0;
-    left: 0;
-    top: 0;
-    transform: none;
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px);
-    opacity: 0;
-}
-.staff-cinematic-developer .staff-cinematic-scan {
-    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34,211,238,0.07) 2px, rgba(34,211,238,0.07) 3px);
-}
-
-.staff-cinematic-label {
-    top: 50%;
-    left: 50%;
-    font-size: clamp(1.1rem, 4vw, 2rem);
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    white-space: nowrap;
-    opacity: 0;
-    text-shadow: 0 0 24px currentColor, 0 0 48px currentColor;
-    z-index: 2;
-}
-.staff-cinematic-developer .staff-cinematic-label {
-    color: #67e8f9;
-}
-.staff-cinematic-admin .staff-cinematic-label {
-    color: #fde68a;
-}
-
-.staff-cinematic-particles {
-    width: 100vw;
-    height: 100vh;
-    left: 50%;
-    top: 50%;
-    background-image:
-        radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 1px),
-        radial-gradient(circle, rgba(34,211,238,0.85) 1px, transparent 1px);
-    background-size: 120px 120px, 180px 180px;
-    background-position: 0 0, 60px 60px;
-    opacity: 0;
-    mix-blend-mode: screen;
-}
-.staff-cinematic-admin .staff-cinematic-particles {
-    background-image:
-        radial-gradient(circle, rgba(255,255,255,0.85) 1px, transparent 1px),
-        radial-gradient(circle, rgba(251,191,36,0.9) 1px, transparent 1px);
-}
-
-.staff-cinematic-root.is-active .staff-cinematic-vignette {
-    animation: staffCineVignette 2.6s ease-in-out forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-burst {
-    animation: staffCineBurstExpand 2.5s cubic-bezier(0.12, 0.85, 0.22, 1) forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-burst-2 {
-    animation: staffCineBurstExpand 2.5s cubic-bezier(0.12, 0.85, 0.22, 1) 0.08s forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-ring {
-    animation: staffCineRingPulse 2.4s ease-out forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-ring-2 {
-    animation: staffCineRingPulse 2.4s ease-out 0.12s forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-ring-3 {
-    animation: staffCineRingPulse 2.4s ease-out 0.22s forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-flash {
-    animation: staffCineFlash 2.5s ease-in-out forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-label {
-    animation: staffCineLabel 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-scan {
-    animation: staffCineScan 2.2s linear forwards;
-}
-.staff-cinematic-root.is-active .staff-cinematic-particles {
-    animation: staffCineVignette 2.6s ease-in-out forwards, staffParticleDrift 2s linear forwards;
-    opacity: 0.35;
-}
-
-.staff-cinematic-lite .staff-cinematic-label { font-size: clamp(0.85rem, 2.5vw, 1.2rem); }
-.staff-cinematic-lite .staff-cinematic-burst { animation-duration: 1.8s !important; }
-.staff-cinematic-lite .staff-cinematic-vignette { animation-duration: 1.9s !important; }
-
-body.staff-cinematic-body-developer {
-    animation: staffCineBodyDev 2.6s ease forwards;
-}
-body.staff-cinematic-body-admin {
-    animation: staffCineBodyAdmin 2.6s ease forwards;
-}
-html.staff-cinematic-html-developer,
-html.staff-cinematic-html-admin {
-    overflow: hidden;
-}
-
-.staff-cinematic-anchor-hit {
-    animation: staffCineAnchorHitSoft 2s ease-in-out !important;
-    z-index: 10 !important;
-    position: relative;
-}
-
-/* 個人頁：週期性版面呼吸光 */
-.dc-profile-wrap.staff-aura-developer.staff-layout-breathe {
-    animation: staffLayoutBreatheDev 4.5s ease-in-out infinite;
-}
-.dc-profile-wrap.staff-aura-admin.staff-layout-breathe {
-    animation: staffLayoutBreatheAdmin 4.5s ease-in-out infinite;
-}
-
-/* 聊天：staff 訊息列短暫全寬脈衝 */
-.message-row.staff-dev-glow.staff-row-pulse,
-.message-row.staff-admin-glow.staff-row-pulse {
-    animation: staffRowPulseDev 2.2s ease-out;
-}
-.message-row.staff-admin-glow.staff-row-pulse {
-    animation: staffRowPulseAdmin 2.2s ease-out;
-}
-@keyframes staffRowPulseDev {
-    0% { box-shadow: inset 0 0 0 rgba(34,211,238,0), 0 0 0 transparent; transform: scale(1); }
-    35% { box-shadow: inset 0 0 80px rgba(34,211,238,0.25), 0 0 60px rgba(99,102,241,0.35); transform: scale(1.01); }
-    100% { box-shadow: inset 4px 0 0 #22d3ee, 0 0 32px rgba(34,211,238,0.2); transform: scale(1); }
-}
-@keyframes staffRowPulseAdmin {
-    0% { box-shadow: inset 0 0 0 rgba(251,191,36,0), 0 0 0 transparent; transform: scale(1); }
-    35% { box-shadow: inset 0 0 80px rgba(251,191,36,0.28), 0 0 60px rgba(239,68,68,0.35); transform: scale(1.01); }
-    100% { box-shadow: inset 4px 0 0 #fbbf24, 0 0 32px rgba(251,191,36,0.25); transform: scale(1); }
-}
-
-/* ── Soft 模式：僅點頭像，全屏爆發但护眼 ── */
-@keyframes staffCineBurstExpandSoft {
-    0% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0.35;
-        filter: blur(0px) brightness(1.02);
-    }
-    28% {
-        transform: translate(-50%, -50%) scale(5.2);
-        opacity: 0.55;
-        filter: blur(2px) brightness(1.08);
-    }
-    52% {
-        transform: translate(-50%, -50%) scale(5.8);
-        opacity: 0.42;
-        filter: blur(4px) brightness(1.05);
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(0);
-        opacity: 0;
-        filter: blur(10px) brightness(1);
-    }
-}
-
-@keyframes staffCineRingPulseSoft {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
-    30% { opacity: 0.5; }
-    60% { transform: translate(-50%, -50%) scale(4.5); opacity: 0.32; }
-    100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-}
-
-@keyframes staffCineVignetteSoft {
-    0%, 100% { opacity: 0; }
-    30% { opacity: 0.55; }
-    65% { opacity: 0.38; }
-}
-
-@keyframes staffCineLabelSoft {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.88); letter-spacing: 0.2em; }
-    22% { opacity: 0.75; transform: translate(-50%, -50%) scale(1); letter-spacing: 0.1em; }
-    55% { opacity: 0.65; }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.92); letter-spacing: 0.06em; }
-}
-
-@keyframes staffCineAnchorHitSoft {
-    0%, 100% { transform: scale(1); filter: none; }
-    40% { transform: scale(1.05); filter: brightness(1.06); }
-}
-
-.staff-cinematic-soft.staff-cinematic-developer .staff-cinematic-vignette {
-    background:
-        radial-gradient(circle at var(--cx) var(--cy), rgba(34,211,238,0.22) 0, transparent 36%),
-        radial-gradient(circle at 50% 50%, rgba(99,102,241,0.12) 0, rgba(2,6,23,0.48) 75%);
-}
-.staff-cinematic-soft.staff-cinematic-admin .staff-cinematic-vignette {
-    background:
-        radial-gradient(circle at var(--cx) var(--cy), rgba(251,191,36,0.22) 0, transparent 36%),
-        radial-gradient(circle at 50% 50%, rgba(239,68,68,0.12) 0, rgba(28,25,23,0.5) 72%);
-}
-.staff-cinematic-soft.staff-cinematic-developer .staff-cinematic-burst {
-    background: radial-gradient(circle, rgba(34,211,238,0.4) 0%, rgba(99,102,241,0.22) 40%, transparent 70%);
-    box-shadow: 0 0 60px rgba(34,211,238,0.28), 0 0 100px rgba(99,102,241,0.12);
-}
-.staff-cinematic-soft.staff-cinematic-admin .staff-cinematic-burst {
-    background: radial-gradient(circle, rgba(251,191,36,0.38) 0%, rgba(239,68,68,0.2) 42%, transparent 70%);
-    box-shadow: 0 0 60px rgba(251,191,36,0.28), 0 0 100px rgba(239,68,68,0.12);
-}
-.staff-cinematic-soft .staff-cinematic-ring {
-    border-width: 2px;
-    opacity: 0.65;
-}
-.staff-cinematic-soft .staff-cinematic-label {
-    font-size: clamp(0.9rem, 2.8vw, 1.25rem);
-    text-shadow: 0 0 10px currentColor;
-    opacity: 0.85;
-}
-.staff-cinematic-soft.is-active .staff-cinematic-vignette {
-    animation: staffCineVignetteSoft 2s ease-in-out forwards;
-}
-.staff-cinematic-soft.is-active .staff-cinematic-burst {
-    animation: staffCineBurstExpandSoft 2s cubic-bezier(0.18, 0.88, 0.24, 1) forwards;
-}
-.staff-cinematic-soft.is-active .staff-cinematic-ring {
-    animation: staffCineRingPulseSoft 1.9s ease-out forwards;
-}
-.staff-cinematic-soft.is-active .staff-cinematic-ring-2 {
-    animation: staffCineRingPulseSoft 1.9s ease-out 0.1s forwards;
-}
-.staff-cinematic-soft.is-active .staff-cinematic-label {
-    animation: staffCineLabelSoft 2s ease-out forwards;
-}
-.msg-avatar.staff-cinematic-anchor-hit,
-.profile-pop-avatar.staff-cinematic-anchor-hit {
-    animation: staffCineAnchorHitSoft 2s ease-in-out !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .staff-cinematic-root { display: none !important; }
-    .dc-profile-wrap.staff-layout-breathe { animation: none !important; }
-}
-
