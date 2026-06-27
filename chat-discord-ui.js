@@ -7,6 +7,8 @@
     var inputEl = null;
     var pickerIndex = 0;
     var filtered = [];
+    var pickerMode = "";
+    var getMentionCandidatesFn = null;
 
     function esc(s) {
         return String(s || "")
@@ -82,10 +84,21 @@
         if (pickerEl) pickerEl.style.display = "none";
         pickerIndex = 0;
         filtered = [];
+        pickerMode = "";
     }
 
-    function showPicker(items) {
+    function bindPickerItems(onPick) {
         if (!pickerEl) return;
+        pickerEl.querySelectorAll(".slash-picker-item").forEach(function (btn) {
+            btn.onclick = function () {
+                onPick(filtered[parseInt(btn.dataset.idx, 10)]);
+            };
+        });
+    }
+
+    function showSlashPicker(items) {
+        if (!pickerEl) return;
+        pickerMode = "slash";
         filtered = items;
         pickerIndex = 0;
         if (!items.length) {
@@ -103,11 +116,31 @@
             );
         }).join("");
         pickerEl.style.display = "block";
-        pickerEl.querySelectorAll(".slash-picker-item").forEach(function (btn) {
-            btn.onclick = function () {
-                pickSlash(filtered[parseInt(btn.dataset.idx, 10)]);
-            };
-        });
+        bindPickerItems(pickSlash);
+    }
+
+    function showMentionPicker(items) {
+        if (!pickerEl) return;
+        pickerMode = "mention";
+        filtered = items;
+        pickerIndex = 0;
+        if (!items.length) {
+            pickerEl.innerHTML = '<div class="slash-picker-empty">沒有符合的成員<br><small>輸入 @ 可艾特聊天室成員</small></div>';
+            pickerEl.style.display = "block";
+            return;
+        }
+        pickerEl.innerHTML = items.map(function (member, idx) {
+            var avatar = "https://ui-avatars.com/api/?name=" + encodeURIComponent(member.label || member.handle || "U") + "&background=5865F2&color=fff";
+            return (
+                '<button type="button" class="slash-picker-item mention-picker-item' + (idx === 0 ? " active" : "") + '" data-idx="' + idx + '">' +
+                '<img src="' + avatar + '" alt="" class="mention-avatar">' +
+                '<span class="mention-name">' + esc(member.label || member.handle) + "</span>" +
+                '<span class="mention-handle">@' + esc(member.handle || "") + "</span>" +
+                "</button>"
+            );
+        }).join("");
+        pickerEl.style.display = "block";
+        bindPickerItems(pickMention);
     }
 
     function highlightPicker() {
@@ -126,27 +159,75 @@
         inputEl.focus();
     }
 
-    function onInputChange() {
-        if (!inputEl) return;
-        var val = inputEl.value;
-        if (!val.startsWith("/")) {
-            hidePicker();
-            return;
-        }
-        var q = val.slice(1).split(/\s/)[0].toLowerCase();
-        var items = slashCommands.filter(function (c) {
-            return !q || c.name.toLowerCase().indexOf(q) === 0;
-        });
-        showPicker(items);
+    function getMentionQueryAtCursor() {
+        if (!inputEl) return null;
+        var val = inputEl.value || "";
+        var pos = typeof inputEl.selectionStart === "number" ? inputEl.selectionStart : val.length;
+        var before = val.slice(0, pos);
+        var m = before.match(/(?:^|\s)@([\w\u4e00-\u9fff\u3400-\u4dbf.-]*)$/);
+        if (!m) return null;
+        var atPos = before.length - m[0].length + (m[0].charAt(0) === " " ? 1 : 0);
+        return { query: (m[1] || "").toLowerCase(), atPos: atPos, cursorPos: pos };
     }
 
-    function mountInput(input, picker, onSlashBtn) {
+    function pickMention(member) {
+        if (!member || !inputEl) return;
+        var ctx = getMentionQueryAtCursor();
+        if (!ctx) return;
+        var val = inputEl.value || "";
+        var handle = String(member.handle || member.label || "user");
+        var insert = "@" + handle + " ";
+        var next = val.slice(0, ctx.atPos) + insert + val.slice(ctx.cursorPos);
+        inputEl.value = next;
+        hidePicker();
+        inputEl.focus();
+        var caret = ctx.atPos + insert.length;
+        if (typeof inputEl.setSelectionRange === "function") inputEl.setSelectionRange(caret, caret);
+        if (typeof inputEl.dispatchEvent === "function") {
+            inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    }
+
+    function onInputChange() {
+        if (!inputEl) return;
+        var val = inputEl.value || "";
+        var mentionCtx = getMentionQueryAtCursor();
+        if (mentionCtx && typeof getMentionCandidatesFn === "function") {
+            var candidates = getMentionCandidatesFn() || [];
+            var q = mentionCtx.query;
+            var items = candidates.filter(function (c) {
+                if (!q) return true;
+                var handle = String(c.handle || "").toLowerCase();
+                var label = String(c.label || "").toLowerCase();
+                return handle.indexOf(q) === 0 || label.indexOf(q) === 0;
+            });
+            showMentionPicker(items);
+            return;
+        }
+        if (val.startsWith("/")) {
+            var slashQ = val.slice(1).split(/\s/)[0].toLowerCase();
+            var slashItems = slashCommands.filter(function (c) {
+                return !slashQ || c.name.toLowerCase().indexOf(slashQ) === 0;
+            });
+            showSlashPicker(slashItems);
+            return;
+        }
+        hidePicker();
+    }
+
+    function mountInput(input, picker, onSlashBtn, options) {
+        options = options || {};
         inputEl = input;
         pickerEl = picker;
+        getMentionCandidatesFn = typeof options.getMentionCandidates === "function"
+            ? options.getMentionCandidates
+            : null;
         if (input._discordUiMounted) return;
         input._discordUiMounted = true;
 
         input.addEventListener("input", onInputChange);
+        input.addEventListener("click", onInputChange);
+        input.addEventListener("keyup", onInputChange);
         input.addEventListener("keydown", function (e) {
             if (pickerEl && pickerEl.style.display === "block" && filtered.length) {
                 if (e.key === "ArrowDown") {
@@ -161,19 +242,19 @@
                     highlightPicker();
                     return;
                 }
-                if (e.key === "Enter") {
+                if (e.key === "Enter" && pickerMode === "slash") {
                     e.preventDefault();
                     pickSlash(filtered[pickerIndex]);
                     if (typeof inputEl._chatSend === "function") inputEl._chatSend();
                     return;
                 }
-                if (e.key === "Escape") {
-                    hidePicker();
+                if ((e.key === "Enter" || e.key === "Tab") && pickerMode === "mention") {
+                    e.preventDefault();
+                    pickMention(filtered[pickerIndex]);
                     return;
                 }
-                if (e.key === "Tab" && filtered.length) {
-                    e.preventDefault();
-                    pickSlash(filtered[pickerIndex]);
+                if (e.key === "Escape") {
+                    hidePicker();
                     return;
                 }
             }
@@ -199,7 +280,7 @@
                 }
                 input.value = "/";
                 input.focus();
-                showPicker(slashCommands);
+                showSlashPicker(slashCommands);
             };
         }
     }
