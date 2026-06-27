@@ -1,0 +1,1446 @@
+[
+  {
+    "id": "avatar_robot_blue",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：機甲藍芯",
+    "desc": "聊天與個人頁會使用機甲主題頭像。",
+    "price": 420,
+    "icon": "🤖"
+  },
+  {
+    "id": "avatar_cat_neon",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：霓虹貓",
+    "desc": "聊天與個人頁會使用霓虹貓主題頭像。",
+    "price": 390,
+    "icon": "🐱"
+  },
+  {
+    "id": "avatar_fox_shadow",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：影狐",
+    "desc": "聊天與個人頁會使用暗影狐狸主題頭像。",
+    "price": 430,
+    "icon": "🦊"
+  },
+  {
+    "id": "avatar_astronaut",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：太空員",
+    "desc": "聊天與個人頁會使用宇航員主題頭像。",
+    "price": 460,
+    "icon": "🧑‍🚀"
+  },
+  {
+    "id": "frame_neon",
+    "category": "style",
+    "slot": "frame",
+    "name": "霓虹脈衝頭像框",
+    "desc": "可在個人資料頁套用，展現科技感發光邊框。",
+    "price": 260,
+    "icon": "🟦"
+  },
+  {
+    "id": "frame_gold",
+    "category": "style",
+    "slot": "frame",
+    "name": "王者金邊頭像框",
+    "desc": "可在個人資料頁套用，亮金框線顯示高級感。",
+    "price": 420,
+    "icon": "👑"
+  },
+  {
+    "id": "frame_sakura",
+    "category": "style",
+    "slot": "frame",
+    "name": "櫻花柔光頭像框",
+    "desc": "可在個人資料頁套用，粉色柔光與陰影。",
+    "price": 320,
+    "icon": "🌸"
+  },
+  {
+    "id": "frame_holo",
+    "category": "style",
+    "slot": "frame",
+    "name": "全像幻彩頭像框",
+    "desc": "可在個人資料頁與聊天室套用幻彩外框。",
+    "price": 480,
+    "icon": "🪩"
+  },
+  {
+    "id": "frame_obsidian",
+    "category": "style",
+    "slot": "frame",
+    "name": "曜石暗影頭像框",
+    "desc": "可在個人資料頁與聊天室套用暗黑系外框。",
+    "price": 460,
+    "icon": "🖤"
+  },
+  {
+    "id": "frame_cyberfire",
+    "category": "style",
+    "slot": "frame",
+    "name": "電馭烈焰頭像框",
+    "desc": "可在個人資料頁與聊天室套用火焰能量風格。",
+    "price": 560,
+    "icon": "🔥"
+  },
+  {
+    "id": "frame_aurora",
+    "category": "style",
+    "slot": "frame",
+    "name": "極光流彩頭像框",
+    "desc": "可在個人資料頁與聊天室套用多彩極光外框。",
+    "price": 620,
+    "icon": "🌈"
+  },
+  {
+    "id": "frame_phoenix_particle",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：鳳凰粒子",
+    "desc": "Docoin 傳奇框，頭像邊框帶有粒子爆閃效果。",
+    "price": 16,
+    "currency": "docoin",
+    "icon": "🪽"
+  },
+  {
+    "id": "frame_quantum_particle",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：量子星塵",
+    "desc": "Docoin 傳奇框，顯示量子星塵循環粒子。",
+    "price": 18,
+    "currency": "docoin",
+    "icon": "✨"
+  },
+  {
+    "id": "title_architect",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：程式建築師",
+    "desc": "可在個人資料頁套用專屬稱號。",
+    "price": 280,
+    "icon": "🏗️"
+  },
+  {
+    "id": "title_bug_hunter",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：Bug 獵人",
+    "desc": "可在個人資料頁套用專屬稱號。",
+    "price": 300,
+    "icon": "🛡️"
+  },
+  {
+    "id": "title_pro",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：資深開發者",
+    "desc": "經典稱號，可在個人資料頁套用。",
+    "price": 500,
+    "icon": "🎖️"
+  },
+  {
+    "id": "title_algo_king",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：演算法王者",
+    "desc": "高難度解題者專屬的王者稱號。",
+    "price": 560,
+    "icon": "♟️"
+  },
+  {
+    "id": "title_night_owl",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：夜貓工程師",
+    "desc": "夜間開發者限定稱號，聊天室也會顯示。",
+    "price": 360,
+    "icon": "🦉"
+  },
+  {
+    "id": "title_quantum",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：量子駭客",
+    "desc": "頂級科技風稱號，適合高端玩家。",
+    "price": 720,
+    "icon": "⚛️"
+  },
+  {
+    "id": "title_void_walker",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：虛空行者",
+    "desc": "神秘系稱號，聊天室辨識度超高。",
+    "price": 680,
+    "icon": "🌌"
+  },
+  {
+    "id": "title_overclock",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：超頻核心",
+    "desc": "速度與效能拉滿的開發者稱號。",
+    "price": 760,
+    "icon": "⚡"
+  },
+  {
+    "id": "title_starlord",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：星際領主",
+    "desc": "宇宙風格傳奇稱號，辨識度極高。",
+    "price": 820,
+    "icon": "🛰️"
+  },
+  {
+    "id": "badge_mentor",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：班級導師",
+    "desc": "可在個人資料頁套用徽章，顯示在名稱旁。",
+    "price": 240,
+    "icon": "🧠"
+  },
+  {
+    "id": "badge_speedrunner",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：速通玩家",
+    "desc": "可在個人資料頁套用徽章，顯示在名稱旁。",
+    "price": 220,
+    "icon": "⚡"
+  },
+  {
+    "id": "badge_alpha",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：內測先鋒",
+    "desc": "顯示你是功能先行體驗者。",
+    "price": 260,
+    "icon": "🧪"
+  },
+  {
+    "id": "badge_guardian",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：社群守護者",
+    "desc": "顯示你重視社群秩序與互助。",
+    "price": 260,
+    "icon": "🛡️"
+  },
+  {
+    "id": "badge_dragon",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：龍焰核心",
+    "desc": "超稀有視覺徽章，聊天名稱旁高亮。",
+    "price": 740,
+    "icon": "🐉"
+  },
+  {
+    "id": "badge_cosmos",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：星穹航行者",
+    "desc": "星際主題徽章，適合宇宙系造型。",
+    "price": 700,
+    "icon": "🪐"
+  },
+  {
+    "id": "badge_phantom",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：幻影駭客",
+    "desc": "暗影科技風格徽章，低調又高級。",
+    "price": 680,
+    "icon": "👻"
+  },
+  {
+    "id": "badge_titan",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：鈦晶守衛",
+    "desc": "重裝防禦系徽章，展現王者氣場。",
+    "price": 780,
+    "icon": "🛡️"
+  },
+  {
+    "id": "badge_supernova",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：超新星之眼",
+    "desc": "Docoin 傳奇徽章，具強烈發光動畫。",
+    "price": 11,
+    "currency": "docoin",
+    "icon": "🌟"
+  },
+  {
+    "id": "badge_reactor",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：反應爐核心",
+    "desc": "Docoin 傳奇徽章，帶有核心脈衝光效。",
+    "price": 12,
+    "currency": "docoin",
+    "icon": "☢️"
+  },
+  {
+    "id": "profilefx_royal",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：皇家光暈",
+    "desc": "聊天點頭像的個人面板帶有金色柔光背景。",
+    "price": 320,
+    "icon": "👑"
+  },
+  {
+    "id": "profilefx_nebula",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：星雲脈衝",
+    "desc": "聊天個人面板出現星雲漸層與流動光感。",
+    "price": 14,
+    "currency": "docoin",
+    "icon": "🌌"
+  },
+  {
+    "id": "namefx_wave",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：流光波紋",
+    "desc": "聊天名稱會出現微動態流光。",
+    "price": 260,
+    "icon": "〰️"
+  },
+  {
+    "id": "namefx_prism",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：稜鏡閃耀",
+    "desc": "傳奇多彩名稱特效，支援個人面板與聊天。",
+    "price": 12,
+    "currency": "docoin",
+    "icon": "💠"
+  },
+  {
+    "id": "namecolor_cyan",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：霓虹青",
+    "desc": "可在個人資料頁套用名稱字色。",
+    "price": 180,
+    "icon": "🩵"
+  },
+  {
+    "id": "namecolor_sunset",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：夕陽橘",
+    "desc": "可在個人資料頁套用名稱字色。",
+    "price": 180,
+    "icon": "🧡"
+  },
+  {
+    "id": "namecolor_violet",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：星雲紫",
+    "desc": "可在個人資料頁與聊天室套用名稱字色。",
+    "price": 210,
+    "icon": "💜"
+  },
+  {
+    "id": "namecolor_lime",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：螢光萊姆",
+    "desc": "可在個人資料頁與聊天室套用名稱字色。",
+    "price": 210,
+    "icon": "💚"
+  },
+  {
+    "id": "namecolor_crimson",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：赤焰紅",
+    "desc": "高飽和名稱字色，突顯戰鬥風格。",
+    "price": 260,
+    "icon": "❤️"
+  },
+  {
+    "id": "namecolor_glacier",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：冰川藍",
+    "desc": "冷色調科技系名稱字色。",
+    "price": 260,
+    "icon": "🧊"
+  },
+  {
+    "id": "namecolor_ember",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：熾焰橘紅",
+    "desc": "高能火系字色，適合戰鬥風稱號。",
+    "price": 300,
+    "icon": "🔥"
+  },
+  {
+    "id": "namecolor_mint",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：薄荷青綠",
+    "desc": "清新亮眼字色，兼具科技與活力。",
+    "price": 300,
+    "icon": "🍃"
+  },
+  {
+    "id": "pack_starter_social",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：社交新手包",
+    "desc": "一次拿到頭像、框、徽章、名稱色，適合剛入坑。",
+    "price": 760,
+    "icon": "🎒",
+    "unlocks": [
+      "avatar_cat_neon",
+      "frame_neon",
+      "badge_speedrunner",
+      "namecolor_cyan"
+    ]
+  },
+  {
+    "id": "pack_shadow_hacker",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：暗影駭客包",
+    "desc": "影狐頭像 + 曜石框 + 幻影徽章 + 流光名稱特效。",
+    "price": 1450,
+    "icon": "🕶️",
+    "unlocks": [
+      "avatar_fox_shadow",
+      "frame_obsidian",
+      "badge_phantom",
+      "namefx_wave",
+      "namecolor_violet"
+    ]
+  },
+  {
+    "id": "pack_legendary_cosmos",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：傳奇星穹包",
+    "desc": "頂級傳奇外觀包，含星際稱號、徽章、名稱與面板特效。",
+    "price": 26,
+    "icon": "🌠",
+    "unlocks": [
+      "avatar_astronaut",
+      "frame_aurora",
+      "title_starlord",
+      "badge_cosmos",
+      "namefx_prism",
+      "profilefx_nebula"
+    ]
+  },
+  {
+    "id": "pack_phoenix_overdrive",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：鳳凰超頻包",
+    "desc": "粒子鳳凰框 + 超頻稱號 + 超新星徽章 + 傳奇特效全套。",
+    "price": 32,
+    "icon": "🔥",
+    "unlocks": [
+      "avatar_robot_blue",
+      "frame_phoenix_particle",
+      "title_overclock",
+      "badge_supernova",
+      "namefx_prism",
+      "profilefx_nebula"
+    ]
+  },
+  {
+    "id": "pack_quantum_emperor",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：量子帝皇包",
+    "desc": "量子粒子框 + 量子稱號 + 反應爐徽章 + 名稱/面板特效。",
+    "price": 36,
+    "icon": "👑",
+    "unlocks": [
+      "avatar_astronaut",
+      "frame_quantum_particle",
+      "title_quantum",
+      "badge_reactor",
+      "namefx_prism",
+      "profilefx_nebula",
+      "namecolor_glacier"
+    ]
+  },
+  {
+    "id": "avatar_panda_cute",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：竹熊貓",
+    "desc": "聊天與個人頁會使用萌系熊貓主題頭像。",
+    "price": 380,
+    "icon": "🐼"
+  },
+  {
+    "id": "avatar_cyber_wolf",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：電馭战狼",
+    "desc": "聊天與個人頁會使用賽博战狼主題頭像。",
+    "price": 450,
+    "icon": "🐺"
+  },
+  {
+    "id": "avatar_code_snake",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：Python 小蛇",
+    "desc": "程式學習者專屬的可愛蛇蛇頭像。",
+    "price": 440,
+    "icon": "🐍"
+  },
+  {
+    "id": "avatar_cherry_blossom",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：櫻花學妹",
+    "desc": "春季限定風格的粉嫩頭像。",
+    "price": 410,
+    "icon": "🌸"
+  },
+  {
+    "id": "frame_bamboo",
+    "category": "style",
+    "slot": "frame",
+    "name": "竹林清風頭像框",
+    "desc": "可在個人資料頁套用，翠綠竹影自然風格。",
+    "price": 340,
+    "icon": "🎋"
+  },
+  {
+    "id": "frame_matrix",
+    "category": "style",
+    "slot": "frame",
+    "name": "駭客矩陣頭像框",
+    "desc": "可在個人資料頁與聊天室套用矩陣代碼風格外框。",
+    "price": 520,
+    "icon": "💻"
+  },
+  {
+    "id": "frame_snowflake",
+    "category": "style",
+    "slot": "frame",
+    "name": "冬日雪花頭像框",
+    "desc": "可在個人資料頁套用冰晶雪花邊框。",
+    "price": 380,
+    "icon": "❄️"
+  },
+  {
+    "id": "frame_glitch_legend",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：故障閃爍",
+    "desc": "Docoin 傳奇框，頭像邊框帶有數位故障粒子效果。",
+    "price": 15,
+    "currency": "docoin",
+    "icon": "📺"
+  },
+  {
+    "id": "title_code_master",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：程式碼大師",
+    "desc": "校園程式社團菁英專屬稱號。",
+    "price": 340,
+    "icon": "💻"
+  },
+  {
+    "id": "title_spring_breeze",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：春風編程師",
+    "desc": "春季主題稱號，聊天室也會顯示。",
+    "price": 380,
+    "icon": "🌷"
+  },
+  {
+    "id": "title_cyber_ninja",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：賽博忍者",
+    "desc": "暗影穿梭于程式碼間的頂級稱號。",
+    "price": 640,
+    "icon": "🥷"
+  },
+  {
+    "id": "title_forest_guardian",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：森林守護者",
+    "desc": "自然系守護者稱號，辨識度十足。",
+    "price": 520,
+    "icon": "🌲"
+  },
+  {
+    "id": "badge_homework_hero",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：作業達人",
+    "desc": "準時交作業的模范生徽章。",
+    "price": 230,
+    "icon": "📝"
+  },
+  {
+    "id": "badge_debug_pro",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：除錯專家",
+    "desc": "善於找出 Bug 的開發者徽章。",
+    "price": 250,
+    "icon": "🔍"
+  },
+  {
+    "id": "badge_moonlight",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：月光旅人",
+    "desc": "夜間與冬季主題的銀色徽章。",
+    "price": 270,
+    "icon": "🌙"
+  },
+  {
+    "id": "badge_void_rift",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：虛無裂隙",
+    "desc": "Docoin 傳奇徽章，帶有裂隙能量脈動。",
+    "price": 13,
+    "currency": "docoin",
+    "icon": "🕳️"
+  },
+  {
+    "id": "namecolor_sakura",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：櫻花粉",
+    "desc": "可在個人資料頁與聊天室套用粉嫩字色。",
+    "price": 200,
+    "icon": "🌸"
+  },
+  {
+    "id": "namecolor_matrix",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：矩陣綠",
+    "desc": "駭客風格螢光綠名稱字色。",
+    "price": 240,
+    "icon": "💚"
+  },
+  {
+    "id": "namefx_glitch",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：故障閃爍",
+    "desc": "聊天名稱會出現賽博故障抖動效果。",
+    "price": 280,
+    "icon": "📺"
+  },
+  {
+    "id": "namefx_aurora_pulse",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：極光脈衝",
+    "desc": "Docoin 傳奇名稱特效，極光波紋循環流動。",
+    "price": 13,
+    "currency": "docoin",
+    "icon": "🌌"
+  },
+  {
+    "id": "profilefx_sakura",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：櫻花飄落",
+    "desc": "聊天點頭像的個人面板帶有櫻花飄落背景。",
+    "price": 300,
+    "icon": "🌸"
+  },
+  {
+    "id": "profilefx_starfall",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：流星雨夜",
+    "desc": "Docoin 傳奇面板特效，夜空流星劃過動態。",
+    "price": 15,
+    "currency": "docoin",
+    "icon": "☄️"
+  },
+  {
+    "id": "pack_campus_coder",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：校園程式新手包",
+    "desc": "Python 小蛇頭像 + 竹林框 + 程式碼大師稱號 + 作業達人徽章 + 櫻花粉字色。",
+    "price": 880,
+    "icon": "🎒",
+    "unlocks": [
+      "avatar_code_snake",
+      "frame_bamboo",
+      "title_code_master",
+      "badge_homework_hero",
+      "namecolor_sakura"
+    ]
+  },
+  {
+    "id": "pack_winter_aurora",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：冬日極光季節包",
+    "desc": "櫻花學妹頭像 + 雪花框 + 春風稱號 + 月光徽章 + 櫻花面板特效。",
+    "price": 1280,
+    "icon": "❄️",
+    "unlocks": [
+      "avatar_cherry_blossom",
+      "frame_snowflake",
+      "title_spring_breeze",
+      "badge_moonlight",
+      "profilefx_sakura"
+    ]
+  },
+  {
+    "id": "pack_cyber_legend",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：傳奇賽博駭客包",
+    "desc": "電馭战狼頭像 + 故障傳奇框 + 賽博忍者稱號 + 虛無徽章 + 極光/流星傳奇特效。",
+    "price": 28,
+    "icon": "🤖",
+    "unlocks": [
+      "avatar_cyber_wolf",
+      "frame_glitch_legend",
+      "title_cyber_ninja",
+      "badge_void_rift",
+      "namefx_aurora_pulse",
+      "profilefx_starfall"
+    ]
+  },
+  {
+    "id": "avatar_stardust_lord",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：星塵領主",
+    "desc": "Docoin 傳奇頭像，深空星塵與金色光環主題。",
+    "price": 22,
+    "currency": "docoin",
+    "icon": "🌠"
+  },
+  {
+    "id": "avatar_void_emperor",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：虛空帝皇",
+    "desc": "Docoin 傳奇頭像，虛空裂隙與紫黑帝皇風格。",
+    "price": 24,
+    "currency": "docoin",
+    "icon": "👑"
+  },
+  {
+    "id": "avatar_phoenix_flame",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：鳳凰焰心",
+    "desc": "Docoin 傳奇頭像，鳳凰火焰與赤金焰心主題。",
+    "price": 20,
+    "currency": "docoin",
+    "icon": "🔥"
+  },
+  {
+    "id": "frame_celestial_particle",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：天界星環",
+    "desc": "Docoin 傳奇框，天界金色星環粒子環繞效果。",
+    "price": 17,
+    "currency": "docoin",
+    "icon": "🪐"
+  },
+  {
+    "id": "frame_eclipse_particle",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：日蝕光環",
+    "desc": "Docoin 傳奇框，日蝕暗紫與赤紅光環粒子。",
+    "price": 19,
+    "currency": "docoin",
+    "icon": "🌑"
+  },
+  {
+    "id": "frame_stardust_particle",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：星塵旋渦",
+    "desc": "Docoin 傳奇框，星塵旋渦粒子環繞頭像邊框。",
+    "price": 16,
+    "currency": "docoin",
+    "icon": "💫"
+  },
+  {
+    "id": "badge_event_horizon",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：事件視界",
+    "desc": "Docoin 傳奇徽章，黑洞事件視界能量脈動。",
+    "price": 14,
+    "currency": "docoin",
+    "icon": "🕳️"
+  },
+  {
+    "id": "badge_singularity",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：奇點核心",
+    "desc": "Docoin 傳奇徽章，奇點坍縮核心發光動畫。",
+    "price": 15,
+    "currency": "docoin",
+    "icon": "⚫"
+  },
+  {
+    "id": "badge_ether_crown",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：以太王冠",
+    "desc": "Docoin 傳奇徽章，以太光冕環繞王冠特效。",
+    "price": 12,
+    "currency": "docoin",
+    "icon": "👑"
+  },
+  {
+    "id": "namefx_stardust",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：星塵閃爍",
+    "desc": "Docoin 傳奇名稱特效，星塵微粒閃爍流動。",
+    "price": 13,
+    "currency": "docoin",
+    "icon": "✨"
+  },
+  {
+    "id": "namefx_pulse_core",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：脈衝核心",
+    "desc": "Docoin 傳奇名稱特效，核心脈衝光波擴散。",
+    "price": 14,
+    "currency": "docoin",
+    "icon": "💓"
+  },
+  {
+    "id": "profilefx_cosmic_aurora",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：宇宙極光",
+    "desc": "Docoin 傳奇面板特效，宇宙極光漸層流動背景。",
+    "price": 16,
+    "currency": "docoin",
+    "icon": "🌌"
+  },
+  {
+    "id": "profilefx_void_rift",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：虛空裂隙",
+    "desc": "Docoin 傳奇面板特效，虛空裂隙能量翻湧動態。",
+    "price": 17,
+    "currency": "docoin",
+    "icon": "🌀"
+  },
+  {
+    "id": "profilefx_glitch",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：故障閃爍",
+    "desc": "聊天個人面板出現賽博故障閃爍與色差抖動。",
+    "price": 18,
+    "currency": "docoin",
+    "icon": "📺"
+  },
+  {
+    "id": "profilefx_matrix_rain",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：矩陣代碼雨",
+    "desc": "聊天個人面板背景呈現綠色代碼雨流動。",
+    "price": 20,
+    "currency": "docoin",
+    "icon": "💻"
+  },
+  {
+    "id": "profilefx_golden_halo",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：聖金光環",
+    "desc": "聊天個人面板帶有金色光環與柔光脈衝。",
+    "price": 680,
+    "icon": "✨"
+  },
+  {
+    "id": "profilefx_void_ripple",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：虛空漣漪",
+    "desc": "Docoin 傳奇面板特效，虛空能量漣漪擴散動態。",
+    "price": 22,
+    "currency": "docoin",
+    "icon": "🌑"
+  },
+  {
+    "id": "profilefx_cherry_bloom",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：彼岸櫻雨",
+    "desc": "聊天個人面板伴隨粉櫻花瓣飄落。",
+    "price": 360,
+    "icon": "🌺"
+  },
+  {
+    "id": "profilefx_cyber_grid",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：賽博網格",
+    "desc": "Docoin 傳奇面板特效，霓虹網格透視空間感。",
+    "price": 16,
+    "currency": "docoin",
+    "icon": "🔲"
+  },
+  {
+    "id": "profilefx_aurora_wave",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：極光波動",
+    "desc": "聊天個人面板極光色帶緩緩流動。",
+    "price": 480,
+    "icon": "🌈"
+  },
+  {
+    "id": "profilefx_crystal_frost",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：水晶霜華",
+    "desc": "聊天個人面板冰晶質感與霜藍光暈。",
+    "price": 520,
+    "icon": "❄️"
+  },
+  {
+    "id": "profilefx_plasma_storm",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：等離子風暴",
+    "desc": "Docoin 傳奇面板特效，等離子電漿翻湧脈動。",
+    "price": 19,
+    "currency": "docoin",
+    "icon": "⚡"
+  },
+  {
+    "id": "profilefx_inferno_glow",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：業火餘燼",
+    "desc": "聊天個人面板赤金火焰餘燼緩燃動態。",
+    "price": 540,
+    "icon": "🔥"
+  },
+  {
+    "id": "pack_stellar_sovereign",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：星際君王包",
+    "desc": "星塵領主頭像 + 天界/星塵傳奇框 + 星際稱號 + 以太王冠徽章 + 星塵/宇宙極光特效。",
+    "price": 38,
+    "icon": "🛸",
+    "unlocks": [
+      "avatar_stardust_lord",
+      "frame_celestial_particle",
+      "frame_stardust_particle",
+      "title_starlord",
+      "badge_ether_crown",
+      "namefx_stardust",
+      "profilefx_cosmic_aurora"
+    ]
+  },
+  {
+    "id": "pack_void_legend",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：虛空傳奇包",
+    "desc": "虛空帝皇頭像 + 日蝕傳奇框 + 虛空稱號 + 事件視界/奇點徽章 + 脈衝/虛空特效。",
+    "price": 42,
+    "icon": "🌌",
+    "unlocks": [
+      "avatar_void_emperor",
+      "frame_eclipse_particle",
+      "title_void_walker",
+      "badge_event_horizon",
+      "badge_singularity",
+      "namefx_pulse_core",
+      "profilefx_void_rift"
+    ]
+  },
+  {
+    "id": "avatar_koala_soft",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：樹懶無尾熊",
+    "desc": "聊天與個人頁會使用軟萌無尾熊主題頭像。",
+    "price": 370,
+    "icon": "🐨"
+  },
+  {
+    "id": "avatar_unicorn_dream",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：夢幻獨角獸",
+    "desc": "聊天與個人頁會使用夢幻獨角獸主題頭像。",
+    "price": 420,
+    "icon": "🦄"
+  },
+  {
+    "id": "avatar_robot_gold",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：黃金機器人",
+    "desc": "聊天與個人頁會使用黃金機甲主題頭像。",
+    "price": 480,
+    "icon": "🤖"
+  },
+  {
+    "id": "avatar_dolphin_wave",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：海豚浪花",
+    "desc": "聊天與個人頁會使用海洋海豚主題頭像。",
+    "price": 390,
+    "icon": "🐬"
+  },
+  {
+    "id": "avatar_eagle_sky",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：天空之鷹",
+    "desc": "聊天與個人頁會使用翱翔老鷹主題頭像。",
+    "price": 440,
+    "icon": "🦅"
+  },
+  {
+    "id": "frame_amethyst",
+    "category": "style",
+    "slot": "frame",
+    "name": "紫水晶光暈頭像框",
+    "desc": "可在個人資料頁與聊天室套用紫水晶光暈外框。",
+    "price": 350,
+    "icon": "💎"
+  },
+  {
+    "id": "frame_thunder",
+    "category": "style",
+    "slot": "frame",
+    "name": "雷電風暴頭像框",
+    "desc": "可在個人資料頁與聊天室套用雷電風暴外框。",
+    "price": 540,
+    "icon": "⚡"
+  },
+  {
+    "id": "frame_dragon_jade",
+    "category": "style",
+    "slot": "frame",
+    "name": "龍紋翡翠頭像框",
+    "desc": "可在個人資料頁與聊天室套用龍紋翡翠外框。",
+    "price": 580,
+    "icon": "🐲"
+  },
+  {
+    "id": "frame_sunset_glow",
+    "category": "style",
+    "slot": "frame",
+    "name": "暮光暖陽頭像框",
+    "desc": "可在個人資料頁套用夕陽暖色柔光邊框。",
+    "price": 360,
+    "icon": "🌅"
+  },
+  {
+    "id": "frame_ocean_deep",
+    "category": "style",
+    "slot": "frame",
+    "name": "深海漸層頭像框",
+    "desc": "可在個人資料頁與聊天室套用深海藍綠漸層外框。",
+    "price": 400,
+    "icon": "🌊"
+  },
+  {
+    "id": "title_data_sage",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：數據賢者",
+    "desc": "數據分析與演算法愛好者專屬稱號。",
+    "price": 380,
+    "icon": "📊"
+  },
+  {
+    "id": "title_pixel_pioneer",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：像素先驅",
+    "desc": "復古像素與遊戲開發者專屬稱號。",
+    "price": 420,
+    "icon": "👾"
+  },
+  {
+    "id": "title_cloud_mage",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：雲端法師",
+    "desc": "雲端架構與 DevOps 高手專屬稱號。",
+    "price": 580,
+    "icon": "☁️"
+  },
+  {
+    "id": "title_mechanic_master",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：機械大師",
+    "desc": "機器人與硬體整合高手專屬稱號。",
+    "price": 620,
+    "icon": "⚙️"
+  },
+  {
+    "id": "title_lightning_coder",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：閃電編碼者",
+    "desc": "極速開發與高效能程式設計者稱號。",
+    "price": 560,
+    "icon": "⚡"
+  },
+  {
+    "id": "avatar_owl_wise",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：智慧貓頭鷹",
+    "desc": "聊天與個人頁會使用學霸貓頭鷹主題頭像。",
+    "price": 370,
+    "icon": "🦉"
+  },
+  {
+    "id": "avatar_dragon_cute",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：萌龍寶寶",
+    "desc": "聊天與個人頁會使用奇幻萌龍主題頭像。",
+    "price": 470,
+    "icon": "🐲"
+  },
+  {
+    "id": "avatar_java_bean",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：Java 咖啡豆",
+    "desc": "程式學習者專屬的 Java 咖啡主題頭像。",
+    "price": 420,
+    "icon": "☕"
+  },
+  {
+    "id": "avatar_scratch_cat",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：Scratch 小貓",
+    "desc": "積木程式入門專屬的可愛小貓頭像。",
+    "price": 400,
+    "icon": "🐈"
+  },
+  {
+    "id": "avatar_bubble_tea",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：珍珠奶茶",
+    "desc": "聊天與個人頁會使用美食系奶茶主題頭像。",
+    "price": 360,
+    "icon": "🧋"
+  },
+  {
+    "id": "avatar_ramen_bowl",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：拉麵達人",
+    "desc": "聊天與個人頁會使用暖系拉麵主題頭像。",
+    "price": 370,
+    "icon": "🍜"
+  },
+  {
+    "id": "avatar_pumpkin_autumn",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：秋收南瓜",
+    "desc": "秋季限定風格的南瓜主題頭像。",
+    "price": 390,
+    "icon": "🎃"
+  },
+  {
+    "id": "avatar_snowman_winter",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：雪人夥伴",
+    "desc": "冬季限定風格的雪人主題頭像。",
+    "price": 400,
+    "icon": "⛄"
+  },
+  {
+    "id": "avatar_soccer_star",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：足球之星",
+    "desc": "聊天與個人頁會使用運動系足球主題頭像。",
+    "price": 430,
+    "icon": "⚽"
+  },
+  {
+    "id": "avatar_basket_ace",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：籃球高手",
+    "desc": "聊天與個人頁會使用運動系籃球主題頭像。",
+    "price": 430,
+    "icon": "🏀"
+  },
+  {
+    "id": "avatar_kitsune_spirit",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：妖狐精靈",
+    "desc": "聊天與個人頁會使用日式妖狐主題頭像。",
+    "price": 490,
+    "icon": "🎭"
+  },
+  {
+    "id": "avatar_docoin_golden",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：傳奇金鑽",
+    "desc": "Docoin 傳奇頭像，金色晶鑽光輝造型。",
+    "price": 12,
+    "currency": "docoin",
+    "icon": "💎"
+  },
+  {
+    "id": "avatar_docoin_crystal",
+    "category": "style",
+    "slot": "avatar",
+    "name": "頭像：傳奇晶核",
+    "desc": "Docoin 傳奇頭像，水晶能量核心造型。",
+    "price": 14,
+    "currency": "docoin",
+    "icon": "🔮"
+  },
+  {
+    "id": "frame_stadium_spotlight",
+    "category": "style",
+    "slot": "frame",
+    "name": "球場聚光頭像框",
+    "desc": "可在個人資料頁與聊天室套用運動聚光外框。",
+    "price": 440,
+    "icon": "🏟️"
+  },
+  {
+    "id": "frame_moonlit_legend",
+    "category": "style",
+    "slot": "frame",
+    "name": "傳奇框：月輝星環",
+    "desc": "Docoin 傳奇框，頭像邊框帶有月輝粒子環繞。",
+    "price": 15,
+    "currency": "docoin",
+    "icon": "🌙"
+  },
+  {
+    "id": "title_foodie_coder",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：美食程式師",
+    "desc": "邊寫程式邊享受美食的趣味稱號。",
+    "price": 320,
+    "icon": "🍱"
+  },
+  {
+    "id": "title_sports_champ",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：運動冠軍",
+    "desc": "運動與競技愛好者專屬稱號。",
+    "price": 400,
+    "icon": "🏆"
+  },
+  {
+    "id": "title_myth_keeper",
+    "category": "style",
+    "slot": "title",
+    "name": "稱號：神話守護者",
+    "desc": "神話與奇幻系玩家專屬高階稱號。",
+    "price": 580,
+    "icon": "📜"
+  },
+  {
+    "id": "badge_ocean_explorer",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：海洋探險家",
+    "desc": "探索海洋主題的冒險者徽章。",
+    "price": 240,
+    "icon": "🐚"
+  },
+  {
+    "id": "badge_meal_master",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：美食大師",
+    "desc": "美食系玩家的趣味徽章。",
+    "price": 230,
+    "icon": "🍽️"
+  },
+  {
+    "id": "badge_sports_mvp",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：運動 MVP",
+    "desc": "運動競技愛好者專屬 MVP 徽章。",
+    "price": 260,
+    "icon": "🥇"
+  },
+  {
+    "id": "badge_ancient_rune",
+    "category": "utility",
+    "slot": "badge",
+    "name": "徽章：遠古符文",
+    "desc": "Docoin 傳奇徽章，帶有符文能量脈動。",
+    "price": 13,
+    "currency": "docoin",
+    "icon": "ᯅ"
+  },
+  {
+    "id": "namecolor_ocean",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：海洋藍",
+    "desc": "可在個人資料頁與聊天室套用海洋藍字色。",
+    "price": 190,
+    "icon": "🌊"
+  },
+  {
+    "id": "namecolor_gold_medal",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：金牌金",
+    "desc": "可在個人資料頁與聊天室套用金牌金字色。",
+    "price": 220,
+    "icon": "🥇"
+  },
+  {
+    "id": "namecolor_pumpkin",
+    "category": "utility",
+    "slot": "nameColor",
+    "name": "名稱顏色：南瓜橙",
+    "desc": "可在個人資料頁與聊天室套用秋季南瓜字色。",
+    "price": 200,
+    "icon": "🎃"
+  },
+  {
+    "id": "namefx_sparkle",
+    "category": "utility",
+    "slot": "nameEffect",
+    "name": "名稱特效：星光閃爍",
+    "desc": "聊天名稱會出現柔和星光閃爍效果。",
+    "price": 270,
+    "icon": "✨"
+  },
+  {
+    "id": "profilefx_ocean_breeze",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：海風漣漪",
+    "desc": "聊天點頭像的個人面板帶有海風漣漪背景。",
+    "price": 310,
+    "icon": "🌊"
+  },
+  {
+    "id": "profilefx_golden_aura",
+    "category": "utility",
+    "slot": "profileEffect",
+    "name": "個人面板特效：黃金光環",
+    "desc": "Docoin 傳奇面板特效，金色光環環繞動態。",
+    "price": 15,
+    "currency": "docoin",
+    "icon": "✨"
+  },
+  {
+    "id": "pack_animal_buddies",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：動物夥伴包",
+    "desc": "海豚 + 貓頭鷹頭像 + 海浪框 + 海洋徽章 + 海洋藍字色。",
+    "price": 950,
+    "icon": "🐾",
+    "unlocks": [
+      "avatar_dolphin_wave",
+      "avatar_owl_wise",
+      "frame_ocean_deep",
+      "badge_ocean_explorer",
+      "namecolor_ocean"
+    ]
+  },
+  {
+    "id": "pack_foodie_gamer",
+    "category": "bundle",
+    "type": "bundle",
+    "name": "組合包：美食玩家包",
+    "desc": "奶茶 + 拉麵頭像 + 美食稱號 + 美食徽章 + 南瓜橙字色。",
+    "price": 820,
+    "icon": "🍜",
+    "unlocks": [
+      "avatar_bubble_tea",
+      "avatar_ramen_bowl",
+      "title_foodie_coder",
+      "badge_meal_master",
+      "namecolor_pumpkin"
+    ]
+  },
+  {
+    "id": "pack_mythic_docoin",
+    "category": "bundle",
+    "type": "bundle",
+    "currency": "docoin",
+    "name": "組合包：傳奇神話包",
+    "desc": "傳奇金鑽 + 妖狐頭像 + 月輝框 + 遠古符文徽章 + 黃金面板特效。",
+    "price": 30,
+    "icon": "🌠",
+    "unlocks": [
+      "avatar_docoin_golden",
+      "avatar_kitsune_spirit",
+      "frame_moonlit_legend",
+      "badge_ancient_rune",
+      "profilefx_golden_aura"
+    ]
+  }
+]
