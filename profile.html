@@ -376,6 +376,25 @@
         .pro-custom-avatar-btn.secondary { background: rgba(255,255,255,0.08); color: #e2e8f0; }
         .pro-custom-avatar-meta { font-size: 11px; color: #94a3b8; margin-top: 8px; line-height: 1.5; }
         #custom-avatar-input { display: none; }
+        .avatar-crop-card { max-width: 360px; }
+        .avatar-crop-viewport {
+            position: relative; width: 300px; height: 300px; margin: 0 auto 12px;
+            border-radius: 12px; overflow: hidden; background: #0f172a; touch-action: none;
+        }
+        .avatar-crop-viewport canvas { display: block; width: 300px; height: 300px; cursor: grab; }
+        .avatar-crop-viewport canvas:active { cursor: grabbing; }
+        .avatar-crop-mask {
+            position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(circle at center, transparent 130px, rgba(0,0,0,0.58) 131px);
+        }
+        .avatar-crop-ring {
+            position: absolute; left: 50%; top: 50%; width: 260px; height: 260px;
+            transform: translate(-50%, -50%); border: 2px solid rgba(255,255,255,0.9);
+            border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 1px rgba(0,0,0,0.35);
+        }
+        .avatar-crop-zoom-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; color: #94a3b8; }
+        .avatar-crop-zoom-row input[type=range] { flex: 1; accent-color: #5865f2; }
+        .avatar-crop-hint { font-size: 12px; color: #c4b5fd; line-height: 1.55; margin: 0 0 10px; }
         .dc-member-info { font-size: 12px; color: #64748b; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); }
         .btn-save-profile {
             margin-top: 12px; border: none; border-radius: 12px; padding: 12px 18px;
@@ -526,7 +545,7 @@
                     <p style="font-size:13px;color:#94a3b8;margin:0 0 12px;">商城購買的道具可在這裡裝備，聊天室與個人面板會同步顯示。</p>
                     <div id="pro-custom-avatar-section" class="pro-custom-avatar-box" style="display:none;">
                         <h3>💎 Pro 自訂頭像</h3>
-                        <p style="font-size:12px;color:#c4b5fd;margin:0;line-height:1.55;">上傳照片會自動壓縮為小尺寸 JPEG 並存入帳號；換新照片會覆寫舊檔，切換商城頭像則會刪除自訂照片。</p>
+                        <p style="font-size:12px;color:#c4b5fd;margin:0;line-height:1.55;">上傳後在<strong>中間圓圈</strong>內調整構圖（圓內即頭像範圍），儲存為高畫質 JPEG（最高約 384×384、單人 ≤512KB）。換新照片會覆寫舊檔。</p>
                         <div class="pro-custom-avatar-actions">
                             <input type="file" id="custom-avatar-input" accept="image/jpeg,image/png,image/webp,image/gif">
                             <button type="button" class="pro-custom-avatar-btn primary" id="btn-pick-custom-avatar">📷 上傳照片</button>
@@ -631,6 +650,27 @@
         <div class="modal-actions">
             <button type="button" class="btn-modal-cancel" id="btn-name-cancel">取消</button>
             <button type="button" class="btn-modal-save" id="btn-name-save">儲存</button>
+        </div>
+    </div>
+</div>
+
+<div id="avatar-crop-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card avatar-crop-card" role="dialog" aria-labelledby="avatar-crop-title">
+        <h3 id="avatar-crop-title">調整頭像範圍</h3>
+        <p class="avatar-crop-hint">白圈<strong>以內</strong>就是頭像顯示範圍。把臉或主體對準圓心，<strong>拖曳</strong>移動照片、<strong>滑桿</strong>放大縮小。</p>
+        <div class="avatar-crop-viewport">
+            <canvas id="avatar-crop-canvas" aria-label="拖曳調整頭像位置"></canvas>
+            <div class="avatar-crop-mask" aria-hidden="true"></div>
+            <div class="avatar-crop-ring" aria-hidden="true"></div>
+        </div>
+        <div class="avatar-crop-zoom-row">
+            <span>縮放</span>
+            <input type="range" id="avatar-crop-zoom" min="100" max="400" value="100" aria-label="縮放照片">
+        </div>
+        <div id="avatar-crop-msg" style="font-size:12px;color:#93c5fd;min-height:1.2em;margin-bottom:4px;"></div>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal-cancel" id="btn-avatar-crop-cancel">取消</button>
+            <button type="button" class="btn-modal-save" id="btn-avatar-crop-confirm">確認並上傳</button>
         </div>
     </div>
 </div>
@@ -1467,7 +1507,7 @@
         const has = DoratchCustomAvatar.hasStoredCustomAvatar(data);
         if (removeBtn) removeBtn.style.display = has ? "inline-flex" : "none";
         if (meta) {
-            if (!has) meta.textContent = "尚未上傳 · 建議使用正方形照片，系統會壓縮至約 96×96 JPEG。";
+            if (!has) meta.textContent = "尚未上傳 · 選照片後在中間白圈內調整構圖（圓內即頭像），最高約 384×384 JPEG。";
             else {
                 const kb = Math.max(1, Math.round((Number(data.customAvatarBytes) || 0) / 1024));
                 meta.textContent = "已設定自訂頭像 · 約 " + kb + " KB · 上傳新照片會覆寫舊檔。";
@@ -1840,6 +1880,45 @@
     const btnPickCustomAvatar = document.getElementById("btn-pick-custom-avatar");
     const customAvatarInput = document.getElementById("custom-avatar-input");
     const btnRemoveCustomAvatar = document.getElementById("btn-remove-custom-avatar");
+    const avatarCropMsg = document.getElementById("avatar-crop-msg");
+    const btnCropConfirm = document.getElementById("btn-avatar-crop-confirm");
+
+    async function uploadCompressedCustomAvatar(compressed, statusEl) {
+        const payload = DoratchCustomAvatar.buildCustomAvatarFirestorePayload(compressed);
+        const eq = { ...(getEquipped(userData)), avatar: DoratchCustomAvatar.CUSTOM_AVATAR_TYPE };
+        await updateDoc(userRef, { ...payload, equippedCosmetics: eq });
+        userData = { ...userData, ...payload, equippedCosmetics: eq };
+        applyDisplayUI(currentUser, userData);
+        if (statusEl) statusEl.textContent = "自訂頭像已更新（舊照片已覆寫刪除）。";
+    }
+
+    const avatarCrop = DoratchCustomAvatar.createAvatarCropController({
+        onConfirm: async (cropCanvas) => {
+            if (!userRef || !currentUser || !cropCanvas) return;
+            if (!DoratchCustomAvatar.canUploadCustomAvatar(userData)) {
+                if (avatarCropMsg) avatarCropMsg.textContent = "需要 Doratch Pro 才能上傳。";
+                return;
+            }
+            const status = document.getElementById("custom-avatar-msg");
+            if (avatarCropMsg) avatarCropMsg.textContent = "壓縮並上傳中…";
+            if (btnCropConfirm) btnCropConfirm.disabled = true;
+            if (btnPickCustomAvatar) btnPickCustomAvatar.disabled = true;
+            try {
+                const compressed = await DoratchCustomAvatar.compressCroppedCanvas(cropCanvas);
+                await uploadCompressedCustomAvatar(compressed, status);
+                avatarCrop.close();
+            } catch (e) {
+                console.error(e);
+                const err = DoratchCustomAvatar.formatCompressError(e && e.message);
+                if (avatarCropMsg) avatarCropMsg.textContent = err;
+                if (status) status.textContent = err;
+            } finally {
+                if (btnCropConfirm) btnCropConfirm.disabled = false;
+                if (btnPickCustomAvatar) btnPickCustomAvatar.disabled = false;
+            }
+        }
+    });
+
     if (btnPickCustomAvatar && customAvatarInput) {
         btnPickCustomAvatar.addEventListener("click", () => customAvatarInput.click());
         customAvatarInput.addEventListener("change", async () => {
@@ -1851,21 +1930,16 @@
                 if (status) status.textContent = "需要 Doratch Pro 才能上傳自訂頭像。";
                 return;
             }
-            if (status) status.textContent = "壓縮並上傳中…";
-            btnPickCustomAvatar.disabled = true;
+            if (!avatarCrop) {
+                if (status) status.textContent = "裁切介面載入失敗，請重新整理頁面。";
+                return;
+            }
             try {
-                const compressed = await DoratchCustomAvatar.compressImageFile(file);
-                const payload = DoratchCustomAvatar.buildCustomAvatarFirestorePayload(compressed);
-                const eq = { ...(getEquipped(userData)), avatar: DoratchCustomAvatar.CUSTOM_AVATAR_TYPE };
-                await updateDoc(userRef, { ...payload, equippedCosmetics: eq });
-                userData = { ...userData, ...payload, equippedCosmetics: eq };
-                applyDisplayUI(currentUser, userData);
-                if (status) status.textContent = "自訂頭像已更新（舊照片已覆寫刪除）。";
+                if (avatarCropMsg) avatarCropMsg.textContent = "";
+                await avatarCrop.open(file);
             } catch (e) {
                 console.error(e);
                 if (status) status.textContent = DoratchCustomAvatar.formatCompressError(e && e.message);
-            } finally {
-                btnPickCustomAvatar.disabled = false;
             }
         });
     }
