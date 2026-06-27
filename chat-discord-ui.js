@@ -178,13 +178,14 @@
                 }
             }
             if (e.key === "Enter" && typeof inputEl._chatSend === "function") {
+                if (e.shiftKey) return;
                 var sendOnEnter = true;
                 if (typeof inputEl._enterToSendCheck === "function") {
                     sendOnEnter = !!inputEl._enterToSendCheck();
                 }
-                if (e.shiftKey) return;
                 if (!sendOnEnter && !e.ctrlKey && !e.metaKey) return;
                 e.preventDefault();
+                e.stopPropagation();
                 hidePicker();
                 inputEl._chatSend();
             }

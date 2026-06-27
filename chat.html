@@ -62,7 +62,23 @@
         .chat-item.active { background: rgba(76, 151, 255, 0.1); border: 1px solid rgba(76, 151, 255, 0.2); }
         .chat-name { font-weight: bold; color: var(--text-muted); font-size: 15px; display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
         .chat-item:hover .chat-name, .chat-item.active .chat-name { color: white; }
-        .chat-preview { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 25px; }
+        .chat-preview { font-size: 12px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 4px; }
+        .chat-peer-avatar-wrap {
+            position: relative;
+            display: inline-flex;
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+        }
+        .chat-peer-avatar-wrap .member-avatar { width: 28px; height: 28px; border-radius: 50%; }
+        .chat-peer-avatar-wrap .user-presence-dot {
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            width: 9px;
+            height: 9px;
+            border: 2px solid var(--sidebar-bg, #1e1f22);
+        }
         .user-presence-dot {
             width: 8px;
             height: 8px;
@@ -781,6 +797,8 @@
             border: 4px solid #2b2d31;
         }
         .profile-pop-status-dot.bot { background: #5865f2; }
+        .profile-pop-status-dot.offline { background: #6b7280; box-shadow: none; }
+        .profile-pop-presence-line { font-size: 12px; color: #949ba4; margin-top: 4px; }
         .profile-pop-identity {
             padding-top: 48px;
             padding-left: 2px;
@@ -1354,7 +1372,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limitToLast, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     let STAFF_COSMETIC_ITEMS = [];
     let STAFF_AVATAR_URLS = {};
     let ownedItemsBySlotWithStaff;
@@ -1725,6 +1743,9 @@
     const chatUpdatedAtCache = {};
     let chatMaxMessages = 300;
     let currentChatDocData = null;
+    let lastChatDocBotsKey = "";
+    let lastChatDocPrivateReqKey = "";
+    let lastChatDocParticipantsKey = "";
 
     function serverBoostApi() {
         return window.DoratchServerBoost || null;
@@ -2146,6 +2167,10 @@
             try { presenceUnsubs[uid](); } catch (_) {}
             delete presenceUnsubs[uid];
         });
+        if (memberPresenceRefreshTimer) {
+            clearTimeout(memberPresenceRefreshTimer);
+            memberPresenceRefreshTimer = null;
+        }
         document.removeEventListener("visibilitychange", onPresenceVisibility);
         window.removeEventListener("focus", touchMyLastSeen);
     }
@@ -2201,6 +2226,7 @@
         patchFriendItemPresence(uid);
         patchPrivateChatItemPresence(uid);
         patchPrivateProfilePresence(uid);
+        patchProfilePopPresence(uid);
         scheduleMemberListPresenceRefresh();
     }
 
@@ -2231,14 +2257,35 @@
 
     function patchPrivateChatItemPresence(uid) {
         if (!uid) return;
-        const online = isOnlineUser(userCache[uid]);
+        const u = userCache[uid];
+        const online = isOnlineUser(u);
         document.querySelectorAll('#list-private .chat-item[data-peer-uid="' + uid + '"]').forEach(function (item) {
             const dot = item.querySelector(".user-presence-dot");
             if (dot) {
                 dot.classList.toggle("online", online);
                 dot.classList.toggle("offline", !online);
             }
+            const preview = item.querySelector(".chat-preview");
+            if (preview) {
+                const base = preview.getAttribute("data-base-preview") || preview.textContent.split(" · ")[0] || "";
+                preview.setAttribute("data-base-preview", base);
+                preview.textContent = base + " · " + (online ? "在線" : "離線");
+            }
         });
+    }
+
+    function patchProfilePopPresence(uid) {
+        const pop = document.getElementById("profile-pop");
+        if (!pop || pop.style.display === "none") return;
+        const popUid = pop.dataset.profileUid || "";
+        if (!popUid || popUid !== uid) return;
+        const dot = pop.querySelector(".profile-pop-status-dot");
+        if (!dot || dot.classList.contains("bot")) return;
+        const online = isOnlineUser(userCache[uid]);
+        dot.classList.toggle("online", online);
+        dot.classList.toggle("offline", !online);
+        const line = pop.querySelector(".profile-pop-presence-line");
+        if (line) line.textContent = online ? "🟢 在線" : "⚪ 離線";
     }
 
     function patchPrivateProfilePresence(uid) {
@@ -2445,14 +2492,14 @@
         return d.toLocaleDateString() + " " + d.toLocaleTimeString([], timeOptions(chatPrefs.showSeconds));
     }
 
-    async function maybeDesktopNotify(title, body) {
+    async function maybeDesktopNotify(title, body, tag) {
         if (!chatPrefs.desktopNotification || typeof Notification === "undefined") return;
         if (document.hasFocus()) return;
-        let permission = Notification.permission;
-        if (permission === "default") {
-            try { permission = await Notification.requestPermission(); } catch { permission = "denied"; }
-        }
-        if (permission === "granted") new Notification(title, { body: body || "" });
+        if (tag && tag === currentChatId) return;
+        if (Notification.permission !== "granted") return;
+        try {
+            new Notification(title, { body: body || "", tag: tag ? String(tag) : undefined });
+        } catch (_) {}
     }
 
     function ownedItemsBySlot(data, slot) {
@@ -3656,8 +3703,8 @@
         const isOutgoingReq = requestPending && chat.requestFrom === currentUser.uid;
 
         const seenBefore = Object.prototype.hasOwnProperty.call(chatUpdatedAtCache, chat.id);
-        if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0)) {
-            maybeDesktopNotify("Doratch 新訊息：" + rawName, chat.lastMessage || "你有一則新訊息");
+        if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0) && chat.id !== currentChatId) {
+            maybeDesktopNotify("Doratch 新訊息：" + rawName, chat.lastMessage || "你有一則新訊息", chat.id);
         }
         chatUpdatedAtCache[chat.id] = Math.max(chatUpdatedAtCache[chat.id] || 0, updatedAtMs);
 
@@ -3672,14 +3719,18 @@
         const privatePresenceDot = (chat.type === "private" && privatePeerUid && !isIncomingReq)
             ? '<span class="user-presence-dot ' + (privatePeerOnline ? "online" : "offline") + '"></span>'
             : "";
+        const privatePreviewBase = isOutgoingReq ? "你已送出訊息請求，等待對方回應" : String(chat.lastMessage || "開始聊天吧！");
+        const privatePreviewText = (chat.type === "private" && privatePeerUid && !isIncomingReq)
+            ? (privatePreviewBase + " · " + (privatePeerOnline ? "在線" : "離線"))
+            : (isOutgoingReq ? privatePreviewBase : escHtml(privatePreviewBase));
         const privateAvatarHtml = (chat.type === "private" && privatePeerUid)
-            ? privatePresenceDot + '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(rawName || "User") + '&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,\'' + privatePeerUid + "')\">"
+            ? '<span class="chat-peer-avatar-wrap">' + privatePresenceDot + '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(rawName || "User") + '&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,\'' + privatePeerUid + "')\"></span></span>"
             : "";
 
         item.innerHTML =
             '<div class="chat-name" style="display:flex; align-items:center; gap:8px;">' + privateAvatarHtml + icon + " " + displayName + " " + unreadHtml +
             ' <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">' + timeStr + "</span></div>" +
-            '<div class="chat-preview">' + (isOutgoingReq ? "你已送出訊息請求，等待對方回應" : escHtml(String(chat.lastMessage || "開始聊天吧！"))) + "</div>" +
+            '<div class="chat-preview"' + (chat.type === "private" && privatePeerUid && !isIncomingReq ? (' data-base-preview="' + escHtml(privatePreviewBase) + '"') : "") + '>' + privatePreviewText + "</div>" +
             privateRemoveBtn;
 
         return {
@@ -3889,6 +3940,112 @@
     let currentChatName = "";
     let currentChatIcon = "💬";
 
+    function getMessagesRenderContext(msgArea) {
+        const rows = msgArea.querySelectorAll(".message-row[data-msg-id]");
+        if (!rows.length) return { lastSenderId: null, lastTimeStr: null };
+        const last = rows[rows.length - 1];
+        return {
+            lastSenderId: last.getAttribute("data-sender-id") || null,
+            lastTimeStr: last.getAttribute("data-time-full") || null
+        };
+    }
+
+    function finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight) {
+        if (stickToBottom) {
+            msgArea.scrollTop = msgArea.scrollHeight;
+            hideNewMessagesPill();
+        } else if (msgArea.scrollHeight > prevScrollHeight) {
+            showNewMessagesPill();
+        }
+    }
+
+    function buildMessageRowHtml(docSnap, ctx) {
+        const msg = docSnap.data();
+        const lastSenderId = ctx.lastSenderId;
+        const lastTimeStr = ctx.lastTimeStr;
+        const isBotMsg = msg.type === "bot" || msg.senderType === "bot";
+        const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
+            ? msg.senderCosmetics
+            : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "", staffRole: "", subscriptionTier: "" };
+        const senderName = isBotMsg
+            ? (msg.botName || "Bot")
+            : (msg.senderDisplayName || (msg.senderEmail || "未知").split("@")[0]);
+        const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
+        const timeStr = formatMsgTime(timeObj);
+        const fullTimeStr = formatMsgFullTime(timeObj);
+        const avatarUrl = isBotMsg
+            ? "https://ui-avatars.com/api/?name=" + encodeURIComponent(msg.botName || "Bot") + "&background=23a559&color=fff"
+            : avatarFromCosmetics(msg.senderEmail || senderName, senderCosmetics.avatar || "");
+        const baseFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
+        const avatarFrame = (!isBotMsg && isLegendaryFrame(senderCosmetics.frame || ""))
+            ? (baseFrame + " avatar-frame-legendary")
+            : baseFrame;
+        const editedMark = msg.editedAt ? '<span class="msg-edited">(edited)</span>' : "";
+        const mine = msg.senderId === currentUser.uid;
+        let quickActionsHtml = '<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById(\'' + docSnap.id + "')\">↩</button>";
+        if (mine && msg.type === "text") quickActionsHtml += '<button class="msg-quick-btn" title="編輯" onclick="editMessageById(\'' + docSnap.id + "')\">✏️</button>";
+        if (mine && msg.type !== "gift") quickActionsHtml += '<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById(\'' + docSnap.id + "')\">🗑️</button>";
+        quickActionsHtml += "</div>";
+        const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
+        const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
+        const badgeLabel = currentChatType === "server" ? "房主" : "管理員";
+        const teacherBadge = isTeacher ? '<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ' + badgeLabel + "</span>" : "";
+        const botBadge = isBotMsg ? '<span class="bot-badge">BOT</span>' : "";
+        const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || ""))
+            ? ("user-title-badge legendary-title" + (isStaffLegendaryTitle(senderCosmetics.title || "") ? " staff-legendary" : "") + (isDocoinLegendaryTitle(senderCosmetics.title || "") ? " docoin-title-lux" : ""))
+            : "user-title-badge";
+        const badgeCls = (!isBotMsg && isLegendaryBadge(senderCosmetics.badge || ""))
+            ? ("user-cosmetic-badge legendary-badge" + (isStaffLegendaryBadge(senderCosmetics.badge || "") ? " staff-legendary" : "") + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
+            : "user-cosmetic-badge";
+        const titleBadge = (!isBotMsg && senderCosmetics.title)
+            ? '<span class="' + titleCls + '"><span class="chip-icon">🏷️</span><span class="chip-label">' + escHtml(senderCosmetics.title) + "</span></span>"
+            : "";
+        const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? '<span class="' + badgeCls + '">✨ ' + escHtml(senderCosmetics.badge) + "</span>" : "";
+        const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? nameColorStyleAttr(senderCosmetics.nameColor, senderCosmetics.nameEffect) : "";
+        const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect)
+            ? (senderCosmetics.nameEffectClass || nameEffectClass(senderCosmetics.nameEffect))
+            : "";
+        const nameFontCls = (!isBotMsg && senderCosmetics.nameFontClass) ? (" " + senderCosmetics.nameFontClass) : "";
+        const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
+        const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
+        const msgSubTier = !isBotMsg ? String(senderCosmetics.subscriptionTier || "").trim() : "";
+        const rowClass = isBotMsg ? "message-row bot-msg" : ("message-row" + (msgStaffRole === "developer" ? " staff-dev-glow" : msgStaffRole === "admin" ? " staff-admin-glow" : ""));
+        const staffRoleBadge = (!isBotMsg && msgStaffRole) ? staffBadgeHtml(msgStaffRole) : "";
+        const subTierBadge = (!isBotMsg && !msgStaffRole && msgSubTier) ? subscriptionBadgeHtml(msgSubTier) : "";
+        const staffAvatarHalo = msgStaffRole === "developer" ? " staff-avatar-halo-dev" : (msgStaffRole === "admin" ? " staff-avatar-halo-admin" : "");
+        const staffBubbleCls = msgStaffRole === "developer" ? " staff-msg-bubble-dev" : (msgStaffRole === "admin" ? " staff-msg-bubble-admin" : "");
+        const staffNameGlow = (!isBotMsg && msgStaffRole === "developer") ? " staff-author-dev" : ((!isBotMsg && msgStaffRole === "admin") ? " staff-author-admin" : "");
+        const replyHtml = msg.replyTo
+            ? '<div class="reply-quote">回覆 ' + escHtml(msg.replyTo.senderName || "使用者") + "：" + escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90)) + "</div>"
+            : "";
+        let contentHtml = "";
+        if (msg.type === "file") {
+            contentHtml =
+                '<div class="msg-file-card ' + ((!isBotMsg && (isLegendaryFrame(senderCosmetics.frame || "") || isLegendaryTitle(senderCosmetics.title || "") || isLegendaryBadge(senderCosmetics.badge || ""))) ? "legendary-share" : "") + '" onclick="downloadXml(\'' + docSnap.id + "')\">" +
+                '<div class="file-icon">📄</div><div class="file-info"><div class="file-name">' + escHtml(msg.fileName || "檔案") + '</div><div class="file-sub">Blockly XML 專案檔 (點擊下載)</div></div><div class="file-download-icon">⬇️</div></div>';
+        } else if (msg.type === "gift") {
+            contentHtml = renderGiftMessageCard(docSnap.id, msg);
+        } else {
+            contentHtml = isBotMsg ? renderBotMessageBody(msg) : ('<div class="msg-text">' + escHtml(msg.text || "") + "</div>");
+        }
+        const rowMeta = ' data-msg-id="' + docSnap.id + '" data-sender-id="' + escHtml(msg.senderId || "") + '" data-time-full="' + escHtml(fullTimeStr) + '" data-staff-role="' + escHtml(msgStaffRole) + '"';
+        let html = "";
+        if (isConsecutive) {
+            html =
+                '<div class="' + rowClass + ' consecutive"' + rowMeta + '>' +
+                '<div class="msg-avatar-container"><span class="msg-time-hover">' + timeStr + (msg.editedAt ? " (edited)" : "") + '</span></div>' +
+                '<div class="msg-content' + staffBubbleCls + '" oncontextmenu="openMessageMenu(event,\'' + docSnap.id + "')\">" + quickActionsHtml + replyHtml + contentHtml + "</div></div>";
+        } else {
+            html =
+                '<div class="' + rowClass + '"' + rowMeta + ' oncontextmenu="openMessageMenu(event,\'' + docSnap.id + "')\">" +
+                '<div class="msg-avatar-container' + (docoinAvatarLux ? " docoin-avatar-lux" : "") + staffAvatarHalo + '"><img src="' + avatarUrl + '" class="msg-avatar ' + avatarFrame + '" onclick="openProfileByMessage(event,\'' + docSnap.id + "')\"></div>" +
+                '<div class="msg-content' + staffBubbleCls + '">' + quickActionsHtml +
+                '<div class="msg-header"><span class="msg-author' + staffNameGlow + nameFontCls + '"><span class="name-fx-text ' + nameEffectCls + '"' + nameStyle + ">" + escHtml(senderName) + "</span>" + staffRoleBadge + subTierBadge + teacherBadge + botBadge + titleBadge + cosmeticBadge + '</span><span class="msg-time">' + fullTimeStr + editedMark + "</span></div>" +
+                replyHtml + contentHtml + "</div></div>";
+        }
+        return { html: html, ctx: { lastSenderId: msg.senderId, lastTimeStr: fullTimeStr } };
+    }
+
     async function renderTypingIndicator(typingUsersMap) {
         const el = document.getElementById("typing-indicator");
         if (!el || !currentChatId) return;
@@ -3905,8 +4062,9 @@
         }
         const names = [];
         for (const uid of activeUids.slice(0, 2)) {
-            const u = await fetchUserByUid(uid);
+            const u = userCache[uid];
             if (u) names.push(displayNameFromUser(u));
+            else fetchUserByUid(uid).then(function (u2) { if (u2) renderTypingIndicator(map); });
         }
         if (!names.length) {
             el.textContent = "有人正在輸入...";
@@ -3972,28 +4130,6 @@
             hint.textContent = "你已送出訊息請求，請等待對方接受。";
             actions.innerHTML = `<button class="mini-btn cancel" onclick="cancelMessageRequest('${currentChatId}')">取消請求</button>`;
         }
-    }
-
-    function handleChatInputKeydown(ev) {
-        if (ev.key !== "Enter") return;
-        if (ev.shiftKey) {
-            ev.stopPropagation();
-            return;
-        }
-        if (chatPrefs.enterToSend) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            window.sendMessage();
-            return;
-        }
-        if (ev.ctrlKey || ev.metaKey) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            window.sendMessage();
-            return;
-        }
-        // enterToSend 關閉：保留純 Enter 換行
-        ev.stopPropagation();
     }
 
     function autoGrowInput(input) {
@@ -4085,6 +4221,9 @@
         }).catch(function () {});
 
         // 監聽聊天室文件（用於更新成員名單等）
+        lastChatDocBotsKey = "";
+        lastChatDocPrivateReqKey = "";
+        lastChatDocParticipantsKey = "";
         unsubscribeChatDoc = onSnapshot(doc(db, "chats", chatId), (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
@@ -4098,13 +4237,27 @@
                     currentPrivatePeerUid = otherUid || "";
                 }
                 syncPresenceWatchers();
-                refreshChatBotsMeta();
+
+                const botsKey = JSON.stringify(data.attachedBots || []);
+                if (botsKey !== lastChatDocBotsKey) {
+                    lastChatDocBotsKey = botsKey;
+                    refreshChatBotsMeta();
+                }
+
+                const participantsKey = (data.participants || []).slice().sort().join(",");
+                const privateReqKey = String(data.requestStatus || "") + "|" + String(data.requestTo || "") + "|" + String(data.requestFrom || "");
+                const membersStructuralChange = participantsKey !== lastChatDocParticipantsKey || privateReqKey !== lastChatDocPrivateReqKey;
+                lastChatDocParticipantsKey = participantsKey;
+                lastChatDocPrivateReqKey = privateReqKey;
+
                 renderTypingIndicator(data.typingUsers || {});
                 if (currentChatType === "private") {
                     applyPrivateRequestState(data);
-                    const sidebar = document.getElementById("member-sidebar");
-                    if (sidebar && sidebar.classList.contains("active")) {
-                        loadMembers();
+                    if (membersStructuralChange) {
+                        const sidebar = document.getElementById("member-sidebar");
+                        if (sidebar && sidebar.classList.contains("active")) {
+                            loadMembers();
+                        }
                     }
                 }
                 if (currentChatType === "server") {
@@ -4113,9 +4266,11 @@
             }
         });
 
+        const msgLimit = effectiveChatMessageLimit(currentChatDocData);
         const q = query(
             collection(db, "chats", chatId, "messages"),
-            orderBy("createdAt", "asc")
+            orderBy("createdAt", "asc"),
+            limitToLast(msgLimit)
         );
 
     window.currentMessages = {}; // 全域暫存，供下載檔案用
@@ -4127,151 +4282,66 @@
 
         if (snapshot.empty) {
             msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
+            delete msgArea.dataset.messagesReady;
             window.currentMessages = {};
             hideNewMessagesPill();
             setReplyBar();
             return;
         }
 
-        let html = '';
-        let lastSenderId = null;
-        let lastTimeStr = null;
-        
-        window.currentMessages = {};
-
-        snapshot.forEach(docSnap => {
-            const msg = docSnap.data();
-            window.currentMessages[docSnap.id] = msg;
-            
-            const isBotMsg = msg.type === 'bot' || msg.senderType === 'bot';
-            const senderCosmetics = (!isBotMsg && msg.senderCosmetics && typeof msg.senderCosmetics === "object")
-                ? msg.senderCosmetics
-                : { avatar: "", frame: "", title: "", badge: "", nameColor: "", nameEffect: "", profileEffect: "", staffRole: "", subscriptionTier: "" };
-            const senderName = isBotMsg
-                ? (msg.botName || "Bot")
-                : (msg.senderDisplayName || (msg.senderEmail || "未知").split('@')[0]);
-            const timeObj = msg.createdAt ? msg.createdAt.toDate() : new Date();
-            const timeStr = formatMsgTime(timeObj);
-            const fullTimeStr = formatMsgFullTime(timeObj);
-            const avatarUrl = isBotMsg
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.botName || "Bot")}&background=23a559&color=fff`
-                : avatarFromCosmetics(msg.senderEmail || senderName, senderCosmetics.avatar || "");
-            const baseFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
-            const avatarFrame = (!isBotMsg && isLegendaryFrame(senderCosmetics.frame || ""))
-                ? (baseFrame + " avatar-frame-legendary")
-                : baseFrame;
-            const editedMark = msg.editedAt ? `<span class="msg-edited">(edited)</span>` : "";
-            const mine = msg.senderId === currentUser.uid;
-            let quickActionsHtml = `<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" onclick="replyMessageById('${docSnap.id}')">↩</button>`;
-            if (mine && msg.type === "text") quickActionsHtml += `<button class="msg-quick-btn" title="編輯" onclick="editMessageById('${docSnap.id}')">✏️</button>`;
-            if (mine && msg.type !== "gift") quickActionsHtml += `<button class="msg-quick-btn danger" title="刪除" onclick="deleteMessageById('${docSnap.id}')">🗑️</button>`;
-            quickActionsHtml += `</div>`;
-            
-            const isConsecutive = (lastSenderId === msg.senderId) && (lastTimeStr === fullTimeStr);
-            const isTeacher = currentChatTeacherId && msg.senderId === currentChatTeacherId;
-            const badgeLabel = currentChatType === 'server' ? '房主' : '管理員';
-            const teacherBadge = isTeacher ? `<span style="background: #5865F2; color: white; border-radius: 4px; padding: 2px 6px; font-size: 10px; margin-left: 6px; vertical-align: middle;">👑 ${badgeLabel}</span>` : '';
-            const botBadge = isBotMsg ? `<span class="bot-badge">BOT</span>` : '';
-            const titleCls = (!isBotMsg && isLegendaryTitle(senderCosmetics.title || ""))
-                ? ("user-title-badge legendary-title" + (isStaffLegendaryTitle(senderCosmetics.title || "") ? " staff-legendary" : "") + (isDocoinLegendaryTitle(senderCosmetics.title || "") ? " docoin-title-lux" : ""))
-                : "user-title-badge";
-            const badgeCls = (!isBotMsg && isLegendaryBadge(senderCosmetics.badge || ""))
-                ? ("user-cosmetic-badge legendary-badge" + (isStaffLegendaryBadge(senderCosmetics.badge || "") ? " staff-legendary" : "") + (isMythicBadge(senderCosmetics.badge || "") ? " legendary-badge-mythic" : ""))
-                : "user-cosmetic-badge";
-            const titleBadge = (!isBotMsg && senderCosmetics.title)
-                ? `<span class="${titleCls}"><span class="chip-icon">🏷️</span><span class="chip-label">${escHtml(senderCosmetics.title)}</span></span>`
-                : '';
-            const cosmeticBadge = (!isBotMsg && senderCosmetics.badge) ? `<span class="${badgeCls}">✨ ${escHtml(senderCosmetics.badge)}</span>` : '';
-            const nameStyle = (!isBotMsg && senderCosmetics.nameColor) ? nameColorStyleAttr(senderCosmetics.nameColor, senderCosmetics.nameEffect) : '';
-            const nameEffectCls = (!isBotMsg && senderCosmetics.nameEffect)
-                ? (senderCosmetics.nameEffectClass || nameEffectClass(senderCosmetics.nameEffect))
-                : "";
-            const nameFontCls = (!isBotMsg && senderCosmetics.nameFontClass) ? (" " + senderCosmetics.nameFontClass) : "";
-            const docoinAvatarLux = !isBotMsg && isDocoinAvatar(senderCosmetics.avatar || "");
-            const msgStaffRole = !isBotMsg ? String(senderCosmetics.staffRole || "").trim() : "";
-            const msgSubTier = !isBotMsg ? String(senderCosmetics.subscriptionTier || "").trim() : "";
-            const rowClass = isBotMsg ? 'message-row bot-msg' : ('message-row' + (msgStaffRole === 'developer' ? ' staff-dev-glow' : msgStaffRole === 'admin' ? ' staff-admin-glow' : ''));
-            const staffRoleBadge = (!isBotMsg && msgStaffRole) ? staffBadgeHtml(msgStaffRole) : '';
-            const subTierBadge = (!isBotMsg && !msgStaffRole && msgSubTier) ? subscriptionBadgeHtml(msgSubTier) : '';
-            const staffAvatarHalo = msgStaffRole === 'developer' ? ' staff-avatar-halo-dev' : (msgStaffRole === 'admin' ? ' staff-avatar-halo-admin' : '');
-            const staffBubbleCls = msgStaffRole === 'developer' ? ' staff-msg-bubble-dev' : (msgStaffRole === 'admin' ? ' staff-msg-bubble-admin' : '');
-            const staffNameGlow = (!isBotMsg && msgStaffRole === 'developer') ? ' staff-author-dev' : ((!isBotMsg && msgStaffRole === 'admin') ? ' staff-author-admin' : '');
-            const replyHtml = msg.replyTo
-                ? `<div class="reply-quote">回覆 ${escHtml(msg.replyTo.senderName || "使用者")}：${escHtml((msg.replyTo.type === "file" ? ("📁 " + (msg.replyTo.fileName || "檔案")) : (msg.replyTo.text || "")).slice(0, 90))}</div>`
-                : "";
-            
-            let contentHtml = '';
-            if (msg.type === 'file') {
-                contentHtml = `
-                    <div class="msg-file-card ${(!isBotMsg && (isLegendaryFrame(senderCosmetics.frame || "") || isLegendaryTitle(senderCosmetics.title || "") || isLegendaryBadge(senderCosmetics.badge || ""))) ? "legendary-share" : ""}" onclick="downloadXml('${docSnap.id}')">
-                        <div class="file-icon">📄</div>
-                        <div class="file-info">
-                            <div class="file-name">${escHtml(msg.fileName || "檔案")}</div>
-                            <div class="file-sub">Blockly XML 專案檔 (點擊下載)</div>
-                        </div>
-                        <div class="file-download-icon">⬇️</div>
-                    </div>
-                `;
-            } else if (msg.type === 'gift') {
-                contentHtml = renderGiftMessageCard(docSnap.id, msg);
-            } else {
-                contentHtml = isBotMsg ? renderBotMessageBody(msg) : `<div class="msg-text">${escHtml(msg.text || "")}</div>`;
-            }
-
-            if (isConsecutive) {
-                html += `
-                    <div class="${rowClass} consecutive" data-sender-id="${escHtml(msg.senderId || "")}" data-staff-role="${escHtml(msgStaffRole)}">
-                        <div class="msg-avatar-container"><span class="msg-time-hover">${timeStr}${msg.editedAt ? " (edited)" : ""}</span></div>
-                        <div class="msg-content${staffBubbleCls}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">${quickActionsHtml}${replyHtml}${contentHtml}</div>
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="${rowClass}" data-sender-id="${escHtml(msg.senderId || "")}" data-staff-role="${escHtml(msgStaffRole)}" oncontextmenu="openMessageMenu(event,'${docSnap.id}')">
-                        <div class="msg-avatar-container${docoinAvatarLux ? " docoin-avatar-lux" : ""}${staffAvatarHalo}"><img src="${avatarUrl}" class="msg-avatar ${avatarFrame}" onclick="openProfileByMessage(event,'${docSnap.id}')"></div>
-                        <div class="msg-content${staffBubbleCls}">
-                            ${quickActionsHtml}
-                            <div class="msg-header">
-                                <span class="msg-author${staffNameGlow}${nameFontCls}"><span class="name-fx-text ${nameEffectCls}"${nameStyle}>${escHtml(senderName)}</span>${staffRoleBadge}${subTierBadge}${teacherBadge}${botBadge}${titleBadge}${cosmeticBadge}</span>
-                                <span class="msg-time">${fullTimeStr}${editedMark}</span>
-                            </div>
-                            ${replyHtml}${contentHtml}
-                        </div>
-                    </div>
-                `;
-            }
-            
-            lastSenderId = msg.senderId;
-            lastTimeStr = fullTimeStr;
-        });
         const stickToBottom = isMsgAreaNearBottom(msgArea);
         const prevScrollHeight = msgArea.scrollHeight;
-        msgArea.innerHTML = html;
-        if (stickToBottom) {
-            msgArea.scrollTop = msgArea.scrollHeight;
-            hideNewMessagesPill();
-        } else if (msgArea.scrollHeight > prevScrollHeight) {
-            showNewMessagesPill();
+        const isReady = msgArea.dataset.messagesReady === "1";
+        const changes = snapshot.docChanges();
+
+        if (isReady && changes.length && changes.every(function (c) { return c.type === "added"; })) {
+            let ctx = getMessagesRenderContext(msgArea);
+            changes.forEach(function (ch) {
+                window.currentMessages[ch.doc.id] = ch.doc.data();
+                const built = buildMessageRowHtml(ch.doc, ctx);
+                ctx = built.ctx;
+                msgArea.insertAdjacentHTML("beforeend", built.html);
+            });
+            finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+            setReplyBar();
+            return;
         }
+
+        let html = '';
+        let ctx = { lastSenderId: null, lastTimeStr: null };
+        window.currentMessages = {};
+        snapshot.forEach(function (docSnap) {
+            window.currentMessages[docSnap.id] = docSnap.data();
+            const built = buildMessageRowHtml(docSnap, ctx);
+            html += built.html;
+            ctx = built.ctx;
+        });
+        msgArea.innerHTML = html;
+        msgArea.dataset.messagesReady = "1";
+        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
         setReplyBar();
     });
         
         setTimeout(() => {
             const input = document.getElementById('msg-input');
-            if (input && window.ChatDiscordUI) {
+            if (input) {
                 input._chatSend = () => window.sendMessage();
                 input._enterToSendCheck = () => !!chatPrefs.enterToSend;
-                window.ChatDiscordUI.mountInput(
-                    input,
-                    document.getElementById('slash-picker'),
-                    document.getElementById('btn-slash-chip')
-                );
-            }
-            if (input) {
-                input.oninput = scheduleTypingPulse;
-                input.addEventListener("input", () => autoGrowInput(input));
-                input.onblur = clearMyTypingIndicator;
-                input.onkeydown = handleChatInputKeydown;
+                if (window.ChatDiscordUI) {
+                    window.ChatDiscordUI.mountInput(
+                        input,
+                        document.getElementById('slash-picker'),
+                        document.getElementById('btn-slash-chip')
+                    );
+                }
+                if (!input._chatInputBound) {
+                    input._chatInputBound = true;
+                    input.addEventListener("input", function () {
+                        scheduleTypingPulse();
+                        autoGrowInput(input);
+                    });
+                    input.addEventListener("blur", clearMyTypingIndicator);
+                }
                 autoGrowInput(input);
             }
             const sendBtn = document.getElementById("btn-send-msg");
@@ -4289,9 +4359,10 @@
                 memberSidebar.classList.remove('active');
             }
             if (isMobileChatShell()) {
-                setTimeout(function () { focusChatInput(); }, 120);
+                document.body.classList.remove("chat-composer-collapsed");
+            } else {
+                document.body.classList.remove("chat-composer-collapsed");
             }
-            document.body.classList.remove("chat-composer-collapsed");
             syncMobileChatChrome();
             if (chatType === "private") {
                 getDoc(doc(db, "chats", chatId)).then((s) => applyPrivateRequestState(s.exists() ? s.data() : null)).catch(() => {});
@@ -4349,9 +4420,6 @@
                 currentChatAttachedBots,
                 loadBotCode
             );
-            if (document.getElementById('member-sidebar')?.classList.contains('active')) {
-                loadMembers();
-            }
         } catch (e) {
             console.warn("Bot meta 更新失敗", e);
         }
@@ -4831,8 +4899,12 @@
             ? profileFxCls
             : bannerCls;
         const handle = isBot ? "bot" : popHandleFromEmail(email);
+        const popPresenceOnline = (!isBot && msg.senderId) ? isOnlineUser(senderData || userCache[msg.senderId]) : false;
         const statusBlock = customStatus
             ? `<div class="profile-pop-status">${escHtml(customStatus)}</div>`
+            : "";
+        const presenceBlock = (!isBot && msg.senderId)
+            ? `<div class="profile-pop-presence-line">${popPresenceOnline ? "🟢 在線" : "⚪ 離線"}</div>`
             : "";
         const bioBlock = profileBio
             ? `<div class="profile-pop-section"><div class="profile-pop-section-label">關於我</div><div class="profile-pop-bio">${escHtml(profileBio)}</div></div><div class="profile-pop-divider"></div>`
@@ -4879,11 +4951,12 @@
             <div class="profile-pop-sheet">
                 <div class="profile-pop-avatar-wrap${docoinAvatarLux ? " docoin-avatar-lux" : ""}">
                     <img src="${avatarUrl}" alt="" class="profile-pop-avatar ${frameClass(c.frame || "")} ${isLegendaryFrame(c.frame || "") ? "avatar-frame-legendary" : ""}">
-                    <span class="profile-pop-status-dot${isBot ? " bot" : ""}"></span>
+                    <span class="profile-pop-status-dot${isBot ? " bot" : (popPresenceOnline ? " online" : " offline")}"></span>
                 </div>
                 <div class="profile-pop-identity">
                     <div class="profile-pop-name ${nameFxCls}${popNameFontCls}">${c.nameColor && !GRADIENT_NAME_EFFECTS.has(nameFxCls) ? `<span class="name-fx-text ${nameFxCls}" style="color:${escHtml(c.nameColor)}">` : `<span class="name-fx-text ${nameFxCls}">`}${escHtml(name)}</span></div>
                     <div class="profile-pop-handle">${escHtml(handle)}</div>
+                    ${presenceBlock}
                     ${statusBlock}
                     ${rolePills.length ? `<div class="profile-pop-role-row">${rolePills.join("")}</div>` : ""}
                 </div>
@@ -4897,6 +4970,8 @@
                 ${profileBtn}
             </div>
         `;
+        if (!isBot && msg.senderId) pop.dataset.profileUid = msg.senderId;
+        else delete pop.dataset.profileUid;
         pop.classList.remove(...PROFILE_FX_CLASSES, "docoin-panel-lux");
         if (profileFxCls) pop.classList.add(profileFxCls);
         pop.classList.toggle("docoin-panel-lux", docoinPanelLux);
@@ -5235,20 +5310,22 @@
     window.sendMessage = async () => {
         if (!currentChatId) return;
         if (isSendingMessage) return;
+        const input = document.getElementById('msg-input');
+        const rawText = String(input && input.value || "").replace(/\r\n/g, "\n");
+        const text = rawText.trim();
+        if (!text) return;
+        isSendingMessage = true;
         if (currentChatType === "private") {
             try {
                 const chatSnap = await getDoc(doc(db, "chats", currentChatId));
                 const chatData = chatSnap.exists() ? chatSnap.data() : null;
                 if (chatData && chatData.requestStatus === "pending") {
                     applyPrivateRequestState(chatData);
+                    isSendingMessage = false;
                     return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
                 }
             } catch {}
         }
-        const input = document.getElementById('msg-input');
-        const rawText = String(input.value || "").replace(/\r\n/g, "\n");
-        const text = rawText.trim();
-        if (!text) return;
         const replyPayload = replyToMessage ? {
             id: replyToMessage.id,
             senderName: replyToMessage.senderName || "",
@@ -5262,7 +5339,6 @@
         if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
         const sendBtn = document.getElementById("btn-send-msg");
         if (sendBtn) sendBtn.disabled = true;
-        isSendingMessage = true;
 
         try {
             const cosmetic = currentCosmeticSnapshot();
