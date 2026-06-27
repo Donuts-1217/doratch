@@ -326,7 +326,11 @@ print("Hello, Doratch!")
         busy: false,
         history: [],
         lastRuntimeError: "",
-        lastRuntimeCode: ""
+        lastRuntimeCode: "",
+        aiLocked: false,
+        proxyMode: "direct",
+        proxyUrl: "",
+        proxyModel: ""
     };
 
     if (dedicatedBotScreen) {
@@ -431,6 +435,70 @@ print("Hello, Doratch!")
         const status = document.getElementById("ai-ide-status");
         status.textContent = msg || "";
         status.classList.toggle("error", !!isError);
+    }
+
+    function setAiIdeEnabled(enabled) {
+        const panel = document.getElementById("ai-ide-panel");
+        const disabled = !enabled;
+        aiState.aiLocked = disabled;
+        if (!panel) return;
+        const controls = [
+            "ai-api-key", "ai-model", "ai-remember-key", "ai-prompt"
+        ];
+        controls.forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.disabled = disabled;
+        });
+        panel.style.opacity = disabled ? "0.58" : "1";
+        if (disabled) {
+            setAiStatus("AI IDE 已被管理員停用", true);
+            renderAiOutput("此帳號目前沒有 AI IDE 使用權限，請聯絡管理員開啟。");
+        }
+    }
+
+    function normalizeTutorModel(name) {
+        var aliases = {
+            "gemini-2.0-flash-lite": "gemini-2.5-flash-lite",
+            "gemini-2.0-flash": "gemini-2.5-flash",
+            "gemini-1.5-flash": "gemini-2.5-flash-lite",
+            "gemini-1.5-pro": "gemini-2.5-flash"
+        };
+        var m = String(name || "").trim();
+        return aliases[m] || m || "gemini-2.5-flash-lite";
+    }
+
+    async function loadAiBackendConfig() {
+        aiState.proxyMode = "direct";
+        aiState.proxyUrl = "";
+        aiState.proxyModel = "";
+        const modelInput = document.getElementById("ai-model");
+        const keyInput = document.getElementById("ai-api-key");
+        const remember = document.getElementById("ai-remember-key");
+        try {
+            const cfgSnap = await getDoc(doc(db, "system_config", "python_tutor"));
+            const cfg = cfgSnap.exists() ? (cfgSnap.data() || {}) : {};
+            const backend = String(cfg.backend || "").trim().toLowerCase();
+            const gasUrl = String(cfg.gasProxyUrl || "").trim();
+            if (cfg.enabled && backend === "gas" && gasUrl) {
+                aiState.proxyMode = "gas";
+                aiState.proxyUrl = gasUrl;
+                aiState.proxyModel = normalizeTutorModel(cfg.model);
+                if (modelInput && aiState.proxyModel) modelInput.value = aiState.proxyModel;
+                if (keyInput) {
+                    keyInput.value = "";
+                    keyInput.placeholder = "已使用 admin 設定的 GAS 代理（不需貼 API Key）";
+                    keyInput.disabled = true;
+                }
+                if (remember) remember.disabled = true;
+                setAiStatus("AI 後端：GAS 代理（admin 設定）", false);
+                return;
+            }
+        } catch (_) {}
+        if (keyInput) {
+            keyInput.disabled = false;
+            keyInput.placeholder = "貼上 Gemini API Key（只存本機）";
+        }
+        if (remember) remember.disabled = false;
     }
 
     function renderAiOutput(text) {
@@ -681,11 +749,52 @@ print("Hello, Doratch!")
         return whole;
     }
 
+    async function callGasProxy(promptText, mode) {
+        const url = String(aiState.proxyUrl || "").trim();
+        if (!url) throw new Error("GAS 代理未設定");
+        const model = normalizeTutorModel(aiState.proxyModel || document.getElementById("ai-model").value.trim());
+        const hist = trimAiHistory(aiState.history).slice(-10).map(function (m) {
+            return {
+                role: m.role === "model" ? "assistant" : "user",
+                content: String(m.text || "").slice(0, 1200)
+            };
+        });
+        const payload = {
+            question: promptText,
+            model: model,
+            ideMode: true,
+            ideAction: mode,
+            lessonTitle: "Python Studio AI IDE",
+            lessonSummary: "程式編輯與除錯助手",
+            goals: [mode],
+            codeSnippet: String(getCode() || "").slice(0, 4500),
+            lastError: String(aiState.lastRuntimeError || "").slice(0, 500),
+            analysisFailed: [],
+            history: hist
+        };
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (!json.ok) {
+            const msg = String(json.error || "GAS 代理錯誤");
+            const hint = String(json.hint || "").trim();
+            throw new Error(hint ? (msg + "\n" + hint) : msg);
+        }
+        return String(json.text || "").trim();
+    }
+
     async function runAi(mode) {
         if (aiState.busy) return;
+        if (aiState.aiLocked) {
+            setAiStatus("AI IDE 已被管理員停用", true);
+            return;
+        }
         const apiKey = document.getElementById("ai-api-key").value.trim();
         const model = document.getElementById("ai-model").value.trim() || "gemini-2.0-flash";
-        if (!apiKey) {
+        if (!apiKey && aiState.proxyMode !== "gas") {
             setAiStatus("請先貼上 Gemini API Key", true);
             return;
         }
@@ -707,13 +816,18 @@ print("Hello, Doratch!")
                 generationConfig: { temperature: (mode === "fix" || mode === "runtime-fix") ? 0.2 : 0.5 }
             };
             let merged = "";
-            try {
-                merged = await callGeminiStream(apiKey, model, payload, function (chunked) {
-                    renderAiOutput(chunked);
-                });
-            } catch (_) {
-                setAiStatus("串流失敗，改用一般模式…", false);
-                merged = await callGeminiGenerate(apiKey, model, payload);
+            if (aiState.proxyMode === "gas") {
+                setAiStatus("AI 產生中（GAS 代理）…", false);
+                merged = await callGasProxy(promptText, mode);
+            } else {
+                try {
+                    merged = await callGeminiStream(apiKey, model, payload, function (chunked) {
+                        renderAiOutput(chunked);
+                    });
+                } catch (_) {
+                    setAiStatus("串流失敗，改用一般模式…", false);
+                    merged = await callGeminiGenerate(apiKey, model, payload);
+                }
             }
             renderAiOutput(merged);
             pushAiHistory("user", promptText, mode);
@@ -1265,6 +1379,10 @@ print("Hello, Doratch!")
         setAiStatus("已覆蓋目前程式碼", false);
     }
     function runAiFromPrompt() {
+        if (aiState.aiLocked) {
+            setAiStatus("AI IDE 已被管理員停用", true);
+            return;
+        }
         const el = document.getElementById("ai-prompt");
         const raw = String(el && el.value || "").trim();
         if (!raw) return runAi("generate");
@@ -1391,6 +1509,13 @@ print("Hello, Doratch!")
 
     onAuthStateChanged(auth, async (user) => {
         if (!user) { location.href = "login.html"; return; }
+        try {
+            const userSnap = await getDoc(doc(db, "users", user.uid));
+            const canUseAi = !userSnap.exists() || userSnap.data().aiIdeEnabled !== false;
+            setAiIdeEnabled(canUseAi);
+        } catch (_) {
+            setAiIdeEnabled(true);
+        }
         loadModeProjectIds(user);
         document.getElementById("bot-settings").style.display = "block";
         pyTerm = getPyTerm();
@@ -1416,6 +1541,7 @@ print("Hello, Doratch!")
             });
         }
         loadAiPrefs();
+        await loadAiBackendConfig();
         loadAiChat();
         engineReady = isEngineReady();
         await initMonaco();

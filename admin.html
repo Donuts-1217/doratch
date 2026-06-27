@@ -579,6 +579,13 @@
                 </select>
             </div>
             <div class="form-group">
+                <label>AI IDE 使用權限</label>
+                <select id="u-ai-ide-enabled">
+                    <option value="true">允許使用</option>
+                    <option value="false">停用</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>雲端儲存上限 (MB)</label>
                 <input type="number" id="u-cloud-storage-limit-mb" min="1" step="1" placeholder="例如 1">
             </div>
@@ -1198,6 +1205,7 @@
             }
         }
         document.getElementById('u-banned').value = u.isBanned ? 'true' : 'false';
+        document.getElementById('u-ai-ide-enabled').value = (u.aiIdeEnabled === false) ? 'false' : 'true';
         document.getElementById('u-cloud-storage-limit-mb').value = Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : defaultCloudStorageMB;
         document.getElementById('u-cloud-storage-max-files').value = Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1
             ? u.cloudStorageMaxFiles : defaultCloudStorageMaxFiles;
@@ -1215,7 +1223,7 @@
             : '<span style="color:#64748B;">未啟用</span>';
         const supportOnly = myRole === 'support';
         [
-            'u-displayName', 'u-doord', 'u-docoin', 'u-lv', 'u-xp', 'u-role', 'u-banned',
+            'u-displayName', 'u-doord', 'u-docoin', 'u-lv', 'u-xp', 'u-role', 'u-banned', 'u-ai-ide-enabled',
             'u-cloud-storage-limit-mb', 'u-cloud-storage-max-files', 'u-review-daily-limit', 'u-review-today-bonus'
         ].forEach((id) => {
             const el = document.getElementById(id);
@@ -1411,6 +1419,7 @@
         const xp = parseInt(document.getElementById('u-xp').value, 10);
         const role = document.getElementById('u-role').value;
         const isBanned = document.getElementById('u-banned').value === 'true';
+        const aiIdeEnabled = document.getElementById('u-ai-ide-enabled').value === 'true';
         const cloudStorageLimitMB = parseInt(document.getElementById('u-cloud-storage-limit-mb').value, 10);
         const cloudStorageMaxFiles = parseInt(document.getElementById('u-cloud-storage-max-files').value, 10);
         const reviewDailyLimit = parseInt(document.getElementById('u-review-daily-limit').value, 10);
@@ -1438,6 +1447,7 @@
         if (xp !== (u.xp ?? 0)) changes.push(`XP → ${xp}`);
         if (role !== (u.role || 'student')) changes.push(`角色 → ${role}`);
         if (isBanned !== !!(u.isBanned)) changes.push(isBanned ? '封鎖帳號' : '解除封鎖');
+        if (aiIdeEnabled !== (u.aiIdeEnabled !== false)) changes.push(`AI IDE → ${aiIdeEnabled ? '允許' : '停用'}`);
         if (cloudStorageLimitMB !== (Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : defaultCloudStorageMB)) changes.push(`雲端儲存上限(MB) → ${cloudStorageLimitMB}`);
         if (cloudStorageMaxFiles !== (Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1 ? u.cloudStorageMaxFiles : defaultCloudStorageMaxFiles)) changes.push(`雲端作品數上限 → ${cloudStorageMaxFiles}`);
         if (reviewDailyLimit !== (Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1)) changes.push(`審核每日上限 → ${reviewDailyLimit}`);
@@ -1475,6 +1485,7 @@
                 (xp !== (u.xp ?? 0)) ||
                 (role !== (u.role || 'student')) ||
                 (isBanned !== !!(u.isBanned)) ||
+                (aiIdeEnabled !== (u.aiIdeEnabled !== false)) ||
                 (cloudStorageLimitMB !== (Number.isFinite(u.cloudStorageLimitMB) ? u.cloudStorageLimitMB : defaultCloudStorageMB)) ||
                 (cloudStorageMaxFiles !== (Number.isFinite(u.cloudStorageMaxFiles) && u.cloudStorageMaxFiles >= 1 ? u.cloudStorageMaxFiles : defaultCloudStorageMaxFiles)) ||
                 (reviewDailyLimit !== (Number.isFinite(u.reviewUploadDailyLimit) ? u.reviewUploadDailyLimit : 1)) ||
@@ -1512,6 +1523,7 @@
                 xp,
                 role,
                 isBanned,
+                aiIdeEnabled,
                 cloudStorageLimitMB: cloudStorageLimitMB,
                 cloudStorageMaxFiles: cloudStorageMaxFiles,
                 reviewUploadDailyLimit: reviewDailyLimit,
@@ -1524,7 +1536,7 @@
                 allUsers[idx] = {
                     ...allUsers[idx],
                     displayName: nameCheck.name,
-                    doord, coins: doord, docoin, lv, xp, role, isBanned,
+                    doord, coins: doord, docoin, lv, xp, role, isBanned, aiIdeEnabled,
                     cloudStorageLimitMB: cloudStorageLimitMB,
                     cloudStorageMaxFiles: cloudStorageMaxFiles,
                     reviewUploadDailyLimit: reviewDailyLimit,
