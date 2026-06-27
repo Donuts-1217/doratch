@@ -68,6 +68,9 @@ function normalizeTutorModel(name) {
 
 function friendlyGeminiError(json, rawMsg) {
     var msg = rawMsg || (json && json.error) || "GAS 代理錯誤";
+    if (/high demand|try again later|overloaded|temporarily unavailable/i.test(msg)) {
+        return "Gemini 目前流量較高（暫時性），請等 1～3 分鐘後再試。若持續失敗，請確認 GAS 代理已部署最新版腳本。";
+    }
     if (/not found|not supported/i.test(msg)) {
         return "Gemini 模型已下架或名稱錯誤。請在 admin 改為 gemini-2.5-flash-lite，並重新部署 GAS 代理。";
     }
