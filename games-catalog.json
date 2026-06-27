@@ -1,0 +1,8 @@
+[
+  { "id": "survival", "name": "異界生存", "icon": "🌍", "path": "game-survival.html", "desc": "開放世界生存冒險" },
+  { "id": "clicker", "name": "點擊放置", "icon": "👆", "path": "game-clicker.html", "desc": "放置成長與資源經營" },
+  { "id": "rpg", "name": "RPG 探索", "icon": "⚔️", "path": "game-rpg.html", "desc": "回合制探索戰鬥" },
+  { "id": "cards", "name": "卡牌對戰", "icon": "🃏", "path": "game-cards.html", "desc": "策略卡牌競技" },
+  { "id": "pet", "name": "寵物養成", "icon": "🐾", "path": "game-pet.html", "desc": "養成與互動" },
+  { "id": "mine", "name": "採礦經營", "icon": "⛏️", "path": "game-mine.html", "desc": "採礦與升級設施" }
+]

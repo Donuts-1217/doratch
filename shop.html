@@ -483,9 +483,18 @@
     }
     if (!bindShopStaff(window.DoratchRoleCosmetics)) {
         try {
-            bindShopStaff(await import("./shared/doratch-role-cosmetics.js"));
+            bindShopStaff(await import("./doratch-role-cosmetics.js"));
         } catch (staffErr) {
             console.warn("Staff cosmetics module unavailable — shop runs without identity-exclusive section", staffErr);
+        }
+    }
+    let DoratchHonor = globalThis.DoratchHonor || null;
+    if (!DoratchHonor) {
+        try {
+            DoratchHonor = await import("./doratch-honor-badges.js");
+            globalThis.DoratchHonor = DoratchHonor.DoratchHonor || DoratchHonor;
+        } catch (honorErr) {
+            console.warn("Honor badges module unavailable", honorErr);
         }
     }
 
@@ -1143,6 +1152,12 @@
 
     function getFilteredShopItems() {
         let list = itemsBank.filter(itemMatchesFilter);
+        if (DoratchHonor && typeof DoratchHonor.isShopPurchasableBadge === "function") {
+            list = list.filter(function (i) {
+                if (i.slot === "badge" && !DoratchHonor.isShopPurchasableBadge(i.id)) return false;
+                return true;
+            });
+        }
         if (shopCurrency === "doord") list = list.filter(function (i) { return i.currency !== "docoin"; });
         if (shopCurrency === "docoin") list = list.filter(function (i) { return i.currency === "docoin"; });
         const q = shopSearch.trim().toLowerCase();
@@ -1486,6 +1501,7 @@
             const chatRef = doc(db, "chats", privateChat.id);
             const msgRef = doc(collection(db, "chats", privateChat.id, "messages"));
             const unlockIds = getUnlockIds(item);
+            let honorAdded = [];
             await runTransaction(db, async (tx) => {
                 const senderSnap = await tx.get(senderRef);
                 const senderData = senderSnap.exists() ? (senderSnap.data() || {}) : {};
@@ -1493,17 +1509,29 @@
                 const currentDocoin = getDocoin(senderData);
                 if (currency === "docoin") {
                     if (currentDocoin < price) throw new Error("INSUFFICIENT_DOCOIN");
-                    tx.set(senderRef, {
+                    const honorPatch = DoratchHonor && DoratchHonor.applyHonorProgress
+                        ? DoratchHonor.applyHonorProgress(senderData.inventory, senderData.honorStats, {
+                            giftsSent: (DoratchHonor.normalizeHonorStats(senderData.honorStats).giftsSent + 1)
+                        })
+                        : null;
+                    if (honorPatch) honorAdded = honorPatch.addedIds.slice();
+                    tx.set(senderRef, Object.assign({
                         docoin: currentDocoin - price,
                         lastGiftAt: serverTimestamp()
-                    }, { merge: true });
+                    }, honorPatch ? { inventory: honorPatch.inventory, honorStats: honorPatch.honorStats } : {}), { merge: true });
                 } else {
                     if (currentDoord < price) throw new Error("INSUFFICIENT_DOORD");
-                    tx.set(senderRef, {
+                    const honorPatch = DoratchHonor && DoratchHonor.applyHonorProgress
+                        ? DoratchHonor.applyHonorProgress(senderData.inventory, senderData.honorStats, {
+                            giftsSent: (DoratchHonor.normalizeHonorStats(senderData.honorStats).giftsSent + 1)
+                        })
+                        : null;
+                    if (honorPatch) honorAdded = honorPatch.addedIds.slice();
+                    tx.set(senderRef, Object.assign({
                         doord: currentDoord - price,
                         coins: currentDoord - price,
                         lastGiftAt: serverTimestamp()
-                    }, { merge: true });
+                    }, honorPatch ? { inventory: honorPatch.inventory, honorStats: honorPatch.honorStats } : {}), { merge: true });
                 }
                 tx.set(msgRef, {
                     senderId: currentUser.uid,
@@ -1537,7 +1565,14 @@
             });
             closeGiftModal();
             await loadMallData(currentUser);
-            alert("禮物已送出！對方會在你們私訊看到可領取的禮物卡。");
+            if (honorAdded.length && DoratchHonor && DoratchHonor.getHonorBadgeMeta) {
+                alert("禮物已送出！解鎖榮耀：" + honorAdded.map(function (id) {
+                    const meta = DoratchHonor.getHonorBadgeMeta(id);
+                    return meta ? meta.value : id;
+                }).join("、"));
+            } else {
+                alert("禮物已送出！對方會在你們私訊看到可領取的禮物卡。");
+            }
         } catch (e) {
             if (String(e && e.message) === "INSUFFICIENT_DOCOIN") {
                 if (statusEl) statusEl.textContent = "Docoin 不足，無法送禮。";

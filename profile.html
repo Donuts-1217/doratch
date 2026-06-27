@@ -12,11 +12,11 @@
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
-    <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="doratch-subscription.css">
     <link rel="stylesheet" href="doratch-member-theme.css">
-    <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
+    <link rel="stylesheet" href="doratch-docoin-luxury.css">
     <title>個人檔案 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&family=Nunito:wght@700;900&family=Noto+Serif+TC:ital,wght@0,600;1,600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
@@ -638,13 +638,13 @@
 <script src="doratch-staff-cosmetics.js"></script>
 <script src="doratch-subscription.js"></script>
 <script src="doratch-member-style.js"></script>
-<script src="shared/doratch-docoin-catalog.js"></script>
+<script src="doratch-docoin-catalog.js"></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc, setDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { DoratchHonor } from "./shared/doratch-honor-badges.js";
-    import { DoratchCustomAvatar } from "./shared/doratch-custom-avatar.js";
+    import { DoratchHonor } from "./doratch-honor-badges.js";
+    import { DoratchCustomAvatar } from "./doratch-custom-avatar.js";
     window.DoratchHonor = DoratchHonor;
     window.DoratchCustomAvatar = DoratchCustomAvatar;
     let STAFF_COSMETIC_ITEMS = [];
@@ -729,7 +729,7 @@
 
     if (!bindStaffModule(window.DoratchRoleCosmetics)) {
         try {
-            bindStaffModule(await import("./shared/doratch-role-cosmetics.js"));
+            bindStaffModule(await import("./doratch-role-cosmetics.js"));
         } catch (staffErr) {
             console.warn("Staff cosmetics module unavailable — profile runs without identity-exclusive items", staffErr);
             bindStaffFallback();
