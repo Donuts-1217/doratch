@@ -567,7 +567,15 @@
             gap: 10px;
         }
         .request-banner .mini-actions { margin-top: 0; }
-        .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: center; padding: 12px 20px; transition: 0.3s; gap: 12px; }
+        .input-wrapper { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; display: flex; align-items: flex-end; padding: 12px 20px; transition: 0.3s; gap: 12px; }
+        .messages-loading, .messages-empty {
+            padding: 48px 24px;
+            text-align: center;
+            color: #949ba4;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .messages-empty i { display: block; font-style: normal; font-size: 2rem; margin-bottom: 8px; opacity: 0.6; }
         .input-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 20px rgba(76, 151, 255, 0.1); }
         .btn-attach { background: rgba(255,255,255,0.1); color: white; border: none; width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; font-size: 20px; transition: 0.2s; flex-shrink: 0; }
         .btn-attach:hover { background: var(--primary); }
@@ -1003,6 +1011,7 @@
         .member-item--bot:hover { background: rgba(35,165,89,0.1); }
         .member-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-left: 4px; }
         .member-status.online { background: #23a559; box-shadow: 0 0 6px rgba(35,165,89,0.6); }
+        .member-status.offline { background: #6b7280; }
         .member-status.bot { background: #5865f2; }
         .member-avatar { width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; }
         .member-info { flex: 1; min-width: 0; }
@@ -1475,6 +1484,13 @@
     let currentChatBotsMeta = [];
     const botSessionCache = {};
     const userCache = {};
+    let presenceUnsubs = {};
+    let presenceHeartbeatTimer = null;
+    let presenceTickTimer = null;
+    let memberPresenceRefreshTimer = null;
+    const PRESENCE_ONLINE_MS = 3 * 60 * 1000;
+    const PRESENCE_HEARTBEAT_MS = 45 * 1000;
+    const PRESENCE_UI_TICK_MS = 25 * 1000;
     let unsubscribeMessages = null;
     let unsubscribeChatDoc = null;
     let unsubscribeChats = null;
@@ -1497,6 +1513,10 @@
     let incomingMessageRequestCount = -1;
     let currentPrivatePeerUid = "";
     let currentPrivatePeerData = null;
+    let chatListRenderTimer = null;
+    let chatListOrderCache = {};
+    let pendingChatListSnapshot = null;
+    let sidebarPrivatePeerUids = [];
 
     function isMobileChatShell() {
         return window.DoratchMobile
@@ -1504,6 +1524,25 @@
             && window.DoratchMobile.isAppMode()
             && typeof window.DoratchMobile.isMobileDevice === "function"
             && window.DoratchMobile.isMobileDevice();
+    }
+
+    function chatInputPlaceholder() {
+        if (chatPrefs.enterToSend) {
+            return "傳送訊息，Shift+Enter 換行，或輸入 / 使用斜線指令…";
+        }
+        return "傳送訊息，Enter 換行，Ctrl+Enter 送出，或輸入 / 使用斜線指令…";
+    }
+
+    function markActiveChatItem(chatId) {
+        document.querySelectorAll(".chat-item.active").forEach(function (el) { el.classList.remove("active"); });
+        if (!chatId) return;
+        const el = document.querySelector('#chat-list .chat-item[data-chat-id="' + chatId + '"]');
+        if (el) el.classList.add("active");
+    }
+
+    function showMessagesLoadingState() {
+        const msgArea = document.getElementById("messages-area");
+        if (msgArea) msgArea.innerHTML = '<div class="messages-loading">載入訊息中…</div>';
     }
 
     function isMsgAreaNearBottom(msgArea, threshold) {
@@ -2041,7 +2080,10 @@
     ];
     STAFF_COSMETIC_ITEMS.forEach(function (it) { COSMETIC_ITEMS.push(it); });
 
-    window.handleLogout = () => signOut(auth).then(() => location.href='index.html');
+    window.handleLogout = () => {
+        stopPresenceSystem();
+        return signOut(auth).then(() => location.href = "index.html");
+    };
 
     function toMillis(v) {
         if (!v) return 0;
@@ -2054,16 +2096,188 @@
     function isOnlineUser(userData) {
         const ms = toMillis(userData && userData.lastSeen);
         if (!ms) return false;
-        return (Date.now() - ms) <= 5 * 60 * 1000;
+        return (Date.now() - ms) <= PRESENCE_ONLINE_MS;
     }
 
-    async function fetchUserByUid(uid) {
-        if (userCache[uid]) return userCache[uid];
+    function upsertUserCache(uid, data) {
+        if (!uid) return null;
+        const prev = userCache[uid] || {};
+        const next = { uid: uid, ...prev, ...(data || {}) };
+        const prevOnline = isOnlineUser(prev);
+        userCache[uid] = next;
+        const nextOnline = isOnlineUser(next);
+        if (prevOnline !== nextOnline || toMillis(prev.lastSeen) !== toMillis(next.lastSeen)) {
+            onUserPresenceChanged(uid);
+        }
+        return next;
+    }
+
+    function invalidateUserCache(uid) {
+        if (uid && userCache[uid]) delete userCache[uid];
+    }
+
+    async function fetchUserByUid(uid, forceRefresh) {
+        if (!forceRefresh && userCache[uid]) return userCache[uid];
         const s = await getDoc(doc(db, "users", uid));
         if (!s.exists()) return null;
-        const u = { uid: uid, ...s.data() };
-        userCache[uid] = u;
-        return u;
+        return upsertUserCache(uid, s.data());
+    }
+
+    function touchMyLastSeen() {
+        if (!currentUser) return;
+        upsertUserCache(currentUser.uid, { lastSeen: Date.now() });
+        setDoc(doc(db, "users", currentUser.uid), {
+            lastSeen: serverTimestamp(),
+            email: currentUser.email || "",
+            uid: currentUser.uid
+        }, { merge: true }).catch(function () {});
+    }
+
+    function stopPresenceSystem() {
+        if (presenceHeartbeatTimer) {
+            clearInterval(presenceHeartbeatTimer);
+            presenceHeartbeatTimer = null;
+        }
+        if (presenceTickTimer) {
+            clearInterval(presenceTickTimer);
+            presenceTickTimer = null;
+        }
+        Object.keys(presenceUnsubs).forEach(function (uid) {
+            try { presenceUnsubs[uid](); } catch (_) {}
+            delete presenceUnsubs[uid];
+        });
+        document.removeEventListener("visibilitychange", onPresenceVisibility);
+        window.removeEventListener("focus", touchMyLastSeen);
+    }
+
+    function onPresenceVisibility() {
+        if (document.visibilityState === "visible") touchMyLastSeen();
+    }
+
+    function collectPresenceWatchUids() {
+        const set = new Set();
+        if (!currentUser) return [];
+        friendLinks.forEach(function (r) {
+            if ((r.status || "pending") !== "accepted") return;
+            if (r.fromUid === currentUser.uid && r.toUid) set.add(r.toUid);
+            if (r.toUid === currentUser.uid && r.fromUid) set.add(r.fromUid);
+        });
+        if (currentPrivatePeerUid) set.add(currentPrivatePeerUid);
+        sidebarPrivatePeerUids.forEach(function (uid) { if (uid) set.add(uid); });
+        (currentChatParticipants || []).forEach(function (uid) {
+            if (uid && uid !== currentUser.uid) set.add(uid);
+        });
+        return Array.from(set);
+    }
+
+    function syncPresenceWatchers() {
+        const wanted = new Set(collectPresenceWatchUids());
+        Object.keys(presenceUnsubs).forEach(function (uid) {
+            if (!wanted.has(uid)) {
+                try { presenceUnsubs[uid](); } catch (_) {}
+                delete presenceUnsubs[uid];
+            }
+        });
+        wanted.forEach(function (uid) {
+            if (presenceUnsubs[uid]) return;
+            presenceUnsubs[uid] = onSnapshot(doc(db, "users", uid), function (snap) {
+                if (snap.exists()) upsertUserCache(uid, snap.data());
+            }, function () {});
+        });
+    }
+
+    function startPresenceSystem() {
+        stopPresenceSystem();
+        if (!currentUser) return;
+        touchMyLastSeen();
+        presenceHeartbeatTimer = setInterval(touchMyLastSeen, PRESENCE_HEARTBEAT_MS);
+        presenceTickTimer = setInterval(tickPresenceUi, PRESENCE_UI_TICK_MS);
+        document.addEventListener("visibilitychange", onPresenceVisibility);
+        window.addEventListener("focus", touchMyLastSeen);
+        syncPresenceWatchers();
+    }
+
+    function onUserPresenceChanged(uid) {
+        patchFriendItemPresence(uid);
+        patchPrivateChatItemPresence(uid);
+        patchPrivateProfilePresence(uid);
+        scheduleMemberListPresenceRefresh();
+    }
+
+    function tickPresenceUi() {
+        collectPresenceWatchUids().forEach(function (uid) {
+            patchFriendItemPresence(uid);
+            patchPrivateChatItemPresence(uid);
+        });
+        if (currentPrivatePeerUid) patchPrivateProfilePresence(currentPrivatePeerUid);
+        scheduleMemberListPresenceRefresh();
+    }
+
+    function patchFriendItemPresence(uid) {
+        const item = document.querySelector('#list-friends .chat-item[data-friend-uid="' + uid + '"]');
+        if (!item) return;
+        const u = userCache[uid];
+        const online = isOnlineUser(u);
+        const dot = item.querySelector(".user-presence-dot");
+        if (dot) {
+            dot.classList.toggle("online", online);
+            dot.classList.toggle("offline", !online);
+        }
+        const preview = item.querySelector(".chat-preview");
+        if (preview && u) {
+            preview.textContent = (u.email || "") + " · " + (online ? "在線" : "離線");
+        }
+    }
+
+    function patchPrivateChatItemPresence(uid) {
+        if (!uid) return;
+        const online = isOnlineUser(userCache[uid]);
+        document.querySelectorAll('#list-private .chat-item[data-peer-uid="' + uid + '"]').forEach(function (item) {
+            const dot = item.querySelector(".user-presence-dot");
+            if (dot) {
+                dot.classList.toggle("online", online);
+                dot.classList.toggle("offline", !online);
+            }
+        });
+    }
+
+    function patchPrivateProfilePresence(uid) {
+        if (!uid || uid !== currentPrivatePeerUid || currentChatType !== "private") return;
+        const el = document.querySelector(".member-private-online");
+        if (!el) return;
+        const online = isOnlineUser(userCache[uid]);
+        el.textContent = online ? "🟢 在線" : "⚪ 離線";
+    }
+
+    function scheduleMemberListPresenceRefresh() {
+        if (memberPresenceRefreshTimer) return;
+        memberPresenceRefreshTimer = setTimeout(function () {
+            memberPresenceRefreshTimer = null;
+            refreshMemberListPresence();
+        }, 120);
+    }
+
+    function refreshMemberListPresence() {
+        const sidebar = document.getElementById("member-sidebar");
+        if (!sidebar || !sidebar.classList.contains("active") || currentChatType === "private") return;
+        const items = document.querySelectorAll(".member-item[data-member-uid]");
+        if (!items.length) return;
+        let onlineCount = 0;
+        items.forEach(function (item) {
+            const uid = item.getAttribute("data-member-uid");
+            const u = userCache[uid] || { uid: uid };
+            const online = isOnlineUser(u);
+            if (online) onlineCount += 1;
+            const dot = item.querySelector(".member-status");
+            if (dot && !dot.classList.contains("bot")) {
+                dot.classList.toggle("online", online);
+                dot.classList.toggle("offline", !online);
+            }
+        });
+        const sec = document.querySelector(".member-section-title");
+        if (sec && sec.textContent.indexOf("線上") === 0) {
+            sec.textContent = "線上 — " + onlineCount + " / " + items.length;
+        }
     }
 
     async function fetchUserByEmail(email) {
@@ -2192,6 +2406,11 @@
         if (chatPrefs.density === "comfortable") document.body.classList.add("chat-density-comfortable");
         if (window.DoratchMemberStyle && window.DoratchMemberStyle.applyColorThemeToBody) {
             window.DoratchMemberStyle.applyColorThemeToBody(chatPrefs.colorTheme, chatPrefs.accentColor);
+        }
+        const input = document.getElementById("msg-input");
+        if (input) {
+            input.placeholder = chatInputPlaceholder();
+            input._enterToSendCheck = function () { return !!chatPrefs.enterToSend; };
         }
     }
 
@@ -3061,7 +3280,7 @@
         friendRenderTimer = setTimeout(function () {
             friendRenderTimer = null;
             renderFriendPanels();
-        }, 40);
+        }, 80);
     }
 
     async function renderFriendPanels() {
@@ -3071,13 +3290,22 @@
         const listOut = document.getElementById("list-friend-outgoing");
         const catReq = document.getElementById("category-friend-requests");
         const catOut = document.getElementById("category-friend-outgoing");
+        const listHost = document.getElementById("chat-list");
         if (!listFriends || !listReq || !listOut || !catReq || !catOut || !currentUser) return;
-        listFriends.innerHTML = "";
-        listReq.innerHTML = "";
-        listOut.innerHTML = "";
+
+        const scrollTop = listHost ? listHost.scrollTop : 0;
+        const anchorId = currentChatId;
+        let anchorViewportOffset = null;
+        if (anchorId && listHost) {
+            const anchorEl = listHost.querySelector('.chat-item[data-chat-id="' + anchorId + '"]');
+            anchorViewportOffset = getListViewportOffset(listHost, anchorEl);
+        }
+        const friendNodes = [];
+        const reqNodes = [];
+        const outNodes = [];
 
         const friendUidSet = new Set();
-        friendLinks.forEach((r) => {
+        friendLinks.forEach(function (r) {
             if ((r.status || "pending") !== "accepted") return;
             if (r.fromUid === currentUser.uid) friendUidSet.add(r.toUid);
             if (r.toUid === currentUser.uid) friendUidSet.add(r.fromUid);
@@ -3085,81 +3313,100 @@
         const friendUids = Array.from(friendUidSet);
 
         if (!friendUids.length) {
-            listFriends.innerHTML = '<div style="padding:10px 20px;color:#64748b;font-size:12px;">尚無好友，可先送出好友請求</div>';
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:10px 20px;color:#64748b;font-size:12px;";
+            empty.textContent = "尚無好友，可先送出好友請求";
+            friendNodes.push(empty);
         } else {
-            for (const uid of friendUids) {
-                if (token !== friendPanelRenderToken) return;
-                const u = await fetchUserByUid(uid);
+            const friendUsers = await Promise.all(friendUids.map(function (uid) { return fetchUserByUid(uid); }));
+            if (token !== friendPanelRenderToken) return;
+            for (let i = 0; i < friendUids.length; i++) {
+                const uid = friendUids[i];
+                const u = friendUsers[i];
                 if (!u) continue;
                 const n = escHtml(displayNameFromUser(u));
                 const emailText = escHtml(u.email || "");
                 const online = isOnlineUser(u);
                 const item = document.createElement("div");
                 item.className = "chat-item friend-item";
-                item.onclick = (ev) => {
+                item.dataset.friendUid = uid;
+                item.onclick = function (ev) {
                     if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
                     openProfileByUid(ev, uid);
                 };
-                item.innerHTML = `
-                    <div class="chat-name"><span class="user-presence-dot ${online ? "online" : "offline"}"></span> ❤️ ${n}</div>
-                    <div class="chat-preview">${emailText} · ${online ? "在線" : "離線"}</div>
-                    <div class="mini-actions">
-                        <button class="mini-btn dm" onclick="event.stopPropagation();startPrivateWithFriend('${uid}')">私訊</button>
-                        <button class="mini-btn cancel" onclick="event.stopPropagation();removeFriend('${uid}')">移除</button>
-                    </div>
-                `;
-                listFriends.appendChild(item);
+                item.innerHTML =
+                    '<div class="chat-name"><span class="user-presence-dot ' + (online ? "online" : "offline") + '"></span> ❤️ ' + n + "</div>" +
+                    '<div class="chat-preview">' + emailText + " · " + (online ? "在線" : "離線") + "</div>" +
+                    '<div class="mini-actions">' +
+                    '<button class="mini-btn dm" onclick="event.stopPropagation();startPrivateWithFriend(\'' + uid + "')\">私訊</button>" +
+                    '<button class="mini-btn cancel" onclick="event.stopPropagation();removeFriend(\'' + uid + "')\">移除</button>" +
+                    "</div>";
+                friendNodes.push(item);
             }
         }
 
-        const incomingVisible = friendIncoming.filter((req) => !friendUidSet.has(req.fromUid));
+        const incomingVisible = friendIncoming.filter(function (req) { return !friendUidSet.has(req.fromUid); });
         catReq.style.display = incomingVisible.length ? "block" : "none";
-        for (const req of incomingVisible) {
-            if (token !== friendPanelRenderToken) return;
+        const incomingUsers = incomingVisible.length
+            ? await Promise.all(incomingVisible.map(function (req) { return fetchUserByUid(req.fromUid); }))
+            : [];
+        if (token !== friendPanelRenderToken) return;
+        for (let i = 0; i < incomingVisible.length; i++) {
+            const req = incomingVisible[i];
             const fromUid = req.fromUid;
-            const u = await fetchUserByUid(fromUid);
+            const u = incomingUsers[i];
             const n = escHtml(u ? displayNameFromUser(u) : (req.fromEmail || "未知"));
             const emailPreview = escHtml((u && u.email) || req.fromEmail || "");
             const item = document.createElement("div");
             item.className = "chat-item friend-request";
-            item.onclick = (ev) => {
+            item.dataset.requestId = req.id;
+            item.onclick = function (ev) {
                 if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
                 openProfileByUid(ev, fromUid);
             };
-            item.innerHTML = `
-                <div class="chat-name">💌 ${n}</div>
-                <div class="chat-preview">${emailPreview}</div>
-                <div class="mini-actions">
-                    <button class="mini-btn accept" onclick="event.stopPropagation();acceptFriendRequest('${req.id}')">接受</button>
-                    <button class="mini-btn reject" onclick="event.stopPropagation();rejectFriendRequest('${req.id}')">拒絕</button>
-                </div>
-            `;
-            listReq.appendChild(item);
+            item.innerHTML =
+                '<div class="chat-name">💌 ' + n + "</div>" +
+                '<div class="chat-preview">' + emailPreview + "</div>" +
+                '<div class="mini-actions">' +
+                '<button class="mini-btn accept" onclick="event.stopPropagation();acceptFriendRequest(\'' + req.id + "')\">接受</button>" +
+                '<button class="mini-btn reject" onclick="event.stopPropagation();rejectFriendRequest(\'' + req.id + "')\">拒絕</button>" +
+                "</div>";
+            reqNodes.push(item);
         }
 
-        const outgoingVisible = friendOutgoing.filter((req) => !friendUidSet.has(req.toUid));
+        const outgoingVisible = friendOutgoing.filter(function (req) { return !friendUidSet.has(req.toUid); });
         catOut.style.display = outgoingVisible.length ? "block" : "none";
-        for (const req of outgoingVisible) {
-            if (token !== friendPanelRenderToken) return;
+        const outgoingUsers = outgoingVisible.length
+            ? await Promise.all(outgoingVisible.map(function (req) { return fetchUserByUid(req.toUid); }))
+            : [];
+        if (token !== friendPanelRenderToken) return;
+        for (let i = 0; i < outgoingVisible.length; i++) {
+            const req = outgoingVisible[i];
             const toUid = req.toUid;
-            const u = await fetchUserByUid(toUid);
+            const u = outgoingUsers[i];
             const n = escHtml(u ? displayNameFromUser(u) : (req.toEmail || "未知"));
             const emailPreview = escHtml((u && u.email) || req.toEmail || "");
             const item = document.createElement("div");
             item.className = "chat-item";
-            item.onclick = (ev) => {
+            item.dataset.requestId = req.id;
+            item.onclick = function (ev) {
                 if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
                 openProfileByUid(ev, toUid);
             };
-            item.innerHTML = `
-                <div class="chat-name">🕒 ${n}</div>
-                <div class="chat-preview">${emailPreview}</div>
-                <div class="mini-actions">
-                    <button class="mini-btn cancel" onclick="event.stopPropagation();cancelFriendRequest('${req.id}')">取消請求</button>
-                </div>
-            `;
-            listOut.appendChild(item);
+            item.innerHTML =
+                '<div class="chat-name">🕒 ' + n + "</div>" +
+                '<div class="chat-preview">' + emailPreview + "</div>" +
+                '<div class="mini-actions">' +
+                '<button class="mini-btn cancel" onclick="event.stopPropagation();cancelFriendRequest(\'' + req.id + "')\">取消請求</button>" +
+                "</div>";
+            outNodes.push(item);
         }
+
+        applySidebarListNodes(listFriends, friendNodes, "friendUid");
+        applySidebarListNodes(listReq, reqNodes, "requestId");
+        applySidebarListNodes(listOut, outNodes, "requestId");
+        restoreListScrollAnchor(listHost, anchorId, anchorViewportOffset, scrollTop);
+        syncPresenceWatchers();
     }
 
     function subscribeFriendPanels() {
@@ -3194,6 +3441,7 @@
         unsubscribeFriendLinks = onSnapshot(qLinks, async (snap) => {
             friendLinks = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
             scheduleFriendPanelRender();
+            syncPresenceWatchers();
         });
     }
 
@@ -3238,13 +3486,8 @@
             if (sideCoins) sideCoins.innerText = "Doord 0 · Docoin 0";
         }
 
-        try {
-            await setDoc(userRef, {
-                email: user.email || "",
-                uid: user.uid,
-                lastSeen: serverTimestamp()
-            }, { merge: true });
-        } catch (e) {}
+        upsertUserCache(user.uid, currentUserData);
+        startPresenceSystem();
         subscribeFriendPanels();
 
         loadChats();
@@ -3273,6 +3516,294 @@
     });
 
     // 2. 監聽並渲染聊天室列表
+    function replaceListChildren(container, nodes) {
+        if (!container) return;
+        if (typeof container.replaceChildren === "function") {
+            container.replaceChildren.apply(container, nodes);
+        } else {
+            container.innerHTML = "";
+            nodes.forEach(function (n) { container.appendChild(n); });
+        }
+    }
+
+    function getListViewportOffset(listHost, el) {
+        if (!listHost || !el) return null;
+        return el.getBoundingClientRect().top - listHost.getBoundingClientRect().top;
+    }
+
+    function restoreListScrollAnchor(listHost, anchorId, anchorViewportOffset, fallbackScrollTop) {
+        if (!listHost) return;
+        requestAnimationFrame(function () {
+            if (anchorId && anchorViewportOffset !== null) {
+                const el = listHost.querySelector('.chat-item[data-chat-id="' + anchorId + '"]');
+                if (el) {
+                    const drift = getListViewportOffset(listHost, el) - anchorViewportOffset;
+                    if (Math.abs(drift) > 0.5) listHost.scrollTop += drift;
+                    return;
+                }
+            }
+            listHost.scrollTop = fallbackScrollTop;
+        });
+    }
+
+    function syncListNodeEvents(existing, fresh) {
+        existing.onclick = fresh.onclick || null;
+        if (fresh.dataset) {
+            Object.keys(fresh.dataset).forEach(function (k) { existing.dataset[k] = fresh.dataset[k]; });
+        }
+    }
+
+    function applySidebarListNodes(container, nodes, matchAttr) {
+        if (!container) return;
+        const attr = matchAttr || "chatId";
+        const dataKey = "data-" + attr.replace(/([A-Z])/g, "-$1").toLowerCase();
+        const existingItems = Array.from(container.children).filter(function (c) {
+            return c.classList && c.classList.contains("chat-item");
+        });
+        const freshItems = nodes.filter(function (n) { return n.classList && n.classList.contains("chat-item"); });
+        if (existingItems.length === freshItems.length && existingItems.length > 0) {
+            let sameOrder = true;
+            for (let i = 0; i < existingItems.length; i++) {
+                if (existingItems[i].getAttribute(dataKey) !== freshItems[i].getAttribute(dataKey)) {
+                    sameOrder = false;
+                    break;
+                }
+            }
+            if (sameOrder) {
+                for (let i = 0; i < existingItems.length; i++) {
+                    const el = existingItems[i];
+                    const fresh = freshItems[i];
+                    if (el.className !== fresh.className) el.className = fresh.className;
+                    if (el.innerHTML !== fresh.innerHTML) {
+                        el.innerHTML = fresh.innerHTML;
+                        syncListNodeEvents(el, fresh);
+                    } else {
+                        syncListNodeEvents(el, fresh);
+                    }
+                }
+                return;
+            }
+        }
+        replaceListChildren(container, nodes);
+    }
+
+    function patchSidebarPreviewForChat(chatId, lastMessage) {
+        if (!chatId) return;
+        const el = document.querySelector('#chat-list .chat-item[data-chat-id="' + chatId + '"]');
+        if (!el) return;
+        const preview = el.querySelector(".chat-preview");
+        if (preview) preview.textContent = String(lastMessage || "開始聊天吧！");
+        const badge = el.querySelector(".chat-unread-badge");
+        if (badge) badge.remove();
+    }
+
+    function sortChatsForSidebar(chats) {
+        const prev = chatListOrderCache;
+        function isPinnedSelfSend(chat) {
+            return !!(currentChatId && currentUser && chat.id === currentChatId && chat.lastSenderId === currentUser.uid);
+        }
+        chats.sort(function (a, b) {
+            if (isPinnedSelfSend(a) || isPinnedSelfSend(b)) {
+                return (prev[a.id] ?? 0) - (prev[b.id] ?? 0);
+            }
+            const t1 = a.updatedAt ? a.updatedAt.toMillis() : 0;
+            const t2 = b.updatedAt ? b.updatedAt.toMillis() : 0;
+            if (t2 !== t1) return t2 - t1;
+            return (prev[a.id] ?? 0) - (prev[b.id] ?? 0);
+        });
+        chats.forEach(function (c, i) { chatListOrderCache[c.id] = i; });
+    }
+
+    function buildChatListItem(chat) {
+        let displayName = chat.name || "未命名";
+        let rawName = displayName;
+        let icon = "💬";
+        let privatePeerUid = "";
+        if (chat.type === "private") {
+            icon = "👤";
+            displayName = (chat.participantEmails || []).find(function (e) { return e !== currentUser.email; }) || "未知使用者";
+            displayName = displayName.split("@")[0];
+            rawName = displayName;
+            privatePeerUid = (chat.participants || []).find(function (uid) { return uid && uid !== currentUser.uid; }) || "";
+        } else if (chat.type === "server") {
+            icon = "🏫";
+            const SB = serverBoostApi();
+            const boostLv = SB ? SB.getServerBoostLevel(chat) : 0;
+            const boostBadge = SB ? SB.serverBoostBadgeHtml(boostLv) : "";
+            displayName += boostBadge + ' <span style="font-size:10px; opacity:0.7; font-weight:normal;">(代碼: ' + chat.id + ")</span>";
+        } else {
+            icon = "👥";
+        }
+
+        const item = document.createElement("div");
+        item.className = "chat-item" + (currentChatId === chat.id ? " active" : "");
+        item.dataset.chatId = chat.id;
+        if (chat.type === "private" && privatePeerUid) item.dataset.peerUid = privatePeerUid;
+        if (chat.type === "server") {
+            const SB = serverBoostApi();
+            if (SB && SB.getServerBoostLevel(chat) > 0) item.classList.add("server-boosted");
+        }
+        item.onclick = function () { openChat(chat.id, rawName, icon, chat.type, chat.teacherId); };
+
+        const timeStr = chat.updatedAt ? formatMsgTime(chat.updatedAt.toDate()) : "";
+        const readMap = chat.lastReadBy || {};
+        const myReadAt = toMillis(readMap[currentUser.uid]);
+        const updatedAtMs = toMillis(chat.updatedAt);
+        const unread = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
+        const unreadHtml = unread ? '<span class="chat-unread-badge">NEW</span>' : "";
+        const requestPending = chat.type === "private" && chat.requestStatus === "pending";
+        const isIncomingReq = requestPending && chat.requestTo === currentUser.uid;
+        const isOutgoingReq = requestPending && chat.requestFrom === currentUser.uid;
+
+        const seenBefore = Object.prototype.hasOwnProperty.call(chatUpdatedAtCache, chat.id);
+        if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0)) {
+            maybeDesktopNotify("Doratch 新訊息：" + rawName, chat.lastMessage || "你有一則新訊息");
+        }
+        chatUpdatedAtCache[chat.id] = Math.max(chatUpdatedAtCache[chat.id] || 0, updatedAtMs);
+
+        if (isOutgoingReq) item.classList.add("message-request");
+
+        const privateRemoveBtn = (chat.type === "private" && !isIncomingReq)
+            ? '<div class="mini-actions"><button type="button" class="mini-btn cancel" onclick="event.stopPropagation();' +
+              (isOutgoingReq ? ("cancelMessageRequest('" + chat.id + "')") : ("removePrivateChat('" + chat.id + "')")) +
+              '">' + (isOutgoingReq ? "取消請求" : "移除私訊") + "</button></div>"
+            : "";
+        const privatePeerOnline = privatePeerUid && isOnlineUser(userCache[privatePeerUid]);
+        const privatePresenceDot = (chat.type === "private" && privatePeerUid && !isIncomingReq)
+            ? '<span class="user-presence-dot ' + (privatePeerOnline ? "online" : "offline") + '"></span>'
+            : "";
+        const privateAvatarHtml = (chat.type === "private" && privatePeerUid)
+            ? privatePresenceDot + '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(rawName || "User") + '&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,\'' + privatePeerUid + "')\">"
+            : "";
+
+        item.innerHTML =
+            '<div class="chat-name" style="display:flex; align-items:center; gap:8px;">' + privateAvatarHtml + icon + " " + displayName + " " + unreadHtml +
+            ' <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">' + timeStr + "</span></div>" +
+            '<div class="chat-preview">' + (isOutgoingReq ? "你已送出訊息請求，等待對方回應" : escHtml(String(chat.lastMessage || "開始聊天吧！"))) + "</div>" +
+            privateRemoveBtn;
+
+        return {
+            item: item,
+            rawName: rawName,
+            icon: icon,
+            isIncomingReq: isIncomingReq,
+            isOutgoingReq: isOutgoingReq,
+            unreadHtml: unreadHtml,
+            unread: unread
+        };
+    }
+
+    function buildIncomingRequestItem(chat, rawName, icon, unreadHtml) {
+        const reqPreview = chat.lastMessage
+            ? escHtml(String(chat.lastMessage).slice(0, 120))
+            : "等待你接受後才能開始聊天";
+        const reqItem = document.createElement("div");
+        reqItem.className = "chat-item message-request";
+        reqItem.dataset.chatId = chat.id;
+        reqItem.onclick = function (ev) {
+            if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
+            openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
+        };
+        reqItem.innerHTML =
+            '<div class="chat-name">📨 ' + escHtml(rawName) + " " + unreadHtml + '</div>' +
+            '<div class="chat-preview">' + reqPreview + '</div>' +
+            '<div class="mini-actions">' +
+            '<button class="mini-btn accept" onclick="event.stopPropagation();acceptMessageRequest(\'' + chat.id + "')\">接受</button>" +
+            '<button class="mini-btn reject" onclick="event.stopPropagation();rejectMessageRequest(\'' + chat.id + "')\">拒絕</button>" +
+            "</div>";
+        return reqItem;
+    }
+
+    function renderChatSidebarLists(snapshot) {
+        const listHost = document.getElementById("chat-list");
+        const listServer = document.getElementById("list-server");
+        const listGroup = document.getElementById("list-group");
+        const listPrivate = document.getElementById("list-private");
+        const msgReqList = document.getElementById("list-message-requests");
+        const msgReqCategory = document.getElementById("category-message-requests");
+        if (!listServer || !listGroup || !listPrivate) return;
+
+        const scrollTop = listHost ? listHost.scrollTop : 0;
+        const anchorId = currentChatId;
+        let anchorViewportOffset = null;
+        if (anchorId && listHost) {
+            const anchorEl = listHost.querySelector('.chat-item[data-chat-id="' + anchorId + '"]');
+            anchorViewportOffset = getListViewportOffset(listHost, anchorEl);
+        }
+
+        if (snapshot.empty) {
+            replaceListChildren(listServer, []);
+            replaceListChildren(listGroup, []);
+            const empty = document.createElement("div");
+            empty.style.cssText = "padding:20px;text-align:center;color:#949ba4;font-size:13px;";
+            empty.textContent = "目前還沒有對話紀錄";
+            replaceListChildren(listPrivate, [empty]);
+            if (msgReqList) replaceListChildren(msgReqList, []);
+            if (msgReqCategory) msgReqCategory.style.display = "none";
+            restoreListScrollAnchor(listHost, anchorId, anchorViewportOffset, scrollTop);
+            return;
+        }
+
+        const chats = [];
+        snapshot.forEach(function (docSnap) { chats.push({ id: docSnap.id, ...docSnap.data() }); });
+        sortChatsForSidebar(chats);
+
+        const serverNodes = [];
+        const groupNodes = [];
+        const privateNodes = [];
+        const msgReqNodes = [];
+        let incomingReqCount = 0;
+
+        chats.forEach(function (chat) {
+            const built = buildChatListItem(chat);
+            if (built.isIncomingReq) {
+                incomingReqCount += 1;
+                if (msgReqList) msgReqNodes.push(buildIncomingRequestItem(chat, built.rawName, built.icon, built.unreadHtml));
+            }
+            if (chat.type === "server") {
+                serverNodes.push(built.item);
+            } else if (chat.type === "private") {
+                if (!built.isIncomingReq) privateNodes.push(built.item);
+            } else {
+                groupNodes.push(built.item);
+            }
+        });
+
+        applySidebarListNodes(listServer, serverNodes);
+        applySidebarListNodes(listGroup, groupNodes);
+        applySidebarListNodes(listPrivate, privateNodes);
+        if (msgReqList) applySidebarListNodes(msgReqList, msgReqNodes);
+        if (msgReqCategory) msgReqCategory.style.display = incomingReqCount ? "block" : "none";
+        sidebarPrivatePeerUids = chats
+            .filter(function (c) {
+                return c.type === "private" && c.requestStatus !== "pending" && c.requestTo !== currentUser.uid;
+            })
+            .map(function (c) {
+                return (c.participants || []).find(function (uid) { return uid && uid !== currentUser.uid; });
+            })
+            .filter(Boolean);
+        syncPresenceWatchers();
+        if (chatPrefs.notifyMessageRequest && incomingMessageRequestCount >= 0 && incomingReqCount > incomingMessageRequestCount) {
+            maybeDesktopNotify("Doratch 訊息請求", "你收到新的訊息請求");
+        }
+        incomingMessageRequestCount = incomingReqCount;
+
+        restoreListScrollAnchor(listHost, anchorId, anchorViewportOffset, scrollTop);
+        markActiveChatItem(currentChatId);
+    }
+
+    function scheduleChatListRender(snapshot) {
+        pendingChatListSnapshot = snapshot;
+        if (chatListRenderTimer) return;
+        chatListRenderTimer = setTimeout(function () {
+            chatListRenderTimer = null;
+            if (pendingChatListSnapshot) {
+                renderChatSidebarLists(pendingChatListSnapshot);
+                pendingChatListSnapshot = null;
+            }
+        }, 60);
+    }
+
     function loadChats() {
         if (unsubscribeChats) unsubscribeChats();
         if (unsubscribeInvites) unsubscribeInvites();
@@ -3282,128 +3813,8 @@
             where("participants", "array-contains", currentUser.uid)
         );
 
-        unsubscribeChats = onSnapshot(q, (snapshot) => {
-            document.getElementById('list-server').innerHTML = '';
-            document.getElementById('list-group').innerHTML = '';
-            document.getElementById('list-private').innerHTML = '';
-            const msgReqList = document.getElementById('list-message-requests');
-            const msgReqCategory = document.getElementById('category-message-requests');
-            if (msgReqList) msgReqList.innerHTML = '';
-            
-            if (snapshot.empty) {
-                document.getElementById('list-private').innerHTML = '<div style="padding:20px; text-align:center; color:#949ba4; font-size:13px;">目前還沒有對話紀錄</div>';
-                if (msgReqCategory) msgReqCategory.style.display = 'none';
-                return;
-            }
-
-            // 在前端進行排序，避免需要 Firebase 建立複合索引 (Composite Index)
-            const chats = [];
-            snapshot.forEach(docSnap => chats.push({ id: docSnap.id, ...docSnap.data() }));
-            chats.sort((a, b) => {
-                const t1 = a.updatedAt ? a.updatedAt.toMillis() : 0;
-                const t2 = b.updatedAt ? b.updatedAt.toMillis() : 0;
-                return t2 - t1;
-            });
-
-            let incomingReqCount = 0;
-            chats.forEach(chat => {
-                let displayName = chat.name || "未命名";
-                let rawName = displayName;
-                let icon = '💬';
-                let privatePeerUid = "";
-                if (chat.type === 'private') {
-                    icon = '👤';
-                    displayName = (chat.participantEmails || []).find(e => e !== currentUser.email) || "未知使用者";
-                    displayName = displayName.split('@')[0];
-                    rawName = displayName;
-                    privatePeerUid = (chat.participants || []).find((uid) => uid && uid !== currentUser.uid) || "";
-                } else if (chat.type === 'server') {
-                    icon = '🏫';
-                    const SB = serverBoostApi();
-                    const boostLv = SB ? SB.getServerBoostLevel(chat) : 0;
-                    const boostBadge = SB ? SB.serverBoostBadgeHtml(boostLv) : "";
-                    displayName += boostBadge + ` <span style="font-size:10px; opacity:0.7; font-weight:normal;">(代碼: ${chat.id})</span>`;
-                } else {
-                    icon = '👥';
-                }
-
-                const item = document.createElement('div');
-                item.className = `chat-item ${currentChatId === chat.id ? 'active' : ''}`;
-                if (chat.type === 'server') {
-                    const SB = serverBoostApi();
-                    if (SB && SB.getServerBoostLevel(chat) > 0) item.classList.add("server-boosted");
-                }
-                item.onclick = () => openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
-                
-                const timeStr = chat.updatedAt ? formatMsgTime(chat.updatedAt.toDate()) : '';
-                const readMap = chat.lastReadBy || {};
-                const myReadAt = toMillis(readMap[currentUser.uid]);
-                const updatedAtMs = toMillis(chat.updatedAt);
-                const unread = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
-                const unreadHtml = unread ? '<span class="chat-unread-badge">NEW</span>' : '';
-                const requestPending = chat.type === 'private' && chat.requestStatus === 'pending';
-                const isIncomingReq = requestPending && chat.requestTo === currentUser.uid;
-                const isOutgoingReq = requestPending && chat.requestFrom === currentUser.uid;
-
-                const seenBefore = Object.prototype.hasOwnProperty.call(chatUpdatedAtCache, chat.id);
-                if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0)) {
-                    maybeDesktopNotify(`Doratch 新訊息：${rawName}`, chat.lastMessage || "你有一則新訊息");
-                }
-                chatUpdatedAtCache[chat.id] = Math.max(chatUpdatedAtCache[chat.id] || 0, updatedAtMs);
-
-                if (isIncomingReq) {
-                    incomingReqCount += 1;
-                    if (msgReqList) {
-                        const reqPreview = chat.lastMessage
-                            ? escHtml(String(chat.lastMessage).slice(0, 120))
-                            : "等待你接受後才能開始聊天";
-                        const reqItem = document.createElement("div");
-                        reqItem.className = "chat-item message-request";
-                        reqItem.onclick = (ev) => {
-                            if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
-                            openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
-                        };
-                        reqItem.innerHTML = `
-                            <div class="chat-name">📨 ${escHtml(rawName)} ${unreadHtml}</div>
-                            <div class="chat-preview">${reqPreview}</div>
-                            <div class="mini-actions">
-                                <button class="mini-btn accept" onclick="event.stopPropagation();acceptMessageRequest('${chat.id}')">接受</button>
-                                <button class="mini-btn reject" onclick="event.stopPropagation();rejectMessageRequest('${chat.id}')">拒絕</button>
-                            </div>
-                        `;
-                        msgReqList.appendChild(reqItem);
-                    }
-                }
-                if (isOutgoingReq) {
-                    item.classList.add("message-request");
-                }
-
-                const privateRemoveBtn = (chat.type === "private" && !isIncomingReq)
-                    ? `<div class="mini-actions"><button type="button" class="mini-btn cancel" onclick="event.stopPropagation();${isOutgoingReq ? `cancelMessageRequest('${chat.id}')` : `removePrivateChat('${chat.id}')`}">${isOutgoingReq ? "取消請求" : "移除私訊"}</button></div>`
-                    : "";
-                const privateAvatarHtml = (chat.type === "private" && privatePeerUid)
-                    ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(rawName || "User")}&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,'${privatePeerUid}')">`
-                    : "";
-
-                item.innerHTML = `
-                    <div class="chat-name" style="display:flex; align-items:center; gap:8px;">${privateAvatarHtml}${icon} ${displayName} ${unreadHtml} <span style="margin-left:auto; font-size:10px; color:#949ba4; font-weight:normal;">${timeStr}</span></div>
-                    <div class="chat-preview">${isOutgoingReq ? '你已送出訊息請求，等待對方回應' : (chat.lastMessage || '開始聊天吧！')}</div>
-                    ${privateRemoveBtn}
-                `;
-                
-                if (chat.type === 'server') {
-                    document.getElementById('list-server').appendChild(item);
-                } else if (chat.type === 'private') {
-                    if (!isIncomingReq) document.getElementById('list-private').appendChild(item);
-                } else {
-                    document.getElementById('list-group').appendChild(item);
-                }
-            });
-            if (msgReqCategory) msgReqCategory.style.display = incomingReqCount ? "block" : "none";
-            if (chatPrefs.notifyMessageRequest && incomingMessageRequestCount >= 0 && incomingReqCount > incomingMessageRequestCount) {
-                maybeDesktopNotify("Doratch 訊息請求", "你收到新的訊息請求");
-            }
-            incomingMessageRequestCount = incomingReqCount;
+        unsubscribeChats = onSnapshot(q, function (snapshot) {
+            scheduleChatListRender(snapshot);
         });
 
         // 監聽待審批邀請
@@ -3412,33 +3823,38 @@
             where("pendingInvites", "array-contains", currentUser.uid)
         );
 
-        unsubscribeInvites = onSnapshot(qInvites, (snapshot) => {
+        unsubscribeInvites = onSnapshot(qInvites, function (snapshot) {
             const listDiv = document.getElementById('list-invites');
             const categoryDiv = document.getElementById('category-invite');
-            listDiv.innerHTML = '';
-            
+            const listHost = document.getElementById('chat-list');
+            const scrollTop = listHost ? listHost.scrollTop : 0;
+            if (!listDiv || !categoryDiv) return;
+
             if (snapshot.empty) {
+                replaceListChildren(listDiv, []);
                 categoryDiv.style.display = 'none';
+                restoreListScrollAnchor(listHost, null, null, scrollTop);
                 return;
             }
             categoryDiv.style.display = 'block';
 
-            snapshot.forEach(docSnap => {
+            const nodes = [];
+            snapshot.forEach(function (docSnap) {
                 const chat = { id: docSnap.id, ...docSnap.data() };
                 const item = document.createElement('div');
                 item.className = 'chat-item';
                 item.style.borderLeft = '3px solid #f47f24';
-                item.innerHTML = `
-                    <div style="display:flex; flex-direction:column; gap:8px;">
-                        <div style="font-size:13px; font-weight:bold;">💌 邀請：${chat.name}</div>
-                        <div style="display:flex; gap:10px;">
-                            <button style="flex:1; background:#4CAF50; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite('${chat.id}', true)">接受</button>
-                            <button style="flex:1; background:#FF4D4D; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite('${chat.id}', false)">拒絕</button>
-                        </div>
-                    </div>
-                `;
-                listDiv.appendChild(item);
+                item.innerHTML =
+                    '<div style="display:flex; flex-direction:column; gap:8px;">' +
+                    '<div style="font-size:13px; font-weight:bold;">💌 邀請：' + escHtml(chat.name || "群組") + '</div>' +
+                    '<div style="display:flex; gap:10px;">' +
+                    '<button style="flex:1; background:#4CAF50; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite(\'' + chat.id + "', true)\">接受</button>" +
+                    '<button style="flex:1; background:#FF4D4D; color:white; border:none; padding:4px; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="handleInvite(\'' + chat.id + "', false)\">拒絕</button>" +
+                    "</div></div>";
+                nodes.push(item);
             });
+            replaceListChildren(listDiv, nodes);
+            restoreListScrollAnchor(listHost, null, null, scrollTop);
         });
     }
 
@@ -3618,9 +4034,7 @@
         Object.keys(botSessionCache).forEach(k => delete botSessionCache[k]);
         
         // 更新樣式
-        document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-        const activeItem = Array.from(document.querySelectorAll('.chat-item')).find(el => el.onclick.toString().includes(chatId));
-        if (activeItem) activeItem.classList.add('active');
+        markActiveChatItem(chatId);
 
         const displayTitle = chatType === 'server' ? `${chatName} <span style="font-size:12px; color:#949ba4;">(代碼: ${chatId})</span>` : chatName;
         const headerActionsHtml = buildChatHeaderActionsHtml(chatId, chatType, teacherId);
@@ -3654,13 +4068,14 @@
                     <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上傳 .xml 專案檔">➕</button>
                     <input type="file" id="file-input" accept=".xml" style="display:none" onchange="sendFile(this)">
                     <button type="button" class="btn-slash-chip" id="btn-slash-chip" title="斜線指令">/</button>
-                    <textarea id="msg-input" class="input-box" rows="1" placeholder="傳送訊息，Shift+Enter 換行，或輸入 / 使用斜線指令…"></textarea>
+                    <textarea id="msg-input" class="input-box" rows="1" placeholder="${chatInputPlaceholder()}"></textarea>
                     <button type="button" class="btn-send" id="btn-send-msg">送出</button>
                 </div>
             </div>
         `;
 
         syncMobileChatView(true);
+        showMessagesLoadingState();
 
         if (unsubscribeMessages) unsubscribeMessages();
         if (unsubscribeChatDoc) unsubscribeChatDoc();
@@ -3676,6 +4091,13 @@
                 currentChatDocData = data;
                 currentChatParticipants = data.participants || [];
                 currentChatAttachedBots = data.attachedBots || [];
+                if (currentChatType === "private") {
+                    const otherUid = (currentChatParticipants || []).find(function (uid) {
+                        return uid && uid !== currentUser.uid;
+                    });
+                    currentPrivatePeerUid = otherUid || "";
+                }
+                syncPresenceWatchers();
                 refreshChatBotsMeta();
                 renderTypingIndicator(data.typingUsers || {});
                 if (currentChatType === "private") {
@@ -3702,6 +4124,15 @@
         if (currentChatId !== chatId) return;
         const msgArea = document.getElementById('messages-area');
         if (!msgArea) return;
+
+        if (snapshot.empty) {
+            msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
+            window.currentMessages = {};
+            hideNewMessagesPill();
+            setReplyBar();
+            return;
+        }
+
         let html = '';
         let lastSenderId = null;
         let lastTimeStr = null;
@@ -3829,6 +4260,7 @@
             const input = document.getElementById('msg-input');
             if (input && window.ChatDiscordUI) {
                 input._chatSend = () => window.sendMessage();
+                input._enterToSendCheck = () => !!chatPrefs.enterToSend;
                 window.ChatDiscordUI.mountInput(
                     input,
                     document.getElementById('slash-picker'),
@@ -3857,10 +4289,9 @@
                 memberSidebar.classList.remove('active');
             }
             if (isMobileChatShell()) {
-                document.body.classList.add("chat-composer-collapsed");
-            } else {
-                document.body.classList.remove("chat-composer-collapsed");
+                setTimeout(function () { focusChatInput(); }, 120);
             }
+            document.body.classList.remove("chat-composer-collapsed");
             syncMobileChatChrome();
             if (chatType === "private") {
                 getDoc(doc(db, "chats", chatId)).then((s) => applyPrivateRequestState(s.exists() ? s.data() : null)).catch(() => {});
@@ -3872,16 +4303,6 @@
                 if (msgAreaEl) {
                     msgAreaEl._scrollWatchBound = false;
                     bindMessagesScrollWatch();
-                    msgAreaEl.addEventListener("click", (ev) => {
-                        const t = ev.target;
-                        if (t && typeof t.closest === "function" && (t.closest("button") || t.closest("a") || t.closest("input[type='file']"))) return;
-                        if (isMobileChatShell()) {
-                            collapseChatComposer();
-                        } else {
-                            const input = document.getElementById("msg-input");
-                            if (input) input.blur();
-                        }
-                    });
                 }
             }
         }, 100);
@@ -4008,6 +4429,7 @@
             }
             currentPrivatePeerUid = otherUid;
             currentPrivatePeerData = otherUser;
+            syncPresenceWatchers();
             const displayName = displayNameFromUser(otherUser);
             const handle = popHandleFromEmail(otherUser.email || displayName);
             const isOnline = isOnlineUser(otherUser);
@@ -4037,7 +4459,7 @@
                         <div style="min-width:0; flex:1;">
                             <div class="member-private-name${nameFontCls}"><span class="name-fx-text ${nameFxCls}"${nameStyle}>${escHtml(displayName)}</span></div>
                             <div class="member-private-handle">${escHtml(handle)}</div>
-                            <div class="member-private-handle">${isOnline ? "🟢 在線" : "⚪ 離線"}</div>
+                            <div class="member-private-handle member-private-online">${isOnline ? "🟢 在線" : "⚪ 離線"}</div>
                         </div>
                     </div>
                     ${roleBadge ? `<div class="profile-pop-role-row" style="margin:0 0 8px;">${roleBadge}</div>` : ""}
@@ -4077,13 +4499,17 @@
             for (const uid of currentChatParticipants) {
                 const userSnap = await getDoc(doc(db, "users", uid));
                 if (userSnap.exists()) {
-                    members.push(userSnap.data());
+                    const data = upsertUserCache(uid, userSnap.data()) || { uid: uid, ...userSnap.data() };
+                    members.push(data);
                 }
             }
 
             members.sort((a, b) => {
                 if (a.uid === currentChatTeacherId) return -1;
                 if (b.uid === currentChatTeacherId) return 1;
+                const aOnline = isOnlineUser(a);
+                const bOnline = isOnlineUser(b);
+                if (aOnline !== bOnline) return aOnline ? -1 : 1;
                 return ((a.email || "").split("@")[0]).localeCompare((b.email || "").split("@")[0]);
             });
 
@@ -4093,6 +4519,7 @@
                     botsMeta: currentChatBotsMeta,
                     teacherId: currentChatTeacherId,
                     currentUid: currentUser.uid,
+                    isOnlineUser: isOnlineUser,
                     onKick: window.kickMember,
                     onDisconnectBot: window.disconnectBot,
                     onUseSlash: (name) => {
@@ -4102,6 +4529,8 @@
                     }
                 });
             }
+            syncPresenceWatchers();
+            refreshMemberListPresence();
         } catch (e) {
             console.error("載入成員失敗:", e);
             listDiv.innerHTML = '<div class="member-empty-hint" style="color:#fca5a5;">載入失敗</div>';
@@ -4829,8 +5258,7 @@
             fileName: replyToMessage.fileName || ""
         } : null;
 
-        input.value = '';
-        autoGrowInput(input);
+        const savedDraft = rawText;
         if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
         const sendBtn = document.getElementById("btn-send-msg");
         if (sendBtn) sendBtn.disabled = true;
@@ -4856,12 +5284,18 @@
                 [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
                 [`typingUsers.${currentUser.uid}`]: deleteField()
             });
+
+            input.value = '';
+            autoGrowInput(input);
+            patchSidebarPreviewForChat(currentChatId, text);
             
             trimChatMessages(currentChatId);
             await processAttachedBots(text);
             replyToMessage = null;
             setReplyBar();
         } catch (e) {
+            input.value = savedDraft;
+            autoGrowInput(input);
             alert("傳送失敗: " + e.message);
         } finally {
             isSendingMessage = false;
@@ -4913,6 +5347,7 @@
                     lastSenderId: currentUser.uid,
                     [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
                 });
+                patchSidebarPreviewForChat(currentChatId, "📁 傳送了檔案");
                 
                 trimChatMessages(currentChatId);
             } catch(err) {

@@ -143,6 +143,8 @@
     function mountInput(input, picker, onSlashBtn) {
         inputEl = input;
         pickerEl = picker;
+        if (input._discordUiMounted) return;
+        input._discordUiMounted = true;
 
         input.addEventListener("input", onInputChange);
         input.addEventListener("keydown", function (e) {
@@ -176,6 +178,12 @@
                 }
             }
             if (e.key === "Enter" && typeof inputEl._chatSend === "function") {
+                var sendOnEnter = true;
+                if (typeof inputEl._enterToSendCheck === "function") {
+                    sendOnEnter = !!inputEl._enterToSendCheck();
+                }
+                if (e.shiftKey) return;
+                if (!sendOnEnter && !e.ctrlKey && !e.metaKey) return;
                 e.preventDefault();
                 hidePicker();
                 inputEl._chatSend();
@@ -212,15 +220,17 @@
 
         container.innerHTML = "";
 
+        var sec1 = null;
         if (members.length) {
-            var sec1 = document.createElement("div");
+            sec1 = document.createElement("div");
             sec1.className = "member-section-title";
-            sec1.textContent = "線上 — " + members.length;
             container.appendChild(sec1);
-
+            var onlineCount = 0;
             members.forEach(function (member) {
                 var isOwner = member.uid === teacherId;
                 var isMe = member.uid === currentUid;
+                var online = options.isOnlineUser ? !!options.isOnlineUser(member) : false;
+                if (online) onlineCount += 1;
                 var avatarUrl = "https://ui-avatars.com/api/?name=" + encodeURIComponent(member.email || "U") + "&background=random";
                 var displayName = (member.email || "未知").split("@")[0];
                 var kickBtn = (teacherId === currentUid && !isOwner && !isMe && onKick)
@@ -228,18 +238,21 @@
                     : "";
                 var crown = isOwner ? " 👑" : "";
                 var meTag = isMe ? ' <span class="member-tag">你</span>' : "";
+                var statusCls = online ? "online" : "offline";
 
                 var item = document.createElement("div");
                 item.className = "member-item";
+                item.setAttribute("data-member-uid", member.uid || "");
                 item.innerHTML =
-                    '<span class="member-status online"></span>' +
+                    '<span class="member-status ' + statusCls + '"></span>' +
                     '<img src="' + avatarUrl + '" class="member-avatar" alt="">' +
                     '<div class="member-info">' +
                     '<div class="member-name">' + esc(displayName) + crown + meTag + "</div>" +
-                    (isOwner ? '<div class="member-role">管理員</div>' : "") +
+                    (isOwner ? '<div class="member-role">管理員</div>' : ('<div class="member-role">' + (online ? "在線" : "離線") + "</div>")) +
                     "</div>" + kickBtn;
                 container.appendChild(item);
             });
+            if (sec1) sec1.textContent = "線上 — " + onlineCount + " / " + members.length;
         }
 
         var sec2 = document.createElement("div");
