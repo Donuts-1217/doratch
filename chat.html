@@ -91,12 +91,53 @@
         .chat-unread-badge {
             margin-left: auto;
             padding: 1px 6px;
+            min-width: 18px;
+            text-align: center;
             border-radius: 999px;
             font-size: 10px;
             background: #5865f2;
             color: #fff;
             font-weight: 900;
+            line-height: 1.35;
         }
+        .chat-unread-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 14px 30px 8px;
+            color: #f23f43;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: 0.02em;
+        }
+        .chat-unread-divider::before,
+        .chat-unread-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(242,63,67,0.45);
+        }
+        .msg-mention {
+            color: #c9d1ff;
+            background: rgba(88,101,242,0.18);
+            padding: 0 3px;
+            border-radius: 4px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .msg-mention-me {
+            color: #fff;
+            background: #5865f2;
+        }
+        .mention-picker-item { align-items: center; }
+        .mention-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .mention-name { color: #fff; font-weight: 800; font-size: 14px; }
+        .mention-handle { color: #949ba4; font-size: 12px; margin-left: auto; }
         .chat-item.friend-request {
             border: 1px solid rgba(244,127,36,0.3);
             background: rgba(244,127,36,0.07);
@@ -170,9 +211,13 @@
         .messages-loading::before { content: ""; width: 18px; height: 18px; border: 2px solid rgba(148,155,164,0.35); border-top-color: #5865F2; border-radius: 50%; animation: msgSpin 0.7s linear infinite; flex-shrink: 0; }
         @keyframes msgSpin { to { transform: rotate(360deg); } }
         
-        .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; position: relative; }
+        .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; position: relative; content-visibility: auto; contain-intrinsic-size: auto 72px; }
         .message-row.msg-pending { opacity: 0.82; animation: msgPendingIn 0.14s ease-out; }
         .message-row.msg-pending .msg-time { color: #949ba4; font-style: italic; }
+        .msg-file-card.msg-uploading { opacity: 0.78; pointer-events: none; cursor: default; }
+        .msg-upload-progress { height: 4px; background: rgba(255,255,255,0.08); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+        .msg-upload-progress > span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5865F2, #7289da); border-radius: 4px; transition: width 0.12s ease-out; }
+        .chat-item.has-draft .chat-preview { color: #a5b4fc; font-style: italic; }
         @keyframes msgPendingIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 0.82; transform: none; } }
         .btn-send:active { transform: scale(0.96); }
         .message-row:hover { background: rgba(255,255,255,0.02); }
@@ -1409,7 +1454,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limitToLast, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limitToLast, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { DoratchHonor } from "./doratch-honor-badges.js";
     import { DoratchCustomAvatar } from "./doratch-custom-avatar.js";
     window.DoratchHonor = DoratchHonor;
@@ -1581,6 +1626,97 @@
     let sidebarPrivatePeerUids = [];
     let typingRenderTimer = null;
     let pendingTypingMap = null;
+    const chatDraftStore = {};
+    let draftSaveTimer = null;
+    let draftPersistTimer = null;
+    const CHAT_DRAFT_LS_PREFIX = "doratch_chat_drafts_";
+    let unreadDividerBeforeMs = 0;
+    let unreadDividerLabel = "";
+    let markReadDebounceTimer = null;
+    let newMessagesBelowCount = 0;
+    const MSG_FULL_RENDER_CHUNK = 48;
+
+    function draftStorageKey() {
+        return CHAT_DRAFT_LS_PREFIX + (currentUser && currentUser.uid ? currentUser.uid : "guest");
+    }
+
+    function loadDraftsFromStorage() {
+        try {
+            const raw = localStorage.getItem(draftStorageKey());
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            if (!data || typeof data !== "object") return;
+            Object.keys(data).forEach(function (chatId) {
+                const d = data[chatId];
+                if (d && (String(d.text || "").trim() || d.reply)) {
+                    chatDraftStore[chatId] = d;
+                }
+            });
+        } catch (e) {
+            console.warn("讀取聊天草稿失敗", e);
+        }
+    }
+
+    function persistDraftsToStorage() {
+        try {
+            const payload = {};
+            Object.keys(chatDraftStore).forEach(function (chatId) {
+                const d = chatDraftStore[chatId];
+                if (d && (String(d.text || "").trim() || d.reply)) payload[chatId] = d;
+            });
+            localStorage.setItem(draftStorageKey(), JSON.stringify(payload));
+        } catch (e) {
+            console.warn("保存聊天草稿失敗", e);
+        }
+    }
+
+    function scheduleDraftPersist() {
+        if (draftPersistTimer) clearTimeout(draftPersistTimer);
+        draftPersistTimer = setTimeout(function () {
+            draftPersistTimer = null;
+            persistDraftsToStorage();
+        }, 500);
+    }
+
+    function getChatDraft(chatId) {
+        return chatDraftStore[chatId] || null;
+    }
+
+    function hasChatDraft(chatId) {
+        const d = getChatDraft(chatId);
+        return !!(d && (String(d.text || "").trim() || d.reply));
+    }
+
+    function draftPreviewText(chatId) {
+        const d = getChatDraft(chatId);
+        if (!d) return "";
+        const t = String(d.text || "").trim();
+        if (t) return "📝 草稿：" + t.slice(0, 48) + (t.length > 48 ? "…" : "");
+        if (d.reply) return "📝 草稿（含回覆）";
+        return "";
+    }
+
+    function refreshChatListDraftIndicators() {
+        document.querySelectorAll("#chat-list .chat-item[data-chat-id]").forEach(function (el) {
+            const id = el.dataset.chatId;
+            const preview = el.querySelector(".chat-preview");
+            if (!id || !preview) return;
+            const draftHint = draftPreviewText(id);
+            if (draftHint) {
+                el.classList.add("has-draft");
+                if (!preview.dataset.basePreview) {
+                    preview.dataset.basePreview = preview.textContent || "";
+                }
+                preview.textContent = draftHint;
+            } else {
+                el.classList.remove("has-draft");
+                if (preview.dataset.basePreview) {
+                    preview.textContent = preview.dataset.basePreview;
+                    delete preview.dataset.basePreview;
+                }
+            }
+        });
+    }
 
     function isMobileChatShell() {
         return window.DoratchMobile
@@ -1592,9 +1728,50 @@
 
     function chatInputPlaceholder() {
         if (chatPrefs.enterToSend) {
-            return "傳送訊息，Shift+Enter 換行，或輸入 / 使用斜線指令…";
+            return "傳送訊息，@ 艾特成員，Shift+Enter 換行，/ 斜線指令…";
         }
-        return "傳送訊息，Enter 換行，Ctrl+Enter 送出，或輸入 / 使用斜線指令…";
+        return "傳送訊息，@ 艾特成員，Enter 換行，Ctrl+Enter 送出，/ 斜線指令…";
+    }
+
+    function saveChatDraft(chatId) {
+        if (!chatId) return;
+        const input = document.getElementById("msg-input");
+        const text = input ? String(input.value || "") : "";
+        if (!text.trim() && !replyToMessage) {
+            delete chatDraftStore[chatId];
+            scheduleDraftPersist();
+            refreshChatListDraftIndicators();
+            return;
+        }
+        chatDraftStore[chatId] = {
+            text: text,
+            reply: replyToMessage ? Object.assign({}, replyToMessage) : null
+        };
+        scheduleDraftPersist();
+        refreshChatListDraftIndicators();
+    }
+
+    function restoreChatDraft(chatId) {
+        const draft = chatDraftStore[chatId];
+        if (!draft) return;
+        const input = document.getElementById("msg-input");
+        if (input && draft.text) {
+            input.value = draft.text;
+            autoGrowInput(input);
+        }
+        if (draft.reply) {
+            replyToMessage = Object.assign({}, draft.reply);
+            setReplyBar();
+        }
+    }
+
+    function scheduleDraftSave() {
+        if (!currentChatId) return;
+        if (draftSaveTimer) clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(function () {
+            draftSaveTimer = null;
+            saveChatDraft(currentChatId);
+        }, 350);
     }
 
     function markActiveChatItem(chatId) {
@@ -1618,11 +1795,16 @@
     function hideNewMessagesPill() {
         const pill = document.getElementById("scroll-bottom-pill");
         if (pill) pill.classList.remove("visible");
+        newMessagesBelowCount = 0;
     }
 
-    function showNewMessagesPill() {
+    function showNewMessagesPill(count) {
         const pill = document.getElementById("scroll-bottom-pill");
-        if (pill) pill.classList.add("visible");
+        if (!pill) return;
+        const n = Number(count) || 1;
+        newMessagesBelowCount = n;
+        pill.textContent = n > 1 ? ("↓ " + (n > 99 ? "99+" : n) + " 則新訊息") : "↓ 新訊息";
+        pill.classList.add("visible");
     }
 
     window.scrollMessagesToBottom = () => {
@@ -3641,9 +3823,18 @@
         }
 
         upsertUserCache(user.uid, currentUserData);
+        loadDraftsFromStorage();
         refreshSelfOutboundRenderCache();
         startPresenceSystem();
         subscribeFriendPanels();
+
+        if (!window.__doratchDraftUnloadBound) {
+            window.__doratchDraftUnloadBound = true;
+            window.addEventListener("beforeunload", function () {
+                if (currentChatId) saveChatDraft(currentChatId);
+                persistDraftsToStorage();
+            });
+        }
 
         loadChats();
 
@@ -3795,8 +3986,158 @@
         if (!el) return;
         const preview = el.querySelector(".chat-preview");
         if (preview) preview.textContent = String(lastMessage || "開始聊天吧！");
-        const badge = el.querySelector(".chat-unread-badge");
-        if (badge) badge.remove();
+    }
+
+    function getChatParticipantsForUnread(chatId) {
+        const snap = chatDocCache[chatId] || (chatId === currentChatId ? currentChatDocData : null);
+        return (snap && Array.isArray(snap.participants)) ? snap.participants : [];
+    }
+
+    function buildOutboundChatPatch(chatId, lastMessage, participants) {
+        const parts = (participants && participants.length) ? participants : getChatParticipantsForUnread(chatId);
+        const patch = {
+            lastMessage: lastMessage,
+            updatedAt: serverTimestamp(),
+            lastSenderId: currentUser.uid,
+            [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
+            [`unreadCountBy.${currentUser.uid}`]: 0,
+            [`typingUsers.${currentUser.uid}`]: deleteField()
+        };
+        parts.forEach(function (uid) {
+            if (uid && uid !== currentUser.uid) {
+                patch[`unreadCountBy.${uid}`] = increment(1);
+            }
+        });
+        return patch;
+    }
+
+    function buildBotChatPatch(chatId, lastMessage, botSenderId) {
+        const parts = getChatParticipantsForUnread(chatId);
+        const patch = {
+            lastMessage: lastMessage,
+            updatedAt: serverTimestamp(),
+            lastSenderId: botSenderId
+        };
+        parts.forEach(function (uid) {
+            if (uid) patch[`unreadCountBy.${uid}`] = increment(1);
+        });
+        return patch;
+    }
+
+    function resolveUnreadCount(chat, myReadAt, updatedAtMs) {
+        const map = chat.unreadCountBy || {};
+        const n = Number(map[currentUser.uid]);
+        if (Number.isFinite(n) && n > 0) return Math.floor(n);
+        const legacy = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
+        return legacy ? 1 : 0;
+    }
+
+    function buildUnreadBadgeHtml(count) {
+        if (!count || count <= 0) return "";
+        const label = count > 99 ? "99+" : String(count);
+        return '<span class="chat-unread-badge" title="' + label + ' 則未讀">' + escHtml(label) + "</span>";
+    }
+
+    function scheduleMarkCurrentChatRead() {
+        if (!currentChatId || !currentUser) return;
+        if (markReadDebounceTimer) clearTimeout(markReadDebounceTimer);
+        markReadDebounceTimer = setTimeout(function () {
+            markReadDebounceTimer = null;
+            updateDoc(doc(db, "chats", currentChatId), {
+                [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
+                [`unreadCountBy.${currentUser.uid}`]: 0
+            }).catch(function () {});
+        }, 450);
+    }
+
+    function lastMessageMentionsMe(chat) {
+        const text = String((chat && chat.lastMessage) || "");
+        if (!text.includes("@") || !currentUser) return false;
+        const email = String((currentUserData && currentUserData.email) || currentUser.email || "");
+        const handle = email.includes("@") ? email.split("@")[0].toLowerCase() : "";
+        const label = currentUserData ? String(displayNameFromUser(currentUserData) || "").toLowerCase() : "";
+        if (handle && text.toLowerCase().includes("@" + handle)) return true;
+        if (label && text.toLowerCase().includes("@" + label)) return true;
+        return false;
+    }
+
+    function getChatMentionCandidates() {
+        if (!currentUser) return [];
+        const uids = (currentChatParticipants && currentChatParticipants.length)
+            ? currentChatParticipants.slice()
+            : ((currentChatDocData && currentChatDocData.participants) || []).slice();
+        const out = [];
+        uids.forEach(function (uid) {
+            if (!uid || uid === currentUser.uid) return;
+            const u = userCache[uid];
+            const email = u ? String(u.email || "").trim() : "";
+            const label = u ? displayNameFromUser(u) : "使用者";
+            let handle = email.includes("@") ? email.split("@")[0] : label;
+            handle = String(handle || "user").trim();
+            out.push({ uid: uid, label: label, handle: handle, email: email });
+        });
+        return out;
+    }
+
+    function resolveMentionsFromText(text, candidates) {
+        const mentions = [];
+        const seen = new Set();
+        const re = /@([\w\u4e00-\u9fff\u3400-\u4dbf.-]+)/g;
+        let m;
+        const list = candidates || getChatMentionCandidates();
+        while ((m = re.exec(String(text || ""))) !== null) {
+            const token = m[1].toLowerCase();
+            const hit = list.find(function (c) {
+                return c.handle.toLowerCase() === token || c.label.toLowerCase() === token;
+            });
+            if (hit && !seen.has(hit.uid)) {
+                seen.add(hit.uid);
+                mentions.push({ uid: hit.uid, handle: hit.handle, label: hit.label });
+            }
+        }
+        return mentions;
+    }
+
+    function formatMentionTextHtml(text, mentions, myUid) {
+        const mentionMap = {};
+        (mentions || []).forEach(function (m) {
+            mentionMap[String(m.handle || "").toLowerCase()] = m;
+            mentionMap[String(m.label || "").toLowerCase()] = m;
+        });
+        const re = /@([\w\u4e00-\u9fff\u3400-\u4dbf.-]+)/g;
+        let out = "";
+        let last = 0;
+        let m;
+        const raw = String(text || "");
+        while ((m = re.exec(raw)) !== null) {
+            out += escHtml(raw.slice(last, m.index));
+            const token = m[1];
+            const hit = mentionMap[token.toLowerCase()];
+            if (hit) {
+                const isMe = myUid && hit.uid === myUid;
+                out += '<span class="msg-mention' + (isMe ? " msg-mention-me" : "") + '" data-uid="' + escHtml(hit.uid) + '" onclick="openProfileByUid(event,\'' + escHtml(hit.uid) + "')\">@" + escHtml(token) + "</span>";
+            } else {
+                out += '<span class="msg-mention">@' + escHtml(token) + "</span>";
+            }
+            last = m.index + m[0].length;
+        }
+        out += escHtml(raw.slice(last));
+        return out;
+    }
+
+    function renderMessageTextHtml(text, mentions) {
+        const body = formatMentionTextHtml(text, mentions, currentUser ? currentUser.uid : "");
+        return '<div class="msg-text">' + body + "</div>";
+    }
+
+    function maybeUnreadDividerHtml(msg, ctx) {
+        if (!unreadDividerBeforeMs || (ctx && ctx.unreadDividerShown)) return "";
+        const t = toMillis(msg.createdAt);
+        if (!t || t <= unreadDividerBeforeMs) return "";
+        if (msg.senderId === (currentUser && currentUser.uid)) return "";
+        if (ctx) ctx.unreadDividerShown = true;
+        const label = unreadDividerLabel ? (unreadDividerLabel + " 則未讀訊息") : "未讀訊息";
+        return '<div class="chat-unread-divider"><span>' + escHtml(label) + "</span></div>";
     }
 
     function sortChatsForSidebar(chats) {
@@ -3851,15 +4192,18 @@
         const readMap = chat.lastReadBy || {};
         const myReadAt = toMillis(readMap[currentUser.uid]);
         const updatedAtMs = toMillis(chat.updatedAt);
-        const unread = updatedAtMs > 0 && updatedAtMs > myReadAt && chat.lastSenderId && chat.lastSenderId !== currentUser.uid;
-        const unreadHtml = unread ? '<span class="chat-unread-badge">NEW</span>' : "";
+        const unreadCount = resolveUnreadCount(chat, myReadAt, updatedAtMs);
+        const unread = unreadCount > 0;
+        const unreadHtml = buildUnreadBadgeHtml(unreadCount);
         const requestPending = chat.type === "private" && chat.requestStatus === "pending";
         const isIncomingReq = requestPending && chat.requestTo === currentUser.uid;
         const isOutgoingReq = requestPending && chat.requestFrom === currentUser.uid;
 
         const seenBefore = Object.prototype.hasOwnProperty.call(chatUpdatedAtCache, chat.id);
         if (chatPrefs.notifyMessage && seenBefore && unread && updatedAtMs > (chatUpdatedAtCache[chat.id] || 0) && chat.id !== currentChatId) {
-            maybeDesktopNotify("Doratch 新訊息：" + rawName, chat.lastMessage || "你有一則新訊息", chat.id);
+            const mentionMe = lastMessageMentionsMe(chat);
+            const title = mentionMe ? ("Doratch 有人艾特你：" + rawName) : ("Doratch 新訊息：" + rawName);
+            maybeDesktopNotify(title, chat.lastMessage || "你有一則新訊息", chat.id);
         }
         chatUpdatedAtCache[chat.id] = Math.max(chatUpdatedAtCache[chat.id] || 0, updatedAtMs);
 
@@ -4009,6 +4353,7 @@
 
         restoreListScrollAnchor(listHost, anchorId, anchorViewportOffset, scrollTop);
         markActiveChatItem(currentChatId);
+        refreshChatListDraftIndicators();
     }
 
     function scheduleChatListRender(snapshot) {
@@ -4108,13 +4453,73 @@
     let currentChatName = "";
     let currentChatIcon = "💬";
 
+    function buildMessagesHtmlFromDocs(docSnaps, pendingMsgStore, chatId) {
+        let html = "";
+        let ctx = { lastSenderId: null, lastTimeStr: null, unreadDividerShown: false };
+        const store = pendingMsgStore || {};
+        docSnaps.forEach(function (docSnap) {
+            window.currentMessages[docSnap.id] = docSnap.data();
+            const built = buildMessageRowHtml(docSnap, ctx);
+            html += built.html;
+            ctx = built.ctx;
+        });
+        Object.assign(window.currentMessages, store);
+        const merged = appendPendingOptimisticToRender(html, ctx, chatId);
+        return merged.html;
+    }
+
+    function renderMessagesFullReplace(msgArea, snapshot, chatId, stickToBottom, prevScrollHeight) {
+        const pendingMsgStore = {};
+        pendingOutboundMessages.forEach(function (p) {
+            if (p.chatId === chatId && window.currentMessages[p.optId]) {
+                pendingMsgStore[p.optId] = window.currentMessages[p.optId];
+            }
+        });
+        const docs = snapshot.docs.slice();
+        window.currentMessages = {};
+
+        if (docs.length <= MSG_FULL_RENDER_CHUNK) {
+            msgArea.innerHTML = buildMessagesHtmlFromDocs(docs, pendingMsgStore, chatId);
+            msgArea.dataset.messagesReady = "1";
+            finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+            return;
+        }
+
+        let idx = 0;
+        let ctx = { lastSenderId: null, lastTimeStr: null };
+        let html = "";
+        msgArea.innerHTML = '<div class="messages-loading">載入 ' + docs.length + ' 則訊息…</div>';
+
+        function step() {
+            if (currentChatId !== chatId) return;
+            const end = Math.min(idx + MSG_FULL_RENDER_CHUNK, docs.length);
+            for (; idx < end; idx += 1) {
+                window.currentMessages[docs[idx].id] = docs[idx].data();
+                const built = buildMessageRowHtml(docs[idx], ctx);
+                html += built.html;
+                ctx = built.ctx;
+            }
+            if (idx < docs.length) {
+                requestAnimationFrame(step);
+                return;
+            }
+            Object.assign(window.currentMessages, pendingMsgStore);
+            const merged = appendPendingOptimisticToRender(html, ctx, chatId);
+            msgArea.innerHTML = merged.html;
+            msgArea.dataset.messagesReady = "1";
+            finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        }
+        requestAnimationFrame(step);
+    }
+
     function getMessagesRenderContext(msgArea) {
         const rows = msgArea.querySelectorAll(".message-row[data-msg-id]");
-        if (!rows.length) return { lastSenderId: null, lastTimeStr: null };
+        if (!rows.length) return { lastSenderId: null, lastTimeStr: null, unreadDividerShown: !!msgArea.querySelector(".chat-unread-divider") };
         const last = rows[rows.length - 1];
         return {
             lastSenderId: last.getAttribute("data-sender-id") || null,
-            lastTimeStr: last.getAttribute("data-time-full") || null
+            lastTimeStr: last.getAttribute("data-time-full") || null,
+            unreadDividerShown: !!msgArea.querySelector(".chat-unread-divider")
         };
     }
 
@@ -4131,22 +4536,31 @@
         return "opt_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
     }
 
-    function trackPendingOutbound(optId, text, chatId) {
+    function trackPendingOutbound(optId, chatId, meta) {
+        const m = meta || {};
         pendingOutboundMessages.push({
             optId: optId,
-            text: String(text || "").trim(),
             chatId: chatId,
+            type: m.type || "text",
+            text: String(m.text || "").trim(),
+            fileName: String(m.fileName || "").trim(),
             ts: Date.now()
         });
-        if (pendingOutboundMessages.length > 12) pendingOutboundMessages.shift();
+        if (pendingOutboundMessages.length > 16) pendingOutboundMessages.shift();
     }
 
     function consumeOptimisticForIncoming(msgData, chatId) {
         if (!msgData || msgData.senderId !== currentUser.uid) return null;
-        const text = String(msgData.text || "").trim();
-        if (!text || msgData.type !== "text") return null;
+        const msgType = String(msgData.type || "text");
         const idx = pendingOutboundMessages.findIndex(function (p) {
-            return p.chatId === chatId && p.text === text && (Date.now() - p.ts) < 45000;
+            if (p.chatId !== chatId || (Date.now() - p.ts) >= 45000) return false;
+            if (msgType === "file" && p.type === "file") {
+                return p.fileName && p.fileName === String(msgData.fileName || "").trim();
+            }
+            if (msgType === "text" && p.type !== "file") {
+                return p.text === String(msgData.text || "").trim();
+            }
+            return false;
         });
         if (idx < 0) return null;
         return pendingOutboundMessages.splice(idx, 1)[0].optId;
@@ -4185,7 +4599,7 @@
         if (!row || !msg) return;
         if (msg.type === "text") {
             const textEl = row.querySelector(".msg-text");
-            if (textEl) textEl.textContent = msg.text || "";
+            if (textEl) textEl.innerHTML = formatMentionTextHtml(msg.text, msg.mentions, currentUser ? currentUser.uid : "");
         } else if (msg.type === "gift") {
             const card = row.querySelector(".msg-gift-card");
             if (card) card.outerHTML = renderGiftMessageCard(docSnap.id, msg);
@@ -4267,7 +4681,8 @@
             '<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" disabled>↩</button></div>' +
             '<div class="msg-header"><span class="msg-author"><span class="name-fx-text">' + escHtml(senderName) + '</span></span><span class="msg-time">傳送中</span></div>' +
             replyHtml +
-            '<div class="msg-text">' + escHtml(text) + "</div></div></div>"
+            renderMessageTextHtml(text, resolveMentionsFromText(text, getChatMentionCandidates())) +
+            "</div></div>"
         );
     }
 
@@ -4288,7 +4703,7 @@
             _optimistic: true
         };
         window.currentMessages[optId] = msg;
-        trackPendingOutbound(optId, text, currentChatId);
+        trackPendingOutbound(optId, currentChatId, { type: "text", text: text });
         const empty = msgArea.querySelector(".messages-empty");
         if (empty) empty.remove();
         const stickToBottom = isMsgAreaNearBottom(msgArea);
@@ -4297,6 +4712,68 @@
         msgArea.dataset.messagesReady = "1";
         finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
         return optId;
+    }
+
+    function buildOptimisticFileRow(optId, fileName) {
+        const R = selfOutboundRenderCache;
+        const senderName = (R && R.senderName) || displayNameFromUser(currentUserData);
+        const avatarUrl = (R && R.avatarUrl) || resolveAvatarForUser(currentUserData, (currentUser && currentUser.email) || "", resolveEquippedAvatarType(currentUserData));
+        const avatarFrame = (R && R.avatarFrame) || "";
+        const safeName = escHtml(fileName || "檔案");
+        const rowMeta = ' data-msg-id="' + optId + '" data-sender-id="' + escHtml(currentUser.uid) + '" data-time-full="上傳中" data-staff-role=""';
+        const fileCard =
+            '<div class="msg-file-card msg-uploading">' +
+            '<div class="file-icon">📄</div><div class="file-info"><div class="file-name">' + safeName + '</div><div class="file-sub">準備上傳…</div>' +
+            '<div class="msg-upload-progress"><span style="width:4%"></span></div></div><div class="file-download-icon">⏳</div></div>';
+        return (
+            '<div class="message-row msg-pending"' + rowMeta + '>' +
+            '<div class="msg-avatar-container"><img src="' + avatarUrl + '" class="msg-avatar ' + avatarFrame + '" alt=""></div>' +
+            '<div class="msg-content">' +
+            '<div class="msg-header"><span class="msg-author"><span class="name-fx-text">' + escHtml(senderName) + '</span></span><span class="msg-time">上傳中</span></div>' +
+            fileCard + "</div></div>"
+        );
+    }
+
+    function appendOptimisticFileMessage(fileName, cosmeticSnapshot) {
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea || !currentUser) return null;
+        const optId = createOptimisticMessageId();
+        const cosmetic = cosmeticSnapshot || currentCosmeticSnapshot();
+        const label = "傳送了檔案：" + fileName;
+        const msg = {
+            senderId: currentUser.uid,
+            senderEmail: currentUser.email || "",
+            senderDisplayName: displayNameFromUser(currentUserData),
+            senderCosmetics: cosmetic,
+            text: label,
+            fileName: fileName,
+            type: "file",
+            createdAt: { toDate: function () { return new Date(); } },
+            _optimistic: true
+        };
+        window.currentMessages[optId] = msg;
+        trackPendingOutbound(optId, currentChatId, { type: "file", fileName: fileName, text: label });
+        const empty = msgArea.querySelector(".messages-empty");
+        if (empty) empty.remove();
+        const stickToBottom = isMsgAreaNearBottom(msgArea);
+        const prevScrollHeight = msgArea.scrollHeight;
+        msgArea.insertAdjacentHTML("beforeend", buildOptimisticFileRow(optId, fileName));
+        msgArea.dataset.messagesReady = "1";
+        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        return optId;
+    }
+
+    function setOptimisticFileProgress(optId, pct, statusText) {
+        if (!optId) return;
+        const row = document.querySelector('.message-row[data-msg-id="' + optId + '"]');
+        if (!row) return;
+        const bar = row.querySelector(".msg-upload-progress > span");
+        const sub = row.querySelector(".msg-file-card .file-sub");
+        const timeEl = row.querySelector(".msg-header .msg-time");
+        const pctSafe = Math.max(0, Math.min(100, Math.floor(Number(pct) || 0)));
+        if (bar) bar.style.width = pctSafe + "%";
+        if (sub && statusText) sub.textContent = statusText;
+        if (timeEl && statusText) timeEl.textContent = statusText;
     }
 
     function isPrivateSendBlocked() {
@@ -4376,10 +4853,11 @@
         } else if (msg.type === "gift") {
             contentHtml = renderGiftMessageCard(docSnap.id, msg);
         } else {
-            contentHtml = isBotMsg ? renderBotMessageBody(msg) : ('<div class="msg-text">' + escHtml(msg.text || "") + "</div>");
+            contentHtml = isBotMsg ? renderBotMessageBody(msg) : renderMessageTextHtml(msg.text, msg.mentions);
         }
+        const dividerHtml = maybeUnreadDividerHtml(msg, ctx);
         const rowMeta = ' data-msg-id="' + docSnap.id + '" data-sender-id="' + escHtml(msg.senderId || "") + '" data-time-full="' + escHtml(fullTimeStr) + '" data-staff-role="' + escHtml(msgStaffRole) + '"';
-        let html = "";
+        let html = dividerHtml;
         if (isConsecutive) {
             html =
                 '<div class="' + rowClass + ' consecutive"' + rowMeta + '>' +
@@ -4510,6 +4988,7 @@
     window.openChat = (chatId, chatName, icon, chatType, teacherId, chatDocHint) => {
         const prevChatId = currentChatId;
         if (prevChatId && prevChatId !== chatId) {
+            saveChatDraft(prevChatId);
             clearPendingOptimisticForChat(prevChatId);
             updateDoc(doc(db, "chats", prevChatId), {
                 [`typingUsers.${currentUser.uid}`]: deleteField()
@@ -4521,6 +5000,14 @@
         currentChatName = chatName;
         currentChatIcon = icon || "💬";
         primeCurrentChatDoc(chatId, chatDocHint);
+        const hintDoc = chatDocHint || chatDocCache[chatId] || {};
+        const readMap = hintDoc.lastReadBy || {};
+        const myReadAt = toMillis(readMap[currentUser.uid]);
+        const updatedAtMs = toMillis(hintDoc.updatedAt);
+        const openUnread = resolveUnreadCount(hintDoc, myReadAt, updatedAtMs);
+        unreadDividerBeforeMs = myReadAt;
+        unreadDividerLabel = openUnread > 1 ? String(openUnread) : (openUnread === 1 ? "1" : "");
+        newMessagesBelowCount = 0;
         currentPrivatePeerUid = "";
         currentPrivatePeerData = null;
         if (currentChatType === "private" && currentChatDocData) {
@@ -4584,7 +5071,8 @@
         if (unsubscribeChatDoc) unsubscribeChatDoc();
 
         updateDoc(doc(db, "chats", chatId), {
-            [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
+            [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
+            [`unreadCountBy.${currentUser.uid}`]: 0
         }).catch(function () {});
 
         // 監聽聊天室文件（用於更新成員名單等）
@@ -4673,21 +5161,29 @@
 
         if (isReady && changes.length && changes.every(function (c) { return c.type === "added"; })) {
             let ctx = getMessagesRenderContext(msgArea);
+            if (!ctx.unreadDividerShown) ctx.unreadDividerShown = false;
+            let incomingFromOthers = 0;
             changes.forEach(function (ch) {
                 const optId = consumeOptimisticForIncoming(ch.doc.data(), chatId);
                 if (optId && confirmOptimisticMessageRow(optId, ch.doc)) {
                     const newRow = msgArea.querySelector('.message-row[data-msg-id="' + ch.doc.id + '"]');
                     if (newRow) {
-                        ctx = { lastSenderId: newRow.getAttribute("data-sender-id"), lastTimeStr: newRow.getAttribute("data-time-full") };
+                        ctx = { lastSenderId: newRow.getAttribute("data-sender-id"), lastTimeStr: newRow.getAttribute("data-time-full"), unreadDividerShown: ctx.unreadDividerShown };
                     }
                     return;
                 }
                 if (optId) removeOptimisticMessageRow(optId);
-                window.currentMessages[ch.doc.id] = ch.doc.data();
+                const msgData = ch.doc.data();
+                window.currentMessages[ch.doc.id] = msgData;
+                if (msgData.senderId && msgData.senderId !== currentUser.uid) incomingFromOthers += 1;
                 const built = buildMessageRowHtml(ch.doc, ctx);
                 ctx = built.ctx;
                 msgArea.insertAdjacentHTML("beforeend", built.html);
             });
+            if (incomingFromOthers > 0) scheduleMarkCurrentChatRead();
+            if (!stickToBottom && incomingFromOthers > 0) {
+                showNewMessagesPill(newMessagesBelowCount + incomingFromOthers);
+            }
             finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
             setReplyBar();
             return;
@@ -4724,26 +5220,7 @@
             return;
         }
 
-        const pendingMsgStore = {};
-        pendingOutboundMessages.forEach(function (p) {
-            if (p.chatId === chatId && window.currentMessages[p.optId]) {
-                pendingMsgStore[p.optId] = window.currentMessages[p.optId];
-            }
-        });
-        let html = '';
-        let ctx = { lastSenderId: null, lastTimeStr: null };
-        window.currentMessages = {};
-        snapshot.forEach(function (docSnap) {
-            window.currentMessages[docSnap.id] = docSnap.data();
-            const built = buildMessageRowHtml(docSnap, ctx);
-            html += built.html;
-            ctx = built.ctx;
-        });
-        Object.assign(window.currentMessages, pendingMsgStore);
-        const merged = appendPendingOptimisticToRender(html, ctx, chatId);
-        msgArea.innerHTML = merged.html;
-        msgArea.dataset.messagesReady = "1";
-        finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
+        renderMessagesFullReplace(msgArea, snapshot, chatId, stickToBottom, prevScrollHeight);
         setReplyBar();
     });
         
@@ -4756,7 +5233,8 @@
                     window.ChatDiscordUI.mountInput(
                         input,
                         document.getElementById('slash-picker'),
-                        document.getElementById('btn-slash-chip')
+                        document.getElementById('btn-slash-chip'),
+                        { getMentionCandidates: getChatMentionCandidates }
                     );
                 }
                 if (!input._chatInputBound) {
@@ -4764,11 +5242,14 @@
                     input.addEventListener("input", function () {
                         scheduleTypingPulse();
                         autoGrowInput(input);
+                        scheduleDraftSave();
                     });
                     input.addEventListener("blur", clearMyTypingIndicator);
                 }
                 autoGrowInput(input);
             }
+            restoreChatDraft(chatId);
+            focusChatInput();
             const sendBtn = document.getElementById("btn-send-msg");
             if (sendBtn) sendBtn.onclick = () => window.sendMessage();
             if (currentChatType === "private" && currentChatDocData) {
@@ -5183,9 +5664,8 @@
             const msgsSnap = await getDocs(msgsQuery);
             if (msgsSnap.size > limit) {
                 const deleteCount = msgsSnap.size - limit;
-                for (let i = 0; i < deleteCount; i++) {
-                    await deleteDoc(msgsSnap.docs[i].ref);
-                }
+                const toDelete = msgsSnap.docs.slice(0, deleteCount);
+                await Promise.all(toDelete.map(function (d) { return deleteDoc(d.ref); }));
             }
         } catch (e) {
             console.error("清理舊訊息失敗:", e);
@@ -5272,9 +5752,11 @@
         if (next == null) return;
         const text = String(next).trim();
         if (!text) return alert("訊息不能是空白");
+        const mentions = resolveMentionsFromText(text, getChatMentionCandidates());
         try {
             await updateDoc(doc(db, "chats", currentChatId, "messages", msgId), {
                 text: text,
+                mentions: mentions,
                 editedAt: serverTimestamp()
             });
             await updateDoc(doc(db, "chats", currentChatId), {
@@ -5624,12 +6106,12 @@
             });
         }
         const preview = responses[0]?.content || (window.DiscordBotRuntime && responses[0]?.embed ? window.DiscordBotRuntime.formatEmbedText(responses[0].embed) : "") || "…";
-        await updateDoc(doc(db, "chats", currentChatId), {
-            lastMessage: "🤖 " + botName + ": " + String(preview).slice(0, 40),
-            updatedAt: serverTimestamp(),
-            lastSenderId: botSenderId
-        });
-        await trimChatMessages(currentChatId);
+        await updateDoc(doc(db, "chats", currentChatId), buildBotChatPatch(
+            currentChatId,
+            "🤖 " + botName + ": " + String(preview).slice(0, 40),
+            botSenderId
+        ));
+        void trimChatMessages(currentChatId);
     }
 
     async function postBotError(entry, message) {
@@ -5649,7 +6131,7 @@
             type: "bot",
             createdAt: serverTimestamp()
         });
-        await trimChatMessages(currentChatId);
+        void trimChatMessages(currentChatId);
     }
 
     function findBotCommandBody(code, commandName, isSlash) {
@@ -5897,23 +6379,20 @@
 
         try {
             const cosmetic = opts.cosmeticSnapshot || currentCosmeticSnapshot();
+            const mentionCandidates = getChatMentionCandidates();
+            const mentions = resolveMentionsFromText(text, mentionCandidates);
             const messagePayload = {
                 senderId: currentUser.uid,
                 senderEmail: currentUser.email,
                 senderDisplayName: displayNameFromUser(currentUserData),
                 senderCosmetics: cosmetic,
                 text: text,
+                mentions: mentions,
                 replyTo: replyPayload,
                 type: "text",
                 createdAt: serverTimestamp()
             };
-            const chatPatch = {
-                lastMessage: text,
-                updatedAt: serverTimestamp(),
-                lastSenderId: currentUser.uid,
-                [`lastReadBy.${currentUser.uid}`]: serverTimestamp(),
-                [`typingUsers.${currentUser.uid}`]: deleteField()
-            };
+            const chatPatch = buildOutboundChatPatch(chatId, text, getChatParticipantsForUnread(chatId));
             await Promise.all([
                 addDoc(collection(db, "chats", chatId, "messages"), messagePayload),
                 updateDoc(doc(db, "chats", chatId), chatPatch)
@@ -5922,8 +6401,11 @@
                 lastMessage: text,
                 lastSenderId: currentUser.uid
             }));
-            trimChatMessages(chatId);
+            void trimChatMessages(chatId);
             processAttachedBots(text).catch(function (e) { console.warn("Bot 處理失敗", e); });
+            delete chatDraftStore[chatId];
+            scheduleDraftPersist();
+            refreshChatListDraftIndicators();
         } catch (e) {
             if (optId) removeOptimisticMessageRow(optId);
             if (input) {
@@ -5934,6 +6416,7 @@
             setReplyBar();
             patchSidebarPreviewForChat(chatId, "");
             alert("傳送失敗: " + e.message);
+            saveChatDraft(chatId);
         }
     }
 
@@ -5972,6 +6455,9 @@
             input.value = '';
             autoGrowInput(input);
         }
+        delete chatDraftStore[chatId];
+        scheduleDraftPersist();
+        refreshChatListDraftIndicators();
         replyToMessage = null;
         setReplyBar();
 
@@ -5993,8 +6479,41 @@
         });
     };
 
-    // 傳送檔案
-    window.sendFile = async (inputElem) => {
+    async function flushOutboundFileMessage(opts) {
+        const chatId = opts.chatId;
+        const fileName = opts.fileName;
+        const content = opts.content;
+        const optId = opts.optId;
+        const cosmetic = opts.cosmeticSnapshot || currentCosmeticSnapshot();
+
+        try {
+            setOptimisticFileProgress(optId, 60, "寫入雲端…");
+            await Promise.all([
+                addDoc(collection(db, "chats", chatId, "messages"), {
+                    senderId: currentUser.uid,
+                    senderEmail: currentUser.email,
+                    senderDisplayName: displayNameFromUser(currentUserData),
+                    senderCosmetics: cosmetic,
+                    text: "傳送了檔案：" + fileName,
+                    type: "file",
+                    fileName: fileName,
+                    fileData: content,
+                    createdAt: serverTimestamp()
+                }),
+                updateDoc(doc(db, "chats", chatId), buildOutboundChatPatch(chatId, "📁 傳送了檔案", getChatParticipantsForUnread(chatId)))
+            ]);
+            setOptimisticFileProgress(optId, 100, "完成");
+            patchSidebarPreviewForChat(chatId, "📁 傳送了檔案");
+            void trimChatMessages(chatId);
+        } catch (err) {
+            if (optId) removeOptimisticMessageRow(optId);
+            patchSidebarPreviewForChat(chatId, "");
+            alert("檔案傳送失敗：" + err.message);
+        }
+    }
+
+    // 傳送檔案（樂觀更新：先顯示檔案卡，背景上傳）
+    window.sendFile = function (inputElem) {
         if (!currentChatId || !inputElem.files || inputElem.files.length === 0) return;
         if (currentChatType === "private") {
             if (isPrivateSendBlocked()) {
@@ -6003,61 +6522,71 @@
                 inputElem.value = "";
                 return;
             }
-            if (!currentChatDocData) {
-                try {
-                    const chatSnap = await getDoc(doc(db, "chats", currentChatId));
-                    const d = chatSnap.exists() ? chatSnap.data() : null;
-                    if (d) {
-                        cacheChatDoc(currentChatId, d);
-                        currentChatDocData = d;
-                    }
-                    if (isPrivateSendBlocked()) {
-                        applyPrivateRequestState(currentChatDocData);
-                        alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
-                        inputElem.value = "";
-                        return;
-                    }
-                } catch {}
-            }
         }
         const file = inputElem.files[0];
-        if (!file.name.endsWith('.xml')) {
+        inputElem.value = "";
+        if (!file.name.endsWith(".xml")) {
             alert("目前僅支援分享 .xml 積木專案檔喔！");
-            inputElem.value = "";
             return;
         }
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const content = e.target.result;
-            try {
-                const cosmetic = currentCosmeticSnapshot();
-                await addDoc(collection(db, "chats", currentChatId, "messages"), {
-                    senderId: currentUser.uid,
-                    senderEmail: currentUser.email,
-                    senderDisplayName: displayNameFromUser(currentUserData),
-                    senderCosmetics: cosmetic,
-                    text: `傳送了檔案：${file.name}`,
-                    type: "file",
+
+        const chatId = currentChatId;
+        const cosmeticSnapshot = currentCosmeticSnapshot();
+        const optId = appendOptimisticFileMessage(file.name, cosmeticSnapshot);
+        patchSidebarPreviewForChat(chatId, "📁 傳送了檔案");
+        clearMyTypingIndicator();
+
+        const validatePrivateThenUpload = function () {
+            const reader = new FileReader();
+            reader.onloadstart = function () {
+                setOptimisticFileProgress(optId, 8, "讀取檔案…");
+            };
+            reader.onprogress = function (ev) {
+                if (ev.lengthComputable) {
+                    const pct = Math.min(50, Math.round((ev.loaded / ev.total) * 50));
+                    setOptimisticFileProgress(optId, pct, "讀取檔案… " + pct + "%");
+                }
+            };
+            reader.onload = function (e) {
+                setOptimisticFileProgress(optId, 52, "準備上傳…");
+                void flushOutboundFileMessage({
+                    chatId: chatId,
                     fileName: file.name,
-                    fileData: content,
-                    createdAt: serverTimestamp()
+                    content: e.target.result,
+                    optId: optId,
+                    cosmeticSnapshot: cosmeticSnapshot
                 });
-                await updateDoc(doc(db, "chats", currentChatId), {
-                    lastMessage: "📁 傳送了檔案",
-                    updatedAt: serverTimestamp(),
-                    lastSenderId: currentUser.uid,
-                    [`lastReadBy.${currentUser.uid}`]: serverTimestamp()
-                });
-                patchSidebarPreviewForChat(currentChatId, "📁 傳送了檔案");
-                
-                trimChatMessages(currentChatId);
-            } catch(err) {
-                alert("檔案傳送失敗：" + err.message);
-            }
-            inputElem.value = ""; // 重置 input
+            };
+            reader.onerror = function () {
+                if (optId) removeOptimisticMessageRow(optId);
+                patchSidebarPreviewForChat(chatId, "");
+                alert("讀取檔案失敗");
+            };
+            reader.readAsText(file);
         };
-        reader.readAsText(file);
+
+        if (currentChatType === "private" && !currentChatDocData) {
+            getDoc(doc(db, "chats", chatId)).then(function (chatSnap) {
+                const d = chatSnap.exists() ? chatSnap.data() : null;
+                if (d) {
+                    cacheChatDoc(chatId, d);
+                    currentChatDocData = d;
+                }
+                if (isPrivateSendBlocked()) {
+                    if (optId) removeOptimisticMessageRow(optId);
+                    patchSidebarPreviewForChat(chatId, "");
+                    applyPrivateRequestState(currentChatDocData);
+                    alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
+                    return;
+                }
+                validatePrivateThenUpload();
+            }).catch(function () {
+                validatePrivateThenUpload();
+            });
+            return;
+        }
+
+        validatePrivateThenUpload();
     };
 
     function renderGiftMessageCard(msgId, msg) {
