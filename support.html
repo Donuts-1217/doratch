@@ -30,25 +30,6 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-        .support-mobile-top {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-        body.doratch-app-mode .support-mobile-top { display: flex; }
-        .support-mobile-top a {
-            text-decoration: none;
-            color: #4C97FF;
-            font-weight: 800;
-            font-size: 14px;
-        }
-        .support-mobile-top span { font-weight: 900; font-size: 15px; }
         .support-wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 48px; }
         .support-hero {
             background: linear-gradient(135deg, #4C97FF, #855CD6);
@@ -249,7 +230,7 @@
     </aside>
 
     <main class="main-content">
-        <div class="support-mobile-top">
+        <div class="doratch-page-mobile-bar">
             <a href="profile.html" id="support-back-link">← 返回</a>
             <span>🎧 客服中心</span>
         </div>
@@ -940,6 +921,7 @@
             userData = { email: user.email || "" };
         }
         applySidebar(user, userData);
+        window.DoratchShell?.applyRoleAdminEntry?.(userData.role, user.email);
         await loadTickets();
     });
 </script>

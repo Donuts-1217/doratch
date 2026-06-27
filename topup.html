@@ -38,28 +38,6 @@
             overflow-x: auto;
             box-sizing: border-box;
         }
-        .mobile-head {
-            display: none;
-            align-items: center;
-            gap: 10px;
-            position: sticky;
-            top: 0;
-            z-index: 12;
-            padding: 12px 16px;
-            background: #fff;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        body.doratch-app-mode .mobile-head { display: flex; }
-        .mobile-head a {
-            text-decoration: none;
-            color: var(--primary);
-            font-size: 14px;
-            font-weight: 800;
-        }
-        .mobile-head span {
-            font-size: 15px;
-            font-weight: 900;
-        }
         .topup-wrap {
             max-width: 980px;
             margin: 0 auto;
@@ -236,7 +214,7 @@
     </aside>
 
     <main class="main-content">
-        <div class="mobile-head">
+        <div class="doratch-page-mobile-bar">
             <a id="back-link" href="shop.html">← 返回</a>
             <span>💳 儲值中心</span>
         </div>
@@ -297,7 +275,8 @@
     </main>
 </div>
 
-<script src="doratch-mobile-shell.js"></script>
+<script src="doratch-shell.js"></script>
+<script src="doratch-mobile-shell.js" defer></script>
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -366,6 +345,7 @@
             const data = snap.exists() ? snap.data() : {};
             applySidebar(user, data);
             setBalance(data);
+            window.DoratchShell?.applyRoleAdminEntry?.(data.role, user.email);
             const guestTip = document.getElementById("guest-tip");
             if (guestTip) guestTip.style.display = "none";
         } catch (_) {
@@ -381,6 +361,5 @@
         if (href) el.setAttribute("href", appAwareHref(href));
     });
 </script>
-<script src="doratch-shell.js"></script>
 </body>
 </html>
