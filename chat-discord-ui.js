@@ -245,11 +245,13 @@
                 item.className = "member-item";
                 item.setAttribute("data-member-uid", member.uid || "");
                 item.innerHTML =
-                    '<span class="member-status ' + statusCls + '"></span>' +
+                    '<div class="member-avatar-wrap">' +
                     '<img src="' + avatarUrl + '" class="member-avatar" alt="">' +
+                    '<span class="member-status ' + statusCls + '"></span>' +
+                    "</div>" +
                     '<div class="member-info">' +
                     '<div class="member-name">' + esc(displayName) + crown + meTag + "</div>" +
-                    (isOwner ? '<div class="member-role">管理員</div>' : ('<div class="member-role">' + (online ? "在線" : "離線") + "</div>")) +
+                    (isOwner ? '<div class="member-role">管理員</div>' : "") +
                     "</div>" + kickBtn;
                 container.appendChild(item);
             });
@@ -280,8 +282,10 @@
             var item = document.createElement("div");
             item.className = "member-item member-item--bot";
             item.innerHTML =
-                '<span class="member-status bot"></span>' +
+                '<div class="member-avatar-wrap">' +
                 '<img src="' + avatarUrl + '" class="member-avatar" alt="">' +
+                '<span class="member-status bot"></span>' +
+                "</div>" +
                 '<div class="member-info">' +
                 '<div class="member-name">' + esc(bm.name) + ' <span class="member-tag bot">APP</span></div>' +
                 '<div class="member-role member-cmds">' + esc(cmdLine) + "</div>" +

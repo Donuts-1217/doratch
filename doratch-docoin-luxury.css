@@ -1,0 +1,736 @@
+/* ═══════════════════════════════════════════════════════════
+   Docoin 傳奇豪華視覺 — 誇張版（覆蓋 doratch-profile-fx.css）
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes dclxMegaPulse {
+    0%, 100% {
+        box-shadow:
+            inset 0 0 80px rgba(255,255,255,0.2),
+            inset 0 -40px 80px rgba(124,58,237,0.65),
+            inset 0 0 120px rgba(59,130,246,0.3),
+            inset 0 0 0 2px rgba(251,191,36,0.2);
+    }
+    50% {
+        box-shadow:
+            inset 0 0 110px rgba(255,255,255,0.35),
+            inset 0 -55px 100px rgba(168,85,247,0.85),
+            inset 0 0 150px rgba(34,211,238,0.45),
+            inset 0 0 0 4px rgba(251,191,36,0.45);
+    }
+}
+@keyframes dclxGoldCorona {
+    0%, 100% {
+        box-shadow:
+            inset 0 -50px 90px rgba(251,191,36,0.65),
+            inset 0 0 80px rgba(245,158,11,0.35),
+            inset 0 0 0 2px rgba(250,204,21,0.3);
+    }
+    50% {
+        box-shadow:
+            inset 0 -70px 120px rgba(250,204,21,0.85),
+            inset 0 0 110px rgba(251,191,36,0.5),
+            inset 0 0 0 4px rgba(234,179,8,0.55);
+    }
+}
+@keyframes dclxShiftFast {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+@keyframes dclxSpin {
+    0% { transform: rotate(0deg) scale(1.5); }
+    100% { transform: rotate(360deg) scale(1.5); }
+}
+@keyframes dclxSpinRev {
+    0% { transform: rotate(360deg) scale(1.55); }
+    100% { transform: rotate(0deg) scale(1.55); }
+}
+@keyframes dclxShimmerBlast {
+    0% { background-position: -130% 0; opacity: 0; }
+    12% { opacity: 1; }
+    100% { background-position: 230% 0; opacity: 0; }
+}
+@keyframes dclxGlitchHard {
+    0%, 78%, 100% { filter: none; clip-path: inset(0); }
+    80% { filter: hue-rotate(120deg) saturate(2.5) contrast(1.25); clip-path: inset(5% 0 55% 0); }
+    82% { filter: hue-rotate(-90deg) saturate(2.2); clip-path: inset(60% 0 8% 0); }
+    84% { filter: saturate(2.8) contrast(1.4) hue-rotate(45deg); clip-path: inset(0); }
+    86% { clip-path: inset(30% 0 35% 0); filter: saturate(2.5) hue-rotate(-30deg); }
+}
+@keyframes dclxMatrixTurbo {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 0 280px, 0 0, 0 0; }
+}
+@keyframes dclxOrbitRing {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes dclxNamePrism {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+}
+@keyframes dclxNamePulse {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(244,114,182,0.6), 0 0 20px rgba(168,85,247,0.5); }
+    50% { transform: scale(1.07); text-shadow: 0 0 20px rgba(244,114,182,0.95), 0 0 36px rgba(236,72,153,0.75), 0 0 52px rgba(251,191,36,0.5); }
+}
+@keyframes dclxNeonStrobe {
+    0%, 100% { text-shadow: 0 0 8px #22d3ee, 0 0 16px #22d3ee, 0 0 24px #ec4899; opacity: 1; }
+    8% { opacity: 0.5; text-shadow: 0 0 4px #22d3ee; }
+    12% { opacity: 1; text-shadow: 0 0 20px #22d3ee, 0 0 32px #a855f7; }
+    20% { opacity: 0.65; }
+}
+@keyframes dclxFrameOrbit {
+    0%, 100% { box-shadow: 0 0 0 5px rgba(251,191,36,0.35), 0 0 24px rgba(251,113,133,0.65), 0 0 40px rgba(99,102,241,0.45), 0 0 60px rgba(250,204,21,0.25); }
+    50% { box-shadow: 0 0 0 8px rgba(250,204,21,0.45), 0 0 36px rgba(251,191,36,0.75), 0 0 56px rgba(168,85,247,0.55), 0 0 80px rgba(34,211,238,0.35); }
+}
+@keyframes dclxBadgeMythic {
+    0%, 100% { box-shadow: 0 0 12px rgba(250,204,21,0.45), 0 0 24px rgba(245,158,11,0.3); transform: scale(1); }
+    50% { box-shadow: 0 0 20px rgba(250,204,21,0.75), 0 0 40px rgba(251,191,36,0.5), 0 0 60px rgba(168,85,247,0.35); transform: scale(1.03); }
+}
+@keyframes dclxAvatarAura {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(251,191,36,0.45), 0 0 20px rgba(250,204,21,0.55), 0 0 40px rgba(168,85,247,0.35); }
+    50% { box-shadow: 0 0 0 7px rgba(250,204,21,0.55), 0 0 32px rgba(251,191,36,0.75), 0 0 56px rgba(124,58,237,0.45); }
+}
+@keyframes dclxParticleDrift {
+    0% { background-position: 0 0, 40px 20px, 80px 10px, 120px 30px, 20px 50px, 60px 70px, 100px 40px, 160px 80px; }
+    100% { background-position: 0 160px, 40px 180px, 80px 170px, 120px 190px, 20px 210px, 60px 230px, 100px 200px, 160px 240px; }
+}
+@keyframes dclxElectricFlicker {
+    0%, 100% { opacity: 0.5; }
+    4% { opacity: 1; }
+    8% { opacity: 0.35; }
+    12% { opacity: 0.95; }
+    20% { opacity: 0.4; }
+    24% { opacity: 1; }
+}
+@keyframes dclxSparkleBurst {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1; }
+}
+@keyframes dclxHueWave {
+    0%, 100% { filter: saturate(1.6) brightness(1.22) hue-rotate(0deg) contrast(1.1); }
+    25% { filter: saturate(2) brightness(1.32) hue-rotate(30deg) contrast(1.15); }
+    50% { filter: saturate(1.85) brightness(1.28) hue-rotate(-25deg) contrast(1.12); }
+    75% { filter: saturate(2.1) brightness(1.35) hue-rotate(15deg) contrast(1.18); }
+}
+@keyframes dclxMeteorFast {
+    0% { background-position: -60% -60%, -30% -30%, 0% 0%; }
+    100% { background-position: 160% 160%, 130% 130%, 200% 200%; }
+}
+@keyframes dclxRippleRing {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
+@keyframes dclxScanSweep {
+    0% { transform: translateY(-120%) skewY(-3deg); opacity: 0; }
+    10% { opacity: 0.85; }
+    100% { transform: translateY(220%) skewY(-3deg); opacity: 0; }
+}
+@keyframes dclxFloatOrb {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(8%, -6%) scale(1.1); }
+    50% { transform: translate(-5%, 4%) scale(0.95); }
+    75% { transform: translate(6%, 8%) scale(1.05); }
+}
+@keyframes dclxNameShake {
+    0%, 100% { transform: scale(1) translateX(0); }
+    25% { transform: scale(1.05) translateX(-1px); }
+    75% { transform: scale(1.05) translateX(1px); }
+}
+@keyframes dclxFrameSpin {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(251,191,36,0.6)) drop-shadow(0 0 14px rgba(168,85,247,0.5)); }
+    50% { filter: drop-shadow(0 0 12px rgba(34,211,238,0.8)) drop-shadow(0 0 24px rgba(244,114,182,0.6)); }
+}
+
+/* ── 橫幅粒子動畫層（Docoin 面板專用，僅限 banner 區域、低於頭像／名稱） ── */
+.docoin-panel-lux {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    contain: layout paint;
+}
+.docoin-panel-lux > .dc-body,
+.profile-pop.docoin-panel-lux > .profile-pop-sheet {
+    position: relative;
+    z-index: 3;
+}
+.docoin-panel-lux .dc-banner,
+.docoin-panel-lux .profile-pop-banner,
+.dc-banner.docoin-banner-lux {
+    overflow: hidden !important;
+    isolation: isolate;
+}
+.docoin-panel-lux::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 148px;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 16px 16px 0 0;
+    background-image:
+        radial-gradient(3px 3px at 8% 15%, rgba(255,255,255,0.98), transparent),
+        radial-gradient(2px 2px at 22% 45%, rgba(250,204,21,0.95), transparent),
+        radial-gradient(3px 3px at 38% 22%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 55% 60%, rgba(34,211,238,0.95), transparent),
+        radial-gradient(3px 3px at 72% 18%, rgba(244,114,182,0.9), transparent),
+        radial-gradient(2px 2px at 88% 52%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(2px 2px at 15% 75%, rgba(167,139,250,0.85), transparent),
+        radial-gradient(3px 3px at 65% 80%, rgba(251,191,36,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 42% 38%, rgba(255,255,255,0.75), transparent),
+        radial-gradient(2px 2px at 78% 68%, rgba(52,211,153,0.8), transparent);
+    background-size: 100% 100%;
+    animation: dclxParticleDrift 5s linear infinite, dclxSparkleBurst 2.5s ease-in-out infinite, dclxElectricFlicker 3s steps(1) infinite;
+    mix-blend-mode: screen;
+}
+.docoin-panel-lux::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 148px;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: 16px 16px 0 0;
+    background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.55) 50%, transparent 80%);
+    background-size: 55% 100%;
+    background-repeat: no-repeat;
+    animation: dclxShimmerBlast 1.6s ease-in-out infinite;
+    mix-blend-mode: overlay;
+}
+.profile-pop.docoin-panel-lux::before,
+.profile-pop.docoin-panel-lux::after {
+    height: 120px;
+    border-radius: 0;
+}
+
+/* Docoin 面板特效 — 全體動態增強 */
+.dc-banner[class*="profile-fx-nebula"],
+.dc-banner[class*="profile-fx-starfall"],
+.dc-banner[class*="profile-fx-cosmic"],
+.dc-banner[class*="profile-fx-void"],
+.dc-banner[class*="profile-fx-glitch"],
+.dc-banner[class*="profile-fx-matrix"],
+.dc-banner[class*="profile-fx-cyber"],
+.dc-banner[class*="profile-fx-plasma"],
+.dc-banner[class*="profile-fx-golden"],
+.dc-banner[class*="profile-fx-neon"],
+.profile-pop-banner[class*="fx-"],
+.profile-pop[class*="fx-"] .profile-pop-banner {
+    animation-duration: 2.5s, 2s !important;
+}
+.docoin-panel-lux .dc-banner[class*="profile-fx-"],
+.profile-pop.docoin-panel-lux .profile-pop-banner[class*="fx-"] {
+    animation: dclxHueWave 4s ease-in-out infinite !important;
+}
+.docoin-panel-lux .dc-banner[class*="profile-fx-"] {
+    animation: dclxHueWave 4s ease-in-out infinite, dclxMegaPulse 1.8s ease-in-out infinite !important;
+}
+.docoin-panel-lux .dc-banner,
+.docoin-panel-lux.profile-pop .profile-pop-banner {
+    filter: saturate(1.45) brightness(1.15) contrast(1.06);
+}
+.docoin-panel-lux .dc-banner::after,
+.docoin-panel-lux .profile-pop-banner::after {
+    z-index: 3;
+}
+
+/* ── Docoin 面板特效：全面加料 ── */
+.dc-banner.profile-fx-nebula,
+.profile-pop-banner.fx-nebula,
+.profile-pop.fx-nebula .profile-pop-banner {
+    background:
+        radial-gradient(ellipse 90% 70% at 15% 85%, rgba(244,114,182,0.75), transparent 50%),
+        radial-gradient(ellipse 80% 60% at 90% 15%, rgba(34,211,238,0.65), transparent 48%),
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 40%),
+        linear-gradient(135deg, #1e1b4b 0%, #2563eb 25%, #7c3aed 55%, #db2777 80%, #06b6d4 100%) !important;
+    background-size: 220% 220%, 200% 200%, 100% 100%, 400% 400% !important;
+    animation: dclxShiftFast 4s ease infinite, dclxMegaPulse 3s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-nebula::before,
+.profile-pop-banner.fx-nebula::before {
+    background:
+        radial-gradient(2px 2px at 8% 18%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 22% 62%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(2px 2px at 48% 12%, #fff, transparent),
+        radial-gradient(1px 1px at 68% 48%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(2px 2px at 88% 28%, #fff, transparent),
+        radial-gradient(1px 1px at 35% 78%, rgba(255,255,255,0.7), transparent);
+    animation: dfxStarTwinkle 1.8s ease-in-out infinite !important;
+    opacity: 1 !important;
+}
+.dc-banner.profile-fx-nebula::after,
+.profile-pop-banner.fx-nebula::after {
+    background: conic-gradient(from 0deg, transparent, rgba(168,85,247,0.55), transparent, rgba(34,211,238,0.5), transparent, rgba(251,191,36,0.4), transparent) !important;
+    animation: dclxSpin 8s linear infinite !important;
+    mix-blend-mode: screen;
+    opacity: 0.95;
+}
+
+.dc-banner.profile-fx-starfall,
+.profile-pop-banner.fx-starfall,
+.profile-pop.fx-starfall .profile-pop-banner {
+    background:
+        linear-gradient(135deg, transparent 35%, rgba(255,255,255,0.9) 50%, transparent 65%),
+        linear-gradient(125deg, transparent 50%, rgba(255,255,255,0.6) 58%, transparent 66%),
+        linear-gradient(140deg, transparent 60%, rgba(34,211,238,0.5) 62%, transparent 64%),
+        linear-gradient(135deg, #020617 0%, #1e3a8a 45%, #4338ca 100%) !important;
+    background-size: 350% 350%, 320% 320%, 280% 280%, 100% 100% !important;
+    animation: dfxStarStreak 1.4s linear infinite, dclxMegaPulse 2.5s ease-in-out infinite !important;
+}
+
+.dc-banner.profile-fx-cosmic-aurora,
+.profile-pop-banner.fx-cosmic-aurora,
+.profile-pop.fx-cosmic-aurora .profile-pop-banner {
+    background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4, #22d3ee, #34d399, #7c3aed) !important;
+    background-size: 500% 500% !important;
+    animation: dclxShiftFast 5s ease infinite, dclxMegaPulse 3.5s ease-in-out infinite !important;
+    filter: saturate(1.4) brightness(1.1) !important;
+}
+.dc-banner.profile-fx-cosmic-aurora::before,
+.profile-pop-banner.fx-cosmic-aurora::before {
+    background: linear-gradient(90deg, transparent, rgba(52,211,153,0.55), rgba(167,139,250,0.6), rgba(34,211,238,0.55), transparent) !important;
+    filter: blur(12px) !important;
+    animation: dfxAuroraWave 3s ease-in-out infinite !important;
+    opacity: 1 !important;
+}
+
+.dc-banner.profile-fx-void-rift,
+.profile-pop-banner.fx-void-rift,
+.profile-pop.fx-void-rift .profile-pop-banner {
+    background: radial-gradient(ellipse 100% 90% at 50% 115%, #a855f7, #6d28d9 30%, #0f0a1a 72%) !important;
+    animation: dclxMegaPulse 2.8s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-void-rift::before,
+.profile-pop-banner.fx-void-rift::before {
+    background: conic-gradient(from 0deg, transparent 10%, rgba(139,92,246,0.7) 25%, transparent 40%, rgba(99,102,241,0.65) 55%, transparent 70%) !important;
+    animation: dclxSpin 6s linear infinite !important;
+    mix-blend-mode: screen;
+    opacity: 0.9;
+}
+.dc-banner.profile-fx-void-rift::after,
+.profile-pop-banner.fx-void-rift::after {
+    background: radial-gradient(circle at 50% 80%, rgba(0,0,0,0.85) 0%, transparent 45%) !important;
+    animation: dfxRipple 2s ease-in-out infinite !important;
+}
+
+.dc-banner.profile-fx-glitch,
+.profile-pop-banner.fx-glitch,
+.profile-pop.fx-glitch .profile-pop-banner {
+    background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15, #a855f7, #ef4444) !important;
+    background-size: 400% 400% !important;
+    animation: dclxShiftFast 1s linear infinite, dclxGlitchHard 1.4s steps(1) infinite !important;
+}
+
+.dc-banner.profile-fx-matrix-rain,
+.profile-pop-banner.fx-matrix-rain,
+.profile-pop.fx-matrix-rain .profile-pop-banner {
+    background:
+        repeating-linear-gradient(0deg, rgba(34,197,94,0.38) 0 1px, transparent 1px 8px),
+        repeating-linear-gradient(90deg, rgba(34,197,94,0.12) 0 1px, transparent 1px 24px),
+        linear-gradient(180deg, #011a0d 0%, #0f172a 100%) !important;
+    animation: dclxMatrixTurbo 0.9s linear infinite !important;
+    box-shadow: inset 0 0 60px rgba(34,197,94,0.45), inset 0 0 0 1px rgba(34,197,94,0.3) !important;
+}
+.dc-banner.profile-fx-matrix-rain::after,
+.profile-pop-banner.fx-matrix-rain::after {
+    background: linear-gradient(180deg, transparent, rgba(34,197,94,0.55), transparent) !important;
+    height: 35% !important;
+    animation: dfxScanLine 1.5s linear infinite !important;
+}
+
+.dc-banner.profile-fx-void-ripple,
+.profile-pop-banner.fx-void-ripple,
+.profile-pop.fx-void-ripple .profile-pop-banner {
+    background: radial-gradient(circle at 50% 130%, #9333ea, #581c87 35%, #0f172a 70%) !important;
+    animation: dclxMegaPulse 2.5s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-void-ripple::before,
+.profile-pop-banner.fx-void-ripple::before {
+    border: 3px solid rgba(167,139,250,0.5) !important;
+    border-radius: 50% !important;
+    width: 70% !important;
+    height: 70% !important;
+    left: 15% !important;
+    top: 25% !important;
+    inset: auto !important;
+    animation: dfxRipple 1.8s ease-out infinite !important;
+    box-shadow: 0 0 30px rgba(168,85,247,0.45) !important;
+}
+
+.dc-banner.profile-fx-cyber-grid,
+.profile-pop-banner.fx-cyber-grid,
+.profile-pop.fx-cyber-grid .profile-pop-banner {
+    background:
+        linear-gradient(rgba(34,211,238,0.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,211,238,0.35) 1px, transparent 1px),
+        radial-gradient(ellipse at 50% 100%, rgba(34,211,238,0.25), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #1e40af 100%) !important;
+    background-size: 18px 18px, 18px 18px, 100% 100%, 100% 100% !important;
+    animation: dfxGridMove 2s linear infinite !important;
+    box-shadow: inset 0 0 60px rgba(34,211,238,0.25), 0 0 40px rgba(34,211,238,0.2) !important;
+}
+.dc-banner.profile-fx-cyber-grid::after,
+.profile-pop-banner.fx-cyber-grid::after {
+    background: linear-gradient(105deg, transparent 35%, rgba(34,211,238,0.65) 50%, transparent 65%) !important;
+    animation: dclxShimmerBlast 2.5s ease-in-out infinite !important;
+}
+
+.dc-banner.profile-fx-plasma-storm,
+.profile-pop-banner.fx-plasma-storm,
+.profile-pop.fx-plasma-storm .profile-pop-banner {
+    background:
+        radial-gradient(ellipse 70% 90% at 25% 50%, rgba(236,72,153,0.75), transparent 55%),
+        radial-gradient(ellipse 60% 80% at 80% 40%, rgba(59,130,246,0.7), transparent 50%),
+        linear-gradient(135deg, #4c1d95, #a855f7, #ec4899, #3b82f6) !important;
+    background-size: 220% 220%, 200% 200%, 350% 350% !important;
+    animation: dclxShiftFast 3s ease infinite, dclxMegaPulse 2.5s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-plasma-storm::before,
+.profile-pop-banner.fx-plasma-storm::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.55), transparent 40%) !important;
+    animation: dfxPlasmaFlash 1.2s ease-in-out infinite !important;
+    mix-blend-mode: overlay;
+}
+
+.dc-banner.profile-fx-golden-aura,
+.profile-pop-banner.fx-golden-aura,
+.profile-pop.fx-golden-aura .profile-pop-banner {
+    background: radial-gradient(ellipse 120% 100% at 50% 110%, #fef08a, #fbbf24 35%, #d97706 65%, #92400e 100%) !important;
+    animation: dclxGoldCorona 2.2s ease-in-out infinite !important;
+    filter: saturate(1.3) brightness(1.12) !important;
+}
+.dc-banner.profile-fx-golden-aura::after,
+.profile-pop-banner.fx-golden-aura::after {
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.7) 50%, transparent 70%) !important;
+    animation: dclxShimmerBlast 2s ease-in-out infinite !important;
+}
+
+.dc-banner.profile-fx-neon-city,
+.profile-pop-banner.fx-neon-city,
+.profile-pop.fx-neon-city .profile-pop-banner {
+    background:
+        linear-gradient(180deg, transparent 52%, rgba(190,24,93,0.55) 52%, rgba(190,24,93,0.55) 56%, transparent 56%),
+        repeating-linear-gradient(90deg, rgba(34,211,238,0.12) 0 2px, transparent 2px 36px),
+        linear-gradient(135deg, #0f172a 0%, #be185d 30%, #7c3aed 60%, #22d3ee 100%) !important;
+    background-size: 100% 100%, 100% 100%, 320% 320% !important;
+    animation: dclxShiftFast 3.5s ease infinite, dclxMegaPulse 3s ease-in-out infinite !important;
+    box-shadow: 0 0 40px rgba(190,24,93,0.45), inset 0 0 40px rgba(34,211,238,0.2) !important;
+}
+.dc-banner.profile-fx-neon-city::before,
+.profile-pop-banner.fx-neon-city::before {
+    background: repeating-linear-gradient(90deg, rgba(34,211,238,0.25) 0 4px, transparent 4px 32px) !important;
+    animation: dfxNeonFlicker 3s steps(1) infinite !important;
+    mix-blend-mode: screen;
+}
+
+/* ── Docoin 橫幅 ── */
+.dc-banner.banner-galaxy,
+.dc-banner.docoin-banner-lux.banner-galaxy,
+.profile-pop-banner.pop-banner-galaxy {
+    background:
+        radial-gradient(ellipse 80% 60% at 70% 30%, rgba(6,182,212,0.55), transparent 50%),
+        radial-gradient(ellipse 70% 50% at 20% 70%, rgba(124,58,237,0.5), transparent 45%),
+        linear-gradient(135deg, #0f0a1a, #4338ca 35%, #7c3aed 65%, #06b6d4) !important;
+    background-size: 200% 200%, 180% 180%, 350% 350% !important;
+    animation: dclxShiftFast 5s ease infinite, dclxMegaPulse 3.5s ease-in-out infinite !important;
+}
+.dc-banner.banner-neon_city,
+.dc-banner.docoin-banner-lux.banner-neon_city,
+.profile-pop-banner.pop-banner-neon-city {
+    background:
+        linear-gradient(180deg, transparent 50%, rgba(190,24,93,0.45) 50%, rgba(190,24,93,0.45) 54%, transparent 54%),
+        linear-gradient(135deg, #0f172a, #be185d 35%, #7c3aed 65%, #22d3ee) !important;
+    background-size: 100% 100%, 300% 300% !important;
+    animation: dclxShiftFast 4s ease infinite, dclxMegaPulse 3s ease-in-out infinite !important;
+    box-shadow: 0 0 35px rgba(190,24,93,0.4) !important;
+}
+
+.docoin-panel-lux::before,
+.docoin-panel-lux::after,
+.profile-pop.docoin-panel-lux::before,
+.profile-pop.docoin-panel-lux::after {
+    display: none !important;
+}
+
+.dc-avatar-row,
+.dc-name-block,
+.profile-pop-identity,
+.profile-pop-name,
+.profile-name {
+    position: relative;
+    z-index: 8;
+}
+
+/* ── 名稱特效：間歇閃現（平時可讀、特效短暫出現） ── */
+@keyframes dclxNamePrismBurst {
+    0%, 34%, 100% {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        background-image: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+        transform: none !important;
+    }
+    40%, 64% {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        background-image: linear-gradient(90deg, #f59e0b, #22d3ee, #f43f5e, #a78bfa, #4ade80, #f59e0b) !important;
+        background-size: 300% 100% !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        text-shadow: 0 0 12px rgba(245,158,11,0.55) !important;
+        filter: drop-shadow(0 0 6px rgba(34,211,238,0.35)) !important;
+    }
+}
+@keyframes dclxNameAuroraBurst {
+    0%, 34%, 100% {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        background-image: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+    }
+    40%, 64% {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        background-image: linear-gradient(90deg, #34d399, #60a5fa, #a78bfa, #f472b6, #34d399) !important;
+        background-size: 280% 100% !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        text-shadow: 0 0 12px rgba(96,165,250,0.5) !important;
+    }
+}
+@keyframes dclxNameRainbowBurst {
+    0%, 34%, 100% {
+        color: #f8fafc !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        background-image: none !important;
+        text-shadow: none !important;
+        filter: none !important;
+    }
+    40%, 64% {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        background-image: linear-gradient(90deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444) !important;
+        background-size: 320% 100% !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        text-shadow: 0 0 12px rgba(168,85,247,0.45) !important;
+    }
+}
+@keyframes dclxNameGlowBurst {
+    0%, 34%, 100% {
+        text-shadow: none !important;
+        filter: none !important;
+        transform: scale(1) !important;
+        opacity: 1 !important;
+    }
+    40%, 64% {
+        text-shadow: var(--dclx-name-glow, 0 0 12px rgba(244,114,182,0.65)) !important;
+        transform: scale(1.02) !important;
+    }
+}
+
+.profile-name.name-effect-prism > .name-fx-text,
+.profile-pop-name.name-effect-prism > .name-fx-text,
+.msg-author .name-fx-text.name-effect-prism {
+    animation: dclxNamePrismBurst 2.8s ease-in-out infinite !important;
+}
+.profile-name.name-effect-aurora-pulse > .name-fx-text,
+.profile-pop-name.name-effect-aurora-pulse > .name-fx-text,
+.msg-author .name-fx-text.name-effect-aurora-pulse {
+    animation: dclxNameAuroraBurst 2.8s ease-in-out infinite !important;
+}
+.profile-name.name-effect-rainbow > .name-fx-text,
+.profile-pop-name.name-effect-rainbow > .name-fx-text,
+.msg-author .name-fx-text.name-effect-rainbow {
+    animation: dclxNameRainbowBurst 3s ease-in-out infinite !important;
+}
+.profile-name.name-effect-stardust > .name-fx-text,
+.profile-pop-name.name-effect-stardust > .name-fx-text,
+.msg-author .name-fx-text.name-effect-stardust {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    --dclx-name-glow: 0 0 12px rgba(251,191,36,0.7), 0 0 22px rgba(167,139,250,0.5);
+    animation: dclxNameGlowBurst 2.6s ease-in-out infinite !important;
+}
+.profile-name.name-effect-pulse-core > .name-fx-text,
+.profile-pop-name.name-effect-pulse-core > .name-fx-text,
+.msg-author .name-fx-text.name-effect-pulse-core {
+    color: #fda4af !important;
+    -webkit-text-fill-color: #fda4af !important;
+    --dclx-name-glow: 0 0 14px rgba(244,114,182,0.85), 0 0 26px rgba(168,85,247,0.5);
+    animation: dclxNameGlowBurst 2.4s ease-in-out infinite !important;
+}
+.profile-name.name-effect-neon-flicker > .name-fx-text,
+.profile-pop-name.name-effect-neon-flicker > .name-fx-text,
+.msg-author .name-fx-text.name-effect-neon-flicker {
+    color: #22d3ee !important;
+    -webkit-text-fill-color: #22d3ee !important;
+    --dclx-name-glow: 0 0 12px #22d3ee, 0 0 22px #ec4899;
+    animation: dclxNameGlowBurst 2.2s ease-in-out infinite !important;
+}
+.name-effect-chaos-prism > .name-fx-text,
+.msg-author .name-fx-text.name-effect-chaos-prism {
+    animation: dclxNamePrismBurst 2.6s ease-in-out infinite !important;
+}
+.name-effect-holy-radiance > .name-fx-text,
+.msg-author .name-fx-text.name-effect-holy-radiance {
+    animation: dclxNameRainbowBurst 3.2s ease-in-out infinite !important;
+}
+.name-effect-code-storm > .name-fx-text,
+.msg-author .name-fx-text.name-effect-code-storm {
+    color: #4ade80 !important;
+    -webkit-text-fill-color: #4ade80 !important;
+    --dclx-name-glow: 0 0 10px rgba(74,222,128,0.9), 0 0 20px rgba(34,211,238,0.6);
+    animation: dclxNameGlowBurst 2s ease-in-out infinite !important;
+}
+.profile-pop-name > .name-fx-text,
+.profile-name > .name-fx-text {
+    position: relative;
+    z-index: 2;
+}
+
+/* ── Docoin 傳奇粒子框 ── */
+.avatar-frame-phoenix-particle,
+.avatar-frame-quantum-particle,
+.avatar-frame-glitch-legend,
+.avatar-frame-celestial-particle,
+.avatar-frame-eclipse-particle,
+.avatar-frame-stardust-particle,
+.avatar-frame-moonlit-legend {
+    animation: dclxFrameOrbit 1.6s ease-in-out infinite !important;
+    border-width: 3px !important;
+}
+.avatar-frame-phoenix-particle { border-color: #fb7185 !important; }
+.avatar-frame-quantum-particle { border-color: #60a5fa !important; }
+.avatar-frame-glitch-legend { border-color: #22d3ee !important; }
+.avatar-frame-celestial-particle { border-color: #fbbf24 !important; }
+.avatar-frame-eclipse-particle { border-color: #a855f7 !important; }
+.avatar-frame-stardust-particle { border-color: #c4b5fd !important; }
+.avatar-frame-moonlit-legend { border-color: #e9d5ff !important; }
+
+/* ── Docoin 神話徽章 ── */
+.profile-pop-badge-chip.docoin-mythic,
+.profile-pop-badge-chip.legend.docoin-mythic {
+    animation: dclxBadgeMythic 1.8s ease-in-out infinite !important;
+    border-color: rgba(250,204,21,0.75) !important;
+    box-shadow: 0 0 16px rgba(251,191,36,0.55), 0 0 28px rgba(168,85,247,0.35) !important;
+}
+.profile-chip.badge.legendary-badge-mythic,
+.user-cosmetic-badge.legendary-badge-mythic {
+    animation: dclxBadgeMythic 1.8s ease-in-out infinite !important;
+    border-color: rgba(250,204,21,0.75) !important;
+    background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(168,85,247,0.12)) !important;
+}
+.profile-pop-badge-chip.legend {
+    border-color: rgba(250,204,21,0.45) !important;
+}
+.user-title-badge.docoin-title-lux,
+.user-title-badge.legendary-title.docoin-title-lux {
+    animation: none !important;
+    filter: none !important;
+}
+.user-title-badge.docoin-title-lux .chip-label,
+.user-title-badge.legendary-title.docoin-title-lux .chip-label {
+    animation: dclxTitleChipBurst 2.8s ease-in-out infinite !important;
+}
+@keyframes dclxTitleChipBurst {
+    0%, 34%, 100% {
+        color: #fde68a !important;
+        -webkit-text-fill-color: #fde68a !important;
+        background-image: none !important;
+        text-shadow: 0 0 4px rgba(251,191,36,0.35);
+    }
+    40%, 64% {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+        background-image: linear-gradient(90deg, #fbbf24, #f472b6, #60a5fa, #a855f7, #fbbf24) !important;
+        background-size: 250% auto !important;
+        -webkit-background-clip: text !important;
+        background-clip: text !important;
+        text-shadow: 0 0 8px rgba(251,191,36,0.55);
+    }
+}
+
+/* ── Docoin 傳奇稱號 ── */
+.profile-chip.docoin-title-lux,
+.profile-pop-role-pill.docoin-title-lux {
+    background: linear-gradient(90deg, #fbbf24, #f43f5e, #60a5fa, #a855f7, #fbbf24) !important;
+    background-size: 250% auto !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    color: transparent !important;
+    animation: dclxNamePrism 2.5s linear infinite !important;
+    filter: drop-shadow(0 0 6px rgba(251,191,36,0.5));
+    border-color: rgba(251,191,36,0.45) !important;
+}
+
+/* ── Docoin 傳奇頭像光環 ── */
+.docoin-avatar-lux .avatar-large,
+.docoin-avatar-lux .profile-pop-avatar,
+.docoin-avatar-lux.msg-avatar-container img,
+.docoin-avatar-lux .msg-avatar,
+img.docoin-avatar-lux {
+    animation: dclxAvatarAura 2.5s ease-in-out infinite !important;
+}
+.docoin-avatar-lux::before,
+.msg-avatar-container.docoin-avatar-lux::before,
+.dc-avatar-wrap.docoin-avatar-lux::before,
+.profile-pop-avatar-wrap.docoin-avatar-lux::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: inherit;
+    border: 2px solid transparent;
+    border-top-color: rgba(251,191,36,0.75);
+    border-right-color: rgba(168,85,247,0.55);
+    animation: dclxOrbitRing 3s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+.dc-avatar-wrap.docoin-avatar-lux::before { border-radius: 50%; inset: -6px; }
+.profile-pop-avatar-wrap.docoin-avatar-lux::before { border-radius: 50%; inset: -6px; }
+.msg-avatar-container.docoin-avatar-lux::before { border-radius: 18px; inset: -4px; }
+img.docoin-avatar-lux { position: relative; }
+
+/* ── 新增 Docoin 傳奇：雷暴 / 數位脈衝 / 極光橫幅 ── */
+.dc-banner.profile-fx-thunder-roll,
+.profile-pop-banner.fx-thunder-roll,
+.profile-pop.fx-thunder-roll .profile-pop-banner {
+    background:
+        radial-gradient(ellipse 90% 50% at 40% 15%, rgba(253,224,71,0.45), transparent 55%),
+        linear-gradient(160deg, #0f172a, #475569 45%, #1e293b) !important;
+    animation: dclxMegaPulse 2.8s ease-in-out infinite !important;
+    filter: saturate(1.2) brightness(1.08) !important;
+}
+.dc-banner.profile-fx-thunder-roll::after,
+.profile-pop-banner.fx-thunder-roll::after {
+    background: linear-gradient(105deg, transparent 30%, rgba(253,224,71,0.55) 50%, transparent 70%) !important;
+    animation: dclxShimmerBlast 2.5s ease-in-out infinite !important;
+}
+
+.dc-banner.profile-fx-digital-pulse,
+.profile-pop-banner.fx-digital-pulse,
+.profile-pop.fx-digital-pulse .profile-pop-banner {
+    background:
+        repeating-linear-gradient(90deg, rgba(6,182,212,0.15) 0 3px, transparent 3px 28px),
+        linear-gradient(135deg, #0f172a, #134e4a 35%, #1e3a8a 70%, #06b6d4) !important;
+    background-size: 100% 100%, 320% 320% !important;
+    animation: dclxShiftFast 4s ease infinite, dclxMegaPulse 3s ease-in-out infinite !important;
+    box-shadow: 0 0 35px rgba(6,182,212,0.35), inset 0 0 40px rgba(34,211,238,0.15) !important;
+}
+
+.dc-banner.banner-aurora_borealis,
+.dc-banner.docoin-banner-lux.banner-aurora_borealis,
+.profile-pop-banner.pop-banner-aurora-borealis {
+    background:
+        radial-gradient(ellipse 80% 55% at 25% 30%, rgba(34,211,238,0.5), transparent 50%),
+        radial-gradient(ellipse 70% 45% at 75% 60%, rgba(99,102,241,0.45), transparent 45%),
+        linear-gradient(135deg, #042f2e, #0e7490 35%, #6366f1 65%, #22d3ee) !important;
+    background-size: 200% 200%, 180% 180%, 350% 350% !important;
+    animation: dclxShiftFast 6s ease infinite, dclxMegaPulse 3.5s ease-in-out infinite !important;
+}

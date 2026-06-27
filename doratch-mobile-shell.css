@@ -944,6 +944,10 @@ body.doratch-app-mode .dc-tabs { margin-top: 12px; }
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.45);
   }
 
+  body.doratch-app-mode.chat-app .member-sidebar.profile-mode {
+    width: min(340px, 92vw);
+  }
+
   body.doratch-app-mode.chat-app .member-sidebar-header {
     min-height: 56px;
     height: auto;

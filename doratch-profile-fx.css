@@ -1,0 +1,677 @@
+/* Doratch 個人面板特效 — profile.html (.profile-fx-*) + chat 彈窗 (.fx-*) */
+
+.dc-banner[class*="profile-fx-"],
+.profile-hero[class*="profile-fx-"],
+.profile-pop-banner[class*="fx-"] {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.dc-banner[class*="profile-fx-"]::before,
+.dc-banner[class*="profile-fx-"]::after,
+.profile-hero[class*="profile-fx-"]::before,
+.profile-hero[class*="profile-fx-"]::after,
+.profile-pop-banner[class*="fx-"]::before,
+.profile-pop-banner[class*="fx-"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* ── Keyframes ── */
+@keyframes dfxShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+@keyframes dfxShiftDiag {
+    0%, 100% { background-position: 0% 0%; }
+    50% { background-position: 100% 100%; }
+}
+@keyframes dfxGlowPulse {
+    0%, 100% { box-shadow: inset 0 0 30px rgba(255,255,255,0.08), 0 0 20px rgba(124,58,237,0.35); }
+    50% { box-shadow: inset 0 0 50px rgba(255,255,255,0.18), 0 0 40px rgba(124,58,237,0.65), 0 0 70px rgba(59,130,246,0.35); }
+}
+@keyframes dfxGoldPulse {
+    0%, 100% { box-shadow: inset 0 -30px 60px rgba(251,191,36,0.35), 0 0 25px rgba(245,158,11,0.4); }
+    50% { box-shadow: inset 0 -40px 80px rgba(250,204,21,0.55), 0 0 45px rgba(251,191,36,0.7), 0 0 80px rgba(217,119,6,0.35); }
+}
+@keyframes dfxRipple {
+    0%, 100% { transform: scale(1); opacity: 0.55; }
+    50% { transform: scale(1.08); opacity: 0.9; }
+}
+@keyframes dfxShimmer {
+    0% { transform: translateX(-120%) skewX(-18deg); }
+    100% { transform: translateX(220%) skewX(-18deg); }
+}
+@keyframes dfxStarTwinkle {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+@keyframes dfxStarStreak {
+    0% { background-position: -40% -40%, 0% 0%; }
+    100% { background-position: 140% 140%, 200% 200%; }
+}
+@keyframes dfxGlitch {
+    0%, 82%, 100% { filter: none; transform: none; clip-path: inset(0 0 0 0); }
+    84% { filter: hue-rotate(95deg) saturate(1.6); transform: translateX(3px); clip-path: inset(8% 0 42% 0); }
+    86% { filter: hue-rotate(-80deg); transform: translateX(-4px); clip-path: inset(52% 0 6% 0); }
+    88% { filter: saturate(2); transform: translateX(2px); clip-path: inset(0 0 0 0); }
+    90% { clip-path: inset(22% 0 28% 0); }
+}
+@keyframes dfxMatrixScroll {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 0 160px, 0 0, 0 0; }
+}
+@keyframes dfxScanLine {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+}
+@keyframes dfxAuroraWave {
+    0%, 100% { transform: translateX(-8%) skewY(-2deg); opacity: 0.65; }
+    50% { transform: translateX(8%) skewY(2deg); opacity: 1; }
+}
+@keyframes dfxVoidSpin {
+    0% { transform: rotate(0deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1.2); }
+}
+@keyframes dfxFlameFlicker {
+    0%, 100% { opacity: 0.7; transform: scaleY(1); }
+    25% { opacity: 1; transform: scaleY(1.06); }
+    50% { opacity: 0.85; transform: scaleY(0.97); }
+    75% { opacity: 0.95; transform: scaleY(1.03); }
+}
+@keyframes dfxNeonFlicker {
+    0%, 100% { opacity: 0.85; }
+    4% { opacity: 0.4; }
+    8% { opacity: 1; }
+    12% { opacity: 0.55; }
+    16% { opacity: 0.95; }
+}
+@keyframes dfxPetalsFall {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 40px 120px, -30px 100px; }
+}
+@keyframes dfxGridMove {
+    0% { background-position: 0 0, 0 0, 0 0; }
+    100% { background-position: 24px 24px, 24px 24px, 0 0; }
+}
+@keyframes dfxPlasmaFlash {
+    0%, 100% { opacity: 0.5; }
+    10% { opacity: 1; }
+    20% { opacity: 0.6; }
+    55% { opacity: 0.95; }
+}
+
+/* ── Royal 皇家光暈 ── */
+.dc-banner.profile-fx-royal,
+.profile-hero.profile-fx-royal,
+.profile-pop-banner.fx-royal,
+.profile-pop.fx-royal .profile-pop-banner {
+    background: linear-gradient(135deg, #92400e 0%, #f59e0b 35%, #855CD6 100%) !important;
+    background-size: 220% 220% !important;
+    animation: dfxShift 5s ease infinite, dfxGoldPulse 3s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-royal::after,
+.profile-hero.profile-fx-royal::after,
+.profile-pop-banner.fx-royal::after {
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%);
+    animation: dfxShimmer 2.8s ease-in-out infinite;
+    mix-blend-mode: overlay;
+}
+
+/* ── Nebula 星雲脈衝 ── */
+.dc-banner.profile-fx-nebula,
+.profile-hero.profile-fx-nebula,
+.profile-pop-banner.fx-nebula,
+.profile-pop.fx-nebula .profile-pop-banner {
+    background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(244,114,182,0.55), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 85% 20%, rgba(34,211,238,0.45), transparent 50%),
+        linear-gradient(135deg, #1e3a8a 0%, #2563eb 30%, #7c3aed 65%, #db2777 100%) !important;
+    background-size: 200% 200%, 180% 180%, 300% 300% !important;
+    animation: dfxShift 6s ease infinite, dfxGlowPulse 4s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-nebula::before,
+.profile-hero.profile-fx-nebula::before,
+.profile-pop-banner.fx-nebula::before {
+    background-image:
+        radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 30% 65%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 55% 15%, rgba(255,255,255,0.85), transparent),
+        radial-gradient(1px 1px at 75% 55%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 90% 30%, rgba(255,255,255,0.75), transparent);
+    animation: dfxStarTwinkle 3s ease-in-out infinite;
+}
+
+/* ── Sakura 櫻花飄落 ── */
+.dc-banner.profile-fx-sakura,
+.profile-hero.profile-fx-sakura,
+.profile-pop-banner.fx-sakura,
+.profile-pop.fx-sakura .profile-pop-banner {
+    background: linear-gradient(135deg, #831843 0%, #ec4899 45%, #fda4af 100%) !important;
+    background-size: 250% 250% !important;
+    animation: dfxShift 7s ease infinite !important;
+}
+.dc-banner.profile-fx-sakura::before,
+.profile-hero.profile-fx-sakura::before,
+.profile-pop-banner.fx-sakura::before {
+    background-image:
+        radial-gradient(4px 4px at 15% 10%, rgba(253,186,216,0.9), transparent),
+        radial-gradient(3px 3px at 45% 25%, rgba(251,207,232,0.85), transparent),
+        radial-gradient(4px 4px at 70% 8%, rgba(249,168,212,0.8), transparent),
+        radial-gradient(3px 3px at 88% 35%, rgba(253,164,175,0.75), transparent);
+    background-size: 100% 100%;
+    animation: dfxPetalsFall 8s linear infinite;
+    opacity: 0.85;
+}
+
+/* ── Starfall 流星雨夜 ── */
+.dc-banner.profile-fx-starfall,
+.profile-hero.profile-fx-starfall,
+.profile-pop-banner.fx-starfall,
+.profile-pop.fx-starfall .profile-pop-banner {
+    background:
+        linear-gradient(135deg, transparent 42%, rgba(255,255,255,0.55) 50%, transparent 58%),
+        linear-gradient(135deg, #020617 0%, #1e3a8a 50%, #4338ca 100%) !important;
+    background-size: 250% 250%, 100% 100% !important;
+    animation: dfxStarStreak 3.5s linear infinite !important;
+    box-shadow: inset 0 0 40px rgba(99,102,241,0.35) !important;
+}
+.dc-banner.profile-fx-starfall::before,
+.profile-hero.profile-fx-starfall::before,
+.profile-pop-banner.fx-starfall::before {
+    background-image:
+        radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+        radial-gradient(1px 1px at 38% 42%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1.5px 1.5px at 62% 22%, #fff, transparent),
+        radial-gradient(1px 1px at 82% 58%, rgba(255,255,255,0.7), transparent);
+    animation: dfxStarTwinkle 2s ease-in-out infinite;
+}
+
+/* ── Cosmic Aurora 宇宙極光 ── */
+.dc-banner.profile-fx-cosmic-aurora,
+.profile-hero.profile-fx-cosmic-aurora,
+.profile-pop-banner.fx-cosmic-aurora,
+.profile-pop.fx-cosmic-aurora .profile-pop-banner {
+    background: linear-gradient(135deg, #0c1445, #1e3a8a, #7c3aed, #06b6d4, #22d3ee) !important;
+    background-size: 400% 400% !important;
+    animation: dfxShiftDiag 8s ease infinite, dfxGlowPulse 5s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-cosmic-aurora::before,
+.profile-hero.profile-fx-cosmic-aurora::before,
+.profile-pop-banner.fx-cosmic-aurora::before {
+    background: linear-gradient(90deg, transparent, rgba(52,211,153,0.35), rgba(167,139,250,0.4), rgba(34,211,238,0.35), transparent);
+    filter: blur(8px);
+    animation: dfxAuroraWave 5s ease-in-out infinite;
+    mix-blend-mode: screen;
+}
+
+/* ── Void Rift 虛空裂隙 ── */
+.dc-banner.profile-fx-void-rift,
+.profile-hero.profile-fx-void-rift,
+.profile-pop-banner.fx-void-rift,
+.profile-pop.fx-void-rift .profile-pop-banner {
+    background: radial-gradient(ellipse 90% 80% at 50% 110%, #6d28d9, #0f0a1a 70%) !important;
+    animation: dfxGlowPulse 3.5s ease-in-out infinite !important;
+    box-shadow: inset 0 0 60px rgba(76,29,149,0.5) !important;
+}
+.dc-banner.profile-fx-void-rift::before,
+.profile-hero.profile-fx-void-rift::before,
+.profile-pop-banner.fx-void-rift::before {
+    background: conic-gradient(from 0deg, transparent, rgba(139,92,246,0.5), transparent, rgba(99,102,241,0.45), transparent);
+    animation: dfxVoidSpin 8s linear infinite;
+    opacity: 0.7;
+    mix-blend-mode: screen;
+}
+
+/* ── Glitch 故障閃爍 ── */
+.dc-banner.profile-fx-glitch,
+.profile-hero.profile-fx-glitch,
+.profile-pop-banner.fx-glitch,
+.profile-pop.fx-glitch .profile-pop-banner {
+    background: linear-gradient(135deg, #ec4899, #22d3ee, #facc15, #a855f7) !important;
+    background-size: 300% 300% !important;
+    animation: dfxShift 2s linear infinite, dfxGlitch 2.5s steps(1) infinite !important;
+}
+
+/* ── Matrix Rain 矩陣代碼雨 ── */
+.dc-banner.profile-fx-matrix-rain,
+.profile-hero.profile-fx-matrix-rain,
+.profile-pop-banner.fx-matrix-rain,
+.profile-pop.fx-matrix-rain .profile-pop-banner {
+    background:
+        repeating-linear-gradient(0deg, rgba(34,197,94,0.22) 0 1px, transparent 1px 10px),
+        repeating-linear-gradient(90deg, rgba(34,197,94,0.06) 0 1px, transparent 1px 40px),
+        linear-gradient(180deg, #022c15 0%, #0f172a 100%) !important;
+    animation: dfxMatrixScroll 1.8s linear infinite !important;
+    box-shadow: inset 0 0 30px rgba(34,197,94,0.25) !important;
+}
+.dc-banner.profile-fx-matrix-rain::after,
+.profile-hero.profile-fx-matrix-rain::after,
+.profile-pop-banner.fx-matrix-rain::after {
+    background: linear-gradient(180deg, transparent, rgba(34,197,94,0.35), transparent);
+    height: 30%;
+    animation: dfxScanLine 2.5s linear infinite;
+}
+
+/* ── Golden Halo 聖金光環 ── */
+.dc-banner.profile-fx-golden-halo,
+.profile-hero.profile-fx-golden-halo,
+.profile-pop-banner.fx-golden-halo,
+.profile-pop.fx-golden-halo .profile-pop-banner {
+    background: radial-gradient(ellipse 120% 100% at 50% 120%, #fde68a, #f59e0b 40%, #92400e 100%) !important;
+    animation: dfxGoldPulse 2.8s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-golden-halo::before,
+.profile-hero.profile-fx-golden-halo::before,
+.profile-pop-banner.fx-golden-halo::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), transparent 55%);
+    animation: dfxRipple 3s ease-in-out infinite;
+}
+
+/* ── Void Ripple 虛空漣漪 ── */
+.dc-banner.profile-fx-void-ripple,
+.profile-hero.profile-fx-void-ripple,
+.profile-pop-banner.fx-void-ripple,
+.profile-pop.fx-void-ripple .profile-pop-banner {
+    background: radial-gradient(circle at 50% 130%, #7c3aed, #581c87 35%, #0f172a 72%) !important;
+    animation: dfxGlowPulse 2.8s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-void-ripple::before,
+.profile-hero.profile-fx-void-ripple::before,
+.profile-pop-banner.fx-void-ripple::before {
+    border: 2px solid rgba(167,139,250,0.35);
+    border-radius: 50%;
+    width: 60%;
+    height: 60%;
+    left: 20%;
+    top: 30%;
+    inset: auto;
+    animation: dfxRipple 2.5s ease-out infinite;
+}
+
+/* ── Cherry Bloom 彼岸櫻雨 ── */
+.dc-banner.profile-fx-cherry-bloom,
+.profile-hero.profile-fx-cherry-bloom,
+.profile-pop-banner.fx-cherry-bloom,
+.profile-pop.fx-cherry-bloom .profile-pop-banner {
+    background: linear-gradient(160deg, #881337 0%, #fb7185 50%, #fda4af 100%) !important;
+    background-size: 260% 260% !important;
+    animation: dfxShift 9s ease infinite !important;
+}
+.dc-banner.profile-fx-cherry-bloom::before,
+.profile-hero.profile-fx-cherry-bloom::before,
+.profile-pop-banner.fx-cherry-bloom::before {
+    background-image:
+        radial-gradient(3px 3px at 20% 15%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(4px 4px at 60% 30%, rgba(253,164,175,0.9), transparent),
+        radial-gradient(3px 3px at 85% 12%, rgba(251,113,133,0.85), transparent);
+    animation: dfxPetalsFall 6s linear infinite;
+}
+
+/* ── Cyber Grid 賽博網格 ── */
+.dc-banner.profile-fx-cyber-grid,
+.profile-hero.profile-fx-cyber-grid,
+.profile-pop-banner.fx-cyber-grid,
+.profile-pop.fx-cyber-grid .profile-pop-banner {
+    background:
+        linear-gradient(rgba(34,211,238,0.25) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34,211,238,0.25) 1px, transparent 1px),
+        linear-gradient(135deg, #020617 0%, #1e40af 100%) !important;
+    background-size: 22px 22px, 22px 22px, 100% 100% !important;
+    animation: dfxGridMove 3s linear infinite !important;
+    box-shadow: inset 0 0 40px rgba(34,211,238,0.2) !important;
+}
+.dc-banner.profile-fx-cyber-grid::after,
+.profile-hero.profile-fx-cyber-grid::after,
+.profile-pop-banner.fx-cyber-grid::after {
+    background: linear-gradient(105deg, transparent 40%, rgba(34,211,238,0.5) 50%, transparent 60%);
+    animation: dfxShimmer 3s ease-in-out infinite;
+}
+
+/* ── Aurora Wave 極光波動 ── */
+.dc-banner.profile-fx-aurora-wave,
+.profile-hero.profile-fx-aurora-wave,
+.profile-pop-banner.fx-aurora-wave,
+.profile-pop.fx-aurora-wave .profile-pop-banner {
+    background: linear-gradient(135deg, #0f766e, #22d3ee, #34d399, #a78bfa, #3b82f6) !important;
+    background-size: 350% 350% !important;
+    animation: dfxShiftDiag 5s ease infinite !important;
+}
+.dc-banner.profile-fx-aurora-wave::before,
+.profile-hero.profile-fx-aurora-wave::before,
+.profile-pop-banner.fx-aurora-wave::before {
+    background: linear-gradient(180deg, rgba(255,255,255,0.15), transparent 60%);
+    filter: blur(6px);
+    animation: dfxAuroraWave 4s ease-in-out infinite;
+    mix-blend-mode: overlay;
+}
+
+/* ── Crystal Frost 水晶霜華 ── */
+.dc-banner.profile-fx-crystal-frost,
+.profile-hero.profile-fx-crystal-frost,
+.profile-pop-banner.fx-crystal-frost,
+.profile-pop.fx-crystal-frost .profile-pop-banner {
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 40%),
+        linear-gradient(135deg, #0c4a6e 0%, #38bdf8 40%, #e0f2fe 100%) !important;
+    background-size: 200% 200%, 280% 280% !important;
+    animation: dfxShift 10s ease infinite !important;
+    box-shadow: inset 0 0 35px rgba(186,230,253,0.45) !important;
+}
+.dc-banner.profile-fx-crystal-frost::after,
+.profile-hero.profile-fx-crystal-frost::after,
+.profile-pop-banner.fx-crystal-frost::after {
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%);
+    animation: dfxShimmer 4s ease-in-out infinite;
+}
+
+/* ── Plasma Storm 等離子風暴 ── */
+.dc-banner.profile-fx-plasma-storm,
+.profile-hero.profile-fx-plasma-storm,
+.profile-pop-banner.fx-plasma-storm,
+.profile-pop.fx-plasma-storm .profile-pop-banner {
+    background:
+        radial-gradient(ellipse 60% 80% at 30% 50%, rgba(236,72,153,0.6), transparent),
+        radial-gradient(ellipse 50% 70% at 75% 40%, rgba(59,130,246,0.55), transparent),
+        linear-gradient(135deg, #581c87, #a855f7, #ec4899) !important;
+    background-size: 200% 200%, 180% 180%, 300% 300% !important;
+    animation: dfxShift 3.5s ease infinite !important;
+}
+.dc-banner.profile-fx-plasma-storm::before,
+.profile-hero.profile-fx-plasma-storm::before,
+.profile-pop-banner.fx-plasma-storm::before {
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.4), transparent 45%);
+    animation: dfxPlasmaFlash 2s ease-in-out infinite;
+    mix-blend-mode: overlay;
+}
+
+/* ── Inferno Glow 業火餘燼 ── */
+.dc-banner.profile-fx-inferno-glow,
+.profile-hero.profile-fx-inferno-glow,
+.profile-pop-banner.fx-inferno-glow,
+.profile-pop.fx-inferno-glow .profile-pop-banner {
+    background: linear-gradient(0deg, #7f1d1d 0%, #ef4444 40%, #f97316 70%, #fbbf24 100%) !important;
+    background-size: 100% 250% !important;
+    animation: dfxShift 4s ease infinite !important;
+    box-shadow: inset 0 -20px 50px rgba(251,146,60,0.5), 0 0 30px rgba(239,68,68,0.45) !important;
+}
+.dc-banner.profile-fx-inferno-glow::before,
+.profile-hero.profile-fx-inferno-glow::before,
+.profile-pop-banner.fx-inferno-glow::before {
+    background: radial-gradient(ellipse 80% 50% at 50% 100%, rgba(251,191,36,0.55), transparent 60%);
+    animation: dfxFlameFlicker 1.2s ease-in-out infinite;
+    mix-blend-mode: screen;
+}
+
+/* ── Ocean Breeze 海風漣漪 ── */
+.dc-banner.profile-fx-ocean-breeze,
+.profile-hero.profile-fx-ocean-breeze,
+.profile-pop-banner.fx-ocean-breeze,
+.profile-pop.fx-ocean-breeze .profile-pop-banner {
+    background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 18px),
+        linear-gradient(135deg, #0c4a6e 0%, #0284c7 40%, #06b6d4 70%, #22d3ee 100%) !important;
+    background-size: 100% 100%, 280% 280% !important;
+    animation: dfxShift 6s ease infinite !important;
+}
+.dc-banner.profile-fx-ocean-breeze::before,
+.profile-hero.profile-fx-ocean-breeze::before,
+.profile-pop-banner.fx-ocean-breeze::before {
+    background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent 50%);
+    animation: dfxAuroraWave 5s ease-in-out infinite;
+    opacity: 0.6;
+}
+
+/* ── Golden Aura 黃金光環 ── */
+.dc-banner.profile-fx-golden-aura,
+.profile-hero.profile-fx-golden-aura,
+.profile-pop-banner.fx-golden-aura,
+.profile-pop.fx-golden-aura .profile-pop-banner {
+    background: radial-gradient(ellipse 100% 90% at 50% 100%, #fde68a, #f59e0b 45%, #b45309 100%) !important;
+    animation: dfxGoldPulse 2.5s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-golden-aura::after,
+.profile-hero.profile-fx-golden-aura::after,
+.profile-pop-banner.fx-golden-aura::after {
+    background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.5) 50%, transparent 62%);
+    animation: dfxShimmer 2.2s ease-in-out infinite;
+}
+
+/* ── Moonlight 月光清輝 ── */
+.dc-banner.profile-fx-moonlight,
+.profile-hero.profile-fx-moonlight,
+.profile-pop-banner.fx-moonlight,
+.profile-pop.fx-moonlight .profile-pop-banner {
+    background: linear-gradient(160deg, #0f172a 0%, #334155 50%, #64748b 100%) !important;
+    box-shadow: inset 0 0 50px rgba(148,163,184,0.25) !important;
+}
+.dc-banner.profile-fx-moonlight::before,
+.profile-hero.profile-fx-moonlight::before,
+.profile-pop-banner.fx-moonlight::before {
+    background: radial-gradient(circle at 78% 28%, rgba(226,232,240,0.85) 0%, rgba(226,232,240,0.15) 18%, transparent 28%);
+    box-shadow: 0 0 30px rgba(226,232,240,0.35);
+}
+.dc-banner.profile-fx-moonlight::after,
+.profile-hero.profile-fx-moonlight::after,
+.profile-pop-banner.fx-moonlight::after {
+    background-image:
+        radial-gradient(1px 1px at 15% 25%, #fff, transparent),
+        radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.6), transparent);
+    animation: dfxStarTwinkle 4s ease-in-out infinite;
+}
+
+/* ── Neon City 霓虹都市 ── */
+.dc-banner.profile-fx-neon-city,
+.profile-hero.profile-fx-neon-city,
+.profile-pop-banner.fx-neon-city,
+.profile-pop.fx-neon-city .profile-pop-banner {
+    background:
+        linear-gradient(180deg, transparent 55%, rgba(190,24,93,0.4) 55%, rgba(190,24,93,0.4) 58%, transparent 58%),
+        linear-gradient(135deg, #0f172a 0%, #be185d 35%, #7c3aed 65%, #22d3ee 100%) !important;
+    background-size: 100% 100%, 280% 280% !important;
+    animation: dfxShift 4s ease infinite !important;
+    box-shadow: 0 0 25px rgba(190,24,93,0.4), inset 0 0 30px rgba(34,211,238,0.15) !important;
+}
+.dc-banner.profile-fx-neon-city::before,
+.profile-hero.profile-fx-neon-city::before,
+.profile-pop-banner.fx-neon-city::before {
+    background: repeating-linear-gradient(90deg, rgba(34,211,238,0.15) 0 3px, transparent 3px 28px);
+    animation: dfxNeonFlicker 4s steps(1) infinite;
+    mix-blend-mode: screen;
+}
+
+/* ── Sakura Night 夜櫻飄雪 ── */
+.dc-banner.profile-fx-sakura-night,
+.profile-hero.profile-fx-sakura-night,
+.profile-pop-banner.fx-sakura-night,
+.profile-pop.fx-sakura-night .profile-pop-banner {
+    background: linear-gradient(135deg, #1e1b4b 0%, #831843 45%, #fda4af 100%) !important;
+    background-size: 280% 280% !important;
+    animation: dfxShift 7s ease infinite !important;
+}
+.dc-banner.profile-fx-sakura-night::before,
+.profile-hero.profile-fx-sakura-night::before,
+.profile-pop-banner.fx-sakura-night::before {
+    background-image:
+        radial-gradient(3px 3px at 18% 12%, rgba(253,186,216,0.95), transparent),
+        radial-gradient(2px 2px at 52% 8%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(3px 3px at 78% 22%, rgba(249,168,212,0.85), transparent);
+    animation: dfxPetalsFall 7s linear infinite;
+}
+.dc-banner.profile-fx-sakura-night::after,
+.profile-hero.profile-fx-sakura-night::after,
+.profile-pop-banner.fx-sakura-night::after {
+    background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 50%);
+}
+
+/* ── 雷雲翻滾 ── */
+.dc-banner.profile-fx-thunder-roll,
+.profile-hero.profile-fx-thunder-roll,
+.profile-pop-banner.fx-thunder-roll,
+.profile-pop.fx-thunder-roll .profile-pop-banner {
+    background: linear-gradient(160deg, #0f172a 0%, #334155 35%, #475569 55%, #1e293b 100%) !important;
+    animation: dfxGlowPulse 2.8s ease-in-out infinite !important;
+}
+.dc-banner.profile-fx-thunder-roll::before,
+.profile-hero.profile-fx-thunder-roll::before,
+.profile-pop-banner.fx-thunder-roll::before {
+    background:
+        radial-gradient(ellipse 80% 40% at 30% 20%, rgba(253,224,71,0.35), transparent 55%),
+        radial-gradient(ellipse 60% 30% at 70% 35%, rgba(148,163,184,0.45), transparent 50%);
+    animation: dfxRipple 3.5s ease-in-out infinite;
+}
+.dc-banner.profile-fx-thunder-roll::after,
+.profile-hero.profile-fx-thunder-roll::after,
+.profile-pop-banner.fx-thunder-roll::after {
+    background: linear-gradient(105deg, transparent 40%, rgba(253,224,71,0.25) 50%, transparent 60%);
+    animation: dfxShimmer 4s ease-in-out infinite;
+}
+
+/* ── 糖果爆彩 ── */
+.dc-banner.profile-fx-candy-pop,
+.profile-hero.profile-fx-candy-pop,
+.profile-pop-banner.fx-candy-pop,
+.profile-pop.fx-candy-pop .profile-pop-banner {
+    background: linear-gradient(135deg, #f472b6, #fb923c 35%, #a78bfa 65%, #22d3ee) !important;
+    background-size: 260% 260% !important;
+    animation: dfxShift 5s ease infinite !important;
+}
+.dc-banner.profile-fx-candy-pop::before,
+.profile-hero.profile-fx-candy-pop::before,
+.profile-pop-banner.fx-candy-pop::before {
+    background-image:
+        radial-gradient(4px 4px at 15% 25%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(3px 3px at 55% 15%, rgba(251,191,36,0.85), transparent),
+        radial-gradient(4px 4px at 82% 40%, rgba(244,114,182,0.9), transparent);
+    animation: dfxStarTwinkle 2.5s ease-in-out infinite;
+}
+.dc-banner.profile-fx-candy-pop::after,
+.profile-hero.profile-fx-candy-pop::after,
+.profile-pop-banner.fx-candy-pop::after {
+    background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.45) 50%, transparent 65%);
+    animation: dfxShimmer 3s ease-in-out infinite;
+}
+
+/* ── 數位脈衝 ── */
+.dc-banner.profile-fx-digital-pulse,
+.profile-hero.profile-fx-digital-pulse,
+.profile-pop-banner.fx-digital-pulse,
+.profile-pop.fx-digital-pulse .profile-pop-banner {
+    background:
+        repeating-linear-gradient(90deg, rgba(6,182,212,0.08) 0 2px, transparent 2px 24px),
+        linear-gradient(135deg, #0f172a, #134e4a 40%, #1e3a8a 75%, #06b6d4) !important;
+    background-size: 100% 100%, 220% 220% !important;
+    animation: dfxShiftDiag 6s ease infinite !important;
+}
+.dc-banner.profile-fx-digital-pulse::before,
+.profile-hero.profile-fx-digital-pulse::before,
+.profile-pop-banner.fx-digital-pulse::before {
+    background: repeating-linear-gradient(0deg, rgba(34,211,238,0.12) 0 1px, transparent 1px 8px);
+    animation: dfxMatrixScroll 8s linear infinite;
+    opacity: 0.7;
+}
+.dc-banner.profile-fx-digital-pulse::after,
+.profile-hero.profile-fx-digital-pulse::after,
+.profile-pop-banner.fx-digital-pulse::after {
+    box-shadow: inset 0 0 40px rgba(6,182,212,0.25);
+    animation: dfxGlowPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes dfxSoftGlow {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.55; }
+}
+@keyframes dfxGentleSway {
+    0%, 100% { transform: translateX(0); opacity: 0.4; }
+    50% { transform: translateX(3%); opacity: 0.55; }
+}
+
+/* ── 竹林清風（Wave 4，低強度） ── */
+.dc-banner.profile-fx-bamboo-grove,
+.profile-hero.profile-fx-bamboo-grove,
+.profile-pop-banner.fx-bamboo-grove,
+.profile-pop.fx-bamboo-grove .profile-pop-banner {
+    background: linear-gradient(160deg, #14532d 0%, #166534 45%, #4ade80 100%) !important;
+    background-size: 200% 200% !important;
+    animation: dfxShift 9s ease infinite !important;
+}
+.dc-banner.profile-fx-bamboo-grove::before,
+.profile-hero.profile-fx-bamboo-grove::before,
+.profile-pop-banner.fx-bamboo-grove::before {
+    background: repeating-linear-gradient(90deg, rgba(74,222,128,0.08) 0 4px, transparent 4px 32px);
+    animation: dfxGentleSway 8s ease-in-out infinite;
+    opacity: 0.5;
+}
+
+/* ── 夕陽夢境（Wave 4，低強度） ── */
+.dc-banner.profile-fx-sunset-dream,
+.profile-hero.profile-fx-sunset-dream,
+.profile-pop-banner.fx-sunset-dream,
+.profile-pop.fx-sunset-dream .profile-pop-banner {
+    background: linear-gradient(135deg, #7c2d12 0%, #ea580c 35%, #fb923c 65%, #fda4af 100%) !important;
+    background-size: 220% 220% !important;
+    animation: dfxShift 8s ease infinite !important;
+}
+.dc-banner.profile-fx-sunset-dream::after,
+.profile-hero.profile-fx-sunset-dream::after,
+.profile-pop-banner.fx-sunset-dream::after {
+    background: radial-gradient(ellipse 70% 50% at 50% 80%, rgba(251,191,36,0.2), transparent 60%);
+    animation: dfxSoftGlow 5s ease-in-out infinite;
+}
+
+/* ── 星光池塘（Wave 4 Docoin，低於 thunder_roll） ── */
+.dc-banner.profile-fx-starlit-pond,
+.profile-hero.profile-fx-starlit-pond,
+.profile-pop-banner.fx-starlit-pond,
+.profile-pop.fx-starlit-pond .profile-pop-banner {
+    background: linear-gradient(160deg, #0c4a6e 0%, #0369a1 50%, #1e3a8a 100%) !important;
+    box-shadow: inset 0 0 35px rgba(56,189,248,0.15) !important;
+}
+.dc-banner.profile-fx-starlit-pond::before,
+.profile-hero.profile-fx-starlit-pond::before,
+.profile-pop-banner.fx-starlit-pond::before {
+    background: radial-gradient(ellipse 90% 40% at 50% 100%, rgba(34,211,238,0.25), transparent 55%);
+    animation: dfxRipple 6s ease-in-out infinite;
+    opacity: 0.6;
+}
+.dc-banner.profile-fx-starlit-pond::after,
+.profile-hero.profile-fx-starlit-pond::after,
+.profile-pop-banner.fx-starlit-pond::after {
+    background-image:
+        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 55% 20%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 78% 35%, rgba(255,255,255,0.6), transparent);
+    animation: dfxStarTwinkle 5s ease-in-out infinite;
+    opacity: 0.65;
+}
+
+/* ── 紙鶴飄飛（Wave 4，低強度） ── */
+.dc-banner.profile-fx-paper-crane,
+.profile-hero.profile-fx-paper-crane,
+.profile-pop-banner.fx-paper-crane,
+.profile-pop.fx-paper-crane .profile-pop-banner {
+    background: linear-gradient(135deg, #f8fafc 0%, #fce7f3 45%, #fbcfe8 100%) !important;
+    background-size: 200% 200% !important;
+    animation: dfxShift 10s ease infinite !important;
+}
+.dc-banner.profile-fx-paper-crane::before,
+.profile-hero.profile-fx-paper-crane::before,
+.profile-pop-banner.fx-paper-crane::before {
+    background-image:
+        radial-gradient(3px 3px at 25% 20%, rgba(244,114,182,0.5), transparent),
+        radial-gradient(2px 2px at 65% 15%, rgba(148,163,184,0.4), transparent);
+    animation: dfxPetalsFall 12s linear infinite;
+    opacity: 0.45;
+}
+.dc-banner.profile-fx-paper-crane::after,
+.profile-hero.profile-fx-paper-crane::after,
+.profile-pop-banner.fx-paper-crane::after {
+    background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,0.35) 50%, transparent 58%);
+    animation: dfxShimmer 5s ease-in-out infinite;
+    opacity: 0.5;
+}

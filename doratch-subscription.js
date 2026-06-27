@@ -1,4 +1,4 @@
-/** Doratch Plus / Pro — browser shim (mirrors shared/doratch-subscription.js) */
+/** Doratch Plus / Pro — browser shim (GitHub Pages 根目錄載入) */
 (function (global) {
     "use strict";
 
@@ -31,6 +31,7 @@
                 "包含 Plus 全部權益",
                 "Pro 專屬色彩主題 · 自訂強調色 · 進階名稱樣式",
                 "Pro 專屬動態頭像框、橫幅與面板特效",
+                "Pro 可上傳自訂頭像（壓縮 JPEG 儲存）",
                 "自訂狀態 128 字 · 簡介 1000 字",
                 "雲端空間 20 MB · 作品上限 50",
                 "審核上傳每日 5 次",

@@ -60,6 +60,35 @@ service cloud.firestore {
         request.resource.data.docoin <= (('docoin' in resource.data) ? resource.data.docoin : 0);
     }
 
+    function selfHasActivePro() {
+      return ('subscription' in resource.data) &&
+        resource.data.subscription is map &&
+        resource.data.subscription.tier == 'pro' &&
+        resource.data.subscription.expiresAtMs is number &&
+        resource.data.subscription.expiresAtMs > request.time.toMillis();
+    }
+
+    function validSelfCustomAvatarChange() {
+      let touched = request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['customAvatarB64', 'customAvatarMime', 'customAvatarBytes', 'customAvatarUpdatedAt']);
+      return !touched || (
+        selfHasActivePro() &&
+        (
+          !('customAvatarB64' in request.resource.data) ||
+          request.resource.data.customAvatarB64 == null ||
+          (
+            request.resource.data.customAvatarB64 is string &&
+            request.resource.data.customAvatarB64.size() >= 40 &&
+            request.resource.data.customAvatarB64.size() <= 88000 &&
+            request.resource.data.customAvatarMime == 'image/jpeg' &&
+            request.resource.data.customAvatarBytes is int &&
+            request.resource.data.customAvatarBytes >= 1 &&
+            request.resource.data.customAvatarBytes <= 70000
+          )
+        )
+      );
+    }
+
     // 1. 使用者中心 (users)
     match /users/{userId} {
       allow read: if request.auth != null;
@@ -97,6 +126,7 @@ service cloud.firestore {
           isSelf(userId) &&
           !selfTouchesProtectedUserFields() &&
           selfDocoinNotIncreased() &&
+          validSelfCustomAvatarChange() &&
           (
             !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']) ||
             request.resource.data.role == resource.data.role

@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
     <link rel="stylesheet" href="doratch-shell.css">
-    <link rel="stylesheet" href="shared/doratch-profile-fx.css">
+    <link rel="stylesheet" href="doratch-profile-fx.css">
     <link rel="stylesheet" href="doratch-staff-fx.css">
     <link rel="stylesheet" href="doratch-subscription.css">
     <link rel="stylesheet" href="doratch-server-boost.css">
     <link rel="stylesheet" href="doratch-member-theme.css">
-    <link rel="stylesheet" href="shared/doratch-docoin-luxury.css">
+    <link rel="stylesheet" href="doratch-docoin-luxury.css">
     <title>聊天室 - Creative Blocks</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Nunito:wght@700;900&family=Outfit:wght@700;800&family=Noto+Serif+TC:ital,wght@0,600;1,600&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
     <style>
@@ -163,13 +163,18 @@
         }
         .chat-panel-backdrop.active { display: block; }
         
-        .messages-area { flex: 1; padding: 30px 0; overflow-y: auto; display: flex; flex-direction: column; }
+        .messages-area { flex: 1; padding: 30px 0; overflow-y: auto; display: flex; flex-direction: column; scroll-behavior: smooth; }
         .messages-area::-webkit-scrollbar { width: 6px; }
         .messages-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .messages-loading { padding: 24px 30px; color: #949ba4; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+        .messages-loading::before { content: ""; width: 18px; height: 18px; border: 2px solid rgba(148,155,164,0.35); border-top-color: #5865F2; border-radius: 50%; animation: msgSpin 0.7s linear infinite; flex-shrink: 0; }
+        @keyframes msgSpin { to { transform: rotate(360deg); } }
         
         .message-row { display: flex; padding: 8px 30px; transition: 0.2s; margin-top: 20px; position: relative; }
-        .message-row.msg-pending { opacity: 0.82; }
+        .message-row.msg-pending { opacity: 0.82; animation: msgPendingIn 0.14s ease-out; }
         .message-row.msg-pending .msg-time { color: #949ba4; font-style: italic; }
+        @keyframes msgPendingIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 0.82; transform: none; } }
+        .btn-send:active { transform: scale(0.96); }
         .message-row:hover { background: rgba(255,255,255,0.02); }
         .message-row.consecutive { margin-top: 2px; }
         .msg-avatar-container { width: 50px; margin-right: 20px; flex-shrink: 0; display: flex; justify-content: center; }
@@ -1394,7 +1399,7 @@
     <script src="discord-bot-runtime.js"></script>
     <script src="discord-bot-engine.js"></script>
     <script src="chat-discord-ui.js"></script>
-    <script src="shared/doratch-docoin-catalog.js"></script>
+    <script src="doratch-docoin-catalog.js"></script>
     <script src="doratch-staff-cosmetics.js"></script>
     <script src="doratch-subscription.js"></script>
     <script src="doratch-member-style.js"></script>
@@ -1405,8 +1410,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, orderBy, limitToLast, onSnapshot, serverTimestamp, getDocs, updateDoc, arrayUnion, arrayRemove, deleteDoc, deleteField, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { DoratchHonor } from "./shared/doratch-honor-badges.js";
-    import { DoratchCustomAvatar } from "./shared/doratch-custom-avatar.js";
+    import { DoratchHonor } from "./doratch-honor-badges.js";
+    import { DoratchCustomAvatar } from "./doratch-custom-avatar.js";
     window.DoratchHonor = DoratchHonor;
     window.DoratchCustomAvatar = DoratchCustomAvatar;
     let STAFF_COSMETIC_ITEMS = [];
@@ -1497,7 +1502,7 @@
 
     if (!bindStaffModule(window.DoratchRoleCosmetics)) {
         try {
-            bindStaffModule(await import("./shared/doratch-role-cosmetics.js"));
+            bindStaffModule(await import("./doratch-role-cosmetics.js"));
         } catch (staffErr) {
             console.warn("Staff cosmetics module unavailable — chat runs without identity-exclusive items", staffErr);
             bindStaffFallback();
@@ -1563,6 +1568,8 @@
     let lastTypingSentAt = 0;
     let isSendingMessage = false;
     const pendingOutboundMessages = [];
+    const chatDocCache = {};
+    let selfOutboundRenderCache = null;
     let currentUserData = {};
     let replyToMessage = null;
     let incomingMessageRequestCount = -1;
@@ -1572,6 +1579,8 @@
     let chatListOrderCache = {};
     let pendingChatListSnapshot = null;
     let sidebarPrivatePeerUids = [];
+    let typingRenderTimer = null;
+    let pendingTypingMap = null;
 
     function isMobileChatShell() {
         return window.DoratchMobile
@@ -2471,8 +2480,20 @@
         return `https://ui-avatars.com/api/?name=${base}&background=random`;
     }
 
+    function resolveEquippedAvatarType(userData) {
+        const picked = pickOwnedEquipped(userData, "avatar");
+        if (picked) return picked;
+        return DoratchCustomAvatar.equippedAvatarType(userData);
+    }
+
+    function avatarUrlForUserData(userData, emailOrName, avatarTypeHint) {
+        const type = String(avatarTypeHint || "").trim() || resolveEquippedAvatarType(userData || {});
+        return resolveAvatarForUser(userData, emailOrName, type);
+    }
+
     function resolveAvatarForUser(userData, emailOrName, avatarType) {
-        return DoratchCustomAvatar.resolveAvatarUrl(userData, emailOrName, avatarType, avatarFromCosmetics);
+        const type = String(avatarType || "").trim() || DoratchCustomAvatar.equippedAvatarType(userData || {});
+        return DoratchCustomAvatar.resolveAvatarUrl(userData, emailOrName, type, avatarFromCosmetics);
     }
 
     function sanitizeChatPrefs(raw) {
@@ -2562,6 +2583,12 @@
     }
 
     function pickOwnedEquipped(data, slot) {
+        if (slot === "avatar" && data) {
+            const raw = String((getEquipped(data).avatar) || "").trim();
+            if (raw === DoratchCustomAvatar.CUSTOM_AVATAR_TYPE && DoratchCustomAvatar.hasStoredCustomAvatar(data)) {
+                return raw;
+            }
+        }
         return pickOwnedWithStaff(data, COSMETIC_ITEMS, slot);
     }
 
@@ -2717,7 +2744,7 @@
         const eq = getEquipped(currentUserData);
         const nameApp = resolveNameAppearanceForUser(currentUserData);
         return {
-            avatar: pickOwnedEquipped(currentUserData, "avatar"),
+            avatar: resolveEquippedAvatarType(currentUserData),
             frame: pickOwnedEquipped(currentUserData, "frame"),
             banner: resolveVisualCosmetic(currentUserData, "banner"),
             title: pickOwnedEquipped(currentUserData, "title"),
@@ -2786,8 +2813,9 @@
         const sideCoins = document.getElementById("side-coins");
         const c = currentCosmeticSnapshot();
         if (sideAvatar) {
-            sideAvatar.src = resolveAvatarForUser(currentUserData, (currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", c.avatar);
-            sideAvatar.classList.toggle("docoin-avatar-lux", isDocoinAvatar(c.avatar));
+            const avatarType = resolveEquippedAvatarType(currentUserData);
+            sideAvatar.src = resolveAvatarForUser(currentUserData, (currentUserData && currentUserData.email) || (currentUser && currentUser.email) || "User", avatarType);
+            sideAvatar.classList.toggle("docoin-avatar-lux", isDocoinAvatar(avatarType));
         }
         applyAvatarFrameToElement(sideAvatar, c.frame);
         const nameApp = resolveNameAppearanceForUser(currentUserData);
@@ -2804,6 +2832,7 @@
             sideBadge.textContent = badgeText ? ("✨ " + badgeText) : "";
         }
         if (sideCoins) sideCoins.textContent = `Doord ${Math.floor(getDoordValue(currentUserData))} · Docoin ${Math.floor(getDocoinValue(currentUserData))}`;
+        refreshSelfOutboundRenderCache();
     }
 
     function fillCosmeticSelect(id, items, selectedValue, emptyLabel) {
@@ -3051,7 +3080,7 @@
                 } catch (_) {}
                 alert("✅ 雙方互發訊息請求，已自動加為好友");
             }
-            openChat(existing.id, label, '👤', 'private', null);
+            openChat(existing.id, label, '👤', 'private', null, { id: existing.id, ...d });
             return;
         }
         const targetUser = await fetchUserByUid(targetUid);
@@ -3071,7 +3100,15 @@
         if (needRequest) {
             alert("已送出訊息請求，等待對方接受後才能開始傳訊。");
         }
-        openChat(newChat.id, label, '👤', 'private', null);
+        openChat(newChat.id, label, '👤', 'private', null, {
+            id: newChat.id,
+            type: 'private',
+            participants: [currentUser.uid, targetUid],
+            participantEmails: [currentUser.email, targetEmail],
+            requestStatus: needRequest ? "pending" : "accepted",
+            requestFrom: needRequest ? currentUser.uid : "",
+            requestTo: needRequest ? targetUid : ""
+        });
     }
 
     window.acceptMessageRequest = async (chatId) => {
@@ -3089,7 +3126,7 @@
             });
             const otherEmail = (d.participantEmails || []).find((e) => e !== currentUser.email) || "未知";
             const label = String(otherEmail).split("@")[0] || "私訊";
-            openChat(chatId, label, "👤", "private", null);
+            openChat(chatId, label, "👤", "private", null, { id: chatId, ...d });
         } catch (e) {
             alert("接受訊息請求失敗：" + (e.message || e));
         }
@@ -3591,8 +3628,6 @@
             applyChatPrefsUI();
             document.getElementById('side-coins').innerText = `Doord ${Math.floor(getDoordValue(currentUserData))} · Docoin ${Math.floor(getDocoinValue(currentUserData))}`;
             document.getElementById('side-username').innerText = displayNameFromUser({ email: user.email, displayName: data.displayName });
-            const c = (data && data.equippedCosmetics) ? data.equippedCosmetics : {};
-            document.getElementById('side-avatar').src = resolveAvatarForUser(data, user.email, c.avatar || "");
             applySidebarCosmetics(currentUserData);
             
             let role = data.role || 'student';
@@ -3606,6 +3641,7 @@
         }
 
         upsertUserCache(user.uid, currentUserData);
+        refreshSelfOutboundRenderCache();
         startPresenceSystem();
         subscribeFriendPanels();
 
@@ -3629,7 +3665,7 @@
                     const otherEmail = (d.participantEmails || []).find(e => e !== user.email) || "未知";
                     name = otherEmail.split('@')[0];
                 }
-                openChat(openId, name, icon, d.type, d.teacherId);
+                openChat(openId, name, icon, d.type, d.teacherId, { id: openId, ...d });
             }
         }
     });
@@ -3706,6 +3742,53 @@
         replaceListChildren(container, nodes);
     }
 
+    function cacheChatDoc(chatId, data) {
+        if (chatId && data && typeof data === "object") chatDocCache[chatId] = data;
+    }
+
+    function primeCurrentChatDoc(chatId, hint) {
+        if (hint && typeof hint === "object") {
+            currentChatDocData = Object.assign({}, hint);
+            cacheChatDoc(chatId, currentChatDocData);
+            return;
+        }
+        currentChatDocData = chatDocCache[chatId] ? Object.assign({}, chatDocCache[chatId]) : null;
+    }
+
+    function refreshSelfOutboundRenderCache() {
+        if (!currentUser) {
+            selfOutboundRenderCache = null;
+            return;
+        }
+        const cosmetic = currentCosmeticSnapshot();
+        const avatarType = resolveEquippedAvatarType(currentUserData);
+        const baseFrame = frameClass(cosmetic.frame || "");
+        selfOutboundRenderCache = {
+            senderName: displayNameFromUser(currentUserData),
+            avatarUrl: resolveAvatarForUser(currentUserData, currentUser.email || "", avatarType),
+            avatarFrame: isLegendaryFrame(cosmetic.frame || "") ? (baseFrame + " avatar-frame-legendary") : baseFrame
+        };
+    }
+
+    function clearPendingOptimisticForChat(chatId) {
+        pendingOutboundMessages.filter(function (p) { return p.chatId === chatId; }).slice().forEach(function (p) {
+            removeOptimisticMessageRow(p.optId);
+        });
+    }
+
+    function appendPendingOptimisticToRender(html, ctx, chatId) {
+        pendingOutboundMessages.forEach(function (p) {
+            if (p.chatId !== chatId) return;
+            const msg = window.currentMessages[p.optId];
+            if (!msg) return;
+            const fakeDoc = { id: p.optId, data: function () { return msg; } };
+            const built = buildMessageRowHtml(fakeDoc, ctx);
+            html += built.html;
+            ctx = built.ctx;
+        });
+        return { html: html, ctx: ctx };
+    }
+
     function patchSidebarPreviewForChat(chatId, lastMessage) {
         if (!chatId) return;
         const el = document.querySelector('#chat-list .chat-item[data-chat-id="' + chatId + '"]');
@@ -3762,7 +3845,7 @@
             const SB = serverBoostApi();
             if (SB && SB.getServerBoostLevel(chat) > 0) item.classList.add("server-boosted");
         }
-        item.onclick = function () { openChat(chat.id, rawName, icon, chat.type, chat.teacherId); };
+        item.onclick = function () { openChat(chat.id, rawName, icon, chat.type, chat.teacherId, chat); };
 
         const timeStr = chat.updatedAt ? formatMsgTime(chat.updatedAt.toDate()) : "";
         const readMap = chat.lastReadBy || {};
@@ -3796,7 +3879,15 @@
             ? (privatePreviewBase + " · " + (privatePeerOnline ? "在線" : "離線"))
             : (isOutgoingReq ? privatePreviewBase : escHtml(privatePreviewBase));
         const privateAvatarHtml = (chat.type === "private" && privatePeerUid)
-            ? '<span class="chat-peer-avatar-wrap">' + privatePresenceDot + '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(rawName || "User") + '&background=5865F2&color=fff" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,\'' + privatePeerUid + "')\"></span></span>"
+            ? (function () {
+                const peer = userCache[privatePeerUid];
+                const peerEmail = peer ? String(peer.email || "").trim() : "";
+                const peerName = peerEmail.split("@")[0] || rawName || "User";
+                const src = peer
+                    ? avatarUrlForUserData(peer, peerEmail || peerName, "")
+                    : ("https://ui-avatars.com/api/?name=" + encodeURIComponent(rawName || "User") + "&background=5865F2&color=fff");
+                return '<span class="chat-peer-avatar-wrap">' + privatePresenceDot + '<img src="' + src + '" alt="" class="member-avatar" style="cursor:pointer;" onclick="openProfileByUid(event,\'' + privatePeerUid + "')\"></span>";
+            })()
             : "";
 
         item.innerHTML =
@@ -3825,7 +3916,7 @@
         reqItem.dataset.chatId = chat.id;
         reqItem.onclick = function (ev) {
             if (ev.target && typeof ev.target.closest === "function" && ev.target.closest("button")) return;
-            openChat(chat.id, rawName, icon, chat.type, chat.teacherId);
+            openChat(chat.id, rawName, icon, chat.type, chat.teacherId, chat);
         };
         reqItem.innerHTML =
             '<div class="chat-name">📨 ' + escHtml(rawName) + " " + unreadHtml + '</div>' +
@@ -3868,7 +3959,11 @@
         }
 
         const chats = [];
-        snapshot.forEach(function (docSnap) { chats.push({ id: docSnap.id, ...docSnap.data() }); });
+        snapshot.forEach(function (docSnap) {
+            const data = docSnap.data();
+            cacheChatDoc(docSnap.id, data);
+            chats.push({ id: docSnap.id, ...data });
+        });
         sortChatsForSidebar(chats);
 
         const serverNodes = [];
@@ -3906,6 +4001,7 @@
             })
             .filter(Boolean);
         syncPresenceWatchers();
+        prefetchSidebarPrivateAvatars();
         if (chatPrefs.notifyMessageRequest && incomingMessageRequestCount >= 0 && incomingReqCount > incomingMessageRequestCount) {
             maybeDesktopNotify("Doratch 訊息請求", "你收到新的訊息請求");
         }
@@ -4056,6 +4152,91 @@
         return pendingOutboundMessages.splice(idx, 1)[0].optId;
     }
 
+    function unpendingOutbound(optId) {
+        for (let i = pendingOutboundMessages.length - 1; i >= 0; i -= 1) {
+            if (pendingOutboundMessages[i].optId === optId) pendingOutboundMessages.splice(i, 1);
+        }
+    }
+
+    function confirmOptimisticMessageRow(optId, docSnap) {
+        const msgArea = document.getElementById("messages-area");
+        if (!msgArea || !optId || !docSnap) return false;
+        const row = msgArea.querySelector('.message-row[data-msg-id="' + optId + '"]');
+        if (!row) return false;
+        const prevRow = row.previousElementSibling;
+        let ctx = { lastSenderId: null, lastTimeStr: null };
+        if (prevRow && prevRow.classList && prevRow.classList.contains("message-row")) {
+            ctx = {
+                lastSenderId: prevRow.getAttribute("data-sender-id"),
+                lastTimeStr: prevRow.getAttribute("data-time-full")
+            };
+        }
+        unpendingOutbound(optId);
+        delete window.currentMessages[optId];
+        window.currentMessages[docSnap.id] = docSnap.data();
+        const built = buildMessageRowHtml(docSnap, ctx);
+        row.outerHTML = built.html;
+        return true;
+    }
+
+    function patchMessageRowInPlace(docSnap) {
+        const msg = docSnap.data();
+        const row = document.querySelector('.message-row[data-msg-id="' + docSnap.id + '"]');
+        if (!row || !msg) return;
+        if (msg.type === "text") {
+            const textEl = row.querySelector(".msg-text");
+            if (textEl) textEl.textContent = msg.text || "";
+        } else if (msg.type === "gift") {
+            const card = row.querySelector(".msg-gift-card");
+            if (card) card.outerHTML = renderGiftMessageCard(docSnap.id, msg);
+        }
+        const fullTimeStr = formatMsgFullTime(msg.createdAt ? msg.createdAt.toDate() : new Date());
+        const timeHeader = row.querySelector(".msg-header .msg-time");
+        if (timeHeader) {
+            timeHeader.innerHTML = fullTimeStr + (msg.editedAt ? '<span class="msg-edited">(edited)</span>' : "");
+        }
+        const hoverTime = row.querySelector(".msg-time-hover");
+        if (hoverTime) {
+            hoverTime.textContent = formatMsgTime(msg.createdAt ? msg.createdAt.toDate() : new Date()) + (msg.editedAt ? " (edited)" : "");
+        }
+        row.setAttribute("data-time-full", fullTimeStr);
+    }
+
+    function refreshPrivateChatListAvatars() {
+        document.querySelectorAll("#list-private .chat-item[data-peer-uid]").forEach(function (el) {
+            const uid = el.dataset.peerUid;
+            const u = userCache[uid];
+            if (!u) return;
+            const img = el.querySelector(".chat-peer-avatar-wrap img.member-avatar");
+            if (!img) return;
+            const email = String(u.email || "").trim();
+            const name = email.split("@")[0] || "User";
+            img.src = avatarUrlForUserData(u, email || name, "");
+        });
+    }
+
+    function prefetchSidebarPrivateAvatars() {
+        const missing = sidebarPrivatePeerUids.filter(function (uid) { return uid && !userCache[uid]; });
+        if (!missing.length) {
+            refreshPrivateChatListAvatars();
+            return;
+        }
+        Promise.all(missing.map(function (uid) { return fetchUserByUid(uid); })).finally(function () {
+            refreshPrivateChatListAvatars();
+        });
+    }
+
+    function prefetchUsersForChat() {
+        const uids = new Set();
+        if (currentPrivatePeerUid) uids.add(currentPrivatePeerUid);
+        (currentChatParticipants || []).forEach(function (uid) {
+            if (uid && uid !== currentUser.uid) uids.add(uid);
+        });
+        const missing = Array.from(uids).filter(function (uid) { return !userCache[uid]; });
+        if (!missing.length) return;
+        Promise.all(missing.map(function (uid) { return fetchUserByUid(uid); })).catch(function () {});
+    }
+
     function removeOptimisticMessageRow(optId) {
         if (!optId) return;
         const msgArea = document.getElementById("messages-area");
@@ -4070,11 +4251,31 @@
         if (empty) empty.remove();
     }
 
-    function appendOptimisticTextMessage(text, replyPayload) {
+    function buildOptimisticOwnTextRow(optId, text, replyPayload) {
+        const R = selfOutboundRenderCache;
+        const senderName = (R && R.senderName) || displayNameFromUser(currentUserData);
+        const avatarUrl = (R && R.avatarUrl) || resolveAvatarForUser(currentUserData, (currentUser && currentUser.email) || "", resolveEquippedAvatarType(currentUserData));
+        const avatarFrame = (R && R.avatarFrame) || "";
+        const replyHtml = replyPayload
+            ? '<div class="reply-quote">回覆 ' + escHtml(replyPayload.senderName || "使用者") + "：" + escHtml((replyPayload.type === "file" ? ("📁 " + (replyPayload.fileName || "檔案")) : (replyPayload.text || "")).slice(0, 90)) + "</div>"
+            : "";
+        const rowMeta = ' data-msg-id="' + optId + '" data-sender-id="' + escHtml(currentUser.uid) + '" data-time-full="傳送中" data-staff-role=""';
+        return (
+            '<div class="message-row msg-pending"' + rowMeta + '>' +
+            '<div class="msg-avatar-container"><img src="' + avatarUrl + '" class="msg-avatar ' + avatarFrame + '" alt=""></div>' +
+            '<div class="msg-content">' +
+            '<div class="msg-quick-actions"><button class="msg-quick-btn" title="回覆" disabled>↩</button></div>' +
+            '<div class="msg-header"><span class="msg-author"><span class="name-fx-text">' + escHtml(senderName) + '</span></span><span class="msg-time">傳送中</span></div>' +
+            replyHtml +
+            '<div class="msg-text">' + escHtml(text) + "</div></div></div>"
+        );
+    }
+
+    function appendOptimisticTextMessage(text, replyPayload, cosmeticSnapshot) {
         const msgArea = document.getElementById("messages-area");
         if (!msgArea || !currentUser) return null;
         const optId = createOptimisticMessageId();
-        const cosmetic = currentCosmeticSnapshot();
+        const cosmetic = cosmeticSnapshot || currentCosmeticSnapshot();
         const msg = {
             senderId: currentUser.uid,
             senderEmail: currentUser.email || "",
@@ -4088,14 +4289,11 @@
         };
         window.currentMessages[optId] = msg;
         trackPendingOutbound(optId, text, currentChatId);
-        const fakeDoc = { id: optId, data: function () { return msg; } };
         const empty = msgArea.querySelector(".messages-empty");
         if (empty) empty.remove();
         const stickToBottom = isMsgAreaNearBottom(msgArea);
         const prevScrollHeight = msgArea.scrollHeight;
-        let ctx = getMessagesRenderContext(msgArea);
-        const built = buildMessageRowHtml(fakeDoc, ctx);
-        msgArea.insertAdjacentHTML("beforeend", built.html);
+        msgArea.insertAdjacentHTML("beforeend", buildOptimisticOwnTextRow(optId, text, replyPayload));
         msgArea.dataset.messagesReady = "1";
         finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
         return optId;
@@ -4123,7 +4321,11 @@
         const fullTimeStr = msg._optimistic ? "傳送中" : formatMsgFullTime(timeObj);
         const avatarUrl = isBotMsg
             ? "https://ui-avatars.com/api/?name=" + encodeURIComponent(msg.botName || "Bot") + "&background=23a559&color=fff"
-            : resolveAvatarForUser(userCache[msg.senderId] || (msg.senderId === currentUser.uid ? currentUserData : null), msg.senderEmail || senderName, senderCosmetics.avatar || "");
+            : avatarUrlForUserData(
+                userCache[msg.senderId] || (msg.senderId === currentUser.uid ? currentUserData : null),
+                msg.senderEmail || senderName,
+                senderCosmetics.avatar || ""
+            );
         const baseFrame = isBotMsg ? "" : frameClass(senderCosmetics.frame || "");
         const avatarFrame = (!isBotMsg && isLegendaryFrame(senderCosmetics.frame || ""))
             ? (baseFrame + " avatar-frame-legendary")
@@ -4192,6 +4394,15 @@
                 replyHtml + contentHtml + "</div></div>";
         }
         return { html: html, ctx: { lastSenderId: msg.senderId, lastTimeStr: fullTimeStr } };
+    }
+
+    function scheduleTypingIndicator(typingUsersMap) {
+        pendingTypingMap = typingUsersMap;
+        if (typingRenderTimer) return;
+        typingRenderTimer = setTimeout(function () {
+            typingRenderTimer = null;
+            renderTypingIndicator(pendingTypingMap);
+        }, 120);
     }
 
     async function renderTypingIndicator(typingUsersMap) {
@@ -4296,9 +4507,10 @@
     }
 
     // 3. 開啟特定聊天室
-    window.openChat = (chatId, chatName, icon, chatType, teacherId) => {
+    window.openChat = (chatId, chatName, icon, chatType, teacherId, chatDocHint) => {
         const prevChatId = currentChatId;
-        if (prevChatId && prevChatId !== chatId && currentUser) {
+        if (prevChatId && prevChatId !== chatId) {
+            clearPendingOptimisticForChat(prevChatId);
             updateDoc(doc(db, "chats", prevChatId), {
                 [`typingUsers.${currentUser.uid}`]: deleteField()
             }).catch(function () {});
@@ -4308,9 +4520,15 @@
         currentChatType = chatType;
         currentChatName = chatName;
         currentChatIcon = icon || "💬";
-        currentChatDocData = null;
+        primeCurrentChatDoc(chatId, chatDocHint);
         currentPrivatePeerUid = "";
         currentPrivatePeerData = null;
+        if (currentChatType === "private" && currentChatDocData) {
+            const otherUid = (currentChatDocData.participants || []).find(function (uid) {
+                return uid && uid !== currentUser.uid;
+            });
+            currentPrivatePeerUid = otherUid || "";
+        }
         if (typingPulseTimer) {
             clearTimeout(typingPulseTimer);
             typingPulseTimer = null;
@@ -4360,6 +4578,7 @@
 
         syncMobileChatView(true);
         showMessagesLoadingState();
+        void prefetchUsersForChat();
 
         if (unsubscribeMessages) unsubscribeMessages();
         if (unsubscribeChatDoc) unsubscribeChatDoc();
@@ -4376,6 +4595,7 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentChatDocData = data;
+                cacheChatDoc(chatId, data);
                 currentChatParticipants = data.participants || [];
                 currentChatAttachedBots = data.attachedBots || [];
                 if (currentChatType === "private") {
@@ -4398,7 +4618,7 @@
                 lastChatDocParticipantsKey = participantsKey;
                 lastChatDocPrivateReqKey = privateReqKey;
 
-                renderTypingIndicator(data.typingUsers || {});
+                scheduleTypingIndicator(data.typingUsers || {});
                 if (currentChatType === "private") {
                     applyPrivateRequestState(data);
                     if (membersStructuralChange) {
@@ -4429,9 +4649,18 @@
         if (!msgArea) return;
 
         if (snapshot.empty) {
-            msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
-            delete msgArea.dataset.messagesReady;
-            window.currentMessages = {};
+            const pendingHere = pendingOutboundMessages.filter(function (p) { return p.chatId === chatId; });
+            if (pendingHere.length) {
+                let html = "";
+                let ctx = { lastSenderId: null, lastTimeStr: null };
+                const merged = appendPendingOptimisticToRender(html, ctx, chatId);
+                msgArea.innerHTML = merged.html;
+                msgArea.dataset.messagesReady = "1";
+            } else {
+                msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
+                delete msgArea.dataset.messagesReady;
+                window.currentMessages = {};
+            }
             hideNewMessagesPill();
             setReplyBar();
             return;
@@ -4446,6 +4675,13 @@
             let ctx = getMessagesRenderContext(msgArea);
             changes.forEach(function (ch) {
                 const optId = consumeOptimisticForIncoming(ch.doc.data(), chatId);
+                if (optId && confirmOptimisticMessageRow(optId, ch.doc)) {
+                    const newRow = msgArea.querySelector('.message-row[data-msg-id="' + ch.doc.id + '"]');
+                    if (newRow) {
+                        ctx = { lastSenderId: newRow.getAttribute("data-sender-id"), lastTimeStr: newRow.getAttribute("data-time-full") };
+                    }
+                    return;
+                }
                 if (optId) removeOptimisticMessageRow(optId);
                 window.currentMessages[ch.doc.id] = ch.doc.data();
                 const built = buildMessageRowHtml(ch.doc, ctx);
@@ -4457,6 +4693,43 @@
             return;
         }
 
+        if (isReady && changes.length && changes.every(function (c) { return c.type === "modified"; })) {
+            changes.forEach(function (ch) {
+                window.currentMessages[ch.doc.id] = ch.doc.data();
+                patchMessageRowInPlace(ch.doc);
+            });
+            setReplyBar();
+            return;
+        }
+
+        if (isReady && changes.length && changes.every(function (c) { return c.type === "removed"; })) {
+            changes.forEach(function (ch) {
+                delete window.currentMessages[ch.doc.id];
+                const row = msgArea.querySelector('.message-row[data-msg-id="' + ch.doc.id + '"]');
+                if (row) row.remove();
+            });
+            if (!msgArea.querySelector(".message-row")) {
+                const pendingHere = pendingOutboundMessages.filter(function (p) { return p.chatId === chatId; });
+                if (pendingHere.length) {
+                    let html = "";
+                    let ctx = { lastSenderId: null, lastTimeStr: null };
+                    const merged = appendPendingOptimisticToRender(html, ctx, chatId);
+                    msgArea.innerHTML = merged.html;
+                } else {
+                    msgArea.innerHTML = '<div class="messages-empty"><i>💬</i>尚無訊息，打個招呼吧！</div>';
+                    delete msgArea.dataset.messagesReady;
+                }
+            }
+            setReplyBar();
+            return;
+        }
+
+        const pendingMsgStore = {};
+        pendingOutboundMessages.forEach(function (p) {
+            if (p.chatId === chatId && window.currentMessages[p.optId]) {
+                pendingMsgStore[p.optId] = window.currentMessages[p.optId];
+            }
+        });
         let html = '';
         let ctx = { lastSenderId: null, lastTimeStr: null };
         window.currentMessages = {};
@@ -4466,7 +4739,9 @@
             html += built.html;
             ctx = built.ctx;
         });
-        msgArea.innerHTML = html;
+        Object.assign(window.currentMessages, pendingMsgStore);
+        const merged = appendPendingOptimisticToRender(html, ctx, chatId);
+        msgArea.innerHTML = merged.html;
         msgArea.dataset.messagesReady = "1";
         finishMessagesScroll(msgArea, stickToBottom, prevScrollHeight);
         setReplyBar();
@@ -4496,6 +4771,9 @@
             }
             const sendBtn = document.getElementById("btn-send-msg");
             if (sendBtn) sendBtn.onclick = () => window.sendMessage();
+            if (currentChatType === "private" && currentChatDocData) {
+                applyPrivateRequestState(currentChatDocData);
+            }
             refreshChatBotsMeta();
             const memberSidebar = document.getElementById('member-sidebar');
             if (chatType === 'group' || chatType === 'server' || chatType === 'private') {
@@ -4843,14 +5121,13 @@
         if (headerText) headerText.textContent = "成員";
 
         try {
-            const members = [];
-            for (const uid of currentChatParticipants) {
-                const userSnap = await getDoc(doc(db, "users", uid));
-                if (userSnap.exists()) {
-                    const data = upsertUserCache(uid, userSnap.data()) || { uid: uid, ...userSnap.data() };
-                    members.push(data);
-                }
-            }
+            const memberResults = await Promise.all(currentChatParticipants.map(function (uid) {
+                return getDoc(doc(db, "users", uid)).then(function (userSnap) {
+                    if (!userSnap.exists()) return null;
+                    return upsertUserCache(uid, userSnap.data()) || { uid: uid, ...userSnap.data() };
+                });
+            }));
+            const members = memberResults.filter(Boolean);
 
             members.sort((a, b) => {
                 if (a.uid === currentChatTeacherId) return -1;
@@ -5586,60 +5863,40 @@
         }
     }
 
-    // 4. 傳送文字訊息（樂觀更新：先顯示氣泡，背景寫入 Firestore）
-    window.sendMessage = async () => {
-        if (!currentChatId) return;
-        if (isSendingMessage) return;
-        const input = document.getElementById('msg-input');
-        const rawText = String(input && input.value || "").replace(/\r\n/g, "\n");
-        const text = rawText.trim();
-        if (!text) return;
+    async function flushOutboundTextMessage(opts) {
+        const chatId = opts.chatId;
+        const text = opts.text;
+        const replyPayload = opts.replyPayload;
+        const optId = opts.optId;
+        const savedDraft = opts.savedDraft;
+        const savedReply = opts.savedReply;
+        const input = document.getElementById("msg-input");
 
-        if (isPrivateSendBlocked()) {
-            applyPrivateRequestState(currentChatDocData);
-            return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
-        }
         if (currentChatType === "private" && !currentChatDocData) {
             try {
-                const chatSnap = await getDoc(doc(db, "chats", currentChatId));
+                const chatSnap = await getDoc(doc(db, "chats", chatId));
                 currentChatDocData = chatSnap.exists() ? chatSnap.data() : null;
+                if (currentChatDocData) cacheChatDoc(chatId, currentChatDocData);
                 if (isPrivateSendBlocked()) {
+                    if (optId) removeOptimisticMessageRow(optId);
+                    if (input) {
+                        input.value = savedDraft;
+                        autoGrowInput(input);
+                    }
+                    replyToMessage = savedReply;
+                    setReplyBar();
+                    patchSidebarPreviewForChat(chatId, "");
                     applyPrivateRequestState(currentChatDocData);
-                    return alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
+                    alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
+                    return;
                 }
-            } catch {}
+            } catch (e) {
+                console.warn("私訊狀態確認失敗", e);
+            }
         }
 
-        isSendingMessage = true;
-        const replyPayload = replyToMessage ? {
-            id: replyToMessage.id,
-            senderName: replyToMessage.senderName || "",
-            senderId: replyToMessage.senderId || "",
-            text: (replyToMessage.text || "").slice(0, 200),
-            type: replyToMessage.type || "text",
-            fileName: replyToMessage.fileName || ""
-        } : null;
-
-        const savedDraft = rawText;
-        const savedReply = replyToMessage;
-        const chatId = currentChatId;
-        if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
-        clearMyTypingIndicator();
-
-        const optId = appendOptimisticTextMessage(text, replyPayload);
-        input.value = '';
-        autoGrowInput(input);
-        patchSidebarPreviewForChat(chatId, text);
-        replyToMessage = null;
-        setReplyBar();
-        focusChatInput();
-
-        const sendBtn = document.getElementById("btn-send-msg");
-        isSendingMessage = false;
-        if (sendBtn) sendBtn.disabled = false;
-
         try {
-            const cosmetic = currentCosmeticSnapshot();
+            const cosmetic = opts.cosmeticSnapshot || currentCosmeticSnapshot();
             const messagePayload = {
                 senderId: currentUser.uid,
                 senderEmail: currentUser.email,
@@ -5661,33 +5918,107 @@
                 addDoc(collection(db, "chats", chatId, "messages"), messagePayload),
                 updateDoc(doc(db, "chats", chatId), chatPatch)
             ]);
+            cacheChatDoc(chatId, Object.assign({}, chatDocCache[chatId] || {}, {
+                lastMessage: text,
+                lastSenderId: currentUser.uid
+            }));
             trimChatMessages(chatId);
             processAttachedBots(text).catch(function (e) { console.warn("Bot 處理失敗", e); });
         } catch (e) {
             if (optId) removeOptimisticMessageRow(optId);
-            input.value = savedDraft;
-            autoGrowInput(input);
+            if (input) {
+                input.value = savedDraft;
+                autoGrowInput(input);
+            }
             replyToMessage = savedReply;
             setReplyBar();
             patchSidebarPreviewForChat(chatId, "");
             alert("傳送失敗: " + e.message);
         }
+    }
+
+    // 4. 傳送文字訊息（樂觀更新：先清空輸入並顯示氣泡，背景寫入 Firestore）
+    window.sendMessage = function () {
+        if (!currentChatId) return;
+        if (isSendingMessage) return;
+        const input = document.getElementById('msg-input');
+        const rawText = String(input && input.value || "").replace(/\r\n/g, "\n");
+        const text = rawText.trim();
+        if (!text) return;
+
+        if (isPrivateSendBlocked()) {
+            applyPrivateRequestState(currentChatDocData);
+            alert("此私訊尚未通過訊息請求，暫時無法傳送訊息。");
+            return;
+        }
+
+        isSendingMessage = true;
+        const replyPayload = replyToMessage ? {
+            id: replyToMessage.id,
+            senderName: replyToMessage.senderName || "",
+            senderId: replyToMessage.senderId || "",
+            text: (replyToMessage.text || "").slice(0, 200),
+            type: replyToMessage.type || "text",
+            fileName: replyToMessage.fileName || ""
+        } : null;
+
+        const savedDraft = rawText;
+        const savedReply = replyToMessage;
+        const chatId = currentChatId;
+        if (window.ChatDiscordUI) window.ChatDiscordUI.hidePicker();
+        clearMyTypingIndicator();
+
+        if (input) {
+            input.value = '';
+            autoGrowInput(input);
+        }
+        replyToMessage = null;
+        setReplyBar();
+
+        const cosmeticSnapshot = currentCosmeticSnapshot();
+        const optId = appendOptimisticTextMessage(text, replyPayload, cosmeticSnapshot);
+        patchSidebarPreviewForChat(chatId, text);
+        focusChatInput();
+
+        isSendingMessage = false;
+
+        void flushOutboundTextMessage({
+            chatId: chatId,
+            text: text,
+            replyPayload: replyPayload,
+            optId: optId,
+            savedDraft: savedDraft,
+            savedReply: savedReply,
+            cosmeticSnapshot: cosmeticSnapshot
+        });
     };
 
     // 傳送檔案
     window.sendFile = async (inputElem) => {
         if (!currentChatId || !inputElem.files || inputElem.files.length === 0) return;
         if (currentChatType === "private") {
-            try {
-                const chatSnap = await getDoc(doc(db, "chats", currentChatId));
-                const d = chatSnap.exists() ? chatSnap.data() : null;
-                if (d && d.requestStatus === "pending") {
-                    applyPrivateRequestState(d);
-                    alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
-                    inputElem.value = "";
-                    return;
-                }
-            } catch {}
+            if (isPrivateSendBlocked()) {
+                applyPrivateRequestState(currentChatDocData);
+                alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
+                inputElem.value = "";
+                return;
+            }
+            if (!currentChatDocData) {
+                try {
+                    const chatSnap = await getDoc(doc(db, "chats", currentChatId));
+                    const d = chatSnap.exists() ? chatSnap.data() : null;
+                    if (d) {
+                        cacheChatDoc(currentChatId, d);
+                        currentChatDocData = d;
+                    }
+                    if (isPrivateSendBlocked()) {
+                        applyPrivateRequestState(currentChatDocData);
+                        alert("此私訊尚未通過訊息請求，暫時無法傳送檔案。");
+                        inputElem.value = "";
+                        return;
+                    }
+                } catch {}
+            }
         }
         const file = inputElem.files[0];
         if (!file.name.endsWith('.xml')) {
@@ -6004,7 +6335,13 @@
                     lastMessage: '群組已建立',
                     updatedAt: serverTimestamp()
                 });
-                openChat(newChat.id, inputVal, '👥', 'group', currentUser.uid);
+                openChat(newChat.id, inputVal, '👥', 'group', currentUser.uid, {
+                    id: newChat.id,
+                    type: 'group',
+                    participants: [currentUser.uid],
+                    teacherId: currentUser.uid,
+                    name: inputVal
+                });
             } else if (modalMode === 'server') {
                 const pendingQ = query(
                     collection(db, "server_create_requests"),
@@ -6051,7 +6388,7 @@
                         participants: arrayUnion(currentUser.uid)
                     });
                     alert("成功加入伺服器！");
-                    openChat(code, chatSnap.data().name, '🏫', 'server', chatSnap.data().teacherId);
+                    openChat(code, serverData.name, '🏫', 'server', serverData.teacherId, { id: code, ...serverData });
                 } else {
                     alert("查無此伺服器代碼，或是該代碼非伺服器！");
                 }
