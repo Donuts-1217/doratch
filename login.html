@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="Doratch.png">
     <link rel="apple-touch-icon" href="Doratch.png">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
     <title>會員登入 - Doratch</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -191,6 +192,10 @@
     </style>
 </head>
 <body>
+<nav data-doratch-auth-top>
+    <div class="doratch-top-brand" onclick="location.href='index.html'"></div>
+    <a href="index.html">← 返回首頁</a>
+</nav>
 
 <div class="bg-glow bg-glow-a"></div>
 <div class="bg-glow bg-glow-b"></div>
@@ -642,6 +647,7 @@
         showMsg("✅ Email 已驗證成功！現在可以登入了。", "success");
     }
 </script>
+<script src="doratch-shell.js" defer></script>
 
 </body>
 </html>

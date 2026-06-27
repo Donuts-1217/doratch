@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="Doratch.png">
     <link rel="stylesheet" href="doratch-mobile-shell.css">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
     <title>Doratch RPG 探索</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
@@ -29,7 +30,21 @@
     </style>
 </head>
 <body>
-    <div class="bar"><a href="game.html">← 遊戲中心</a><span id="coins">💰 —</span></div>
+<div class="app-container app-container--game">
+    <aside class="sidebar-main" data-doratch-active="game_rpg">
+        <div class="sidebar-footer">
+            <div class="user-mini-card">
+                <img id="side-avatar" src="https://ui-avatars.com/api/?name=Guest&background=random" style="width:32px; height:32px; border-radius:50%;">
+                <div style="flex:1; overflow:hidden;"><div id="side-username" style="font-size:12px; font-weight:bold;">玩家</div></div>
+                <button type="button" onclick="location.href='login.html'" style="background:none;border:none;color:#64748B;cursor:pointer;">🚪</button>
+            </div>
+        </div>
+    </aside>
+    <main class="main-content">
+    <div class="game-page-head">
+        <h1 class="game-page-title">RPG 探索</h1>
+        <span class="game-page-meta" id="coins">💰 —</span>
+    </div>
     <div class="wrap">
         <h1>🗺️ Doratch RPG 探索</h1>
         <div class="hero">
@@ -214,6 +229,9 @@
             persist();
         }, setSyncHint);
     </script>
+    </main>
+</div>
+    <script src="doratch-shell.js" defer></script>
     <script src="doratch-mobile-shell.js" defer></script>
 </body>
 </html>

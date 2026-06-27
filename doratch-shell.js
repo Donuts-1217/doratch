@@ -14,7 +14,7 @@
         {
             key: "class",
             label: "🏫 班級",
-            pages: ["dashboard", "profile"],
+            pages: ["dashboard", "profile", "class_view"],
             items: [
                 { href: "dashboard.html", label: "我的班級", pages: ["dashboard"] },
                 { href: "profile.html", label: "個人檔案", pages: ["profile"] }
@@ -87,7 +87,8 @@
         "index.html": "index",
         "dashboard.html": "dashboard",
         "profile.html": "profile",
-        "class_view.html": "dashboard",
+        "class_view.html": "class_view",
+        "bot-studio.html": "create",
         "python.html": "python",
         "create.html": "create",
         "page.html": "create",
@@ -278,6 +279,24 @@
         bindSidebarMenus(sidebar);
     }
 
+    const TOP_LINK_CATEGORY = {
+        "index.html": "index",
+        "dashboard.html": "class",
+        "python.html": "learn",
+        "challenge_zone.html": "challenge",
+        "game.html": "game",
+        "chat.html": "other",
+        "admin.html": "admin"
+    };
+
+    function isTopLinkActive(href) {
+        const pageKey = pageActiveKey();
+        if (pageKey === "index" && href === "index.html") return true;
+        const cat = TOP_LINK_CATEGORY[href];
+        if (!cat || cat === "index") return false;
+        return categoryForPage(pageKey) === cat;
+    }
+
     function mountTopNav() {
         document.querySelectorAll("[data-doratch-top-nav]").forEach(function (el) {
             const brand = el.querySelector(".doratch-top-brand, .logo, .nav-logo");
@@ -291,7 +310,8 @@
             const linksHost = el.querySelector(".doratch-top-links-host");
             if (linksHost) {
                 linksHost.innerHTML = TOP_LINKS.map(function (l) {
-                    return '<a href="' + l.href + '">' + l.label + "</a>";
+                    const cls = isTopLinkActive(l.href) ? ' class="active"' : "";
+                    return '<a href="' + l.href + '"' + cls + ">" + l.label + "</a>";
                 }).join("");
                 linksHost.classList.add("doratch-top-links");
             }

@@ -6,6 +6,8 @@
     <link rel="icon" type="image/png" href="Doratch.png">
     <link rel="apple-touch-icon" href="Doratch.png">
     <link rel="stylesheet" href="responsive-global.css">
+    <link rel="stylesheet" href="doratch-shell.css">
+    <link rel="stylesheet" href="doratch-mobile-shell.css">
     <script src="doratch-mobile-shell.js"></script>
     <script>
         (function () {
@@ -147,8 +149,9 @@
 
     <div class="bg-dots"></div>
 
-    <nav>
-        <div class="logo" onclick="location.href='index.html'">🚀 Doratch</div>
+    <nav data-doratch-top-nav>
+        <div class="logo doratch-top-brand" onclick="location.href='index.html'"></div>
+        <div class="doratch-top-links-host"></div>
         <div class="nav-links" id="nav-actions">
             <span style="color:#64748B;">Connecting...</span>
         </div>
@@ -286,5 +289,6 @@
             if (e.persisted) doratchLeaveAppMode();
         });
     </script>
+    <script src="doratch-shell.js" defer></script>
 </body>
 </html>
